@@ -28,6 +28,9 @@ class SockGame {
     // Initialize Martha scene
     this.marthaScene = new MarthaScene(this);
 
+    // Initialize level end screen
+    this.levelEndScreen = new LevelEndScreen(this);
+
     // Game objects for shooting phase
     this.crosshair = { x: 600, y: 400 };
 
@@ -186,6 +189,8 @@ class SockGame {
       this.levelSelect.handleMouseDown(x, y);
     } else if (this.gameState === "matching") {
       this.matchScreen.handleMouseDown(x, y);
+    } else if (this.gameState === "gameOver") {
+      this.levelEndScreen.handleMouseDown(x, y);
     }
   }
 
@@ -201,6 +206,8 @@ class SockGame {
     } else if (this.gameState === "shooting") {
       this.crosshair.x = x;
       this.crosshair.y = y;
+    } else if (this.gameState === "gameOver") {
+      this.levelEndScreen.handleMouseMove(x, y);
     }
   }
 
@@ -213,6 +220,8 @@ class SockGame {
       this.levelSelect.handleMouseUp(x, y);
     } else if (this.gameState === "matching") {
       this.matchScreen.handleMouseUp();
+    } else if (this.gameState === "gameOver") {
+      this.levelEndScreen.handleMouseUp();
     }
   }
 
@@ -226,7 +235,7 @@ class SockGame {
     } else if (this.gameState === "shooting") {
       this.handleShootingClick(x, y);
     } else if (this.gameState === "gameOver") {
-      this.gameState = "menu";
+      this.levelEndScreen.handleClick(x, y);
     }
   }
 
@@ -257,6 +266,9 @@ class SockGame {
     this.playerPoints += totalPointsEarned;
 
     this.saveGameData();
+
+    // Setup and show level end screen
+    this.levelEndScreen.setup();
     this.gameState = "gameOver";
   }
 
@@ -267,6 +279,8 @@ class SockGame {
       this.matchScreen.update();
     } else if (this.gameState === "shooting") {
       this.marthaScene.update();
+    } else if (this.gameState === "gameOver") {
+      this.levelEndScreen.update();
     }
   }
 
@@ -291,53 +305,8 @@ class SockGame {
     } else if (this.gameState === "shooting") {
       this.marthaScene.render(this.ctx);
     } else if (this.gameState === "gameOver") {
-      this.renderGameOver();
+      this.levelEndScreen.render(this.ctx);
     }
-  }
-
-  renderGameOver() {
-    this.ctx.fillStyle = "white";
-    this.ctx.font = "32px Courier New";
-    this.ctx.textAlign = "center";
-    this.ctx.fillText(
-      "Level Complete!",
-      this.canvas.width / 2,
-      this.canvas.height / 2 - 50
-    );
-
-    // Show points earned breakdown
-    const consumedSocks = this.marthaScene.marthaManager.consumedSocks;
-    const extraSockBalls = this.sockBalls;
-    const consumedPoints = consumedSocks * 5;
-    const extraPoints = extraSockBalls * 10;
-    const totalPointsEarned = consumedPoints + extraPoints;
-
-    this.ctx.font = "18px Courier New";
-    this.ctx.fillText(
-      `Socks Fed to Martha: ${consumedSocks} × 5 = ${consumedPoints} pts`,
-      this.canvas.width / 2,
-      this.canvas.height / 2
-    );
-    this.ctx.fillText(
-      `Extra Sock Balls: ${extraSockBalls} × 10 = ${extraPoints} pts`,
-      this.canvas.width / 2,
-      this.canvas.height / 2 + 30
-    );
-    this.ctx.fillText(
-      `Total Points Earned: ${totalPointsEarned}`,
-      this.canvas.width / 2,
-      this.canvas.height / 2 + 60
-    );
-    this.ctx.fillText(
-      `Total Points: ${this.playerPoints}`,
-      this.canvas.width / 2,
-      this.canvas.height / 2 + 90
-    );
-    this.ctx.fillText(
-      "Click to continue",
-      this.canvas.width / 2,
-      this.canvas.height / 2 + 130
-    );
   }
 
   gameLoop() {

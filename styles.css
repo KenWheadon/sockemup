@@ -56,62 +56,6 @@ canvas {
   }
 }
 
-/* Game Over Screen */
-.game-over-screen {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 40px;
-  border-radius: 15px;
-  text-align: center;
-  z-index: 1000;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.game-over-screen h1 {
-  font-size: 48px;
-  margin-bottom: 20px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  animation: glow 2s ease-in-out infinite alternate;
-}
-
-@keyframes glow {
-  from {
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  }
-  to {
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8),
-      0 0 20px rgba(255, 255, 255, 0.5);
-  }
-}
-
-.game-over-screen .stats {
-  font-size: 18px;
-  margin-bottom: 30px;
-}
-
-.game-over-screen .continue-button {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.5);
-  color: white;
-  padding: 15px 30px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease-out;
-  font-family: "Courier New", monospace;
-  font-size: 16px;
-}
-
-.game-over-screen .continue-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.8);
-  transform: scale(1.05);
-}
-
 /* Loading Screen */
 .loading-screen {
   position: absolute;
@@ -179,15 +123,6 @@ canvas {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .game-over-screen {
-    padding: 20px;
-    margin: 20px;
-  }
-
-  .game-over-screen h1 {
-    font-size: 36px;
-  }
-
   canvas {
     width: 100vw !important;
     height: 100vh !important;
@@ -195,15 +130,6 @@ canvas {
 }
 
 @media (max-width: 480px) {
-  .game-over-screen {
-    padding: 15px;
-    margin: 10px;
-  }
-
-  .game-over-screen h1 {
-    font-size: 28px;
-  }
-
   canvas {
     width: 100vw !important;
     height: 100vh !important;
@@ -268,10 +194,6 @@ canvas {
 /* Reduced data usage */
 @media (prefers-reduced-data: reduce) {
   .loading-progress-bar {
-    animation: none;
-  }
-
-  .glow {
     animation: none;
   }
 }
