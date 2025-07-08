@@ -57,7 +57,7 @@ const GameConfig = {
       marthaSpeed: 1,
       sockPairs: 6,
       typesAvailable: [1],
-      matchingTime: 60,
+      matchingTime: 100,
     },
     {
       sockTarget: 5,
