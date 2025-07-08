@@ -24,32 +24,6 @@ canvas {
   background: radial-gradient(circle, #34495e 0%, #2c3e50 100%);
 }
 
-/* Menu Styles */
-.menu-screen {
-  text-align: center;
-}
-
-.level-button {
-  cursor: pointer;
-  transition: all 0.3s ease-out;
-  position: relative;
-}
-
-.level-button:hover {
-  transform: scale(1.1);
-  filter: brightness(1.3);
-}
-
-.level-button.locked {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.level-button.locked:hover {
-  transform: scale(1.05);
-  filter: brightness(0.8);
-}
-
 /* Game Phase Indicators */
 .game-phase {
   position: absolute;

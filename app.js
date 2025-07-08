@@ -19,6 +19,9 @@ class SockGame {
     this.unlockedLevels = [...GameConfig.INITIAL_UNLOCKED_LEVELS];
     this.completedLevels = [...GameConfig.INITIAL_COMPLETED_LEVELS];
 
+    // Initialize level select screen
+    this.levelSelect = new LevelSelect(this);
+
     // Initialize match screen
     this.matchScreen = new MatchScreen(this);
 
@@ -179,7 +182,9 @@ class SockGame {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (this.gameState === "matching") {
+    if (this.gameState === "menu") {
+      this.levelSelect.handleMouseDown(x, y);
+    } else if (this.gameState === "matching") {
       this.matchScreen.handleMouseDown(x, y);
     }
   }
@@ -189,7 +194,9 @@ class SockGame {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (this.gameState === "matching") {
+    if (this.gameState === "menu") {
+      this.levelSelect.handleMouseMove(x, y);
+    } else if (this.gameState === "matching") {
       this.matchScreen.handleMouseMove(x, y);
     } else if (this.gameState === "shooting") {
       this.crosshair.x = x;
@@ -198,7 +205,13 @@ class SockGame {
   }
 
   handleMouseUp(e) {
-    if (this.gameState === "matching") {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (this.gameState === "menu") {
+      this.levelSelect.handleMouseUp(x, y);
+    } else if (this.gameState === "matching") {
       this.matchScreen.handleMouseUp();
     }
   }
@@ -209,38 +222,11 @@ class SockGame {
     const y = e.clientY - rect.top;
 
     if (this.gameState === "menu") {
-      this.handleMenuClick(x, y);
+      this.levelSelect.handleClick(x, y);
     } else if (this.gameState === "shooting") {
       this.handleShootingClick(x, y);
     } else if (this.gameState === "gameOver") {
       this.gameState = "menu";
-    }
-  }
-
-  handleMenuClick(x, y) {
-    const levelSpacing = 150;
-    const startX = this.canvas.width / 3.5 - levelSpacing;
-
-    for (let i = 0; i < GameConfig.LEVELS.length; i++) {
-      const levelX = startX + i * levelSpacing;
-      const levelY = this.canvas.height / 2 + 50;
-
-      if (
-        x >= levelX - 40 &&
-        x <= levelX + 40 &&
-        y >= levelY - 40 &&
-        y <= levelY + 40
-      ) {
-        if (this.unlockedLevels[i]) {
-          this.startLevel(i);
-        } else if (this.playerPoints >= GameConfig.LEVEL_COSTS[i]) {
-          this.playerPoints -= GameConfig.LEVEL_COSTS[i];
-          this.unlockedLevels[i] = true;
-          this.saveGameData();
-          this.startLevel(i);
-        }
-        break;
-      }
     }
   }
 
@@ -261,12 +247,23 @@ class SockGame {
       this.unlockedLevels[this.currentLevel + 1] = true;
     }
 
+    // Award points for completing the level
+    const consumedSocks = this.marthaScene.marthaManager.consumedSocks;
+    const extraSockBalls = this.sockBalls;
+    const consumedPoints = consumedSocks * 5;
+    const extraPoints = extraSockBalls * 10;
+    const totalPointsEarned = consumedPoints + extraPoints;
+
+    this.playerPoints += totalPointsEarned;
+
     this.saveGameData();
     this.gameState = "gameOver";
   }
 
   update() {
-    if (this.gameState === "matching") {
+    if (this.gameState === "menu") {
+      this.levelSelect.update();
+    } else if (this.gameState === "matching") {
       this.matchScreen.update();
     } else if (this.gameState === "shooting") {
       this.marthaScene.update();
@@ -288,7 +285,7 @@ class SockGame {
     }
 
     if (this.gameState === "menu") {
-      this.renderMenu();
+      this.levelSelect.render(this.ctx);
     } else if (this.gameState === "matching") {
       this.matchScreen.render(this.ctx);
     } else if (this.gameState === "shooting") {
@@ -296,119 +293,6 @@ class SockGame {
     } else if (this.gameState === "gameOver") {
       this.renderGameOver();
     }
-  }
-
-  renderMenu() {
-    // Draw logo
-    if (this.images["logo.png"]) {
-      this.ctx.drawImage(
-        this.images["logo.png"],
-        this.canvas.width / 2 - 100,
-        100,
-        200,
-        100
-      );
-    }
-
-    // Draw instructions
-    this.ctx.fillStyle = "white";
-    this.ctx.font = "18px Courier New";
-    this.ctx.textAlign = "center";
-    this.ctx.fillText(
-      "Click sock pile to shoot socks, drag socks to drop zones",
-      this.canvas.width / 2,
-      220
-    );
-    this.ctx.fillText(
-      "Match pairs to create sock balls, then throw them at Martha!",
-      this.canvas.width / 2,
-      245
-    );
-
-    // Draw level selection
-    this.ctx.fillStyle = "white";
-    this.ctx.font = "24px Courier New";
-    this.ctx.textAlign = "center";
-    this.ctx.fillText(
-      "Select Level",
-      this.canvas.width / 2,
-      this.canvas.height / 2 - 50
-    );
-
-    const levelSpacing = 150;
-    const startX = this.canvas.width / 3.5 - levelSpacing;
-
-    for (let i = 0; i < GameConfig.LEVELS.length; i++) {
-      const levelX = startX + i * levelSpacing;
-      const levelY = this.canvas.height / 2 + 50;
-
-      // Get the appropriate sock image for this level (sock1.png to sock6.png)
-      const sockImageName = `sock${i + 1}.png`;
-      const sockImage = this.images[sockImageName];
-
-      if (this.unlockedLevels[i]) {
-        if (this.completedLevels[i]) {
-          // Completed level: show sock without animation and star above
-          if (sockImage) {
-            this.ctx.drawImage(sockImage, levelX - 40, levelY - 40, 80, 80);
-          }
-
-          // Draw star above completed level
-          if (this.images["star.png"]) {
-            this.ctx.drawImage(
-              this.images["star.png"],
-              levelX - 20,
-              levelY - 80,
-              40,
-              40
-            );
-          }
-        } else {
-          // Unlocked but not completed: show wiggling sock
-          const wiggle = Math.sin(Date.now() * 0.01 + i) * 3;
-          if (sockImage) {
-            this.ctx.drawImage(
-              sockImage,
-              levelX - 40 + wiggle,
-              levelY - 40,
-              80,
-              80
-            );
-          }
-        }
-
-        this.ctx.fillStyle = "white";
-        this.ctx.font = "16px Courier New";
-        this.ctx.fillText(`Level ${i + 1}`, levelX, levelY + 60);
-      } else {
-        // Locked level: show darkened sock without animation
-        if (sockImage) {
-          this.ctx.save();
-          this.ctx.globalAlpha = 0.5;
-          this.ctx.filter = "brightness(0.3)";
-          this.ctx.drawImage(sockImage, levelX - 40, levelY - 40, 80, 80);
-          this.ctx.restore();
-        }
-
-        this.ctx.fillStyle = "white";
-        this.ctx.font = "16px Courier New";
-        this.ctx.fillText(
-          `Cost: ${GameConfig.LEVEL_COSTS[i]}`,
-          levelX,
-          levelY - 50
-        );
-        this.ctx.fillText(`Level ${i + 1}`, levelX, levelY + 60);
-      }
-    }
-
-    // Show current points
-    this.ctx.fillStyle = "yellow";
-    this.ctx.font = "20px Courier New";
-    this.ctx.fillText(
-      `Points: ${this.playerPoints}`,
-      this.canvas.width / 2,
-      this.canvas.height - 50
-    );
   }
 
   renderGameOver() {
