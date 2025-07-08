@@ -320,7 +320,7 @@ class SockGame {
     );
 
     const levelSpacing = 150;
-    const startX = this.canvas.width / 2 - levelSpacing;
+    const startX = this.canvas.width / 3.5 - levelSpacing;
 
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
       const levelX = startX + i * levelSpacing;

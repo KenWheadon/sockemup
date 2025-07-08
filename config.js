@@ -71,30 +71,51 @@ const GameConfig = {
   LEVELS: [
     {
       sockTarget: 2,
-      marthaSpeed: 1,
+      marthaSpeed: 0.5,
       sockPairs: 3,
       typesAvailable: [1],
-      matchingTime: 100,
+      matchingTime: 60,
+    },
+    {
+      sockTarget: 3,
+      marthaSpeed: 1,
+      sockPairs: 4,
+      typesAvailable: [1, 2],
+      matchingTime: 60,
     },
     {
       sockTarget: 5,
+      marthaSpeed: 1.2,
+      sockPairs: 6,
+      typesAvailable: [1, 2, 3],
+      matchingTime: 55,
+    },
+    {
+      sockTarget: 10,
       marthaSpeed: 1.5,
       sockPairs: 10,
-      typesAvailable: [1, 2, 3],
+      typesAvailable: [1, 2, 3, 4],
+      matchingTime: 50,
+    },
+    {
+      sockTarget: 12,
+      marthaSpeed: 1.75,
+      sockPairs: 14,
+      typesAvailable: [1, 2, 3, 4, 5],
       matchingTime: 45,
     },
     {
-      sockTarget: 8,
+      sockTarget: 16,
       marthaSpeed: 2,
-      sockPairs: 16,
+      sockPairs: 20,
       typesAvailable: [1, 2, 3, 4, 5, 6],
-      matchingTime: 30,
+      matchingTime: 40,
     },
   ],
 
   // Level costs and unlock data
-  LEVEL_COSTS: [0, 10, 25],
-  INITIAL_UNLOCKED_LEVELS: [true, false, false],
+  LEVEL_COSTS: [0, 10, 25, 50, 100, 150],
+  INITIAL_UNLOCKED_LEVELS: [true, false, false, false, false, false],
 
   // Image files
   IMAGES: {
