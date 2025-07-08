@@ -1,0 +1,87 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #2c3e50;
+  font-family: "Courier New", monospace;
+  overflow: hidden;
+}
+
+canvas {
+  display: block;
+  background: #34495e;
+  cursor: crosshair;
+}
+
+#gameContainer {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#ui {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  color: white;
+  font-size: 18px;
+  z-index: 100;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+#sockCounter {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: white;
+  font-size: 18px;
+  z-index: 100;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.ui-element {
+  margin-bottom: 5px;
+}
+
+.sockball-animation {
+  position: absolute;
+  pointer-events: none;
+  z-index: 200;
+  animation: wiggle 0.5s ease-in-out infinite;
+}
+
+@keyframes wiggle {
+  0% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+  100% {
+    transform: rotate(-3deg);
+  }
+}
+
+@keyframes shake {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  50% {
+    transform: translateX(2px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.shaking {
+  animation: shake 0.2s ease-in-out;
+}
