@@ -19,21 +19,13 @@ class SockGame {
 
     this.unlockedLevels = [...GameConfig.INITIAL_UNLOCKED_LEVELS];
 
-    // Game objects
-    this.sockPile = null;
-    this.socks = [];
-    this.dropZones = [];
-    this.sockList = [];
+    // Initialize match screen
+    this.matchScreen = new MatchScreen(this);
+
+    // Game objects for shooting phase
     this.crosshair = { x: 600, y: 400 };
     this.martha = null;
     this.thrownSocks = [];
-    this.matchAnimations = [];
-    this.sockballAnimations = [];
-
-    // Drag state
-    this.draggedSock = null;
-    this.dragOffset = { x: 0, y: 0 };
-    this.isDragging = false;
 
     this.init();
   }
@@ -113,7 +105,16 @@ class SockGame {
     this.sockBalls = 0;
     this.playerHP = GameConfig.INITIAL_HP;
 
-    // Generate sock list
+    // Generate sock list for match screen
+    this.generateSockList(level);
+
+    // Setup match screen
+    this.matchScreen.sockList = [...this.sockList];
+    this.matchScreen.setup();
+    this.gameState = "matching";
+  }
+
+  generateSockList(level) {
     this.sockList = [];
     const socksPerType = Math.floor(
       (level.sockPairs * 2) / level.typesAvailable.length
@@ -132,9 +133,6 @@ class SockGame {
 
     // Shuffle the sock list
     this.shuffleArray(this.sockList);
-
-    this.setupMatchingPhase();
-    this.gameState = "matching";
   }
 
   shuffleArray(array) {
@@ -144,98 +142,13 @@ class SockGame {
     }
   }
 
-  setupMatchingPhase() {
-    this.canvas.className = ""; // Remove crosshair cursor
-    this.sockPile = {
-      x: GameConfig.SOCK_PILE_POS.x,
-      y: GameConfig.SOCK_PILE_POS.y,
-      width: 100,
-      height: 100,
-      currentImage: "sockpile1.png",
-    };
-
-    this.dropZones = GameConfig.DROP_ZONE_POSITIONS.map((pos) => ({
-      ...pos,
-      sock: null,
-    }));
-
-    this.socks = [];
-    this.matchAnimations = [];
-    this.sockballAnimations = [];
-    this.draggedSock = null;
-    this.isDragging = false;
-  }
-
-  updateSockPileImage() {
-    const remaining = this.sockList.length;
-    const total = GameConfig.LEVELS[this.currentLevel].sockPairs * 2;
-    const percentage = (remaining / total) * 100;
-
-    if (percentage <= 0) {
-      this.sockPile.currentImage = null; // Pile disappears
-    } else if (percentage <= GameConfig.SOCK_PILE_THRESHOLDS.IMAGE_4) {
-      this.sockPile.currentImage = "sockpile4.png";
-    } else if (percentage <= GameConfig.SOCK_PILE_THRESHOLDS.IMAGE_3) {
-      this.sockPile.currentImage = "sockpile3.png";
-    } else if (percentage <= GameConfig.SOCK_PILE_THRESHOLDS.IMAGE_2) {
-      this.sockPile.currentImage = "sockpile2.png";
-    } else {
-      this.sockPile.currentImage = "sockpile1.png";
-    }
-  }
-
   handleMouseDown(e) {
     const rect = this.canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
     if (this.gameState === "matching") {
-      // Check if clicking on sock pile
-      if (
-        this.sockPile &&
-        this.sockPile.currentImage &&
-        x >= this.sockPile.x - this.sockPile.width / 2 &&
-        x <= this.sockPile.x + this.sockPile.width / 2 &&
-        y >= this.sockPile.y - this.sockPile.height / 2 &&
-        y <= this.sockPile.y + this.sockPile.height / 2
-      ) {
-        if (this.sockList.length > 0) {
-          this.shootSockFromPile();
-        }
-        return;
-      }
-
-      // Check if clicking on existing sock - using the working logic from index.html
-      for (let i = this.socks.length - 1; i >= 0; i--) {
-        const sock = this.socks[i];
-
-        // Skip socks that are in match animations
-        const sockInAnimation = this.matchAnimations.some((anim) =>
-          anim.socks.includes(sock)
-        );
-        if (sockInAnimation) continue;
-
-        if (
-          x >= sock.x - sock.width / 2 &&
-          x <= sock.x + sock.width / 2 &&
-          y >= sock.y - sock.height / 2 &&
-          y <= sock.y + sock.height / 2
-        ) {
-          this.draggedSock = sock;
-          this.dragOffset = { x: x - sock.x, y: y - sock.y };
-          this.isDragging = true;
-          sock.bouncing = false;
-
-          // Remove from drop zone if it was there
-          this.dropZones.forEach((zone) => {
-            if (zone.sock === sock) {
-              zone.sock = null;
-            }
-          });
-
-          break;
-        }
-      }
+      this.matchScreen.handleMouseDown(x, y);
     }
   }
 
@@ -244,55 +157,31 @@ class SockGame {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (this.gameState === "matching" && this.draggedSock) {
-      this.draggedSock.x = x - this.dragOffset.x;
-      this.draggedSock.y = y - this.dragOffset.y;
-      this.draggedSock.vx = 0;
-      this.draggedSock.vy = 0;
-    }
-
-    if (this.gameState === "shooting") {
+    if (this.gameState === "matching") {
+      this.matchScreen.handleMouseMove(x, y);
+    } else if (this.gameState === "shooting") {
       this.crosshair.x = x;
       this.crosshair.y = y;
     }
   }
 
   handleMouseUp(e) {
-    if (this.gameState === "matching" && this.draggedSock) {
-      const sock = this.draggedSock;
-      let snapped = false;
+    if (this.gameState === "matching") {
+      this.matchScreen.handleMouseUp();
+    }
+  }
 
-      // Check for drop zone snapping
-      this.dropZones.forEach((zone) => {
-        const distance = Math.sqrt(
-          Math.pow(sock.x - zone.x, 2) + Math.pow(sock.y - zone.y, 2)
-        );
+  handleClick(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-        if (distance < 60) {
-          if (zone.sock === null) {
-            zone.sock = sock;
-            sock.x = zone.x;
-            sock.y = zone.y;
-            snapped = true;
-          } else {
-            // Zone occupied, throw sock away
-            sock.vx = (Math.random() - 0.5) * 10;
-            sock.vy = (Math.random() - 0.5) * 10;
-            sock.bouncing = true;
-          }
-        }
-      });
-
-      // If not snapped, start bouncing
-      if (!snapped) {
-        sock.vx = (Math.random() - 0.5) * 8;
-        sock.vy = (Math.random() - 0.5) * 8;
-        sock.bouncing = true;
-      }
-
-      this.draggedSock = null;
-      this.isDragging = false;
-      this.checkForMatch();
+    if (this.gameState === "menu") {
+      this.handleMenuClick(x, y);
+    } else if (this.gameState === "shooting") {
+      this.handleShootingClick(x, y);
+    } else if (this.gameState === "gameOver") {
+      this.gameState = "menu";
     }
   }
 
@@ -323,155 +212,13 @@ class SockGame {
     }
   }
 
-  handleClick(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    if (this.gameState === "menu") {
-      this.handleMenuClick(x, y);
-    } else if (this.gameState === "shooting") {
-      this.handleShootingClick(x, y);
-    } else if (this.gameState === "gameOver") {
-      this.gameState = "menu";
-    }
-  }
-
   handleShootingClick(x, y) {
     this.fireSock();
   }
 
-  shootSockFromPile() {
-    const sockType = this.sockList.pop();
-
-    // Random upward angle (between 45 and 135 degrees)
-    const angle = Math.PI / 4 + (Math.random() * Math.PI) / 2;
-    const speed = GameConfig.SOCK_SHOOT_SPEED;
-
-    const newSock = {
-      id: Date.now(),
-      type: sockType,
-      x: this.sockPile.x,
-      y: this.sockPile.y,
-      width: GameConfig.SOCK_SIZE,
-      height: GameConfig.SOCK_SIZE,
-      vx: Math.cos(angle) * speed,
-      vy: -Math.sin(angle) * speed, // Negative for upward
-      bouncing: true,
-    };
-
-    this.socks.push(newSock);
-    this.updateSockPileImage();
-  }
-
-  handleMouseMove(e) {
-    if (this.gameState === "shooting") {
-      const rect = this.canvas.getBoundingClientRect();
-      this.crosshair.x = e.clientX - rect.left;
-      this.crosshair.y = e.clientY - rect.top;
-    }
-  }
-
-  checkForMatch() {
-    if (this.dropZones[0].sock && this.dropZones[1].sock) {
-      if (this.dropZones[0].sock.type === this.dropZones[1].sock.type) {
-        // Start match animation
-        this.startMatchAnimation(
-          this.dropZones[0].sock,
-          this.dropZones[1].sock
-        );
-      }
-    }
-  }
-
-  startMatchAnimation(sock1, sock2) {
-    // Add shaking animation
-    this.matchAnimations.push({
-      socks: [sock1, sock2],
-      phase: "shake",
-      timer: 0,
-      duration: GameConfig.SHAKE_DURATION,
-    });
-  }
-
-  updateMatchAnimations() {
-    this.matchAnimations.forEach((animation, index) => {
-      animation.timer++;
-
-      if (animation.phase === "shake") {
-        if (animation.timer >= animation.duration) {
-          // Start pop phase
-          animation.phase = "pop";
-          animation.timer = 0;
-          animation.duration = GameConfig.POP_DURATION;
-
-          // Create sockball animation
-          this.createSockballAnimation(animation.socks[0]);
-
-          // Remove matched socks
-          this.socks = this.socks.filter(
-            (sock) => sock !== animation.socks[0] && sock !== animation.socks[1]
-          );
-
-          // Clear drop zones
-          this.dropZones[0].sock = null;
-          this.dropZones[1].sock = null;
-        }
-      } else if (animation.phase === "pop") {
-        if (animation.timer >= animation.duration) {
-          // Animation complete
-          this.matchAnimations.splice(index, 1);
-
-          // Check if matching phase is complete
-          if (
-            this.sockList.length === 0 &&
-            this.sockBalls >= GameConfig.LEVELS[this.currentLevel].sockPairs
-          ) {
-            this.startShootingPhase();
-          }
-        }
-      }
-    });
-  }
-
-  createSockballAnimation(sock) {
-    const sockballType = GameConfig.IMAGES.SOCK_BALLS[sock.type - 1];
-    const targetX = this.canvas.width - 200;
-    const targetY = 150;
-
-    this.sockballAnimations.push({
-      image: sockballType,
-      x: sock.x,
-      y: sock.y,
-      targetX: targetX,
-      targetY: targetY,
-      progress: 0,
-      wiggleOffset: 0,
-    });
-  }
-
-  updateSockballAnimations() {
-    this.sockballAnimations.forEach((animation, index) => {
-      animation.progress += GameConfig.SOCKBALL_ANIMATION_SPEED / 100;
-      animation.wiggleOffset += 0.2;
-
-      if (animation.progress >= 1) {
-        // Animation complete - increment sockball counter
-        this.sockBalls++;
-        this.sockballAnimations.splice(index, 1);
-      } else {
-        // Interpolate position
-        animation.x =
-          animation.x + (animation.targetX - animation.x) * animation.progress;
-        animation.y =
-          animation.y + (animation.targetY - animation.y) * animation.progress;
-      }
-    });
-  }
-
   startShootingPhase() {
     this.gameState = "shooting";
-    this.canvas.className = "shooting"; // Add crosshair cursor
+    this.canvas.className = "shooting-phase";
     this.martha = {
       x: this.canvas.width + 50,
       y: this.canvas.height / 2,
@@ -511,62 +258,10 @@ class SockGame {
 
   update() {
     if (this.gameState === "matching") {
-      this.updateMatching();
+      this.matchScreen.update();
     } else if (this.gameState === "shooting") {
       this.updateShooting();
     }
-
-    this.updateMatchAnimations();
-    this.updateSockballAnimations();
-  }
-
-  updateMatching() {
-    // Proper 1-second countdown (60 FPS)
-    this.timeRemaining -= 1 / 60;
-
-    if (this.timeRemaining <= 0) {
-      this.startShootingPhase();
-    }
-
-    // Update bouncing socks
-    this.socks.forEach((sock) => {
-      if (sock.bouncing) {
-        sock.x += sock.vx;
-        sock.y += sock.vy;
-        sock.vy += GameConfig.GRAVITY; // Add gravity
-
-        // Bounce off physics bounds
-        if (
-          sock.x <= GameConfig.PHYSICS_BOUNDS.LEFT + sock.width / 2 ||
-          sock.x >= GameConfig.PHYSICS_BOUNDS.RIGHT - sock.width / 2
-        ) {
-          sock.vx *= -GameConfig.BOUNCE_DAMPING;
-          sock.x = Math.max(
-            GameConfig.PHYSICS_BOUNDS.LEFT + sock.width / 2,
-            Math.min(GameConfig.PHYSICS_BOUNDS.RIGHT - sock.width / 2, sock.x)
-          );
-        }
-        if (
-          sock.y <= GameConfig.PHYSICS_BOUNDS.TOP + sock.height / 2 ||
-          sock.y >= GameConfig.PHYSICS_BOUNDS.BOTTOM - sock.height / 2
-        ) {
-          sock.vy *= -GameConfig.BOUNCE_DAMPING;
-          sock.y = Math.max(
-            GameConfig.PHYSICS_BOUNDS.TOP + sock.height / 2,
-            Math.min(GameConfig.PHYSICS_BOUNDS.BOTTOM - sock.height / 2, sock.y)
-          );
-        }
-
-        // Apply friction
-        sock.vx *= GameConfig.FRICTION;
-        sock.vy *= GameConfig.FRICTION;
-
-        // Stop bouncing if velocity is low
-        if (Math.abs(sock.vx) < 0.1 && Math.abs(sock.vy) < 0.1) {
-          sock.bouncing = false;
-        }
-      }
-    });
   }
 
   updateShooting() {
@@ -653,7 +348,7 @@ class SockGame {
     if (this.gameState === "menu") {
       this.renderMenu();
     } else if (this.gameState === "matching") {
-      this.renderMatching();
+      this.matchScreen.render(this.ctx);
     } else if (this.gameState === "shooting") {
       this.renderShooting();
     } else if (this.gameState === "gameOver") {
@@ -680,7 +375,7 @@ class SockGame {
     this.ctx.font = "18px Courier New";
     this.ctx.textAlign = "center";
     this.ctx.fillText(
-      "Click sock pile to shoot socks, click socks to place in drop zones",
+      "Click sock pile to shoot socks, drag socks to drop zones",
       this.canvas.width / 2,
       220
     );
@@ -747,119 +442,6 @@ class SockGame {
       this.canvas.width / 2,
       this.canvas.height - 50
     );
-  }
-
-  renderMatching() {
-    // Draw background instruction
-    this.ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-    this.ctx.font = "48px Courier New";
-    this.ctx.textAlign = "center";
-    this.ctx.fillText(
-      "MATCH THOSE SOCKS",
-      this.canvas.width / 2,
-      this.canvas.height / 2
-    );
-
-    // Draw physics bounds if debug is enabled
-    if (GameConfig.DEBUG_PHYSICS_BOUNDS) {
-      this.ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeRect(
-        GameConfig.PHYSICS_BOUNDS.LEFT,
-        GameConfig.PHYSICS_BOUNDS.TOP,
-        GameConfig.PHYSICS_BOUNDS.RIGHT - GameConfig.PHYSICS_BOUNDS.LEFT,
-        GameConfig.PHYSICS_BOUNDS.BOTTOM - GameConfig.PHYSICS_BOUNDS.TOP
-      );
-
-      // Draw corner labels
-      this.ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
-      this.ctx.font = "12px Courier New";
-      this.ctx.textAlign = "left";
-      this.ctx.fillText(
-        `${GameConfig.PHYSICS_BOUNDS.LEFT}, ${GameConfig.PHYSICS_BOUNDS.TOP}`,
-        GameConfig.PHYSICS_BOUNDS.LEFT + 5,
-        GameConfig.PHYSICS_BOUNDS.TOP + 15
-      );
-      this.ctx.textAlign = "right";
-      this.ctx.fillText(
-        `${GameConfig.PHYSICS_BOUNDS.RIGHT}, ${GameConfig.PHYSICS_BOUNDS.BOTTOM}`,
-        GameConfig.PHYSICS_BOUNDS.RIGHT - 5,
-        GameConfig.PHYSICS_BOUNDS.BOTTOM - 5
-      );
-    }
-
-    // Draw sock pile
-    if (this.sockPile.currentImage && this.images[this.sockPile.currentImage]) {
-      this.ctx.drawImage(
-        this.images[this.sockPile.currentImage],
-        this.sockPile.x - this.sockPile.width / 2,
-        this.sockPile.y - this.sockPile.height / 2,
-        this.sockPile.width,
-        this.sockPile.height
-      );
-    }
-
-    // Draw drop zones
-    this.dropZones.forEach((zone) => {
-      this.ctx.strokeStyle = "white";
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeRect(
-        zone.x - zone.width / 2,
-        zone.y - zone.height / 2,
-        zone.width,
-        zone.height
-      );
-    });
-
-    // Draw socks
-    this.socks.forEach((sock) => {
-      let drawX = sock.x - sock.width / 2;
-      let drawY = sock.y - sock.height / 2;
-
-      // Apply shake effect if in match animation
-      this.matchAnimations.forEach((animation) => {
-        if (animation.phase === "shake" && animation.socks.includes(sock)) {
-          drawX += (Math.random() - 0.5) * 4;
-          drawY += (Math.random() - 0.5) * 4;
-        }
-      });
-
-      // Highlight dragged sock
-      if (this.draggedSock === sock) {
-        this.ctx.strokeStyle = "yellow";
-        this.ctx.lineWidth = 3;
-        this.ctx.strokeRect(
-          drawX - 2,
-          drawY - 2,
-          sock.width + 4,
-          sock.height + 4
-        );
-      }
-
-      if (this.images[`sock${sock.type}.png`]) {
-        this.ctx.drawImage(
-          this.images[`sock${sock.type}.png`],
-          drawX,
-          drawY,
-          sock.width,
-          sock.height
-        );
-      }
-    });
-
-    // Draw sockball animations
-    this.sockballAnimations.forEach((animation) => {
-      if (this.images[animation.image]) {
-        const wiggle = Math.sin(animation.wiggleOffset) * 2;
-        this.ctx.drawImage(
-          this.images[animation.image],
-          animation.x - GameConfig.SOCKBALL_SIZE / 2 + wiggle,
-          animation.y - GameConfig.SOCKBALL_SIZE / 2,
-          GameConfig.SOCKBALL_SIZE,
-          GameConfig.SOCKBALL_SIZE
-        );
-      }
-    });
   }
 
   renderShooting() {
@@ -959,14 +541,38 @@ class SockGame {
   }
 
   updateUI() {
-    document.getElementById("timeValue").textContent = Math.max(
-      0,
-      Math.floor(this.timeRemaining)
-    );
-    document.getElementById("sockBallsValue").textContent = this.sockBalls;
+    // Update time display with warning effect
+    const timeElement = document.getElementById("timeValue");
+    const timeValue = Math.max(0, Math.floor(this.timeRemaining));
+    timeElement.textContent = timeValue;
+
+    // Add warning class if time is low
+    if (timeValue <= 10 && this.gameState === "matching") {
+      timeElement.parentElement.classList.add("time-warning");
+    } else {
+      timeElement.parentElement.classList.remove("time-warning");
+    }
+
+    // Update sockball counter with animation
+    const sockballsElement = document.getElementById("sockBallsValue");
+    const currentValue = parseInt(sockballsElement.textContent);
+    if (currentValue !== this.sockBalls) {
+      sockballsElement.textContent = this.sockBalls;
+      sockballsElement.parentElement.classList.add(
+        "sockball-counter",
+        "updated"
+      );
+      setTimeout(() => {
+        sockballsElement.parentElement.classList.remove("updated");
+      }, 500);
+    }
+
     document.getElementById("pointsValue").textContent = this.playerPoints;
-    document.getElementById("remainingSocksValue").textContent =
-      this.sockList.length;
+
+    // Update remaining socks counter
+    const remainingSocks =
+      this.gameState === "matching" ? this.matchScreen.sockList.length : 0;
+    document.getElementById("remainingSocksValue").textContent = remainingSocks;
   }
 
   gameLoop() {
@@ -976,5 +582,7 @@ class SockGame {
   }
 }
 
-// Start the game
-const game = new SockGame();
+// Start the game when DOM is loaded
+document.addEventListener("DOMContentLoaded", () => {
+  const game = new SockGame();
+});
