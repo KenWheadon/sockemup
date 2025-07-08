@@ -1,0 +1,247 @@
+class MarthaScene {
+  constructor(game) {
+    this.game = game;
+    this.throwPhysics = new ThrowPhysics(game);
+    this.marthaManager = new MarthaManager(game);
+    this.thrownSocks = [];
+    this.gameEndTimer = null;
+    this.gameEndDelay = 60; // 1 second at 60 FPS
+  }
+
+  setup() {
+    this.game.gameState = "shooting";
+    this.game.canvas.className = "shooting-phase";
+
+    // Setup Martha for current level
+    this.marthaManager.setup(this.game.currentLevel);
+
+    // Clear any existing thrown socks
+    this.thrownSocks = [];
+
+    // Reset game end timer
+    this.gameEndTimer = null;
+
+    console.log("Martha scene setup complete:", {
+      currentLevel: this.game.currentLevel,
+      sockBalls: this.game.sockBalls,
+      targetSocks: this.marthaManager.targetSocks,
+    });
+  }
+
+  fireSock(cursorX, cursorY) {
+    console.log("=== FIRING SOCK ===");
+    console.log("Cursor position:", { x: cursorX, y: cursorY });
+    console.log("Sock balls remaining:", this.game.sockBalls);
+
+    if (this.game.sockBalls > 0) {
+      // Fire from bottom of screen
+      const startX = cursorX;
+      const startY = GameConfig.CANVAS_HEIGHT - 30; // Bottom of screen
+      const targetX = cursorX;
+      const targetY = cursorY;
+
+      console.log("Launch parameters:", {
+        start: { x: startX, y: startY },
+        target: { x: targetX, y: targetY },
+      });
+
+      // Create sock with simple physics
+      const sock = this.throwPhysics.createThrownSock(
+        startX,
+        startY,
+        targetX,
+        targetY
+      );
+
+      this.thrownSocks.push(sock);
+      this.game.sockBalls--;
+
+      console.log("Sock created and added to array:", {
+        sockPosition: { x: sock.x, y: sock.y },
+        sockVelocity: { vx: sock.vx, vy: sock.vy },
+        totalThrown: this.thrownSocks.length,
+        remainingSockBalls: this.game.sockBalls,
+      });
+      console.log("=== SOCK FIRED ===");
+    } else {
+      console.log("No sock balls remaining!");
+    }
+  }
+
+  update() {
+    // Update Martha
+    this.marthaManager.update();
+
+    // Update thrown socks
+    this.thrownSocks.forEach((sock, index) => {
+      this.throwPhysics.updateSock(sock);
+
+      // Check collision with Martha
+      if (this.marthaManager.checkSockCollision(sock)) {
+        console.log("Sock hit Martha! Removing sock and feeding Martha");
+        this.thrownSocks.splice(index, 1);
+        const isLevelComplete = this.marthaManager.consumeSock();
+
+        if (isLevelComplete) {
+          console.log("Level complete! Martha is satisfied");
+          this.endLevel();
+        }
+      }
+
+      // Remove socks that go off screen
+      if (this.throwPhysics.isSockOffScreen(sock)) {
+        console.log("Sock went off screen, removing and reducing HP");
+        this.thrownSocks.splice(index, 1);
+        this.game.playerHP--;
+
+        if (this.game.playerHP <= 0) {
+          console.log("Player HP reached 0, game over");
+          this.game.gameState = "gameOver";
+        }
+      }
+    });
+
+    // Check if we should start the game end timer
+    if (
+      this.game.sockBalls === 0 &&
+      this.thrownSocks.length === 0 &&
+      !this.marthaManager.isSatisfied()
+    ) {
+      if (this.gameEndTimer === null) {
+        // Start the countdown timer
+        this.gameEndTimer = this.gameEndDelay;
+        console.log(
+          "Starting game end timer - no more socks available and Martha not satisfied"
+        );
+      } else {
+        // Count down the timer
+        this.gameEndTimer--;
+        console.log("Game end timer countdown:", this.gameEndTimer);
+
+        if (this.gameEndTimer <= 0) {
+          console.log("Game end timer expired, ending game");
+          this.game.gameState = "gameOver";
+        }
+      }
+    } else {
+      // Reset timer if conditions are no longer met
+      if (this.gameEndTimer !== null) {
+        console.log("Resetting game end timer - conditions changed");
+        this.gameEndTimer = null;
+      }
+    }
+
+    // Debug logging for game state
+    console.log("Game state update:", {
+      sockBalls: this.game.sockBalls,
+      thrownSocks: this.thrownSocks.length,
+      marthaConsumption: this.marthaManager.getProgress(),
+      gameEndTimer: this.gameEndTimer,
+      playerHP: this.game.playerHP,
+    });
+  }
+
+  endLevel() {
+    // Calculate score based on remaining sock balls
+    const remainingSockBalls = this.game.sockBalls;
+    const points = remainingSockBalls * GameConfig.POINTS_PER_SOCK;
+    this.game.playerPoints += points;
+
+    console.log("Level ended successfully:", {
+      remainingSockBalls: remainingSockBalls,
+      pointsEarned: points,
+      totalPoints: this.game.playerPoints,
+    });
+
+    this.game.saveGameData();
+    this.game.gameState = "gameOver";
+  }
+
+  render(ctx) {
+    // Clear canvas first
+    ctx.clearRect(0, 0, GameConfig.CANVAS_WIDTH, GameConfig.CANVAS_HEIGHT);
+
+    // Draw background elements first
+    this.marthaManager.render(ctx);
+    this.marthaManager.renderDialogue(ctx);
+
+    // Draw trajectory preview line
+    this.renderTrajectoryPreview(ctx);
+
+    // Draw thrown socks ON TOP of everything else
+    console.log("=== RENDERING SOCKS ===");
+    console.log("Number of thrown socks:", this.thrownSocks.length);
+
+    if (this.thrownSocks.length > 0) {
+      // Set high z-index equivalent by rendering last
+      this.thrownSocks.forEach((sock, index) => {
+        console.log(`Rendering sock ${index}:`, {
+          position: { x: sock.x, y: sock.y },
+          age: sock.age,
+          visible: true,
+        });
+        this.throwPhysics.renderSock(ctx, sock);
+      });
+    } else {
+      console.log("No socks to render");
+    }
+
+    // Draw UI elements on top
+    this.renderCrosshair(ctx);
+    this.renderHP(ctx);
+
+    // Draw game end timer if active
+    if (this.gameEndTimer !== null) {
+      this.renderGameEndTimer(ctx);
+    }
+
+    console.log("=== RENDER COMPLETE ===");
+  }
+
+  renderCrosshair(ctx) {
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(this.game.crosshair.x - 10, this.game.crosshair.y);
+    ctx.lineTo(this.game.crosshair.x + 10, this.game.crosshair.y);
+    ctx.moveTo(this.game.crosshair.x, this.game.crosshair.y - 10);
+    ctx.lineTo(this.game.crosshair.x, this.game.crosshair.y + 10);
+    ctx.stroke();
+  }
+
+  renderTrajectoryPreview(ctx) {
+    // Show trajectory from bottom of screen to cursor
+    const startX = this.game.crosshair.x;
+    const startY = GameConfig.CANVAS_HEIGHT - 30;
+    const targetX = this.game.crosshair.x;
+    const targetY = this.game.crosshair.y;
+
+    this.throwPhysics.renderTrajectoryPreview(
+      ctx,
+      startX,
+      startY,
+      targetX,
+      targetY
+    );
+  }
+
+  renderHP(ctx) {
+    ctx.fillStyle = "red";
+    ctx.font = "18px Courier New";
+    ctx.textAlign = "left";
+    ctx.fillText(`HP: ${this.game.playerHP}`, 10, 100);
+  }
+
+  renderGameEndTimer(ctx) {
+    const secondsRemaining = Math.ceil(this.gameEndTimer / 60);
+
+    ctx.fillStyle = "rgba(255, 255, 0, 0.8)";
+    ctx.font = "24px Courier New";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      `Game ending in ${secondsRemaining}...`,
+      GameConfig.CANVAS_WIDTH / 2,
+      GameConfig.CANVAS_HEIGHT - 50
+    );
+  }
+}

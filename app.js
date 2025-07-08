@@ -22,10 +22,11 @@ class SockGame {
     // Initialize match screen
     this.matchScreen = new MatchScreen(this);
 
+    // Initialize Martha scene
+    this.marthaScene = new MarthaScene(this);
+
     // Game objects for shooting phase
     this.crosshair = { x: 600, y: 400 };
-    this.martha = null;
-    this.thrownSocks = [];
 
     this.init();
   }
@@ -213,122 +214,19 @@ class SockGame {
   }
 
   handleShootingClick(x, y) {
-    this.fireSock();
+    this.marthaScene.fireSock(x, y);
   }
 
   startShootingPhase() {
-    this.gameState = "shooting";
-    this.canvas.className = "shooting-phase";
-    this.martha = {
-      x: this.canvas.width + 50,
-      y: this.canvas.height / 2,
-      width: GameConfig.MARTHA_SIZE.width,
-      height: GameConfig.MARTHA_SIZE.height,
-      vx: -GameConfig.LEVELS[this.currentLevel].marthaSpeed,
-      direction: -1,
-      hitEffect: 0,
-    };
-
-    this.thrownSocks = [];
-  }
-
-  fireSock() {
-    if (this.sockBalls > 0) {
-      // Fire from bottom of screen toward crosshair
-      const startX = this.crosshair.x;
-      const startY = this.canvas.height - 50;
-
-      const angle = Math.atan2(
-        this.crosshair.y - startY,
-        this.crosshair.x - startX
-      );
-      const speed = GameConfig.SOCK_SHOOT_SPEED;
-
-      this.thrownSocks.push({
-        x: startX,
-        y: startY,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        type: 1, // Could be random from available types
-      });
-
-      this.sockBalls--;
-    }
+    this.marthaScene.setup();
   }
 
   update() {
     if (this.gameState === "matching") {
       this.matchScreen.update();
     } else if (this.gameState === "shooting") {
-      this.updateShooting();
+      this.marthaScene.update();
     }
-  }
-
-  updateShooting() {
-    // Update Martha
-    this.martha.x += this.martha.vx;
-
-    // Martha movement pattern
-    if (this.martha.x <= 50) {
-      this.martha.vx = GameConfig.LEVELS[this.currentLevel].marthaSpeed;
-      this.martha.direction = 1;
-    } else if (this.martha.x >= this.canvas.width - 50) {
-      this.martha.vx = -GameConfig.LEVELS[this.currentLevel].marthaSpeed;
-      this.martha.direction = -1;
-    }
-
-    // Update hit effect
-    if (this.martha.hitEffect > 0) {
-      this.martha.hitEffect--;
-    }
-
-    // Update thrown socks
-    this.thrownSocks.forEach((sock, index) => {
-      sock.x += sock.vx;
-      sock.y += sock.vy;
-      sock.vy += GameConfig.GRAVITY; // Gravity
-
-      // Check collision with Martha
-      if (
-        sock.x >= this.martha.x - this.martha.width / 2 &&
-        sock.x <= this.martha.x + this.martha.width / 2 &&
-        sock.y >= this.martha.y - this.martha.height / 2 &&
-        sock.y <= this.martha.y + this.martha.height / 2
-      ) {
-        this.martha.hitEffect = GameConfig.MARTHA_HIT_EFFECT_DURATION;
-        this.thrownSocks.splice(index, 1);
-
-        // Check if level complete
-        if (this.sockBalls === 0 && this.thrownSocks.length === 0) {
-          this.endLevel();
-        }
-      }
-
-      // Remove socks that go off screen
-      if (sock.y > this.canvas.height + 50) {
-        this.thrownSocks.splice(index, 1);
-        this.playerHP--;
-
-        if (this.playerHP <= 0) {
-          this.gameState = "gameOver";
-        }
-      }
-    });
-
-    // End level if no more socks
-    if (this.sockBalls === 0 && this.thrownSocks.length === 0) {
-      this.endLevel();
-    }
-  }
-
-  endLevel() {
-    // Calculate score
-    const remainingSocks = this.sockBalls;
-    const points = remainingSocks * GameConfig.POINTS_PER_SOCK;
-    this.playerPoints += points;
-
-    this.saveGameData();
-    this.gameState = "gameOver";
   }
 
   render() {
@@ -350,7 +248,7 @@ class SockGame {
     } else if (this.gameState === "matching") {
       this.matchScreen.render(this.ctx);
     } else if (this.gameState === "shooting") {
-      this.renderShooting();
+      this.marthaScene.render(this.ctx);
     } else if (this.gameState === "gameOver") {
       this.renderGameOver();
     }
@@ -444,74 +342,6 @@ class SockGame {
     );
   }
 
-  renderShooting() {
-    // Draw Martha
-    if (this.images["martha.png"]) {
-      this.ctx.save();
-      if (this.martha.hitEffect > 0) {
-        this.ctx.globalAlpha = 0.5;
-        this.ctx.filter = "brightness(200%)";
-      }
-      this.ctx.drawImage(
-        this.images["martha.png"],
-        this.martha.x - this.martha.width / 2,
-        this.martha.y - this.martha.height / 2,
-        this.martha.width,
-        this.martha.height
-      );
-      this.ctx.restore();
-    }
-
-    // Draw crosshair
-    this.ctx.strokeStyle = "red";
-    this.ctx.lineWidth = 2;
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.crosshair.x - 10, this.crosshair.y);
-    this.ctx.lineTo(this.crosshair.x + 10, this.crosshair.y);
-    this.ctx.moveTo(this.crosshair.x, this.crosshair.y - 10);
-    this.ctx.lineTo(this.crosshair.x, this.crosshair.y + 10);
-    this.ctx.stroke();
-
-    // Draw trajectory line from bottom to crosshair
-    this.ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    this.ctx.lineWidth = 1;
-    this.ctx.beginPath();
-    this.ctx.moveTo(this.crosshair.x, this.canvas.height - 50);
-    this.ctx.lineTo(this.crosshair.x, this.crosshair.y);
-    this.ctx.stroke();
-
-    // Draw thrown socks
-    this.thrownSocks.forEach((sock) => {
-      if (this.images[`sock${sock.type}.png`]) {
-        this.ctx.drawImage(
-          this.images[`sock${sock.type}.png`],
-          sock.x - 20,
-          sock.y - 20,
-          40,
-          40
-        );
-      }
-    });
-
-    // Draw Martha's dialogue
-    this.ctx.fillStyle = "white";
-    this.ctx.font = "16px Courier New";
-    this.ctx.textAlign = "center";
-    this.ctx.fillText(
-      `I DEMAND ${
-        GameConfig.LEVELS[this.currentLevel].sockTarget
-      } PAIRS OF SOCKS OR ELSE!`,
-      this.canvas.width / 2,
-      50
-    );
-
-    // Draw HP
-    this.ctx.fillStyle = "red";
-    this.ctx.font = "18px Courier New";
-    this.ctx.textAlign = "left";
-    this.ctx.fillText(`HP: ${this.playerHP}`, 10, 100);
-  }
-
   renderGameOver() {
     this.ctx.fillStyle = "white";
     this.ctx.font = "32px Courier New";
@@ -522,9 +352,11 @@ class SockGame {
       this.canvas.height / 2 - 50
     );
 
+    // Show points earned based on remaining sock balls
+    const pointsEarned = this.sockBalls * GameConfig.POINTS_PER_SOCK;
     this.ctx.font = "18px Courier New";
     this.ctx.fillText(
-      `Points Earned: ${this.sockBalls * GameConfig.POINTS_PER_SOCK}`,
+      `Points Earned: ${pointsEarned}`,
       this.canvas.width / 2,
       this.canvas.height / 2
     );

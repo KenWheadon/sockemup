@@ -14,10 +14,6 @@ canvas {
   cursor: default;
 }
 
-canvas.shooting-phase {
-  cursor: crosshair;
-}
-
 #gameContainer {
   position: relative;
   width: 100vw;
@@ -165,19 +161,6 @@ canvas.shooting-phase {
     opacity: 0.8;
     transform: translate(-50%, -50%) scale(1);
   }
-}
-
-/* Shooting Phase Styles */
-.shooting-phase .crosshair {
-  position: absolute;
-  pointer-events: none;
-  z-index: 200;
-}
-
-.trajectory-line {
-  position: absolute;
-  pointer-events: none;
-  z-index: 150;
 }
 
 /* Game Over Screen */

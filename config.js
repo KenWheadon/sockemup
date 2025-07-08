@@ -14,11 +14,12 @@ const GameConfig = {
   INITIAL_HP: 10,
   POINTS_PER_SOCK: 10,
   GRAVITY: 0.2,
+  STARTING_SPEED: 15,
   FRICTION: 0.98,
   BOUNCE_DAMPING: 0.8,
 
   // Sock settings
-  SOCK_SIZE: 40,
+  SOCK_SIZE: 80,
   SOCKBALL_SIZE: 30,
   SOCK_BOUNCE_VELOCITY: 8,
   SOCK_SHOOT_SPEED: 12,
@@ -53,9 +54,9 @@ const GameConfig = {
   // Game levels
   LEVELS: [
     {
-      sockTarget: 3,
+      sockTarget: 2,
       marthaSpeed: 1,
-      sockPairs: 6,
+      sockPairs: 3,
       typesAvailable: [1],
       matchingTime: 100,
     },
