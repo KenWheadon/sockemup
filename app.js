@@ -77,6 +77,34 @@ class SockGame {
     this.canvas.addEventListener("mousemove", (e) => this.handleMouseMove(e));
     this.canvas.addEventListener("mouseup", (e) => this.handleMouseUp(e));
     this.canvas.addEventListener("click", (e) => this.handleClick(e));
+
+    // Add resize listener for responsive design
+    window.addEventListener("resize", () => this.handleResize());
+  }
+
+  handleResize() {
+    // Update canvas size if needed for responsive design
+    const container = document.getElementById("gameContainer");
+    const rect = container.getBoundingClientRect();
+
+    // Maintain aspect ratio while fitting container
+    const aspectRatio = GameConfig.CANVAS_WIDTH / GameConfig.CANVAS_HEIGHT;
+    let newWidth = rect.width;
+    let newHeight = rect.height;
+
+    if (newWidth / newHeight > aspectRatio) {
+      newWidth = newHeight * aspectRatio;
+    } else {
+      newHeight = newWidth / aspectRatio;
+    }
+
+    this.canvas.width = newWidth;
+    this.canvas.height = newHeight;
+
+    // Update match screen responsive elements
+    if (this.gameState === "matching") {
+      this.matchScreen.setup();
+    }
   }
 
   loadGameData() {
@@ -252,8 +280,6 @@ class SockGame {
     } else if (this.gameState === "gameOver") {
       this.renderGameOver();
     }
-
-    this.updateUI();
   }
 
   renderMenu() {
@@ -370,41 +396,6 @@ class SockGame {
       this.canvas.width / 2,
       this.canvas.height / 2 + 80
     );
-  }
-
-  updateUI() {
-    // Update time display with warning effect
-    const timeElement = document.getElementById("timeValue");
-    const timeValue = Math.max(0, Math.floor(this.timeRemaining));
-    timeElement.textContent = timeValue;
-
-    // Add warning class if time is low
-    if (timeValue <= 10 && this.gameState === "matching") {
-      timeElement.parentElement.classList.add("time-warning");
-    } else {
-      timeElement.parentElement.classList.remove("time-warning");
-    }
-
-    // Update sockball counter with animation
-    const sockballsElement = document.getElementById("sockBallsValue");
-    const currentValue = parseInt(sockballsElement.textContent);
-    if (currentValue !== this.sockBalls) {
-      sockballsElement.textContent = this.sockBalls;
-      sockballsElement.parentElement.classList.add(
-        "sockball-counter",
-        "updated"
-      );
-      setTimeout(() => {
-        sockballsElement.parentElement.classList.remove("updated");
-      }, 500);
-    }
-
-    document.getElementById("pointsValue").textContent = this.playerPoints;
-
-    // Update remaining socks counter
-    const remainingSocks =
-      this.gameState === "matching" ? this.matchScreen.sockList.length : 0;
-    document.getElementById("remainingSocksValue").textContent = remainingSocks;
   }
 
   gameLoop() {

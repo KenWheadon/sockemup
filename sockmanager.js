@@ -13,11 +13,12 @@ class SockManager {
   }
 
   initialize() {
+    // Initialize sock pile with responsive positioning
     this.sockPile = {
-      x: GameConfig.SOCK_PILE_POS.x,
-      y: GameConfig.SOCK_PILE_POS.y,
-      width: 100,
-      height: 100,
+      x: this.game.canvas.width / 2, // Will be updated by match screen
+      y: this.game.canvas.height - 100,
+      width: Math.min(120, this.game.canvas.width / 10),
+      height: Math.min(120, this.game.canvas.width / 10),
       currentImage: "sockpile1.png",
       glowEffect: 0,
       bounceEffect: 0,
@@ -442,12 +443,27 @@ class SockManager {
       scale = 1 + Math.sin(this.sockPile.pulseEffect * 0.3) * 0.1;
     }
 
+    // Draw sock pile with full width consideration
+    const drawWidth = this.sockPile.width * scale;
+    const drawHeight = this.sockPile.height * scale;
+
     ctx.drawImage(
       this.game.images[this.sockPile.currentImage],
-      this.sockPile.x - (this.sockPile.width * scale) / 2,
-      this.sockPile.y - (this.sockPile.height * scale) / 2 + bounceOffset,
-      this.sockPile.width * scale,
-      this.sockPile.height * scale
+      this.sockPile.x - drawWidth / 2,
+      this.sockPile.y - drawHeight / 2 + bounceOffset,
+      drawWidth,
+      drawHeight
+    );
+
+    // Draw border around sock pile area to show full width
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.strokeRect(
+      50, // Full width border
+      this.sockPile.y - drawHeight / 2 - 20,
+      this.game.canvas.width - 100,
+      drawHeight + 40
     );
 
     ctx.restore();

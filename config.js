@@ -28,11 +28,27 @@ const GameConfig = {
   MARTHA_SIZE: { width: 60, height: 80 },
   MARTHA_HIT_EFFECT_DURATION: 60, // frames
 
-  // UI positions
-  SOCK_PILE_POS: { x: 600, y: 700 }, // Bottom center
+  // UI positions - Updated for full-width drawer and 3 pairs of drop zones
+  SOCK_PILE_POS: { x: 600, y: 700 }, // Will be calculated dynamically for full width
   DROP_ZONE_POSITIONS: [
-    { x: 1050, y: 200, width: 80, height: 80 },
-    { x: 1050, y: 320, width: 80, height: 80 },
+    // Pair 1 (left side)
+    { x: 200, y: 150, width: 80, height: 80, pairId: 0 },
+    { x: 200, y: 250, width: 80, height: 80, pairId: 0 },
+
+    // Pair 2 (center)
+    { x: 600, y: 150, width: 80, height: 80, pairId: 1 },
+    { x: 600, y: 250, width: 80, height: 80, pairId: 1 },
+
+    // Pair 3 (right side)
+    { x: 1000, y: 150, width: 80, height: 80, pairId: 2 },
+    { x: 1000, y: 250, width: 80, height: 80, pairId: 2 },
+  ],
+
+  // Drop zone pair boxes
+  DROP_ZONE_PAIR_BOXES: [
+    { x: 200, y: 200, width: 120, height: 160, pairId: 0 },
+    { x: 600, y: 200, width: 120, height: 160, pairId: 1 },
+    { x: 1000, y: 200, width: 120, height: 160, pairId: 2 },
   ],
 
   // Sock pile image thresholds
