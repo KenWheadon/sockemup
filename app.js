@@ -8,7 +8,6 @@ class SockGame {
     this.gameState = "menu"; // menu, matching, shooting, gameOver
     this.currentLevel = 0;
     this.playerPoints = 0;
-    this.playerHP = GameConfig.INITIAL_HP;
     this.sockBalls = 0;
     this.matchingTime = 60;
     this.timeRemaining = 60;
@@ -137,7 +136,6 @@ class SockGame {
     this.matchingTime = level.matchingTime;
     this.timeRemaining = level.matchingTime;
     this.sockBalls = 0;
-    this.playerHP = GameConfig.INITIAL_HP;
 
     // Generate sock list for match screen
     this.generateSockList(level);
@@ -257,10 +255,6 @@ class SockGame {
   completeLevel() {
     // Mark the current level as completed
     this.completedLevels[this.currentLevel] = true;
-
-    // Calculate and award points
-    const pointsEarned = this.sockBalls * GameConfig.POINTS_PER_SOCK;
-    this.playerPoints += pointsEarned;
 
     // Unlock next level if it exists and isn't already unlocked
     if (this.currentLevel + 1 < GameConfig.LEVELS.length) {
@@ -427,23 +421,38 @@ class SockGame {
       this.canvas.height / 2 - 50
     );
 
-    // Show points earned based on remaining sock balls
-    const pointsEarned = this.sockBalls * GameConfig.POINTS_PER_SOCK;
+    // Show points earned breakdown
+    const consumedSocks = this.marthaScene.marthaManager.consumedSocks;
+    const extraSockBalls = this.sockBalls;
+    const consumedPoints = consumedSocks * 5;
+    const extraPoints = extraSockBalls * 10;
+    const totalPointsEarned = consumedPoints + extraPoints;
+
     this.ctx.font = "18px Courier New";
     this.ctx.fillText(
-      `Points Earned: ${pointsEarned}`,
+      `Socks Fed to Martha: ${consumedSocks} × 5 = ${consumedPoints} pts`,
       this.canvas.width / 2,
       this.canvas.height / 2
     );
     this.ctx.fillText(
-      `Total Points: ${this.playerPoints}`,
+      `Extra Sock Balls: ${extraSockBalls} × 10 = ${extraPoints} pts`,
       this.canvas.width / 2,
       this.canvas.height / 2 + 30
     );
     this.ctx.fillText(
+      `Total Points Earned: ${totalPointsEarned}`,
+      this.canvas.width / 2,
+      this.canvas.height / 2 + 60
+    );
+    this.ctx.fillText(
+      `Total Points: ${this.playerPoints}`,
+      this.canvas.width / 2,
+      this.canvas.height / 2 + 90
+    );
+    this.ctx.fillText(
       "Click to continue",
       this.canvas.width / 2,
-      this.canvas.height / 2 + 80
+      this.canvas.height / 2 + 130
     );
   }
 

@@ -4,21 +4,52 @@ class MarthaManager {
     this.martha = null;
     this.consumedSocks = 0;
     this.targetSocks = 0;
+    this.isAway = false;
+    this.awayTimer = 0;
+    this.awayDuration = 120; // 2 seconds at 60 FPS
+    this.movementPattern = 0;
+    this.patternTimer = 0;
+    this.movementPatterns = [
+      "horizontal",
+      "vertical",
+      "circular",
+      "figure8",
+      "diagonal",
+    ];
   }
 
   // Initialize Martha for the current level
   setup(level) {
     this.targetSocks = GameConfig.LEVELS[level].sockTarget;
     this.consumedSocks = 0;
+    this.isAway = false;
+    this.awayTimer = 0;
+    this.patternTimer = 0;
+
+    // Select random movement pattern
+    this.movementPattern = Math.floor(
+      Math.random() * this.movementPatterns.length
+    );
+
+    // Random spawn height within safe bounds
+    const minY = 100;
+    const maxY = this.game.canvas.height - 200;
+    const randomY = minY + Math.random() * (maxY - minY);
 
     this.martha = {
       x: this.game.canvas.width + 50,
-      y: this.game.canvas.height / 2,
+      y: randomY,
       width: GameConfig.MARTHA_SIZE.width,
       height: GameConfig.MARTHA_SIZE.height,
       vx: -GameConfig.LEVELS[level].marthaSpeed,
+      vy: 0,
       direction: -1,
       hitEffect: 0,
+      centerX: this.game.canvas.width / 2, // For circular patterns
+      centerY: randomY, // For circular patterns
+      radius: 150, // For circular patterns
+      angle: 0, // For circular patterns
+      originalSpeed: GameConfig.LEVELS[level].marthaSpeed,
     };
   }
 
@@ -26,17 +57,20 @@ class MarthaManager {
   update() {
     if (!this.martha) return;
 
-    // Update Martha's position
-    this.martha.x += this.martha.vx;
-
-    // Martha movement pattern - bounce between screen edges
-    if (this.martha.x <= 50) {
-      this.martha.vx = GameConfig.LEVELS[this.game.currentLevel].marthaSpeed;
-      this.martha.direction = 1;
-    } else if (this.martha.x >= this.game.canvas.width - 50) {
-      this.martha.vx = -GameConfig.LEVELS[this.game.currentLevel].marthaSpeed;
-      this.martha.direction = -1;
+    // Handle away state
+    if (this.isAway) {
+      this.awayTimer--;
+      if (this.awayTimer <= 0) {
+        this.respawnMartha();
+      }
+      return;
     }
+
+    // Update pattern timer
+    this.patternTimer++;
+
+    // Update Martha's position based on movement pattern
+    this.updateMovementPattern();
 
     // Update hit effect
     if (this.martha.hitEffect > 0) {
@@ -44,9 +78,161 @@ class MarthaManager {
     }
   }
 
+  updateMovementPattern() {
+    const pattern = this.movementPatterns[this.movementPattern];
+
+    switch (pattern) {
+      case "horizontal":
+        this.updateHorizontalMovement();
+        break;
+      case "vertical":
+        this.updateVerticalMovement();
+        break;
+      case "circular":
+        this.updateCircularMovement();
+        break;
+      case "figure8":
+        this.updateFigure8Movement();
+        break;
+      case "diagonal":
+        this.updateDiagonalMovement();
+        break;
+    }
+  }
+
+  updateHorizontalMovement() {
+    this.martha.x += this.martha.vx;
+
+    if (this.martha.x <= 50) {
+      this.martha.vx = this.martha.originalSpeed;
+      this.martha.direction = 1;
+    } else if (this.martha.x >= this.game.canvas.width - 50) {
+      this.martha.vx = -this.martha.originalSpeed;
+      this.martha.direction = -1;
+    }
+  }
+
+  updateVerticalMovement() {
+    this.martha.y += this.martha.vy;
+
+    if (this.martha.vy === 0) {
+      this.martha.vy = this.martha.originalSpeed;
+    }
+
+    if (this.martha.y <= 100) {
+      this.martha.vy = this.martha.originalSpeed;
+    } else if (this.martha.y >= this.game.canvas.height - 200) {
+      this.martha.vy = -this.martha.originalSpeed;
+    }
+  }
+
+  updateCircularMovement() {
+    this.martha.angle += this.martha.originalSpeed * 0.02;
+    this.martha.x =
+      this.martha.centerX + Math.cos(this.martha.angle) * this.martha.radius;
+    this.martha.y =
+      this.martha.centerY +
+      Math.sin(this.martha.angle) * this.martha.radius * 0.5;
+
+    // Keep within bounds
+    if (this.martha.x < 50) this.martha.x = 50;
+    if (this.martha.x > this.game.canvas.width - 50)
+      this.martha.x = this.game.canvas.width - 50;
+    if (this.martha.y < 100) this.martha.y = 100;
+    if (this.martha.y > this.game.canvas.height - 200)
+      this.martha.y = this.game.canvas.height - 200;
+  }
+
+  updateFigure8Movement() {
+    this.martha.angle += this.martha.originalSpeed * 0.015;
+    this.martha.x =
+      this.martha.centerX + Math.cos(this.martha.angle) * this.martha.radius;
+    this.martha.y =
+      this.martha.centerY +
+      Math.sin(this.martha.angle * 2) * this.martha.radius * 0.3;
+
+    // Keep within bounds
+    if (this.martha.x < 50) this.martha.x = 50;
+    if (this.martha.x > this.game.canvas.width - 50)
+      this.martha.x = this.game.canvas.width - 50;
+    if (this.martha.y < 100) this.martha.y = 100;
+    if (this.martha.y > this.game.canvas.height - 200)
+      this.martha.y = this.game.canvas.height - 200;
+  }
+
+  updateDiagonalMovement() {
+    this.martha.x += this.martha.vx;
+    this.martha.y += this.martha.vy;
+
+    if (this.martha.vy === 0) {
+      this.martha.vy = this.martha.originalSpeed * 0.5;
+    }
+
+    // Bounce off walls
+    if (this.martha.x <= 50 || this.martha.x >= this.game.canvas.width - 50) {
+      this.martha.vx = -this.martha.vx;
+    }
+    if (
+      this.martha.y <= 100 ||
+      this.martha.y >= this.game.canvas.height - 200
+    ) {
+      this.martha.vy = -this.martha.vy;
+    }
+  }
+
+  // Make Martha disappear when hit
+  makeAway() {
+    this.isAway = true;
+    this.awayTimer = this.awayDuration;
+    console.log("Martha is going away for", this.awayDuration, "frames");
+  }
+
+  // Respawn Martha at a new random position
+  respawnMartha() {
+    this.isAway = false;
+    this.awayTimer = 0;
+    this.patternTimer = 0;
+
+    // Select new random movement pattern
+    this.movementPattern = Math.floor(
+      Math.random() * this.movementPatterns.length
+    );
+
+    // Random spawn height within safe bounds
+    const minY = 100;
+    const maxY = this.game.canvas.height - 200;
+    const randomY = minY + Math.random() * (maxY - minY);
+
+    // Spawn from random side
+    const spawnFromLeft = Math.random() < 0.5;
+
+    this.martha.x = spawnFromLeft ? -50 : this.game.canvas.width + 50;
+    this.martha.y = randomY;
+    this.martha.vx = spawnFromLeft
+      ? this.martha.originalSpeed
+      : -this.martha.originalSpeed;
+    this.martha.vy = 0;
+    this.martha.direction = spawnFromLeft ? 1 : -1;
+    this.martha.centerX = this.game.canvas.width / 2;
+    this.martha.centerY = randomY;
+    this.martha.angle = 0;
+
+    console.log(
+      "Martha respawned with pattern:",
+      this.movementPatterns[this.movementPattern],
+      "at y:",
+      randomY
+    );
+  }
+
+  // Check if Martha is currently away
+  isMarthaAway() {
+    return this.isAway;
+  }
+
   // Check if a sock hits Martha
   checkSockCollision(sock) {
-    if (!this.martha) return false;
+    if (!this.martha || this.isAway) return false;
 
     const sockBounds = {
       left: sock.x - 20,
@@ -74,6 +260,13 @@ class MarthaManager {
   consumeSock() {
     this.martha.hitEffect = GameConfig.MARTHA_HIT_EFFECT_DURATION;
     this.consumedSocks++;
+
+    // Award points immediately when Martha consumes a sock
+    this.game.playerPoints += 5; // 5 points per sock consumed
+
+    // Make Martha go away after being hit
+    this.makeAway();
+
     return this.consumedSocks >= this.targetSocks;
   }
 
@@ -98,7 +291,7 @@ class MarthaManager {
 
   // Render Martha
   render(ctx) {
-    if (!this.martha) return;
+    if (!this.martha || this.isAway) return;
 
     // Draw Martha
     if (this.game.images["martha.png"]) {
@@ -127,7 +320,7 @@ class MarthaManager {
 
   // Render Martha's fullness bar
   renderFullnessBar(ctx) {
-    if (!this.martha) return;
+    if (!this.martha || this.isAway) return;
 
     const barWidth = 60;
     const barHeight = 8;
@@ -184,7 +377,7 @@ class MarthaManager {
 
   // Get Martha's bounds for collision detection
   getBounds() {
-    if (!this.martha) return null;
+    if (!this.martha || this.isAway) return null;
 
     return {
       x: this.martha.x,

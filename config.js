@@ -11,7 +11,6 @@ const GameConfig = {
   },
 
   // Game settings
-  INITIAL_HP: 10,
   POINTS_PER_SOCK: 10,
   GRAVITY: 0.2,
   STARTING_SPEED: 15,

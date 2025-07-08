@@ -32,40 +32,43 @@ class MarthaScene {
     console.log("=== FIRING SOCK ===");
     console.log("Cursor position:", { x: cursorX, y: cursorY });
     console.log("Sock balls remaining:", this.game.sockBalls);
+    console.log("Martha away status:", this.marthaManager.isAway);
 
-    if (this.game.sockBalls > 0) {
-      // Fire from bottom of screen
-      const startX = cursorX;
-      const startY = GameConfig.CANVAS_HEIGHT - 30; // Bottom of screen
-      const targetX = cursorX;
-      const targetY = cursorY;
-
-      console.log("Launch parameters:", {
-        start: { x: startX, y: startY },
-        target: { x: targetX, y: targetY },
-      });
-
-      // Create sock with simple physics
-      const sock = this.throwPhysics.createThrownSock(
-        startX,
-        startY,
-        targetX,
-        targetY
-      );
-
-      this.thrownSocks.push(sock);
-      this.game.sockBalls--;
-
-      console.log("Sock created and added to array:", {
-        sockPosition: { x: sock.x, y: sock.y },
-        sockVelocity: { vx: sock.vx, vy: sock.vy },
-        totalThrown: this.thrownSocks.length,
-        remainingSockBalls: this.game.sockBalls,
-      });
-      console.log("=== SOCK FIRED ===");
-    } else {
-      console.log("No sock balls remaining!");
+    // Block firing if Martha is away or no sock balls remaining
+    if (this.marthaManager.isMarthaAway() || this.game.sockBalls <= 0) {
+      console.log("Cannot fire: Martha is away or no sock balls remaining");
+      return;
     }
+
+    // Fire from bottom of screen
+    const startX = cursorX;
+    const startY = GameConfig.CANVAS_HEIGHT - 30; // Bottom of screen
+    const targetX = cursorX;
+    const targetY = cursorY;
+
+    console.log("Launch parameters:", {
+      start: { x: startX, y: startY },
+      target: { x: targetX, y: targetY },
+    });
+
+    // Create sock with simple physics
+    const sock = this.throwPhysics.createThrownSock(
+      startX,
+      startY,
+      targetX,
+      targetY
+    );
+
+    this.thrownSocks.push(sock);
+    this.game.sockBalls--;
+
+    console.log("Sock created and added to array:", {
+      sockPosition: { x: sock.x, y: sock.y },
+      sockVelocity: { vx: sock.vx, vy: sock.vy },
+      totalThrown: this.thrownSocks.length,
+      remainingSockBalls: this.game.sockBalls,
+    });
+    console.log("=== SOCK FIRED ===");
   }
 
   update() {
@@ -88,16 +91,10 @@ class MarthaScene {
         }
       }
 
-      // Remove socks that go off screen
+      // Remove socks that go off screen (no HP penalty)
       if (this.throwPhysics.isSockOffScreen(sock)) {
-        console.log("Sock went off screen, removing and reducing HP");
+        console.log("Sock went off screen, removing (no penalty)");
         this.thrownSocks.splice(index, 1);
-        this.game.playerHP--;
-
-        if (this.game.playerHP <= 0) {
-          console.log("Player HP reached 0, game over");
-          this.game.gameState = "gameOver";
-        }
       }
     });
 
@@ -120,7 +117,7 @@ class MarthaScene {
 
         if (this.gameEndTimer <= 0) {
           console.log("Game end timer expired, ending game");
-          this.game.gameState = "gameOver";
+          this.endLevel(); // End level instead of game over
         }
       }
     } else {
@@ -137,19 +134,19 @@ class MarthaScene {
       thrownSocks: this.thrownSocks.length,
       marthaConsumption: this.marthaManager.getProgress(),
       gameEndTimer: this.gameEndTimer,
-      playerHP: this.game.playerHP,
+      marthaAway: this.marthaManager.isMarthaAway(),
     });
   }
 
   endLevel() {
-    // Calculate score based on remaining sock balls
-    const remainingSockBalls = this.game.sockBalls;
-    const points = remainingSockBalls * GameConfig.POINTS_PER_SOCK;
-    this.game.playerPoints += points;
+    // Calculate score based on extra sock balls (10 points each)
+    const extraSockBalls = this.game.sockBalls;
+    const extraPoints = extraSockBalls * 10;
+    this.game.playerPoints += extraPoints;
 
-    console.log("Level ended successfully:", {
-      remainingSockBalls: remainingSockBalls,
-      pointsEarned: points,
+    console.log("Level ended:", {
+      extraSockBalls: extraSockBalls,
+      extraPoints: extraPoints,
       totalPoints: this.game.playerPoints,
     });
 
@@ -165,8 +162,10 @@ class MarthaScene {
     this.marthaManager.render(ctx);
     this.marthaManager.renderDialogue(ctx);
 
-    // Draw trajectory preview line
-    this.renderTrajectoryPreview(ctx);
+    // Draw trajectory preview line (only if Martha is not away)
+    if (!this.marthaManager.isMarthaAway()) {
+      this.renderTrajectoryPreview(ctx);
+    }
 
     // Draw thrown socks ON TOP of everything else
     console.log("=== RENDERING SOCKS ===");
@@ -188,17 +187,26 @@ class MarthaScene {
 
     // Draw UI elements on top
     this.renderCrosshair(ctx);
-    this.renderHP(ctx);
+    this.renderPoints(ctx);
+    this.renderSockBalls(ctx);
 
     // Draw game end timer if active
     if (this.gameEndTimer !== null) {
       this.renderGameEndTimer(ctx);
     }
 
+    // Draw firing status
+    if (this.marthaManager.isMarthaAway()) {
+      this.renderMarthaAwayMessage(ctx);
+    }
+
     console.log("=== RENDER COMPLETE ===");
   }
 
   renderCrosshair(ctx) {
+    // Only show crosshair if Martha is not away
+    if (this.marthaManager.isMarthaAway()) return;
+
     ctx.strokeStyle = "red";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -225,11 +233,18 @@ class MarthaScene {
     );
   }
 
-  renderHP(ctx) {
-    ctx.fillStyle = "red";
+  renderPoints(ctx) {
+    ctx.fillStyle = "yellow";
     ctx.font = "18px Courier New";
     ctx.textAlign = "left";
-    ctx.fillText(`HP: ${this.game.playerHP}`, 10, 100);
+    ctx.fillText(`Points: ${this.game.playerPoints}`, 10, 30);
+  }
+
+  renderSockBalls(ctx) {
+    ctx.fillStyle = "white";
+    ctx.font = "18px Courier New";
+    ctx.textAlign = "left";
+    ctx.fillText(`Sock Balls: ${this.game.sockBalls}`, 10, 55);
   }
 
   renderGameEndTimer(ctx) {
@@ -239,9 +254,20 @@ class MarthaScene {
     ctx.font = "24px Courier New";
     ctx.textAlign = "center";
     ctx.fillText(
-      `Game ending in ${secondsRemaining}...`,
+      `Level ending in ${secondsRemaining}...`,
       GameConfig.CANVAS_WIDTH / 2,
       GameConfig.CANVAS_HEIGHT - 50
+    );
+  }
+
+  renderMarthaAwayMessage(ctx) {
+    ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
+    ctx.font = "20px Courier New";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      "Martha is away! Wait for her to return...",
+      GameConfig.CANVAS_WIDTH / 2,
+      GameConfig.CANVAS_HEIGHT / 2 + 100
     );
   }
 }
