@@ -18,6 +18,7 @@ class SockGame {
     this.totalImages = 0;
 
     this.unlockedLevels = [...GameConfig.INITIAL_UNLOCKED_LEVELS];
+    this.completedLevels = [...GameConfig.INITIAL_COMPLETED_LEVELS];
 
     // Initialize match screen
     this.matchScreen = new MatchScreen(this);
@@ -115,6 +116,9 @@ class SockGame {
       this.unlockedLevels = data.unlockedLevels || [
         ...GameConfig.INITIAL_UNLOCKED_LEVELS,
       ];
+      this.completedLevels = data.completedLevels || [
+        ...GameConfig.INITIAL_COMPLETED_LEVELS,
+      ];
     }
   }
 
@@ -122,6 +126,7 @@ class SockGame {
     const data = {
       playerPoints: this.playerPoints,
       unlockedLevels: this.unlockedLevels,
+      completedLevels: this.completedLevels,
     };
     localStorage.setItem("sockGameData", JSON.stringify(data));
   }
@@ -216,7 +221,7 @@ class SockGame {
 
   handleMenuClick(x, y) {
     const levelSpacing = 150;
-    const startX = this.canvas.width / 2 - levelSpacing;
+    const startX = this.canvas.width / 3.5 - levelSpacing;
 
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
       const levelX = startX + i * levelSpacing;
@@ -247,6 +252,23 @@ class SockGame {
 
   startShootingPhase() {
     this.marthaScene.setup();
+  }
+
+  completeLevel() {
+    // Mark the current level as completed
+    this.completedLevels[this.currentLevel] = true;
+
+    // Calculate and award points
+    const pointsEarned = this.sockBalls * GameConfig.POINTS_PER_SOCK;
+    this.playerPoints += pointsEarned;
+
+    // Unlock next level if it exists and isn't already unlocked
+    if (this.currentLevel + 1 < GameConfig.LEVELS.length) {
+      this.unlockedLevels[this.currentLevel + 1] = true;
+    }
+
+    this.saveGameData();
+    this.gameState = "gameOver";
   }
 
   update() {
@@ -326,26 +348,53 @@ class SockGame {
       const levelX = startX + i * levelSpacing;
       const levelY = this.canvas.height / 2 + 50;
 
+      // Get the appropriate sock image for this level (sock1.png to sock6.png)
+      const sockImageName = `sock${i + 1}.png`;
+      const sockImage = this.images[sockImageName];
+
       if (this.unlockedLevels[i]) {
-        // Draw unlocked level as animated sock
-        const wiggle = Math.sin(Date.now() * 0.01 + i) * 3;
-        if (this.images["sock1.png"]) {
-          this.ctx.drawImage(
-            this.images["sock1.png"],
-            levelX - 40 + wiggle,
-            levelY - 40,
-            80,
-            80
-          );
+        if (this.completedLevels[i]) {
+          // Completed level: show sock without animation and star above
+          if (sockImage) {
+            this.ctx.drawImage(sockImage, levelX - 40, levelY - 40, 80, 80);
+          }
+
+          // Draw star above completed level
+          if (this.images["star.png"]) {
+            this.ctx.drawImage(
+              this.images["star.png"],
+              levelX - 20,
+              levelY - 80,
+              40,
+              40
+            );
+          }
+        } else {
+          // Unlocked but not completed: show wiggling sock
+          const wiggle = Math.sin(Date.now() * 0.01 + i) * 3;
+          if (sockImage) {
+            this.ctx.drawImage(
+              sockImage,
+              levelX - 40 + wiggle,
+              levelY - 40,
+              80,
+              80
+            );
+          }
         }
 
         this.ctx.fillStyle = "white";
         this.ctx.font = "16px Courier New";
         this.ctx.fillText(`Level ${i + 1}`, levelX, levelY + 60);
       } else {
-        // Draw locked level
-        this.ctx.fillStyle = "gray";
-        this.ctx.fillRect(levelX - 40, levelY - 40, 80, 80);
+        // Locked level: show darkened sock without animation
+        if (sockImage) {
+          this.ctx.save();
+          this.ctx.globalAlpha = 0.5;
+          this.ctx.filter = "brightness(0.3)";
+          this.ctx.drawImage(sockImage, levelX - 40, levelY - 40, 80, 80);
+          this.ctx.restore();
+        }
 
         this.ctx.fillStyle = "white";
         this.ctx.font = "16px Courier New";

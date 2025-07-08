@@ -233,7 +233,7 @@ class MatchScreen {
 
   update() {
     // Update time
-    this.game.timeRemaining -= 1 / 60;
+    this.game.timeRemaining -= 0.25 / 60;
 
     if (this.game.timeRemaining <= 0) {
       this.game.startShootingPhase();

@@ -116,6 +116,7 @@ const GameConfig = {
   // Level costs and unlock data
   LEVEL_COSTS: [0, 10, 25, 50, 100, 150],
   INITIAL_UNLOCKED_LEVELS: [true, false, false, false, false, false],
+  INITIAL_COMPLETED_LEVELS: [false, false, false, false, false, false],
 
   // Image files
   IMAGES: {
@@ -142,6 +143,6 @@ const GameConfig = {
       "sockpile4.png",
     ],
     CHARACTERS: ["martha.png"],
-    UI: ["background.png", "logo.png"],
+    UI: ["background.png", "logo.png", "star.png"],
   },
 };

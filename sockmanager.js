@@ -280,9 +280,9 @@ class SockManager {
       targetY: targetY,
       progress: 0,
       wiggleOffset: 0,
-      scale: 1.2, // Reduced from 2 to 1.2 for gentler entrance
+      scale: 4,
       rotation: 0,
-      rotationSpeed: 0.05, // Reduced from 0.2 to 0.05 for smoother rotation
+      rotationSpeed: 0.1, // Reduced from 0.2 to 0.05 for smoother rotation
       glowEffect: 40,
       rainbowEffect: 60,
       rainbowOffset: 0,
@@ -591,7 +591,7 @@ class SockManager {
 
   checkSockPileClick(x, y) {
     if (!this.sockPile || !this.sockPile.currentImage) {
-      console.log("No sock pile or image");
+      // console.log("No sock pile or image");
       return false;
     }
 
@@ -603,11 +603,11 @@ class SockManager {
 
     const hasStock = this.sockList.length > 0;
 
-    console.log("Sock pile click check:", {
-      inBounds,
-      hasStock,
-      sockCount: this.sockList.length,
-    });
+    // console.log("Sock pile click check:", {
+    //   inBounds,
+    //   hasStock,
+    //   sockCount: this.sockList.length,
+    // });
 
     return inBounds && hasStock;
   }
