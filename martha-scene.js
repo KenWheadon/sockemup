@@ -168,9 +168,6 @@ class MarthaScene {
     }
 
     // Draw thrown socks ON TOP of everything else
-    console.log("=== RENDERING SOCKS ===");
-    console.log("Number of thrown socks:", this.thrownSocks.length);
-
     if (this.thrownSocks.length > 0) {
       // Set high z-index equivalent by rendering last
       this.thrownSocks.forEach((sock, index) => {
@@ -182,7 +179,7 @@ class MarthaScene {
         this.throwPhysics.renderSock(ctx, sock);
       });
     } else {
-      console.log("No socks to render");
+      //   console.log("No socks to render");
     }
 
     // Draw UI elements on top

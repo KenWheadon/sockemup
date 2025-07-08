@@ -17,16 +17,11 @@ class MarthaManager {
       "diagonal",
     ];
 
-    // Animation properties
-    this.animationFrames = [
-      "martha.png",
-      "martha2.png",
-      "martha.png",
-      "martha3.png",
-    ];
+    // Animation properties - using array indices instead of filenames
+    this.animationFrames = [0, 1, 0, 2]; // martha.png, martha2.png, martha.png, martha3.png
     this.currentFrameIndex = 0;
     this.animationTimer = 0;
-    this.animationSpeed = 8; // Change frame every 8 game ticks (about 8/60 seconds)
+    this.animationSpeed = 15; // Change frame every 15 game ticks for smoother animation
   }
 
   // Initialize Martha for the current level
@@ -52,7 +47,7 @@ class MarthaManager {
     const randomY = minY + Math.random() * (maxY - minY);
 
     this.martha = {
-      x: this.game.canvas.width + 50,
+      x: this.game.canvas.width / 2, // Start Martha in the middle for visibility
       y: randomY,
       width: GameConfig.MARTHA_SIZE.width,
       height: GameConfig.MARTHA_SIZE.height,
@@ -66,6 +61,12 @@ class MarthaManager {
       angle: 0, // For circular patterns
       originalSpeed: GameConfig.LEVELS[level].marthaSpeed,
     };
+
+    console.log("Martha setup complete:", {
+      position: { x: this.martha.x, y: this.martha.y },
+      targetSocks: this.targetSocks,
+      movementPattern: this.movementPatterns[this.movementPattern],
+    });
   }
 
   // Update Martha's position and behavior
@@ -104,6 +105,12 @@ class MarthaManager {
       this.animationTimer = 0;
       this.currentFrameIndex =
         (this.currentFrameIndex + 1) % this.animationFrames.length;
+
+      const currentImageIndex = this.animationFrames[this.currentFrameIndex];
+      const imageName = GameConfig.IMAGES.CHARACTERS[currentImageIndex];
+      console.log(
+        `Martha animation frame changed to index ${currentImageIndex} (${imageName})`
+      );
     }
   }
 
@@ -326,11 +333,21 @@ class MarthaManager {
   render(ctx) {
     if (!this.martha || this.isAway) return;
 
-    // Get current animation frame
-    const currentFrame = this.animationFrames[this.currentFrameIndex];
+    // Get current animation frame index
+    const currentImageIndex = this.animationFrames[this.currentFrameIndex];
+    const imageName = GameConfig.IMAGES.CHARACTERS[currentImageIndex];
+    const marthaImage = this.game.images[imageName];
+
+    console.log("Rendering Martha:", {
+      currentFrameIndex: this.currentFrameIndex,
+      imageIndex: currentImageIndex,
+      imageName: imageName,
+      imageLoaded: marthaImage && marthaImage.complete,
+      position: { x: this.martha.x, y: this.martha.y },
+    });
 
     // Draw Martha with current animation frame
-    if (this.game.images[currentFrame]) {
+    if (marthaImage && marthaImage.complete) {
       ctx.save();
 
       // Apply hit effect
@@ -340,7 +357,7 @@ class MarthaManager {
       }
 
       ctx.drawImage(
-        this.game.images[currentFrame],
+        marthaImage,
         this.martha.x - this.martha.width / 2,
         this.martha.y - this.martha.height / 2,
         this.martha.width,
@@ -348,6 +365,26 @@ class MarthaManager {
       );
 
       ctx.restore();
+    } else {
+      // Fallback rendering - draw a colored rectangle if image not loaded
+      ctx.save();
+      ctx.fillStyle = "purple";
+      ctx.fillRect(
+        this.martha.x - this.martha.width / 2,
+        this.martha.y - this.martha.height / 2,
+        this.martha.width,
+        this.martha.height
+      );
+
+      // Add a label for debugging
+      ctx.fillStyle = "white";
+      ctx.font = "12px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("MARTHA", this.martha.x, this.martha.y);
+
+      ctx.restore();
+
+      console.log("Drew fallback Martha rectangle");
     }
 
     // Draw Martha's fullness bar

@@ -453,7 +453,12 @@ class LevelSelect {
     // Points display with background
     ctx.save();
     ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillRect(this.canvas.width / 2 - 100, this.canvas.height - 70, 200, 40);
+    ctx.fillRect(
+      this.canvas.width / 2 - 100,
+      this.canvas.height - 185,
+      200,
+      40
+    );
 
     ctx.fillStyle = "#FFD700";
     ctx.font = "20px Courier New";
@@ -461,7 +466,7 @@ class LevelSelect {
     ctx.fillText(
       `Points: ${this.game.playerPoints}`,
       this.canvas.width / 2,
-      this.canvas.height - 45
+      this.canvas.height - 160
     );
     ctx.restore();
   }
