@@ -16,6 +16,7 @@ class LevelSelect {
     this.dragSock = null;
     this.dragOffset = { x: 0, y: 0 };
     this.logoClickCount = 0;
+    this.currentSockType = 1; // Cycles through sock types
 
     // Physics for menu socks
     this.menuPhysics = {
@@ -58,8 +59,29 @@ class LevelSelect {
   }
 
   updateMenuSocks() {
-    this.menuSocks.forEach((sock) => {
+    this.menuSocks.forEach((sock, index) => {
       if (sock === this.dragSock) return; // Skip dragged sock
+
+      // Check if sock should despawn (20 seconds = 20000ms)
+      const age = Date.now() - sock.spawnTime;
+      if (age > 20000) {
+        // Remove expired sock
+        this.menuSocks.splice(index, 1);
+
+        // If this was the dragged sock, clear drag state
+        if (sock === this.dragSock) {
+          this.isDragging = false;
+          this.dragSock = null;
+        }
+
+        return;
+      }
+
+      // Add fade out effect in the last 3 seconds
+      if (age > 17000) {
+        const fadeProgress = (age - 17000) / 3000; // 0 to 1 over 3 seconds
+        sock.alpha = 1 - fadeProgress;
+      }
 
       // Apply physics
       sock.vy += this.menuPhysics.gravity;
@@ -97,6 +119,9 @@ class LevelSelect {
       // Gradually slow down rotation
       sock.rotationSpeed *= 0.99;
     });
+
+    // Clean up array if we removed items
+    this.menuSocks = this.menuSocks.filter((sock) => sock !== undefined);
   }
 
   handleMouseMove(x, y) {
@@ -184,54 +209,33 @@ class LevelSelect {
 
     if (!this.easterEggActive) {
       this.easterEggActive = true;
-      this.spawnEasterEggSocks();
-    } else {
-      // If already active, add more socks with different behavior
-      this.spawnAdditionalSocks();
     }
+
+    // Always spawn one sock, cycling through types
+    this.spawnSingleSock();
   }
 
-  spawnEasterEggSocks() {
-    const sockTypes = GameConfig.IMAGES.SOCKS.length;
+  spawnSingleSock() {
+    const sock = {
+      type: this.currentSockType,
+      x: this.canvas.width / 2 + (Math.random() - 0.5) * 100,
+      y: -this.canvas.height + (Math.random() - 0.5) * 100,
+      size: (Math.random() + 0.5) * 60,
+      vx: (Math.random() - 0.5) * 15,
+      vy: (Math.random() - 0.5) * 15,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.2,
+      glowEffect: 30,
+      spawnTime: Date.now(),
+      alpha: 1,
+    };
 
-    for (let i = 1; i <= sockTypes; i++) {
-      const sock = {
-        type: i,
-        x: this.canvas.width / 2 + (Math.random() - 0.5) * 200,
-        y: this.canvas.height / 2 + (Math.random() - 0.5) * 200,
-        size: 60,
-        vx: (Math.random() - 0.5) * 15,
-        vy: (Math.random() - 0.5) * 15,
-        rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.2,
-        glowEffect: 30,
-        spawnTime: Date.now(),
-      };
+    this.menuSocks.push(sock);
 
-      this.menuSocks.push(sock);
-    }
-  }
-
-  spawnAdditionalSocks() {
-    // Add rainbow effect socks
-    for (let i = 0; i < 3; i++) {
-      const sockType =
-        Math.floor(Math.random() * GameConfig.IMAGES.SOCKS.length) + 1;
-      const sock = {
-        type: sockType,
-        x: this.canvas.width / 2 + (Math.random() - 0.5) * 300,
-        y: 200 + Math.random() * 200,
-        size: 40 + Math.random() * 40,
-        vx: (Math.random() - 0.5) * 20,
-        vy: (Math.random() - 0.5) * 20,
-        rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.3,
-        glowEffect: 50,
-        rainbow: true,
-        spawnTime: Date.now(),
-      };
-
-      this.menuSocks.push(sock);
+    // Cycle to next sock type
+    this.currentSockType++;
+    if (this.currentSockType > GameConfig.IMAGES.SOCKS.length) {
+      this.currentSockType = 1;
     }
   }
 
@@ -335,11 +339,11 @@ class LevelSelect {
     );
 
     // Easter egg hint
-    if (this.easterEggActive) {
+    if (this.easterEggActive && this.menuSocks.length > 0) {
       ctx.fillStyle = "rgba(255, 215, 0, 0.8)";
       ctx.font = "14px Courier New";
       ctx.fillText(
-        "Drag the socks around! Click logo for more!",
+        "Drag the sock around! Click logo for next type!",
         this.canvas.width / 2,
         270
       );
@@ -466,14 +470,14 @@ class LevelSelect {
     this.menuSocks.forEach((sock) => {
       ctx.save();
 
+      // Apply fade out effect
+      if (sock.alpha < 1) {
+        ctx.globalAlpha = sock.alpha;
+      }
+
       // Apply glow effect
       if (sock.glowEffect > 0) {
-        if (sock.rainbow) {
-          const hue = ((Date.now() - sock.spawnTime) * 0.1) % 360;
-          ctx.shadowColor = `hsl(${hue}, 70%, 50%)`;
-        } else {
-          ctx.shadowColor = "#FFD700";
-        }
+        ctx.shadowColor = "#FFD700";
         ctx.shadowBlur = sock.glowEffect;
         sock.glowEffect--;
       }
