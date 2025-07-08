@@ -8,11 +8,11 @@ class MatchPhysics {
       bottom: GameConfig.PHYSICS_BOUNDS.BOTTOM,
     };
 
-    // Friction-based physics constants
-    this.friction = 0.985; // Higher value = less friction
-    this.minVelocity = 0.1; // Minimum velocity before stopping
-    this.bounceRestitution = 0.6; // Energy retained after bounce
-    this.rotationFriction = 0.95; // Rotation slowdown
+    // Smoother friction-based physics constants
+    this.friction = 0.992; // Increased from 0.985 for smoother slowdown
+    this.minVelocity = 0.05; // Reduced from 0.1 for more gradual stopping
+    this.bounceRestitution = 0.4; // Reduced from 0.6 for gentler bounces
+    this.rotationFriction = 0.98; // Increased from 0.95 for smoother rotation slowdown
   }
 
   updateSock(sock) {
@@ -89,15 +89,15 @@ class MatchPhysics {
   }
 
   applySockThrow(sock, throwVelocity) {
-    // Apply throw velocity with some randomness
-    sock.vx = throwVelocity.x + (Math.random() - 0.5) * 2;
-    sock.vy = throwVelocity.y + (Math.random() - 0.5) * 2;
+    // Apply throw velocity with reduced randomness for smoother motion
+    sock.vx = throwVelocity.x + (Math.random() - 0.5) * 1; // Reduced from 2 to 1
+    sock.vy = throwVelocity.y + (Math.random() - 0.5) * 1; // Reduced from 2 to 1
 
-    // Add rotation based on throw
-    sock.rotationSpeed = (Math.random() - 0.5) * 0.2;
+    // Gentler rotation based on throw
+    sock.rotationSpeed = (Math.random() - 0.5) * 0.1; // Reduced from 0.2 to 0.1
 
-    // Add visual effect
-    sock.glowEffect = 20;
+    // Reduced visual effect
+    sock.glowEffect = 10; // Reduced from 20 to 10
   }
 
   getDropZoneDistance(sock, dropZone) {

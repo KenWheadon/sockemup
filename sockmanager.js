@@ -150,8 +150,8 @@ class SockManager {
       socks: [sock1, sock2],
       phase: "wiggle",
       timer: 0,
-      wiggleDuration: 15, // 0.25 seconds at 60fps
-      shrinkDuration: 15, // 0.25 seconds at 60fps
+      wiggleDuration: 45, // Increased from 15 to 45 (0.75 seconds at 60fps)
+      shrinkDuration: 30, // Increased from 15 to 30 (0.5 seconds at 60fps)
       sockType: sock1.type,
       centerX: (sock1.x + sock2.x) / 2,
       centerY: (sock1.y + sock2.y) / 2,
@@ -187,29 +187,35 @@ class SockManager {
       animation.timer++;
 
       if (animation.phase === "wiggle") {
-        // Wiggle and grow phase
+        // Smooth wiggle and grow phase with easing
         const progress = animation.timer / animation.wiggleDuration;
-        animation.scale = 1 + Math.sin(progress * Math.PI) * 0.3; // Grow up to 1.3x
-        animation.wiggleIntensity = Math.sin(progress * Math.PI * 6) * 8; // Wiggle intensity
+        const easeProgress = this.easeInOutSine(progress);
 
-        // Add sparkle particles during wiggle
-        if (animation.timer % 3 === 0) {
+        // Gentle growth with smooth easing
+        animation.scale = 1 + easeProgress * 0.2; // Reduced from 0.3 to 0.2 for gentler effect
+
+        // Smoother wiggle with less intensity
+        const wiggleFreq = progress * Math.PI * 3; // Reduced frequency
+        animation.wiggleIntensity = Math.sin(wiggleFreq) * 3 * easeProgress; // Reduced intensity
+
+        // Less frequent particle generation
+        if (animation.timer % 8 === 0) {
+          // Reduced from every 3 frames to every 8
           this.particleEffects.push({
-            x: animation.centerX + (Math.random() - 0.5) * 60,
-            y: animation.centerY + (Math.random() - 0.5) * 60,
-            vx: (Math.random() - 0.5) * 4,
-            vy: (Math.random() - 0.5) * 4,
-            life: 25,
-            maxLife: 25,
+            x: animation.centerX + (Math.random() - 0.5) * 40,
+            y: animation.centerY + (Math.random() - 0.5) * 40,
+            vx: (Math.random() - 0.5) * 2,
+            vy: (Math.random() - 0.5) * 2,
+            life: 40,
+            maxLife: 40,
             color: "#FFD700",
-            size: 1 + Math.random() * 2,
+            size: 1 + Math.random() * 1.5,
           });
         }
 
         if (animation.timer >= animation.wiggleDuration) {
           animation.phase = "shrink";
           animation.timer = 0;
-          // Create sockball at the START of shrink phase
           console.log(
             "Creating sockball at:",
             animation.centerX,
@@ -218,9 +224,11 @@ class SockManager {
           this.createSockballAnimation(animation);
         }
       } else if (animation.phase === "shrink") {
-        // Shrink phase
+        // Smooth shrink phase with easing
         const progress = animation.timer / animation.shrinkDuration;
-        animation.scale = 1.3 * (1 - progress); // Shrink from 1.3x to 0
+        const easeProgress = this.easeInQuart(progress); // Smooth ease-in for shrinking
+
+        animation.scale = 1.2 * (1 - easeProgress); // Shrink smoothly
         animation.wiggleIntensity = 0;
 
         if (animation.timer >= animation.shrinkDuration) {
@@ -230,6 +238,23 @@ class SockManager {
         }
       }
     });
+  }
+
+  // Easing functions for smooth animations
+  easeInOutSine(t) {
+    return -(Math.cos(Math.PI * t) - 1) / 2;
+  }
+
+  easeInQuart(t) {
+    return t * t * t * t;
+  }
+
+  easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
   }
 
   createSockballAnimation(animation) {
@@ -254,13 +279,14 @@ class SockManager {
       targetY: targetY,
       progress: 0,
       wiggleOffset: 0,
-      scale: 2, // Start big and visible
+      scale: 1.2, // Reduced from 2 to 1.2 for gentler entrance
       rotation: 0,
-      rotationSpeed: 0.2,
-      glowEffect: 60,
-      rainbowEffect: 90,
+      rotationSpeed: 0.05, // Reduced from 0.2 to 0.05 for smoother rotation
+      glowEffect: 40,
+      rainbowEffect: 60,
       rainbowOffset: 0,
-      phase: "entrance", // New phase for initial appearance
+      phase: "entrance",
+      entranceTimer: 0,
     };
 
     this.sockballAnimations.push(sockballAnim);
@@ -272,35 +298,52 @@ class SockManager {
 
   updateSockballAnimations() {
     this.sockballAnimations.forEach((animation, index) => {
-      animation.wiggleOffset += 0.4;
+      animation.wiggleOffset += 0.1; // Reduced from 0.4 to 0.1 for gentler wiggle
       animation.rotation += animation.rotationSpeed;
-      animation.rainbowOffset += 0.1;
+      animation.rainbowOffset += 0.05; // Reduced from 0.1 to 0.05 for smoother rainbow
 
       if (animation.phase === "entrance") {
-        // Entrance phase - sockball appears and does rainbow wiggle
-        animation.entranceTimer = (animation.entranceTimer || 0) + 1;
+        // Smooth entrance phase
+        animation.entranceTimer += 1;
+        const entranceProgress = animation.entranceTimer / 60; // 60 frames = 1 second entrance
 
-        // Pulsing scale effect
-        animation.scale = 2 + Math.sin(animation.entranceTimer * 0.3) * 0.3;
+        // Gentle pulsing scale with smooth easing
+        const pulse = Math.sin(animation.entranceTimer * 0.15) * 0.1; // Reduced frequency and intensity
+        animation.scale =
+          1.2 + pulse * this.easeInOutSine(Math.min(entranceProgress, 1));
 
-        // After 30 frames (0.5 seconds), start traveling
-        if (animation.entranceTimer >= 30) {
+        // After 60 frames (1 second), start traveling
+        if (animation.entranceTimer >= 60) {
           animation.phase = "traveling";
           animation.progress = 0;
           console.log("Sockball starting to travel");
         }
       } else if (animation.phase === "traveling") {
-        // Traveling phase
-        animation.progress += GameConfig.SOCKBALL_ANIMATION_SPEED / 100;
+        // Smooth traveling phase
+        animation.progress += 0.012; // Reduced from GameConfig.SOCKBALL_ANIMATION_SPEED/100 for slower travel
 
-        // Scale down as it travels
-        animation.scale = 2 - animation.progress * 1.2;
+        // Smooth scale transition
+        const scaleProgress = this.easeOutCubic(animation.progress);
+        animation.scale = 1.2 - scaleProgress * 0.4; // Gentle scale down
         if (animation.scale < 0.8) animation.scale = 0.8;
 
-        // Smooth interpolation
-        const ease = 1 - Math.pow(1 - animation.progress, 3);
-        animation.x = animation.x + (animation.targetX - animation.x) * ease;
-        animation.y = animation.y + (animation.targetY - animation.y) * ease;
+        // Smooth position interpolation with easing
+        const positionProgress = this.easeInOutCubic(animation.progress);
+        const startX = animation.x || animation.centerX;
+        const startY = animation.y || animation.centerY;
+
+        // Store initial position if not set
+        if (!animation.startX) {
+          animation.startX = animation.x;
+          animation.startY = animation.y;
+        }
+
+        animation.x =
+          animation.startX +
+          (animation.targetX - animation.startX) * positionProgress;
+        animation.y =
+          animation.startY +
+          (animation.targetY - animation.startY) * positionProgress;
 
         if (animation.progress >= 1) {
           console.log("Sockball reached target, incrementing counter");
@@ -310,9 +353,9 @@ class SockManager {
         }
       }
 
-      // Effects diminish over time
-      if (animation.glowEffect > 0) animation.glowEffect -= 0.5;
-      if (animation.rainbowEffect > 0) animation.rainbowEffect -= 0.8;
+      // Gentler effect diminishing
+      if (animation.glowEffect > 0) animation.glowEffect -= 0.3; // Reduced from 0.5
+      if (animation.rainbowEffect > 0) animation.rainbowEffect -= 0.4; // Reduced from 0.8
     });
   }
 
@@ -473,21 +516,22 @@ class SockManager {
 
       ctx.save();
 
-      // Rainbow effect
+      // Gentler rainbow effect
       if (animation.rainbowEffect > 0) {
-        const hue = (animation.rainbowOffset * 360) % 360;
-        ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
-        ctx.shadowBlur = animation.rainbowEffect;
+        const hue = (animation.rainbowOffset * 180) % 360; // Reduced speed
+        const intensity = Math.min(animation.rainbowEffect / 60, 1);
+        ctx.shadowColor = `hsl(${hue}, 70%, 60%)`;
+        ctx.shadowBlur = 10 * intensity; // Reduced blur intensity
       }
 
-      // Glow effect
+      // Gentler glow effect
       if (animation.glowEffect > 0) {
         ctx.shadowColor = "#FFD700";
-        ctx.shadowBlur = animation.glowEffect;
+        ctx.shadowBlur = Math.min(animation.glowEffect, 15); // Capped blur
       }
 
-      // Apply wiggle and rotation
-      const wiggle = Math.sin(animation.wiggleOffset) * 4;
+      // Subtle wiggle and rotation
+      const wiggle = Math.sin(animation.wiggleOffset) * 1.5; // Reduced from 4 to 1.5
       ctx.translate(animation.x, animation.y);
       ctx.rotate(animation.rotation);
       ctx.scale(animation.scale, animation.scale);

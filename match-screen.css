@@ -8,6 +8,11 @@
   cursor: grabbing;
 }
 
+.match-instructions {
+  font-size: 12px;
+  top: 10px;
+}
+
 /* Sock Pile Styles */
 .sock-pile {
   position: relative;
