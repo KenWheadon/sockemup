@@ -209,6 +209,12 @@ class SockManager {
         if (animation.timer >= animation.wiggleDuration) {
           animation.phase = "shrink";
           animation.timer = 0;
+          // Create sockball at the START of shrink phase
+          console.log(
+            "Creating sockball at:",
+            animation.centerX,
+            animation.centerY
+          );
           this.createSockballAnimation(animation);
         }
       } else if (animation.phase === "shrink") {
@@ -218,6 +224,7 @@ class SockManager {
         animation.wiggleIntensity = 0;
 
         if (animation.timer >= animation.shrinkDuration) {
+          console.log("Match animation complete, removing socks");
           this.completeMatch(animation);
           this.matchAnimations.splice(index, 1);
         }
@@ -230,7 +237,16 @@ class SockManager {
     const targetX = this.game.canvas.width - 200;
     const targetY = 150;
 
-    this.sockballAnimations.push({
+    console.log("Creating sockball:", {
+      image: sockballImage,
+      startX: animation.centerX,
+      startY: animation.centerY,
+      targetX: targetX,
+      targetY: targetY,
+      sockType: animation.sockType,
+    });
+
+    const sockballAnim = {
       image: sockballImage,
       x: animation.centerX,
       y: animation.centerY,
@@ -238,44 +254,65 @@ class SockManager {
       targetY: targetY,
       progress: 0,
       wiggleOffset: 0,
-      scale: 1.5,
+      scale: 2, // Start big and visible
       rotation: 0,
-      rotationSpeed: 0.1,
-      glowEffect: 40,
-      rainbowEffect: 60,
+      rotationSpeed: 0.2,
+      glowEffect: 60,
+      rainbowEffect: 90,
       rainbowOffset: 0,
-    });
+      phase: "entrance", // New phase for initial appearance
+    };
+
+    this.sockballAnimations.push(sockballAnim);
+    console.log(
+      "Sockball animation created, total animations:",
+      this.sockballAnimations.length
+    );
   }
 
   updateSockballAnimations() {
     this.sockballAnimations.forEach((animation, index) => {
-      animation.progress += GameConfig.SOCKBALL_ANIMATION_SPEED / 100;
       animation.wiggleOffset += 0.4;
       animation.rotation += animation.rotationSpeed;
       animation.rainbowOffset += 0.1;
 
-      // Scale adjustments
-      if (animation.progress < 0.2) {
-        animation.scale =
-          1.5 + Math.sin(animation.progress * Math.PI * 10) * 0.2;
-      } else {
-        animation.scale = 1.5 - (animation.progress - 0.2) * 0.8;
+      if (animation.phase === "entrance") {
+        // Entrance phase - sockball appears and does rainbow wiggle
+        animation.entranceTimer = (animation.entranceTimer || 0) + 1;
+
+        // Pulsing scale effect
+        animation.scale = 2 + Math.sin(animation.entranceTimer * 0.3) * 0.3;
+
+        // After 30 frames (0.5 seconds), start traveling
+        if (animation.entranceTimer >= 30) {
+          animation.phase = "traveling";
+          animation.progress = 0;
+          console.log("Sockball starting to travel");
+        }
+      } else if (animation.phase === "traveling") {
+        // Traveling phase
+        animation.progress += GameConfig.SOCKBALL_ANIMATION_SPEED / 100;
+
+        // Scale down as it travels
+        animation.scale = 2 - animation.progress * 1.2;
+        if (animation.scale < 0.8) animation.scale = 0.8;
+
+        // Smooth interpolation
+        const ease = 1 - Math.pow(1 - animation.progress, 3);
+        animation.x = animation.x + (animation.targetX - animation.x) * ease;
+        animation.y = animation.y + (animation.targetY - animation.y) * ease;
+
+        if (animation.progress >= 1) {
+          console.log("Sockball reached target, incrementing counter");
+          this.game.sockBalls++;
+          this.sockballAnimations.splice(index, 1);
+          this.createArrivalEffect(animation.targetX, animation.targetY);
+        }
       }
 
       // Effects diminish over time
       if (animation.glowEffect > 0) animation.glowEffect -= 0.5;
       if (animation.rainbowEffect > 0) animation.rainbowEffect -= 0.8;
-
-      if (animation.progress >= 1) {
-        this.game.sockBalls++;
-        this.sockballAnimations.splice(index, 1);
-        this.createArrivalEffect(animation.targetX, animation.targetY);
-      } else {
-        // Smooth interpolation
-        const ease = 1 - Math.pow(1 - animation.progress, 3);
-        animation.x = animation.x + (animation.targetX - animation.x) * ease;
-        animation.y = animation.y + (animation.targetY - animation.y) * ease;
-      }
     });
   }
 
@@ -429,7 +466,10 @@ class SockManager {
 
   renderSockballAnimations(ctx) {
     this.sockballAnimations.forEach((animation) => {
-      if (!this.game.images[animation.image]) return;
+      if (!this.game.images[animation.image]) {
+        console.log("Missing sockball image:", animation.image);
+        return;
+      }
 
       ctx.save();
 
@@ -440,19 +480,34 @@ class SockManager {
         ctx.shadowBlur = animation.rainbowEffect;
       }
 
+      // Glow effect
+      if (animation.glowEffect > 0) {
+        ctx.shadowColor = "#FFD700";
+        ctx.shadowBlur = animation.glowEffect;
+      }
+
       // Apply wiggle and rotation
-      const wiggle = Math.sin(animation.wiggleOffset) * 3;
+      const wiggle = Math.sin(animation.wiggleOffset) * 4;
       ctx.translate(animation.x, animation.y);
       ctx.rotate(animation.rotation);
       ctx.scale(animation.scale, animation.scale);
 
+      // Draw the sockball
+      const size = GameConfig.SOCKBALL_SIZE;
       ctx.drawImage(
         this.game.images[animation.image],
-        -GameConfig.SOCKBALL_SIZE / 2 + wiggle,
-        -GameConfig.SOCKBALL_SIZE / 2,
-        GameConfig.SOCKBALL_SIZE,
-        GameConfig.SOCKBALL_SIZE
+        -size / 2 + wiggle,
+        -size / 2,
+        size,
+        size
       );
+
+      // Debug: draw a circle to show position
+      if (GameConfig.DEBUG_PHYSICS_BOUNDS) {
+        ctx.strokeStyle = "red";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-size / 2, -size / 2, size, size);
+      }
 
       ctx.restore();
     });
