@@ -6,8 +6,8 @@ const GameConfig = {
   PHYSICS_BOUNDS: {
     LEFT: 50,
     RIGHT: 1150,
-    TOP: 50,
-    BOTTOM: 750,
+    TOP: 60,
+    BOTTOM: 600,
   },
 
   // Game settings

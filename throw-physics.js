@@ -262,8 +262,8 @@ class ThrowPhysics {
     ctx.fillStyle = "white";
     ctx.font = "12px Arial";
     ctx.textAlign = "center";
-    ctx.fillText(`Age: ${sock.age}`, 0, -35);
-    ctx.fillText(`Pos: ${Math.round(sock.x)},${Math.round(sock.y)}`, 0, 40);
+    // ctx.fillText(`Age: ${sock.age}`, 0, -35);
+    // ctx.fillText(`Pos: ${Math.round(sock.x)},${Math.round(sock.y)}`, 0, 40);
 
     ctx.restore();
   }
