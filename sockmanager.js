@@ -260,17 +260,17 @@ class SockManager {
 
   createSockballAnimation(animation) {
     const sockballImage = GameConfig.IMAGES.SOCK_BALLS[animation.sockType - 1];
-    const targetX = this.game.canvas.width - 200;
-    const targetY = 150;
+    const targetX = this.game.canvas.width - 50;
+    const targetY = 20;
 
-    console.log("Creating sockball:", {
-      image: sockballImage,
-      startX: animation.centerX,
-      startY: animation.centerY,
-      targetX: targetX,
-      targetY: targetY,
-      sockType: animation.sockType,
-    });
+    // console.log("Creating sockball:", {
+    //   image: sockballImage,
+    //   startX: animation.centerX,
+    //   startY: animation.centerY,
+    //   targetX: targetX,
+    //   targetY: targetY,
+    //   sockType: animation.sockType,
+    // });
 
     const sockballAnim = {
       image: sockballImage,
@@ -311,7 +311,7 @@ class SockManager {
         // Gentle pulsing scale with smooth easing
         const pulse = Math.sin(animation.entranceTimer * 0.15) * 0.1; // Reduced frequency and intensity
         animation.scale =
-          1.2 + pulse * this.easeInOutSine(Math.min(entranceProgress, 1));
+          2 + pulse * this.easeInOutSine(Math.min(entranceProgress, 1));
 
         // After 60 frames (1 second), start traveling
         if (animation.entranceTimer >= 60) {
@@ -427,7 +427,7 @@ class SockManager {
     ctx.save();
 
     // Apply effects
-    let scale = 1;
+    let scale = 1.5;
     let bounceOffset = 0;
 
     if (this.sockPile.glowEffect > 0) {

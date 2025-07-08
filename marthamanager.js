@@ -16,6 +16,17 @@ class MarthaManager {
       "figure8",
       "diagonal",
     ];
+
+    // Animation properties
+    this.animationFrames = [
+      "martha.png",
+      "martha2.png",
+      "martha.png",
+      "martha3.png",
+    ];
+    this.currentFrameIndex = 0;
+    this.animationTimer = 0;
+    this.animationSpeed = 8; // Change frame every 8 game ticks (about 8/60 seconds)
   }
 
   // Initialize Martha for the current level
@@ -25,6 +36,10 @@ class MarthaManager {
     this.isAway = false;
     this.awayTimer = 0;
     this.patternTimer = 0;
+
+    // Reset animation
+    this.currentFrameIndex = 0;
+    this.animationTimer = 0;
 
     // Select random movement pattern
     this.movementPattern = Math.floor(
@@ -72,9 +87,23 @@ class MarthaManager {
     // Update Martha's position based on movement pattern
     this.updateMovementPattern();
 
+    // Update animation frame
+    this.updateAnimation();
+
     // Update hit effect
     if (this.martha.hitEffect > 0) {
       this.martha.hitEffect--;
+    }
+  }
+
+  // Update animation frame cycling
+  updateAnimation() {
+    this.animationTimer++;
+
+    if (this.animationTimer >= this.animationSpeed) {
+      this.animationTimer = 0;
+      this.currentFrameIndex =
+        (this.currentFrameIndex + 1) % this.animationFrames.length;
     }
   }
 
@@ -193,6 +222,10 @@ class MarthaManager {
     this.awayTimer = 0;
     this.patternTimer = 0;
 
+    // Reset animation when respawning
+    this.currentFrameIndex = 0;
+    this.animationTimer = 0;
+
     // Select new random movement pattern
     this.movementPattern = Math.floor(
       Math.random() * this.movementPatterns.length
@@ -293,8 +326,11 @@ class MarthaManager {
   render(ctx) {
     if (!this.martha || this.isAway) return;
 
-    // Draw Martha
-    if (this.game.images["martha.png"]) {
+    // Get current animation frame
+    const currentFrame = this.animationFrames[this.currentFrameIndex];
+
+    // Draw Martha with current animation frame
+    if (this.game.images[currentFrame]) {
       ctx.save();
 
       // Apply hit effect
@@ -304,7 +340,7 @@ class MarthaManager {
       }
 
       ctx.drawImage(
-        this.game.images["martha.png"],
+        this.game.images[currentFrame],
         this.martha.x - this.martha.width / 2,
         this.martha.y - this.martha.height / 2,
         this.martha.width,
