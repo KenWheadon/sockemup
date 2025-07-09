@@ -413,7 +413,7 @@ class LevelSelect extends Screen {
       ctx,
       "Select Level",
       layout.centerX,
-      layout.levelAreaY - this.game.getScaledValue(50),
+      layout.levelAreaY - this.game.getScaledValue(50) - 60,
       { fontSize: layout.titleFontSize, weight: "bold" }
     );
 
@@ -473,8 +473,8 @@ class LevelSelect extends Screen {
           const starSize = this.game.getScaledValue(40);
           ctx.drawImage(
             this.game.images["star.png"],
-            x - starSize / 2,
-            y - this.game.getScaledValue(80),
+            x - starSize / 2 + 15,
+            y - this.game.getScaledValue(80) - 10,
             starSize,
             starSize
           );
