@@ -1,13 +1,10 @@
-class LevelSelect {
+class LevelSelect extends Screen {
   constructor(game) {
-    this.game = game;
-    this.canvas = game.canvas;
-    this.ctx = game.ctx;
+    super(game);
 
     // Level selection state
     this.hoveredLevel = -1;
     this.selectedLevel = -1;
-    this.animationFrame = 0;
 
     // Easter egg state
     this.easterEggActive = false;
@@ -42,8 +39,43 @@ class LevelSelect {
     };
   }
 
-  // Handle resize events from the main game
-  handleResize() {
+  createLayoutCache() {
+    const baseLayout = super.createLayoutCache();
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
+    return {
+      ...baseLayout,
+
+      // Logo positioning
+      logoX: canvasWidth / 2,
+      logoY: this.game.getScaledValue(150),
+      logoWidth: this.game.getScaledValue(200),
+      logoHeight: this.game.getScaledValue(100),
+
+      // Instructions positioning
+      instructionsY: this.game.getScaledValue(220),
+
+      // Level button layout
+      levelSpacing: this.game.getScaledValue(this.levelConfig.baseSpacing),
+      levelButtonSize: this.game.getScaledValue(
+        this.levelConfig.baseButtonSize
+      ),
+      levelAreaY: canvasHeight / 2 + this.game.getScaledValue(50),
+      levelStartX:
+        canvasWidth / 2 -
+        ((GameConfig.LEVELS.length - 1) *
+          this.game.getScaledValue(this.levelConfig.baseSpacing)) /
+          2,
+
+      // Player stats positioning
+      statsY: canvasHeight - this.game.getScaledValue(80),
+      statsPanelWidth: this.game.getScaledValue(200),
+      statsPanelHeight: this.game.getScaledValue(40),
+    };
+  }
+
+  onResize() {
     // Update physics bounds based on new canvas size
     this.menuPhysics.bounds = {
       left: this.game.getScaledValue(50),
@@ -69,13 +101,7 @@ class LevelSelect {
     });
   }
 
-  update(deltaTime) {
-    // Use delta time for frame-rate independent animation
-    const frameRate = deltaTime > 0 ? 1000 / deltaTime : 60;
-    const animationSpeed = 60 / frameRate; // Normalize to 60fps
-
-    this.animationFrame += animationSpeed;
-
+  onUpdate(deltaTime) {
     // Update easter egg socks if active
     if (this.easterEggActive) {
       this.updateMenuSocks(deltaTime);
@@ -83,7 +109,7 @@ class LevelSelect {
   }
 
   updateMenuSocks(deltaTime) {
-    const timeMultiplier = deltaTime / 16.67; // Normalize to 60fps (16.67ms per frame)
+    const timeMultiplier = deltaTime / 16.67; // Normalize to 60fps
 
     this.menuSocks.forEach((sock, index) => {
       if (sock === this.dragSock) return; // Skip dragged sock
@@ -150,7 +176,7 @@ class LevelSelect {
     this.menuSocks = this.menuSocks.filter((sock) => sock !== undefined);
   }
 
-  handleMouseMove(x, y) {
+  onMouseMove(x, y) {
     // Check level hover
     this.hoveredLevel = this.getLevelAtPosition(x, y);
 
@@ -161,7 +187,7 @@ class LevelSelect {
     }
   }
 
-  handleMouseDown(x, y) {
+  onMouseDown(x, y) {
     // Check if clicking on easter egg sock
     if (this.easterEggActive) {
       const sock = this.getSockAtPosition(x, y);
@@ -179,7 +205,7 @@ class LevelSelect {
     return false; // Not handled
   }
 
-  handleMouseUp(x, y) {
+  onMouseUp(x, y) {
     if (this.isDragging && this.dragSock) {
       // Give the sock some velocity based on mouse movement
       this.dragSock.vx = (Math.random() - 0.5) * 10;
@@ -191,7 +217,7 @@ class LevelSelect {
     }
   }
 
-  handleClick(x, y) {
+  onClick(x, y) {
     // Check logo click for easter egg
     if (this.isLogoClicked(x, y)) {
       this.activateEasterEgg();
@@ -217,17 +243,12 @@ class LevelSelect {
   }
 
   isLogoClicked(x, y) {
-    const logoPos = this.game.getScaledPosition(
-      this.game.getCanvasWidth() / 2,
-      150
-    ); // Center horizontally, 150 from top
-    const logoSize = this.game.getScaledSize(200, 100); // Base: 200x100
-
+    const layout = this.layoutCache;
     return (
-      x >= logoPos.x - logoSize.width / 2 &&
-      x <= logoPos.x + logoSize.width / 2 &&
-      y >= logoPos.y - logoSize.height / 2 &&
-      y <= logoPos.y + logoSize.height / 2
+      x >= layout.logoX - layout.logoWidth / 2 &&
+      x <= layout.logoX + layout.logoWidth / 2 &&
+      y >= layout.logoY - layout.logoHeight / 2 &&
+      y <= layout.logoY + layout.logoHeight / 2
     );
   }
 
@@ -271,20 +292,12 @@ class LevelSelect {
   }
 
   getLevelAtPosition(x, y) {
-    const canvasWidth = this.game.getCanvasWidth();
-    const canvasHeight = this.game.getCanvasHeight();
-    const spacing = this.game.getScaledValue(this.levelConfig.baseSpacing);
-    const buttonSize = this.game.getScaledValue(
-      this.levelConfig.baseButtonSize
-    );
-
-    const startX =
-      canvasWidth / 2 - ((GameConfig.LEVELS.length - 1) * spacing) / 2;
+    const layout = this.layoutCache;
 
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
-      const levelX = startX + i * spacing;
-      const levelY = canvasHeight / 2 + this.game.getScaledValue(50);
-      const halfSize = buttonSize / 2;
+      const levelX = layout.levelStartX + i * layout.levelSpacing;
+      const levelY = layout.levelAreaY;
+      const halfSize = layout.levelButtonSize / 2;
 
       if (
         x >= levelX - halfSize &&
@@ -315,7 +328,7 @@ class LevelSelect {
     return null;
   }
 
-  render(ctx) {
+  onRender(ctx) {
     this.renderLogo(ctx);
     this.renderInstructions(ctx);
     this.renderLevelButtons(ctx);
@@ -328,26 +341,22 @@ class LevelSelect {
   }
 
   renderLogo(ctx) {
-    const logoPos = this.game.getScaledPosition(
-      this.game.getCanvasWidth() / 2,
-      150
-    ); // Center horizontally, 150 from top
-    const logoSize = this.game.getScaledSize(200, 100); // Base: 200x100
+    const layout = this.layoutCache;
 
     // Add glow effect if easter egg is active
     if (this.easterEggActive) {
       ctx.save();
-      const glowIntensity = Math.sin(this.animationFrame * 0.1) * 10 + 15;
+      const glowIntensity = this.getGlowIntensity(10, 20);
       ctx.shadowColor = "#FFD700";
       ctx.shadowBlur = glowIntensity;
 
       if (this.game.images["logo.png"]) {
         ctx.drawImage(
           this.game.images["logo.png"],
-          logoPos.x - logoSize.width / 2,
-          logoPos.y - logoSize.height / 2,
-          logoSize.width,
-          logoSize.height
+          layout.logoX - layout.logoWidth / 2,
+          layout.logoY - layout.logoHeight / 2,
+          layout.logoWidth,
+          layout.logoHeight
         );
       }
 
@@ -356,76 +365,71 @@ class LevelSelect {
       if (this.game.images["logo.png"]) {
         ctx.drawImage(
           this.game.images["logo.png"],
-          logoPos.x - logoSize.width / 2,
-          logoPos.y - logoSize.height / 2,
-          logoSize.width,
-          logoSize.height
+          layout.logoX - layout.logoWidth / 2,
+          layout.logoY - layout.logoHeight / 2,
+          layout.logoWidth,
+          layout.logoHeight
         );
       }
     }
   }
 
   renderInstructions(ctx) {
-    const canvasWidth = this.game.getCanvasWidth();
-    const fontSize = this.game.getScaledValue(18);
-    const lineHeight = this.game.getScaledValue(25);
-    const baseY = this.game.getScaledValue(220);
+    const layout = this.layoutCache;
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.font = `${fontSize}px Courier New`;
-    ctx.textAlign = "center";
-    ctx.fillText(
+    this.renderText(
+      ctx,
       "Click sock pile to shoot socks, drag socks to drop zones",
-      canvasWidth / 2,
-      baseY
+      layout.centerX,
+      layout.instructionsY,
+      { fontSize: layout.bodyFontSize, color: "rgba(255, 255, 255, 0.9)" }
     );
-    ctx.fillText(
+
+    this.renderText(
+      ctx,
       "Match pairs to create sock balls, then throw them at Martha!",
-      canvasWidth / 2,
-      baseY + lineHeight
+      layout.centerX,
+      layout.instructionsY + layout.mediumSpacing,
+      { fontSize: layout.bodyFontSize, color: "rgba(255, 255, 255, 0.9)" }
     );
 
     // Easter egg hint
     if (this.easterEggActive && this.menuSocks.length > 0) {
-      ctx.fillStyle = "rgba(255, 215, 0, 0.8)";
-      ctx.font = `${this.game.getScaledValue(14)}px Courier New`;
-      ctx.fillText(
+      this.renderText(
+        ctx,
         "Drag the sock around! Click logo for next type!",
-        canvasWidth / 2,
-        baseY + lineHeight * 2
+        layout.centerX,
+        layout.instructionsY + layout.mediumSpacing * 2,
+        { fontSize: layout.smallFontSize, color: "rgba(255, 215, 0, 0.8)" }
       );
     }
   }
 
   renderLevelButtons(ctx) {
-    const canvasWidth = this.game.getCanvasWidth();
-    const canvasHeight = this.game.getCanvasHeight();
-    const fontSize = this.game.getScaledValue(24);
-    const spacing = this.game.getScaledValue(this.levelConfig.baseSpacing);
-    const buttonSize = this.game.getScaledValue(
-      this.levelConfig.baseButtonSize
-    );
+    const layout = this.layoutCache;
 
-    ctx.fillStyle = "white";
-    ctx.font = `${fontSize}px Courier New`;
-    ctx.textAlign = "center";
-    ctx.fillText(
+    // Title
+    this.renderText(
+      ctx,
       "Select Level",
-      canvasWidth / 2,
-      canvasHeight / 2 - this.game.getScaledValue(50)
+      layout.centerX,
+      layout.levelAreaY - this.game.getScaledValue(50),
+      { fontSize: layout.titleFontSize, weight: "bold" }
     );
-
-    const startX =
-      canvasWidth / 2 - ((GameConfig.LEVELS.length - 1) * spacing) / 2;
 
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
-      this.renderLevelButton(ctx, i, startX + i * spacing, buttonSize);
+      this.renderLevelButton(
+        ctx,
+        i,
+        layout.levelStartX + i * layout.levelSpacing
+      );
     }
   }
 
-  renderLevelButton(ctx, levelIndex, x, buttonSize) {
-    const canvasHeight = this.game.getCanvasHeight();
-    const y = canvasHeight / 2 + this.game.getScaledValue(50);
+  renderLevelButton(ctx, levelIndex, x) {
+    const layout = this.layoutCache;
+    const y = layout.levelAreaY;
+    const buttonSize = layout.levelButtonSize;
     const sockImageName = `sock${levelIndex + 1}.png`;
     const sockImage = this.game.images[sockImageName];
 
@@ -440,8 +444,9 @@ class LevelSelect {
 
     // Apply hover effects
     if (isHovered && isUnlocked) {
+      const scale = this.levelConfig.hoverScale;
       ctx.translate(x, y);
-      ctx.scale(this.levelConfig.hoverScale, this.levelConfig.hoverScale);
+      ctx.scale(scale, scale);
       ctx.translate(-x, -y);
     }
 
@@ -493,13 +498,12 @@ class LevelSelect {
       }
 
       // Level number
-      ctx.fillStyle = "white";
-      ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
-      ctx.textAlign = "center";
-      ctx.fillText(
+      this.renderText(
+        ctx,
         `Level ${levelIndex + 1}`,
         x,
-        y + this.game.getScaledValue(60)
+        y + this.game.getScaledValue(60),
+        { fontSize: layout.bodyFontSize }
       );
     } else {
       // Locked level
@@ -518,27 +522,36 @@ class LevelSelect {
       }
 
       // Cost and level info
-      ctx.fillStyle = isAffordable ? "#90EE90" : "#FFB6C1";
-      ctx.font = `${this.game.getScaledValue(14)}px Courier New`;
-      ctx.textAlign = "center";
-      ctx.fillText(
+      this.renderText(
+        ctx,
         `Cost: ${GameConfig.LEVEL_COSTS[levelIndex]}`,
         x,
-        y - this.game.getScaledValue(50)
+        y - this.game.getScaledValue(50),
+        {
+          fontSize: layout.smallFontSize,
+          color: isAffordable ? "#90EE90" : "#FFB6C1",
+        }
       );
 
-      ctx.fillStyle = "white";
-      ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
-      ctx.fillText(
+      this.renderText(
+        ctx,
         `Level ${levelIndex + 1}`,
         x,
-        y + this.game.getScaledValue(60)
+        y + this.game.getScaledValue(60),
+        { fontSize: layout.bodyFontSize }
       );
 
       if (isAffordable) {
-        ctx.fillStyle = "#90EE90";
-        ctx.font = `${this.game.getScaledValue(12)}px Courier New`;
-        ctx.fillText("Click to unlock!", x, y + this.game.getScaledValue(80));
+        this.renderText(
+          ctx,
+          "Click to unlock!",
+          x,
+          y + this.game.getScaledValue(80),
+          {
+            fontSize: layout.smallFontSize,
+            color: "#90EE90",
+          }
+        );
       }
     }
 
@@ -546,28 +559,30 @@ class LevelSelect {
   }
 
   renderPlayerStats(ctx) {
-    const canvasWidth = this.game.getCanvasWidth();
-    const canvasHeight = this.game.getCanvasHeight();
-    const fontSize = this.game.getScaledValue(20);
-    const panelWidth = this.game.getScaledValue(200);
-    const panelHeight = this.game.getScaledValue(40);
-    const panelX = canvasWidth / 2 - panelWidth / 2;
-    const panelY = canvasHeight - this.game.getScaledValue(80);
+    const layout = this.layoutCache;
+    const panelX = layout.centerX - layout.statsPanelWidth / 2;
+    const panelY = layout.statsY;
 
-    // Points display with background
-    ctx.save();
-    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
-
-    ctx.fillStyle = "#FFD700";
-    ctx.font = `${fontSize}px Courier New`;
-    ctx.textAlign = "center";
-    ctx.fillText(
-      `Points: ${this.game.playerPoints}`,
-      canvasWidth / 2,
-      panelY + this.game.getScaledValue(25)
+    // Points display with background panel
+    this.renderPanel(
+      ctx,
+      panelX,
+      panelY,
+      layout.statsPanelWidth,
+      layout.statsPanelHeight
     );
-    ctx.restore();
+
+    this.renderText(
+      ctx,
+      `Points: ${this.game.playerPoints}`,
+      layout.centerX,
+      panelY + layout.statsPanelHeight / 2,
+      {
+        fontSize: layout.headerFontSize,
+        color: "#FFD700",
+        weight: "bold",
+      }
+    );
   }
 
   renderMenuSocks(ctx) {

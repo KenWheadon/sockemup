@@ -1,6 +1,6 @@
-class MatchScreen {
+class MatchScreen extends Screen {
   constructor(game) {
-    this.game = game;
+    super(game);
     this.sockManager = new SockManager(game);
     this.physics = new MatchPhysics(game);
 
@@ -17,17 +17,49 @@ class MatchScreen {
     this.sockPileHover = false;
   }
 
+  createLayoutCache() {
+    const baseLayout = super.createLayoutCache();
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
+    return {
+      ...baseLayout,
+
+      // Title positioning
+      titleY: this.game.getScaledValue(50),
+      instructionY: this.game.getScaledValue(80),
+
+      // Drop zone configuration
+      dropZoneSize: this.game.getScaledValue(80),
+      dropZoneSpacing: this.game.getScaledValue(100),
+      dropZoneAreaY: canvasHeight / 3,
+      pairWidth: canvasWidth / GameConfig.DROP_TARGET_PAIRS,
+
+      // Sock pile configuration
+      sockPileX: canvasWidth / 2,
+      sockPileY: canvasHeight - this.game.getScaledValue(100),
+      sockPileSize: this.game.getScaledValue(120),
+
+      // UI stats positioning
+      timeX: this.game.getScaledValue(20),
+      timeY: this.game.getScaledValue(30),
+      sockBallsX: canvasWidth - this.game.getScaledValue(20),
+      sockBallsY: this.game.getScaledValue(30),
+      remainingX: canvasWidth - this.game.getScaledValue(20),
+      remainingY: canvasHeight - this.game.getScaledValue(20),
+    };
+  }
+
   setup() {
+    super.setup();
     this.game.canvas.className = "matching-phase";
 
     // Initialize components
     this.sockManager.initialize();
     this.sockManager.setSockList(this.game.sockList);
 
-    // Setup drop zones with responsive positioning
+    // Setup drop zones and sock pile
     this.setupDropZones();
-
-    // Setup responsive sock pile position
     this.setupSockPilePosition();
 
     // Reset states
@@ -37,35 +69,24 @@ class MatchScreen {
     this.sockPileHover = false;
   }
 
-  // Handle resize events from the main game
-  handleResize() {
+  onResize() {
     this.setupDropZones();
     this.setupSockPilePosition();
   }
 
   setupDropZones() {
-    // Calculate responsive positions for drop zones using centralized scaling
-    const canvasWidth = this.game.getCanvasWidth();
-    const canvasHeight = this.game.getCanvasHeight();
-    const dropZoneSize = this.game.getScaledValue(80);
-    const verticalSpacing = this.game.getScaledValue(100);
-
-    // Calculate positions for 3 pairs across the screen
-    const pairWidth = canvasWidth / GameConfig.DROP_TARGET_PAIRS;
-    const startX = pairWidth / 2;
-    const centerY = canvasHeight / 3;
-
+    const layout = this.layoutCache;
     this.dropZones = [];
 
     for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
-      const pairCenterX = startX + pairId * pairWidth;
+      const pairCenterX = layout.pairWidth / 2 + pairId * layout.pairWidth;
 
       // First zone of the pair (top)
       this.dropZones.push({
         x: pairCenterX,
-        y: centerY - verticalSpacing / 2,
-        width: dropZoneSize,
-        height: dropZoneSize,
+        y: layout.dropZoneAreaY - layout.dropZoneSpacing / 2,
+        width: layout.dropZoneSize,
+        height: layout.dropZoneSize,
         pairId: pairId,
         zoneIndex: 0,
         sock: null,
@@ -77,9 +98,9 @@ class MatchScreen {
       // Second zone of the pair (bottom)
       this.dropZones.push({
         x: pairCenterX,
-        y: centerY + verticalSpacing / 2,
-        width: dropZoneSize,
-        height: dropZoneSize,
+        y: layout.dropZoneAreaY + layout.dropZoneSpacing / 2,
+        width: layout.dropZoneSize,
+        height: layout.dropZoneSize,
         pairId: pairId,
         zoneIndex: 1,
         sock: null,
@@ -91,19 +112,14 @@ class MatchScreen {
   }
 
   setupSockPilePosition() {
-    // Make sock pile responsive to screen width using centralized scaling
-    const canvasWidth = this.game.getCanvasWidth();
-    const canvasHeight = this.game.getCanvasHeight();
-    const pileSize = this.game.getScaledValue(120);
-
-    // Position sock pile at bottom center
-    this.sockManager.sockPile.x = canvasWidth / 2;
-    this.sockManager.sockPile.y = canvasHeight - this.game.getScaledValue(100);
-    this.sockManager.sockPile.width = pileSize;
-    this.sockManager.sockPile.height = pileSize;
+    const layout = this.layoutCache;
+    this.sockManager.sockPile.x = layout.sockPileX;
+    this.sockManager.sockPile.y = layout.sockPileY;
+    this.sockManager.sockPile.width = layout.sockPileSize;
+    this.sockManager.sockPile.height = layout.sockPileSize;
   }
 
-  handleMouseDown(x, y) {
+  onMouseDown(x, y) {
     // Check if clicking on sock pile
     if (this.sockManager.checkSockPileClick(x, y)) {
       this.shootSockFromPile();
@@ -133,7 +149,7 @@ class MatchScreen {
     return false;
   }
 
-  handleMouseMove(x, y) {
+  onMouseMove(x, y) {
     // Update drag position
     if (this.draggedSock) {
       this.draggedSock.x = x - this.dragOffset.x;
@@ -165,7 +181,7 @@ class MatchScreen {
     }
   }
 
-  handleMouseUp() {
+  onMouseUp() {
     if (!this.draggedSock) return;
 
     const sock = this.draggedSock;
@@ -240,7 +256,7 @@ class MatchScreen {
     this.sockManager.startMatchAnimation(sock1, sock2);
   }
 
-  update(deltaTime) {
+  onUpdate(deltaTime) {
     // Update time with frame-rate independent timing
     const timeDecrement = (0.25 / 60) * (deltaTime / 16.67); // Normalize to 60fps
     this.game.timeRemaining -= timeDecrement;
@@ -278,7 +294,7 @@ class MatchScreen {
     }
   }
 
-  render(ctx) {
+  onRender(ctx) {
     // Draw physics bounds if debug is enabled
     this.physics.renderDebugBounds(ctx);
 
@@ -310,10 +326,10 @@ class MatchScreen {
   }
 
   renderDropZonePairBoxes(ctx) {
+    const layout = this.layoutCache;
     const lineWidth = this.game.getScaledValue(2);
     const dashLength = this.game.getScaledValue(5);
     const margin = this.game.getScaledValue(50);
-    const fontSize = this.game.getScaledValue(16);
 
     // Draw boxes around each pair of drop zones
     for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
@@ -332,13 +348,15 @@ class MatchScreen {
         ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
 
         // Draw pair label
-        ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-        ctx.font = `${fontSize}px Arial`;
-        ctx.textAlign = "center";
-        ctx.fillText(
+        this.renderText(
+          ctx,
           `Pair ${pairId + 1}`,
           (minX + maxX) / 2,
-          minY - this.game.getScaledValue(10)
+          minY - this.game.getScaledValue(10),
+          {
+            fontSize: layout.bodyFontSize,
+            color: "rgba(255, 255, 255, 0.8)",
+          }
         );
 
         ctx.restore();
@@ -422,102 +440,66 @@ class MatchScreen {
   }
 
   renderMatchScreenUI(ctx) {
-    ctx.save();
-
-    // Set up UI text style with responsive sizing
-    const titleFontSize = this.game.getScaledValue(32);
-    const instructionFontSize = this.game.getScaledValue(16);
-    const statsFontSize = this.game.getScaledValue(20);
-    const canvasWidth = this.game.getCanvasWidth();
-    const canvasHeight = this.game.getCanvasHeight();
-
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.7)";
-    ctx.lineWidth = this.game.getScaledValue(2);
-    ctx.textAlign = "center";
+    const layout = this.layoutCache;
 
     // Instructions at top
-    ctx.font = `${titleFontSize}px Arial`;
-    ctx.strokeText(
-      "MATCH THOSE SOCKS",
-      canvasWidth / 2,
-      this.game.getScaledValue(50)
-    );
-    ctx.fillText(
-      "MATCH THOSE SOCKS",
-      canvasWidth / 2,
-      this.game.getScaledValue(50)
-    );
+    this.renderText(ctx, "MATCH THOSE SOCKS", layout.centerX, layout.titleY, {
+      fontSize: layout.titleFontSize,
+      weight: "bold",
+      color: "rgba(255, 255, 255, 0.9)",
+    });
 
-    // Smaller instruction text
-    ctx.font = `${instructionFontSize}px Arial`;
-    ctx.strokeText(
+    this.renderText(
+      ctx,
       "Click sock pile to shoot socks • Drag socks to drop zones",
-      canvasWidth / 2,
-      this.game.getScaledValue(80)
-    );
-    ctx.fillText(
-      "Click sock pile to shoot socks • Drag socks to drop zones",
-      canvasWidth / 2,
-      this.game.getScaledValue(80)
+      layout.centerX,
+      layout.instructionY,
+      {
+        fontSize: layout.bodyFontSize,
+        color: "rgba(255, 255, 255, 0.9)",
+      }
     );
 
     // Time remaining (top left)
-    ctx.textAlign = "left";
-    ctx.font = `${statsFontSize}px Arial`;
     const timeValue = Math.max(0, Math.floor(this.game.timeRemaining));
-    const timeText = `Time: ${timeValue}s`;
-
-    // Add warning color if time is low
-    if (timeValue <= 10) {
-      ctx.fillStyle =
-        Math.sin(Date.now() * 0.01) > 0
+    const timeColor =
+      timeValue <= 10
+        ? Math.sin(this.pulseTimer * 0.5) > 0
           ? "rgba(255, 68, 68, 0.9)"
-          : "rgba(255, 255, 255, 0.9)";
-    } else {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    }
+          : "rgba(255, 255, 255, 0.9)"
+        : "rgba(255, 255, 255, 0.9)";
 
-    ctx.strokeText(
-      timeText,
-      this.game.getScaledValue(20),
-      this.game.getScaledValue(30)
-    );
-    ctx.fillText(
-      timeText,
-      this.game.getScaledValue(20),
-      this.game.getScaledValue(30)
-    );
+    this.renderText(ctx, `Time: ${timeValue}s`, layout.timeX, layout.timeY, {
+      fontSize: layout.headerFontSize,
+      align: "left",
+      color: timeColor,
+    });
 
     // Sock balls (top right)
-    ctx.textAlign = "right";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    const sockBallsText = `Sock Balls: ${this.game.sockBalls}`;
-    ctx.strokeText(
-      sockBallsText,
-      canvasWidth - this.game.getScaledValue(20),
-      this.game.getScaledValue(30)
-    );
-    ctx.fillText(
-      sockBallsText,
-      canvasWidth - this.game.getScaledValue(20),
-      this.game.getScaledValue(30)
+    this.renderText(
+      ctx,
+      `Sock Balls: ${this.game.sockBalls}`,
+      layout.sockBallsX,
+      layout.sockBallsY,
+      {
+        fontSize: layout.headerFontSize,
+        align: "right",
+        color: "rgba(255, 255, 255, 0.9)",
+      }
     );
 
     // Remaining socks (bottom right)
     const remainingSocks = this.sockManager.getSockListLength();
-    const remainingText = `Remaining: ${remainingSocks}`;
-    ctx.strokeText(
-      remainingText,
-      canvasWidth - this.game.getScaledValue(20),
-      canvasHeight - this.game.getScaledValue(20)
+    this.renderText(
+      ctx,
+      `Remaining: ${remainingSocks}`,
+      layout.remainingX,
+      layout.remainingY,
+      {
+        fontSize: layout.headerFontSize,
+        align: "right",
+        color: "rgba(255, 255, 255, 0.9)",
+      }
     );
-    ctx.fillText(
-      remainingText,
-      canvasWidth - this.game.getScaledValue(20),
-      canvasHeight - this.game.getScaledValue(20)
-    );
-
-    ctx.restore();
   }
 }

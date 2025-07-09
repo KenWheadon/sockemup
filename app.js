@@ -40,7 +40,7 @@ class SockGame {
     this.fpsDisplay = 0;
     this.fpsTimer = 0;
 
-    // Initialize screens
+    // Initialize screens - now using the base Screen class
     this.levelSelect = new LevelSelect(this);
     this.matchScreen = new MatchScreen(this);
     this.marthaScene = new MarthaScene(this);
@@ -186,7 +186,7 @@ class SockGame {
   handleResize() {
     this.initializeCanvas();
 
-    // Notify screens about resize
+    // Notify screens about resize using new base class method
     if (this.levelSelect) this.levelSelect.handleResize();
     if (this.matchScreen) this.matchScreen.handleResize();
     if (this.marthaScene) this.marthaScene.handleResize();
@@ -268,6 +268,7 @@ class SockGame {
     const x = coords.x;
     const y = coords.y;
 
+    // Use the new Screen base class method
     if (this.gameState === "menu") {
       this.levelSelect.handleMouseDown(x, y);
     } else if (this.gameState === "matching") {
@@ -282,6 +283,7 @@ class SockGame {
     const x = coords.x;
     const y = coords.y;
 
+    // Use the new Screen base class method
     if (this.gameState === "menu") {
       this.levelSelect.handleMouseMove(x, y);
     } else if (this.gameState === "matching") {
@@ -299,6 +301,7 @@ class SockGame {
     const x = coords.x;
     const y = coords.y;
 
+    // Use the new Screen base class method
     if (this.gameState === "menu") {
       this.levelSelect.handleMouseUp(x, y);
     } else if (this.gameState === "matching") {
@@ -313,6 +316,7 @@ class SockGame {
     const x = coords.x;
     const y = coords.y;
 
+    // Use the new Screen base class method
     if (this.gameState === "menu") {
       this.levelSelect.handleClick(x, y);
     } else if (this.gameState === "shooting") {
@@ -356,6 +360,7 @@ class SockGame {
   }
 
   update(deltaTime) {
+    // Use the new Screen base class update method
     if (this.gameState === "menu") {
       this.levelSelect.update(deltaTime);
     } else if (this.gameState === "matching") {
@@ -389,6 +394,7 @@ class SockGame {
       );
     }
 
+    // Use the new Screen base class render method
     if (this.gameState === "menu") {
       this.levelSelect.render(this.ctx);
     } else if (this.gameState === "matching") {

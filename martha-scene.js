@@ -1,6 +1,6 @@
-class MarthaScene {
+class MarthaScene extends Screen {
   constructor(game) {
-    this.game = game;
+    super(game);
     this.throwPhysics = new ThrowPhysics(game);
     this.marthaManager = new MarthaManager(game);
     this.thrownSocks = [];
@@ -8,19 +8,61 @@ class MarthaScene {
     this.gameEndDelay = 60; // 1 second at 60 FPS
 
     // UI animation timers
-    this.uiAnimationTimer = 0;
     this.crosshairPulseTimer = 0;
     this.messageFlashTimer = 0;
   }
 
-  // Handle resize events from the main game
-  handleResize() {
-    // Reset crosshair position to center
-    this.game.crosshair.x = this.game.getCanvasWidth() / 2;
-    this.game.crosshair.y = this.game.getCanvasHeight() / 2;
+  createLayoutCache() {
+    const baseLayout = super.createLayoutCache();
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
+    return {
+      ...baseLayout,
+
+      // Crosshair configuration
+      crosshairSize: this.game.getScaledValue(12),
+      crosshairLineWidth: this.game.getScaledValue(3),
+      crosshairDotSize: this.game.getScaledValue(2),
+
+      // UI panel positioning
+      pointsPanelX: this.game.getScaledValue(10),
+      pointsPanelY: this.game.getScaledValue(10),
+      pointsPanelWidth: this.game.getScaledValue(150),
+      pointsPanelHeight: this.game.getScaledValue(50),
+
+      sockBallsPanelWidth: this.game.getScaledValue(150),
+      sockBallsPanelHeight: this.game.getScaledValue(50),
+      sockBallsPanelX:
+        canvasWidth -
+        this.game.getScaledValue(150) -
+        this.game.getScaledValue(10),
+      sockBallsPanelY: this.game.getScaledValue(10),
+
+      // Dialogue panel positioning
+      dialoguePanelWidth: this.game.getScaledValue(400),
+      dialoguePanelHeight: this.game.getScaledValue(80),
+      dialoguePanelX: canvasWidth / 2,
+      dialoguePanelY: this.game.getScaledValue(70),
+
+      // Progress bar configuration
+      progressBarWidth: this.game.getScaledValue(200),
+      progressBarHeight: this.game.getScaledValue(10),
+
+      // Message positioning
+      timerMessageY: canvasHeight - this.game.getScaledValue(80),
+      awayMessageY: canvasHeight / 2 + this.game.getScaledValue(100),
+
+      // Trajectory configuration
+      trajectoryStartY: canvasHeight - this.game.getScaledValue(30),
+      trajectoryDashLength: this.game.getScaledValue(8),
+      trajectoryLineWidth: this.game.getScaledValue(3),
+      targetIndicatorSize: this.game.getScaledValue(8),
+    };
   }
 
   setup() {
+    super.setup();
     this.game.gameState = "shooting";
     this.game.canvas.className = "shooting-phase";
 
@@ -33,14 +75,15 @@ class MarthaScene {
     // Reset game end timer
     this.gameEndTimer = null;
 
-    // Reset UI animation timers
-    this.uiAnimationTimer = 0;
+    // Reset specific animation timers
     this.crosshairPulseTimer = 0;
     this.messageFlashTimer = 0;
   }
 
   // Clean up when leaving Martha scene
   cleanup() {
+    super.cleanup();
+
     // Remove CSS class that affects canvas styling
     this.game.canvas.className = "";
 
@@ -63,6 +106,12 @@ class MarthaScene {
     this.thrownSocks = [];
   }
 
+  onResize() {
+    // Reset crosshair position to center
+    this.game.crosshair.x = this.game.getCanvasWidth() / 2;
+    this.game.crosshair.y = this.game.getCanvasHeight() / 2;
+  }
+
   fireSock(cursorX, cursorY) {
     // Block firing if Martha is away or no sock balls remaining
     if (this.marthaManager.isMarthaAway() || this.game.sockBalls <= 0) {
@@ -71,7 +120,7 @@ class MarthaScene {
 
     // Fire from bottom of screen - use centralized scaling
     const startX = cursorX;
-    const startY = this.game.getCanvasHeight() - this.game.getScaledValue(30);
+    const startY = this.layoutCache.trajectoryStartY;
     const targetX = cursorX;
     const targetY = cursorY;
 
@@ -87,11 +136,10 @@ class MarthaScene {
     this.game.sockBalls--;
   }
 
-  update(deltaTime) {
-    // Update animation timers with frame-rate independent timing
+  onUpdate(deltaTime) {
+    // Update specific animation timers
     const timeMultiplier = deltaTime / 16.67; // Normalize to 60fps
-    this.uiAnimationTimer += timeMultiplier;
-    this.crosshairPulseTimer += timeMultiplier;
+    this.crosshairPulseTimer += timeMultiplier * 0.1;
     this.messageFlashTimer += timeMultiplier;
 
     // Update Martha
@@ -151,7 +199,7 @@ class MarthaScene {
     this.game.gameState = "gameOver";
   }
 
-  render(ctx) {
+  onRender(ctx) {
     // Clear canvas
     ctx.clearRect(
       0,
@@ -195,16 +243,12 @@ class MarthaScene {
     // Only show crosshair if Martha is not away
     if (this.marthaManager.isMarthaAway()) return;
 
+    const layout = this.layoutCache;
     const x = this.game.crosshair.x;
     const y = this.game.crosshair.y;
 
-    // Use centralized scaling for crosshair size
-    const crosshairSize = this.game.getScaledValue(12);
-    const lineWidth = this.game.getScaledValue(3);
-    const dotSize = this.game.getScaledValue(2);
-
     // Pulsing animation
-    const pulseScale = 1 + Math.sin(this.crosshairPulseTimer * 0.1) * 0.1;
+    const pulseScale = 1 + Math.sin(this.crosshairPulseTimer) * 0.1;
     const canFire = this.game.sockBalls > 0;
 
     ctx.save();
@@ -223,29 +267,29 @@ class MarthaScene {
 
     // Draw crosshair
     ctx.strokeStyle = crosshairColor;
-    ctx.lineWidth = lineWidth;
+    ctx.lineWidth = layout.crosshairLineWidth;
     ctx.lineCap = "round";
 
     ctx.beginPath();
-    ctx.moveTo(-crosshairSize, 0);
-    ctx.lineTo(crosshairSize, 0);
-    ctx.moveTo(0, -crosshairSize);
-    ctx.lineTo(0, crosshairSize);
+    ctx.moveTo(-layout.crosshairSize, 0);
+    ctx.lineTo(layout.crosshairSize, 0);
+    ctx.moveTo(0, -layout.crosshairSize);
+    ctx.lineTo(0, layout.crosshairSize);
     ctx.stroke();
 
     // Draw center dot
     ctx.fillStyle = crosshairColor;
     ctx.beginPath();
-    ctx.arc(0, 0, dotSize, 0, Math.PI * 2);
+    ctx.arc(0, 0, layout.crosshairDotSize, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
   }
 
   renderEnhancedTrajectoryPreview(ctx) {
-    // Fixed trajectory line positioning using centralized scaling
+    const layout = this.layoutCache;
     const startX = this.game.crosshair.x;
-    const startY = this.game.getCanvasHeight() - this.game.getScaledValue(30);
+    const startY = layout.trajectoryStartY;
     const targetX = this.game.crosshair.x;
     const targetY = this.game.crosshair.y;
 
@@ -260,7 +304,7 @@ class MarthaScene {
 
     ctx.save();
     ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.lineWidth = layout.trajectoryLineWidth;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
@@ -269,9 +313,8 @@ class MarthaScene {
     ctx.shadowBlur = this.game.getScaledValue(5);
 
     // Draw dashed line with animation
-    const dashLength = this.game.getScaledValue(8);
     const dashOffset = (this.uiAnimationTimer * 0.5) % 16;
-    ctx.setLineDash([dashLength, dashLength]);
+    ctx.setLineDash([layout.trajectoryDashLength, layout.trajectoryDashLength]);
     ctx.lineDashOffset = dashOffset;
 
     ctx.beginPath();
@@ -286,14 +329,19 @@ class MarthaScene {
     ctx.stroke();
 
     // Target indicator
-    const targetSize = this.game.getScaledValue(8);
     const targetPulse = 1 + Math.sin(this.uiAnimationTimer * 0.15) * 0.3;
     ctx.fillStyle = "rgba(255, 255, 0, 0.9)";
     ctx.shadowColor = "rgba(255, 255, 0, 0.6)";
     ctx.shadowBlur = this.game.getScaledValue(15);
 
     ctx.beginPath();
-    ctx.arc(targetX, targetY, targetSize * targetPulse, 0, Math.PI * 2);
+    ctx.arc(
+      targetX,
+      targetY,
+      layout.targetIndicatorSize * targetPulse,
+      0,
+      Math.PI * 2
+    );
     ctx.fill();
 
     // Start point indicator
@@ -302,102 +350,93 @@ class MarthaScene {
     ctx.shadowBlur = this.game.getScaledValue(10);
 
     ctx.beginPath();
-    ctx.arc(startX, startY, targetSize * 0.75, 0, Math.PI * 2);
+    ctx.arc(startX, startY, layout.targetIndicatorSize * 0.75, 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
   }
 
   renderEnhancedPoints(ctx) {
-    // Points panel positioning using centralized scaling
-    const panelX = this.game.getScaledValue(10);
-    const panelY = this.game.getScaledValue(10);
-    const panelWidth = this.game.getScaledValue(150);
-    const panelHeight = this.game.getScaledValue(50);
-    const padding = this.game.getScaledValue(10);
-    const fontSize = this.game.getScaledValue(18);
+    const layout = this.layoutCache;
 
-    ctx.save();
-
-    // Panel background with gradient
-    const gradient = ctx.createLinearGradient(
-      panelX,
-      panelY,
-      panelX + panelWidth,
-      panelY + panelHeight
+    // Panel background
+    this.renderPanel(
+      ctx,
+      layout.pointsPanelX,
+      layout.pointsPanelY,
+      layout.pointsPanelWidth,
+      layout.pointsPanelHeight
     );
-    gradient.addColorStop(0, "rgba(0, 0, 0, 0.8)");
-    gradient.addColorStop(1, "rgba(0, 0, 0, 0.6)");
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
-
-    // Panel border
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = this.game.getScaledValue(2);
-    ctx.strokeRect(panelX, panelY, panelWidth, panelHeight);
 
     // Points text
-    ctx.fillStyle = "#ffd700";
-    ctx.font = `bold ${fontSize}px Courier New`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Points", panelX + padding, panelY + panelHeight * 0.35);
-
-    ctx.fillStyle = "#ffffff";
-    ctx.font = `bold ${fontSize * 0.9}px Courier New`;
-    ctx.fillText(
-      `${this.game.playerPoints}`,
-      panelX + padding,
-      panelY + panelHeight * 0.7
+    this.renderText(
+      ctx,
+      "Points",
+      layout.pointsPanelX + layout.padding,
+      layout.pointsPanelY + layout.pointsPanelHeight * 0.35,
+      {
+        fontSize: layout.bodyFontSize,
+        align: "left",
+        baseline: "middle",
+        color: "#ffd700",
+        weight: "bold",
+      }
     );
 
-    ctx.restore();
+    this.renderText(
+      ctx,
+      `${this.game.playerPoints}`,
+      layout.pointsPanelX + layout.padding,
+      layout.pointsPanelY + layout.pointsPanelHeight * 0.7,
+      {
+        fontSize: layout.bodyFontSize * 0.9,
+        align: "left",
+        baseline: "middle",
+        color: "#ffffff",
+        weight: "bold",
+      }
+    );
   }
 
   renderEnhancedSockBalls(ctx) {
-    // Sock balls panel positioning using centralized scaling
-    const panelWidth = this.game.getScaledValue(150);
-    const panelHeight = this.game.getScaledValue(50);
-    const panelX =
-      this.game.getCanvasWidth() - panelWidth - this.game.getScaledValue(10);
-    const panelY = this.game.getScaledValue(10);
-    const padding = this.game.getScaledValue(10);
-    const fontSize = this.game.getScaledValue(18);
+    const layout = this.layoutCache;
 
-    ctx.save();
-
-    // Panel background with gradient
-    const gradient = ctx.createLinearGradient(
-      panelX,
-      panelY,
-      panelX + panelWidth,
-      panelY + panelHeight
+    // Panel background
+    this.renderPanel(
+      ctx,
+      layout.sockBallsPanelX,
+      layout.sockBallsPanelY,
+      layout.sockBallsPanelWidth,
+      layout.sockBallsPanelHeight
     );
-    gradient.addColorStop(0, "rgba(0, 0, 0, 0.6)");
-    gradient.addColorStop(1, "rgba(0, 0, 0, 0.8)");
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
-
-    // Panel border
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = this.game.getScaledValue(2);
-    ctx.strokeRect(panelX, panelY, panelWidth, panelHeight);
 
     // Sock balls text
-    ctx.fillStyle = "#87ceeb";
-    ctx.font = `bold ${fontSize}px Courier New`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Sock Balls", panelX + padding, panelY + panelHeight * 0.35);
+    this.renderText(
+      ctx,
+      "Sock Balls",
+      layout.sockBallsPanelX + layout.padding,
+      layout.sockBallsPanelY + layout.sockBallsPanelHeight * 0.35,
+      {
+        fontSize: layout.bodyFontSize,
+        align: "left",
+        baseline: "middle",
+        color: "#87ceeb",
+        weight: "bold",
+      }
+    );
 
-    ctx.fillStyle = "#ffffff";
-    ctx.font = `bold ${fontSize * 0.9}px Courier New`;
-    ctx.fillText(
+    this.renderText(
+      ctx,
       `${this.game.sockBalls}`,
-      panelX + padding,
-      panelY + panelHeight * 0.7
+      layout.sockBallsPanelX + layout.padding,
+      layout.sockBallsPanelY + layout.sockBallsPanelHeight * 0.7,
+      {
+        fontSize: layout.bodyFontSize * 0.9,
+        align: "left",
+        baseline: "middle",
+        color: "#ffffff",
+        weight: "bold",
+      }
     );
 
     // Visual sock ball indicators
@@ -406,12 +445,14 @@ class MarthaScene {
     const maxBalls = Math.min(this.game.sockBalls, 8);
 
     for (let i = 0; i < maxBalls; i++) {
-      const ballX = panelX + panelWidth * 0.65 + i * ballSpacing;
-      const ballY = panelY + panelHeight * 0.5;
+      const ballX =
+        layout.sockBallsPanelX +
+        layout.sockBallsPanelWidth * 0.65 +
+        i * ballSpacing;
+      const ballY = layout.sockBallsPanelY + layout.sockBallsPanelHeight * 0.5;
 
       // Glowing effect
-      const glowIntensity =
-        0.5 + Math.sin(this.uiAnimationTimer * 0.1 + i * 0.5) * 0.3;
+      const glowIntensity = this.getGlowIntensity(0.5, 0.8);
       ctx.shadowColor = `rgba(135, 206, 235, ${glowIntensity})`;
       ctx.shadowBlur = this.game.getScaledValue(8);
 
@@ -420,40 +461,24 @@ class MarthaScene {
       ctx.arc(ballX, ballY, ballSize, 0, Math.PI * 2);
       ctx.fill();
     }
-
-    ctx.restore();
   }
 
   renderEnhancedDialogue(ctx) {
+    const layout = this.layoutCache;
     const progress = this.marthaManager.getProgress();
 
-    // Dialogue panel positioning using centralized scaling
-    const panelWidth = this.game.getScaledValue(400);
-    const panelHeight = this.game.getScaledValue(80);
-    const panelX = this.game.getCanvasWidth() / 2;
-    const panelY = this.game.getScaledValue(70);
-    const fontSize = this.game.getScaledValue(16);
-
     ctx.save();
-    ctx.translate(panelX, panelY);
+    ctx.translate(layout.dialoguePanelX, layout.dialoguePanelY);
 
-    // Panel background with gradient
-    const gradient = ctx.createLinearGradient(
-      -panelWidth / 2,
-      -panelHeight / 2,
-      panelWidth / 2,
-      panelHeight / 2
+    // Panel background
+    this.renderPanel(
+      ctx,
+      -layout.dialoguePanelWidth / 2,
+      -layout.dialoguePanelHeight / 2,
+      layout.dialoguePanelWidth,
+      layout.dialoguePanelHeight,
+      "secondary"
     );
-    gradient.addColorStop(0, "rgba(75, 0, 130, 0.9)");
-    gradient.addColorStop(1, "rgba(138, 43, 226, 0.8)");
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
-
-    // Panel border
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-    ctx.lineWidth = this.game.getScaledValue(3);
-    ctx.strokeRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
 
     // Dynamic dialogue text
     let dialogueText = `RENT IS DUE: ${this.marthaManager.targetSocks} SOCKBALLS!`;
@@ -465,153 +490,89 @@ class MarthaScene {
     }
 
     // Dialogue text with pulse effect
-    const textScale = 1 + Math.sin(this.uiAnimationTimer * 0.08) * 0.02;
+    const textScale = this.getPulseScale(0.02);
     ctx.scale(textScale, textScale);
 
-    ctx.fillStyle = "white";
-    ctx.font = `bold ${fontSize}px Courier New`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(dialogueText, 0, -panelHeight * 0.15);
+    this.renderText(ctx, dialogueText, 0, -layout.dialoguePanelHeight * 0.15, {
+      fontSize: layout.bodyFontSize,
+      weight: "bold",
+      color: "white",
+    });
 
     ctx.restore();
 
-    // Progress bar using centralized scaling
-    const barWidth = this.game.getScaledValue(200);
-    const barHeight = this.game.getScaledValue(10);
-    const barX = panelX - barWidth / 2;
-    const barY = panelY + panelHeight * 0.25;
+    // Progress bar
+    const barX = layout.dialoguePanelX - layout.progressBarWidth / 2;
+    const barY = layout.dialoguePanelY + layout.dialoguePanelHeight * 0.25;
 
-    ctx.save();
-
-    // Progress bar background
-    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-    ctx.fillRect(barX, barY, barWidth, barHeight);
-
-    // Progress bar border
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = this.game.getScaledValue(1);
-    ctx.strokeRect(barX, barY, barWidth, barHeight);
-
-    // Progress bar fill
-    const fillWidth = barWidth * progress.percentage;
-    let fillColor = "#4caf50";
-    if (progress.percentage > 0.7) fillColor = "#ffc107";
-    if (progress.percentage >= 1) fillColor = "#ff5722";
-
-    ctx.fillStyle = fillColor;
-    ctx.fillRect(barX, barY, fillWidth, barHeight);
-
-    // Progress bar glow
-    ctx.shadowColor = fillColor;
-    ctx.shadowBlur = this.game.getScaledValue(5);
-    ctx.fillRect(barX, barY, fillWidth, barHeight);
-
-    ctx.restore();
+    this.renderProgressBar(
+      ctx,
+      barX,
+      barY,
+      layout.progressBarWidth,
+      layout.progressBarHeight,
+      progress.percentage,
+      { glow: true }
+    );
   }
 
   renderEnhancedGameEndTimer(ctx) {
+    const layout = this.layoutCache;
     const secondsRemaining = Math.ceil(this.gameEndTimer / 60);
 
-    // Timer panel positioning using centralized scaling
+    // Timer panel
     const panelWidth = this.game.getScaledValue(300);
     const panelHeight = this.game.getScaledValue(60);
-    const panelX = this.game.getCanvasWidth() / 2;
-    const panelY = this.game.getCanvasHeight() - this.game.getScaledValue(80);
-    const fontSize = this.game.getScaledValue(22);
+    const panelX = layout.centerX - panelWidth / 2;
+    const panelY = layout.timerMessageY;
 
-    ctx.save();
-    ctx.translate(panelX, panelY);
-
-    // Panel background with gradient
-    const gradient = ctx.createLinearGradient(
-      -panelWidth / 2,
-      -panelHeight / 2,
-      panelWidth / 2,
-      panelHeight / 2
-    );
-    gradient.addColorStop(0, "rgba(255, 215, 0, 0.9)");
-    gradient.addColorStop(1, "rgba(255, 140, 0, 0.8)");
-
-    // Warning animation
-    if (secondsRemaining <= 5) {
-      const warningIntensity = Math.sin(this.messageFlashTimer * 0.3);
-      gradient.addColorStop(
-        0,
-        `rgba(255, 69, 0, ${0.9 + warningIntensity * 0.1})`
-      );
-      gradient.addColorStop(
-        1,
-        `rgba(255, 0, 0, ${0.8 + warningIntensity * 0.1})`
-      );
-    }
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
-
-    // Panel border
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.lineWidth = this.game.getScaledValue(3);
-    ctx.strokeRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
+    const style = secondsRemaining <= 5 ? "warning" : "primary";
+    this.renderPanel(ctx, panelX, panelY, panelWidth, panelHeight, style);
 
     // Timer text with scale effect
-    const textScale =
-      secondsRemaining <= 3
-        ? 1 + Math.sin(this.messageFlashTimer * 0.4) * 0.1
-        : 1;
+    const textScale = secondsRemaining <= 3 ? this.getPulseScale(0.1) : 1;
+
+    ctx.save();
+    ctx.translate(layout.centerX, panelY + panelHeight / 2);
     ctx.scale(textScale, textScale);
 
-    ctx.fillStyle = "white";
-    ctx.font = `bold ${fontSize}px Courier New`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(`Level ending in ${secondsRemaining}...`, 0, 0);
+    this.renderText(ctx, `Level ending in ${secondsRemaining}...`, 0, 0, {
+      fontSize: layout.headerFontSize,
+      weight: "bold",
+      color: "white",
+    });
 
     ctx.restore();
   }
 
   renderEnhancedMarthaAwayMessage(ctx) {
-    // Martha away message positioning using centralized scaling
+    const layout = this.layoutCache;
+
+    // Martha away message panel
     const panelWidth = this.game.getScaledValue(400);
     const panelHeight = this.game.getScaledValue(80);
-    const panelX = this.game.getCanvasWidth() / 2;
-    const panelY =
-      this.game.getCanvasHeight() / 2 + this.game.getScaledValue(100);
-    const fontSize = this.game.getScaledValue(18);
+    const panelX = layout.centerX - panelWidth / 2;
+    const panelY = layout.awayMessageY;
 
-    ctx.save();
-    ctx.translate(panelX, panelY);
-
-    // Panel background with gradient
-    const gradient = ctx.createLinearGradient(
-      -panelWidth / 2,
-      -panelHeight / 2,
-      panelWidth / 2,
-      panelHeight / 2
-    );
-    gradient.addColorStop(0, "rgba(255, 140, 0, 0.9)");
-    gradient.addColorStop(1, "rgba(255, 165, 0, 0.8)");
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
-
-    // Panel border
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.lineWidth = this.game.getScaledValue(3);
-    ctx.strokeRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
+    this.renderPanel(ctx, panelX, panelY, panelWidth, panelHeight, "warning");
 
     // Message text with pulse effect
-    const textScale = 1 + Math.sin(this.messageFlashTimer * 0.1) * 0.05;
+    const textScale = this.getPulseScale(0.05);
+
+    ctx.save();
+    ctx.translate(layout.centerX, panelY + panelHeight / 2);
     ctx.scale(textScale, textScale);
 
-    ctx.fillStyle = "white";
-    ctx.font = `bold ${fontSize}px Courier New`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("Martha is away!", 0, -panelHeight * 0.15);
+    this.renderText(ctx, "Martha is away!", 0, -panelHeight * 0.15, {
+      fontSize: layout.bodyFontSize,
+      weight: "bold",
+      color: "white",
+    });
 
-    ctx.font = `${fontSize * 0.85}px Courier New`;
-    ctx.fillText("Wait for her to return...", 0, panelHeight * 0.2);
+    this.renderText(ctx, "Wait for her to return...", 0, panelHeight * 0.2, {
+      fontSize: layout.bodyFontSize * 0.85,
+      color: "white",
+    });
 
     ctx.restore();
   }

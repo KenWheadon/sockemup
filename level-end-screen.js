@@ -1,8 +1,6 @@
-// 📁 level-end-screen.js (cleaned)
-// Canvas-based animated level end screen with score animation and celebration particles
-class LevelEndScreen {
+class LevelEndScreen extends Screen {
   constructor(game) {
-    this.game = game;
+    super(game);
     this.animationState = "entering";
     this.animationProgress = 0;
     this.animationSpeed = 0.05;
@@ -21,6 +19,34 @@ class LevelEndScreen {
     };
   }
 
+  createLayoutCache() {
+    const baseLayout = super.createLayoutCache();
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
+    return {
+      ...baseLayout,
+
+      // Main container positioning
+      containerWidth: this.game.getScaledValue(500),
+      containerHeight: this.game.getScaledValue(400),
+      containerX: canvasWidth / 2 - this.game.getScaledValue(250),
+      containerY: canvasHeight / 2 - this.game.getScaledValue(200),
+
+      // Title positioning
+      titleY: canvasHeight / 2 - this.game.getScaledValue(150),
+
+      // Score section positioning
+      scoreY: canvasHeight / 2 - this.game.getScaledValue(80),
+      scoreLineHeight: this.game.getScaledValue(30),
+
+      // Button positioning
+      buttonWidth: this.game.getScaledValue(200),
+      buttonHeight: this.game.getScaledValue(50),
+      buttonY: canvasHeight / 2 + this.game.getScaledValue(200),
+    };
+  }
+
   resetScores() {
     this.consumedSocksDisplay = 0;
     this.extraSockBallsDisplay = 0;
@@ -32,20 +58,19 @@ class LevelEndScreen {
     this.scoreAnimationPhase = 0;
   }
 
-  handleResize() {
-    const { width, height } = this.game.getScaledSize(200, 50);
-    this.continueButton.width = width;
-    this.continueButton.height = height;
-    this.continueButton.x = this.game.getCanvasWidth() / 2 - width / 2;
-    this.continueButton.y =
-      this.game.getCanvasHeight() / 2 + this.game.getScaledValue(200);
+  onResize() {
+    const layout = this.layoutCache;
+    this.continueButton.width = layout.buttonWidth;
+    this.continueButton.height = layout.buttonHeight;
+    this.continueButton.x = layout.centerX - layout.buttonWidth / 2;
+    this.continueButton.y = layout.buttonY;
   }
 
   setup() {
+    super.setup();
     this.animationState = "entering";
     this.animationProgress = 0;
     this.resetScores();
-    this.handleResize();
     this.particles = [];
     this.particleTimer = 0;
     this.createCelebrationParticles();
@@ -75,8 +100,8 @@ class LevelEndScreen {
     ];
   }
 
-  update(dt) {
-    const t = dt / 16.67;
+  onUpdate(deltaTime) {
+    const t = deltaTime / 16.67;
     if (this.animationState === "entering") {
       this.animationProgress += this.animationSpeed * t;
       if (this.animationProgress >= 1) {
@@ -162,22 +187,25 @@ class LevelEndScreen {
     });
   }
 
-  handleMouseMove(x, y) {
+  onMouseMove(x, y) {
     const b = this.continueButton;
     b.hovered =
       x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height;
   }
-  handleMouseDown(x, y) {
+
+  onMouseDown(x, y) {
     if (this.continueButton.hovered) this.continueButton.pressed = true;
   }
-  handleMouseUp() {
+
+  onMouseUp() {
     this.continueButton.pressed = false;
   }
-  handleClick(x, y) {
+
+  onClick(x, y) {
     if (this.continueButton.hovered) this.game.gameState = "menu";
   }
 
-  render(ctx) {
+  onRender(ctx) {
     const s = this.easeOutBack(this.animationProgress);
     ctx.save();
     ctx.globalAlpha = this.animationProgress;
@@ -210,97 +238,126 @@ class LevelEndScreen {
   }
 
   renderMainContainer(ctx) {
-    const cx = this.game.getCanvasWidth() / 2;
-    const cy = this.game.getCanvasHeight() / 2;
-    const size = this.game.getScaledSize(500, 400);
-    const x = cx - size.width / 2;
-    const y = cy - size.height / 2;
+    const layout = this.layoutCache;
 
+    // Background overlay
     ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.fillRect(0, 0, this.game.getCanvasWidth(), this.game.getCanvasHeight());
+
+    // Shadow
     ctx.fillStyle = "rgba(0,0,0,0.3)";
-    ctx.fillRect(x + 5, y + 5, size.width, size.height);
-    const grad = ctx.createLinearGradient(x, y, x, y + size.height);
-    grad.addColorStop(0, "#2c3e50");
-    grad.addColorStop(1, "#34495e");
-    ctx.fillStyle = grad;
-    ctx.fillRect(x, y, size.width, size.height);
-    ctx.strokeStyle = "#3498db";
-    ctx.lineWidth = this.game.getScaledValue(3);
-    ctx.shadowColor = "#3498db";
-    ctx.shadowBlur = this.game.getScaledValue(20);
-    ctx.strokeRect(x, y, size.width, size.height);
-    ctx.shadowBlur = 0;
+    ctx.fillRect(
+      layout.containerX + 5,
+      layout.containerY + 5,
+      layout.containerWidth,
+      layout.containerHeight
+    );
+
+    // Main container using shared panel rendering
+    this.renderPanel(
+      ctx,
+      layout.containerX,
+      layout.containerY,
+      layout.containerWidth,
+      layout.containerHeight,
+      "primary"
+    );
   }
 
   renderContent(ctx) {
-    const cx = this.game.getCanvasWidth() / 2;
-    const cy = this.game.getCanvasHeight() / 2;
-    const v = this.game.getScaledValue.bind(this.game);
-    ctx.textAlign = "center";
+    const layout = this.layoutCache;
 
-    ctx.fillStyle = "#FFD700";
-    ctx.font = `bold ${v(48)}px Courier New`;
-    ctx.fillText("LEVEL COMPLETE!", cx, cy - v(150));
-    ctx.fillStyle = "rgba(0,0,0,0.5)";
-    ctx.fillText("LEVEL COMPLETE!", cx + v(2), cy - v(148));
+    // Title with glow effect
+    ctx.save();
+    ctx.shadowColor = "#FFD700";
+    ctx.shadowBlur = this.game.getScaledValue(10);
 
-    ctx.fillStyle = "#ecf0f1";
-    ctx.font = `${v(20)}px Courier New`;
-    let y = cy - v(80);
-    const lh = v(30);
-    ctx.fillText(
+    this.renderText(ctx, "LEVEL COMPLETE!", layout.centerX, layout.titleY, {
+      fontSize: this.game.getScaledValue(48),
+      weight: "bold",
+      color: "#FFD700",
+    });
+    ctx.restore();
+
+    // Score breakdown
+    let y = layout.scoreY;
+    const lineHeight = layout.scoreLineHeight;
+
+    this.renderText(
+      ctx,
       `Socks Fed to Martha: ${this.consumedSocksDisplay} × 5 = ${this.consumedPointsDisplay} pts`,
-      cx,
-      y
+      layout.centerX,
+      y,
+      { fontSize: layout.headerFontSize }
     );
-    y += lh;
-    ctx.fillText(
+    y += lineHeight;
+
+    this.renderText(
+      ctx,
       `Extra Sock Balls: ${this.extraSockBallsDisplay} × 10 = ${this.extraPointsDisplay} pts`,
-      cx,
-      y
+      layout.centerX,
+      y,
+      { fontSize: layout.headerFontSize }
     );
-    y += lh;
+    y += lineHeight;
 
+    // Separator line
     ctx.strokeStyle = "#95a5a6";
-    ctx.lineWidth = v(2);
+    ctx.lineWidth = this.game.getScaledValue(2);
     ctx.beginPath();
-    ctx.moveTo(cx - v(150), y + v(10));
-    ctx.lineTo(cx + v(150), y + v(10));
+    ctx.moveTo(
+      layout.centerX - this.game.getScaledValue(150),
+      y + this.game.getScaledValue(10)
+    );
+    ctx.lineTo(
+      layout.centerX + this.game.getScaledValue(150),
+      y + this.game.getScaledValue(10)
+    );
     ctx.stroke();
-    y += v(30);
+    y += this.game.getScaledValue(30);
 
-    ctx.fillStyle = "#2ecc71";
-    ctx.font = `bold ${v(24)}px Courier New`;
-    ctx.fillText(`Points Earned: ${this.totalPointsDisplay}`, cx, y);
-    y += lh + v(10);
+    // Total points earned
+    this.renderText(
+      ctx,
+      `Points Earned: ${this.totalPointsDisplay}`,
+      layout.centerX,
+      y,
+      {
+        fontSize: layout.titleFontSize,
+        weight: "bold",
+        color: "#2ecc71",
+      }
+    );
+    y += lineHeight + this.game.getScaledValue(10);
 
-    ctx.fillStyle = "#f39c12";
-    ctx.font = `bold ${v(28)}px Courier New`;
-    ctx.fillText(`Total Points: ${this.finalTotalDisplay}`, cx, y);
+    // Final total
+    this.renderText(
+      ctx,
+      `Total Points: ${this.finalTotalDisplay}`,
+      layout.centerX,
+      y,
+      {
+        fontSize: this.game.getScaledValue(28),
+        weight: "bold",
+        color: "#f39c12",
+      }
+    );
   }
 
   renderContinueButton(ctx) {
-    const b = this.continueButton;
-    const s = this.game.getScaledValue.bind(this.game);
-    const color = b.pressed ? "#2980b9" : b.hovered ? "#5dade2" : "#3498db";
+    const button = this.continueButton;
 
-    ctx.fillStyle = color;
-    ctx.fillRect(b.x, b.y, b.width, b.height);
-    ctx.strokeStyle = "#2980b9";
-    ctx.lineWidth = s(2);
-    ctx.strokeRect(b.x, b.y, b.width, b.height);
-    ctx.fillStyle = "white";
-    ctx.font = `bold ${s(18)}px Courier New`;
-    ctx.textAlign = "center";
-    ctx.fillText("CONTINUE", b.x + b.width / 2, b.y + b.height / 2 + s(6));
-
-    if (b.hovered) {
-      ctx.shadowColor = "#3498db";
-      ctx.shadowBlur = s(15);
-      ctx.strokeRect(b.x, b.y, b.width, b.height);
-      ctx.shadowBlur = 0;
-    }
+    // Use shared button rendering
+    this.renderButton(ctx, {
+      x: button.x,
+      y: button.y,
+      width: button.width,
+      height: button.height,
+      text: "CONTINUE",
+      hovered: button.hovered,
+      pressed: button.pressed,
+      enabled: true,
+    });
   }
 
   easeOutBack(t) {
