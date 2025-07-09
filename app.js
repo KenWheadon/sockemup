@@ -42,6 +42,7 @@ class SockGame {
 
     // Initialize screens - now using the base Screen class
     this.levelSelect = new LevelSelect(this);
+    this.levelSelect.setup();
     this.matchScreen = new MatchScreen(this);
     this.throwingScreen = new ThrowingScreen(this);
     this.levelEndScreen = new LevelEndScreen(this);

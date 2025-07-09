@@ -64,19 +64,22 @@ const GameConfig = {
   // Game settings
   POINTS_PER_SOCK: 10,
   GRAVITY: 0.2,
+  STARTING_SPEED: 15,
   FRICTION: 0.98,
   BOUNCE_DAMPING: 0.8,
 
   // Sock settings
   SOCK_SIZE: 80,
   SOCKBALL_SIZE: 30,
-  SOCK_SHOOT_SPEED: 50,
+  SOCK_BOUNCE_VELOCITY: 8,
+  SOCK_SHOOT_SPEED: 12,
 
   // dropssss
   DROP_TARGET_PAIRS: 5,
 
   // Martha settings
   MARTHA_SIZE: { width: 60, height: 80 },
+  MARTHA_HIT_EFFECT_DURATION: 60, // frames
 
   // Throwing screen settings
   THROWING_BOUNDS: {
@@ -87,9 +90,9 @@ const GameConfig = {
   },
 
   // Sockball throwing settings
-  SOCKBALL_THROW_SPEED: 25,
+  SOCKBALL_THROW_SPEED: 15,
   SOCKBALL_THROW_COOLDOWN: 2000, // milliseconds
-  SOCKBALL_LAUNCH_POSITION: { x: 50, y: 750 }, // bottom left corner
+  SOCKBALL_LAUNCH_POSITION: { x: 100, y: 650 }, // bottom left corner
 
   // Martha movement patterns
   MARTHA_PATTERNS: {

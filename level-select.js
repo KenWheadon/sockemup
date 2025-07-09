@@ -15,12 +15,11 @@ class LevelSelect extends Screen {
     this.logoClickCount = 0;
     this.currentSockType = 1; // Cycles through sock types
 
-    // Martha display and animation
-    this.marthaImage = null;
+    // Martha display and animation - removed marthaImage property
     this.marthaWiggleTimer = 0;
     this.marthaWiggling = false;
 
-    // Easter egg drop zones
+    // Easter egg drop zones - initialize as empty array
     this.easterDropZones = [];
 
     // Sock ball animations
@@ -80,17 +79,17 @@ class LevelSelect extends Screen {
           this.game.getScaledValue(this.levelConfig.baseSpacing)) /
           2,
 
-      // Martha positioning
-      marthaX: canvasWidth - this.game.getScaledValue(150),
-      marthaY: this.game.getScaledValue(300),
-      marthaSize: this.game.getScaledValue(100),
+      // Martha positioning - move to left side to be more visible
+      marthaX: this.game.getScaledValue(150),
+      marthaY: this.game.getScaledValue(350),
+      marthaSize: this.game.getScaledValue(120),
 
-      // Easter egg drop zones
+      // Easter egg drop zones - position near Martha
       dropZoneSize: this.game.getScaledValue(60),
-      dropZone1X: canvasWidth - this.game.getScaledValue(250),
-      dropZone1Y: this.game.getScaledValue(400),
-      dropZone2X: canvasWidth - this.game.getScaledValue(250),
-      dropZone2Y: this.game.getScaledValue(500),
+      dropZone1X: this.game.getScaledValue(250),
+      dropZone1Y: this.game.getScaledValue(300),
+      dropZone2X: this.game.getScaledValue(250),
+      dropZone2Y: this.game.getScaledValue(400),
 
       // Player stats positioning
       statsY: canvasHeight - this.game.getScaledValue(80),
@@ -129,7 +128,12 @@ class LevelSelect extends Screen {
   }
 
   setupEasterDropZones() {
+    // Ensure layoutCache is calculated
+    this.clearLayoutCache(); // <- This forces recalculation
+    this.calculateLayout();
+
     const layout = this.layoutCache;
+
     this.easterDropZones = [
       {
         x: layout.dropZone1X,
@@ -150,11 +154,12 @@ class LevelSelect extends Screen {
         id: 1,
       },
     ];
+
+    console.log("Drop zones initialized:", this.easterDropZones);
   }
 
   setup() {
     super.setup();
-    this.marthaImage = this.game.images["martha-demand.png"];
     this.setupEasterDropZones();
   }
 
@@ -385,11 +390,18 @@ class LevelSelect extends Screen {
   }
 
   checkForEasterEggMatches() {
+    // Add null checks to prevent errors
+    if (!this.easterDropZones || this.easterDropZones.length < 2) {
+      console.warn("Easter drop zones not properly initialized");
+      return;
+    }
+
     if (this.easterDropZones[0].sock && this.easterDropZones[1].sock) {
       const sock1 = this.easterDropZones[0].sock;
       const sock2 = this.easterDropZones[1].sock;
 
       if (sock1.type === sock2.type) {
+        console.log("Easter egg match found!", sock1.type, sock2.type);
         // Create sock ball animation
         this.createSockBallAnimation(sock1, sock2);
 
@@ -518,12 +530,17 @@ class LevelSelect extends Screen {
     this.renderLogo(ctx);
     this.renderInstructions(ctx);
     this.renderMarthaImage(ctx);
-    this.renderEasterDropZones(ctx);
     this.renderLevelButtons(ctx);
     this.renderPlayerStats(ctx);
+
+    // Always render drop zones if easter egg is active
+    if (this.easterEggActive) {
+      this.renderEasterDropZones(ctx);
+    }
+
     this.renderSockBallAnimations(ctx);
 
-    // Render easter egg socks
+    // Render easter egg socks last so they appear on top
     if (this.easterEggActive) {
       this.renderMenuSocks(ctx);
     }
@@ -597,7 +614,8 @@ class LevelSelect extends Screen {
   renderMarthaImage(ctx) {
     const layout = this.layoutCache;
 
-    if (this.marthaImage) {
+    // Access Martha image directly from game.images like socks do
+    if (this.game.images["martha-demand.png"]) {
       ctx.save();
 
       // Apply wiggle effect if wiggling
@@ -609,7 +627,7 @@ class LevelSelect extends Screen {
       }
 
       ctx.drawImage(
-        this.marthaImage,
+        this.game.images["martha-demand.png"],
         -layout.marthaSize / 2,
         -layout.marthaSize / 2,
         layout.marthaSize,
@@ -621,28 +639,49 @@ class LevelSelect extends Screen {
   }
 
   renderEasterDropZones(ctx) {
-    if (!this.easterEggActive) return;
-
     const layout = this.layoutCache;
+
+    console.log("Rendering easter drop zones, active:", this.easterEggActive);
+    console.log("Drop zones array:", this.easterDropZones);
 
     this.easterDropZones.forEach((zone, index) => {
       ctx.save();
 
-      // Base drop zone
+      // Calculate glow intensity
       let glowIntensity = 0;
       if (zone.glowEffect > 0) {
         glowIntensity = zone.glowEffect / 20;
       }
 
+      // Draw bright blue border for the easter egg area (outer border)
+      ctx.strokeStyle = "rgba(0, 150, 255, 0.9)"; // Bright blue
+      ctx.lineWidth = this.game.getScaledValue(5);
+      ctx.strokeRect(
+        zone.x - zone.width / 2 - this.game.getScaledValue(10),
+        zone.y - zone.height / 2 - this.game.getScaledValue(10),
+        zone.width + this.game.getScaledValue(20),
+        zone.height + this.game.getScaledValue(20)
+      );
+
+      // Add blue fill for the easter egg area
+      ctx.fillStyle = "rgba(0, 150, 255, 0.1)";
+      ctx.fillRect(
+        zone.x - zone.width / 2 - this.game.getScaledValue(10),
+        zone.y - zone.height / 2 - this.game.getScaledValue(10),
+        zone.width + this.game.getScaledValue(20),
+        zone.height + this.game.getScaledValue(20)
+      );
+
+      // Draw yellow border for the actual drop target (inner border)
       if (glowIntensity > 0) {
-        ctx.shadowColor = "rgba(100, 255, 100, " + glowIntensity + ")";
+        ctx.shadowColor = "rgba(255, 255, 0, " + glowIntensity + ")";
         ctx.shadowBlur = this.game.getScaledValue(15);
       }
 
       ctx.strokeStyle = zone.sock
-        ? "rgba(100, 255, 100, 0.8)"
-        : "rgba(255, 255, 255, 0.5)";
-      ctx.lineWidth = this.game.getScaledValue(2);
+        ? "rgba(255, 255, 0, 1.0)" // Bright yellow when occupied
+        : "rgba(255, 255, 0, 0.8)"; // Slightly transparent when empty
+      ctx.lineWidth = this.game.getScaledValue(4);
       ctx.strokeRect(
         zone.x - zone.width / 2,
         zone.y - zone.height / 2,
@@ -650,20 +689,309 @@ class LevelSelect extends Screen {
         zone.height
       );
 
-      // Label
-      this.renderText(
-        ctx,
-        index === 0 ? "Drop Zone 1" : "Drop Zone 2",
-        zone.x,
-        zone.y - zone.height / 2 - this.game.getScaledValue(20),
-        {
-          fontSize: layout.smallFontSize,
-          color: "rgba(255, 255, 255, 0.7)",
-        }
+      // Add yellow fill for the drop target
+      ctx.fillStyle = zone.sock
+        ? "rgba(255, 255, 0, 0.3)" // More visible when occupied
+        : "rgba(255, 255, 0, 0.15)"; // Subtle when empty
+      ctx.fillRect(
+        zone.x - zone.width / 2,
+        zone.y - zone.height / 2,
+        zone.width,
+        zone.height
       );
+
+      // Add a pulsing effect for empty drop zones
+      if (!zone.sock) {
+        const pulseIntensity = Math.sin(Date.now() * 0.003) * 0.3 + 0.7;
+        ctx.strokeStyle = `rgba(255, 255, 0, ${pulseIntensity})`;
+        ctx.lineWidth = this.game.getScaledValue(2);
+        ctx.strokeRect(
+          zone.x - zone.width / 2,
+          zone.y - zone.height / 2,
+          zone.width,
+          zone.height
+        );
+      }
+
+      // Label with better visibility
+      ctx.fillStyle = "rgba(255, 255, 255, 1.0)";
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+      ctx.lineWidth = this.game.getScaledValue(2);
+
+      const labelText = index === 0 ? "Drop Zone 1" : "Drop Zone 2";
+      const labelY = zone.y - zone.height / 2 - this.game.getScaledValue(25);
+
+      // Draw text outline
+      ctx.strokeText(labelText, zone.x, labelY);
+      // Draw text fill
+      ctx.fillText(labelText, zone.x, labelY);
+
+      // Add instruction text
+      if (!zone.sock) {
+        ctx.fillStyle = "rgba(255, 215, 0, 0.9)";
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+        ctx.lineWidth = this.game.getScaledValue(1);
+
+        const instructionText = "Drop socks here!";
+        const instructionY =
+          zone.y + zone.height / 2 + this.game.getScaledValue(20);
+
+        // Draw instruction outline
+        ctx.strokeText(instructionText, zone.x, instructionY);
+        // Draw instruction fill
+        ctx.fillText(instructionText, zone.x, instructionY);
+      }
 
       ctx.restore();
     });
+  }
+
+  // Enhanced renderEasterDropZones method for level-select.js
+  // Also add this method to render the overall easter egg area bounds
+
+  renderEasterEggBounds(ctx) {
+    if (
+      !this.easterEggActive ||
+      !this.easterDropZones ||
+      this.easterDropZones.length < 2
+    )
+      return;
+
+    const layout = this.layoutCache;
+
+    // Draw a bright blue border around the entire easter egg area
+    ctx.save();
+    ctx.strokeStyle = "rgba(0, 150, 255, 0.6)";
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.setLineDash([
+      this.game.getScaledValue(10),
+      this.game.getScaledValue(5),
+    ]);
+
+    // Calculate bounds that encompass both drop zones and Martha
+    const leftBound =
+      Math.min(this.easterDropZones[0].x, this.easterDropZones[1].x) -
+      this.game.getScaledValue(80);
+    const rightBound =
+      Math.max(this.easterDropZones[0].x, this.easterDropZones[1].x) +
+      this.game.getScaledValue(80);
+    const topBound =
+      Math.min(this.easterDropZones[0].y, this.easterDropZones[1].y) -
+      this.game.getScaledValue(80);
+    const bottomBound =
+      Math.max(this.easterDropZones[0].y, this.easterDropZones[1].y) +
+      this.game.getScaledValue(80);
+
+    ctx.strokeRect(
+      leftBound,
+      topBound,
+      rightBound - leftBound,
+      bottomBound - topBound
+    );
+
+    // Add title for easter egg area
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(0, 150, 255, 0.9)";
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.lineWidth = this.game.getScaledValue(2);
+    ctx.font = `${layout.bodyFontSize}px "Courier New", monospace`;
+    ctx.textAlign = "center";
+
+    const titleText = "Easter Egg Area";
+    const titleY = topBound - this.game.getScaledValue(10);
+
+    ctx.strokeText(titleText, (leftBound + rightBound) / 2, titleY);
+    ctx.fillText(titleText, (leftBound + rightBound) / 2, titleY);
+
+    ctx.restore();
+  }
+
+  renderEasterDropZones(ctx) {
+    const layout = this.layoutCache;
+
+    console.log("Rendering easter drop zones, active:", this.easterEggActive);
+    console.log("Drop zones array:", this.easterDropZones);
+
+    this.easterDropZones.forEach((zone, index) => {
+      ctx.save();
+
+      // Calculate glow intensity
+      let glowIntensity = 0;
+      if (zone.glowEffect > 0) {
+        glowIntensity = zone.glowEffect / 20;
+      }
+
+      // Draw bright blue border for the easter egg area (outer border)
+      ctx.strokeStyle = "rgba(0, 150, 255, 0.9)"; // Bright blue
+      ctx.lineWidth = this.game.getScaledValue(5);
+      ctx.strokeRect(
+        zone.x - zone.width / 2 - this.game.getScaledValue(10),
+        zone.y - zone.height / 2 - this.game.getScaledValue(10),
+        zone.width + this.game.getScaledValue(20),
+        zone.height + this.game.getScaledValue(20)
+      );
+
+      // Add blue fill for the easter egg area
+      ctx.fillStyle = "rgba(0, 150, 255, 0.1)";
+      ctx.fillRect(
+        zone.x - zone.width / 2 - this.game.getScaledValue(10),
+        zone.y - zone.height / 2 - this.game.getScaledValue(10),
+        zone.width + this.game.getScaledValue(20),
+        zone.height + this.game.getScaledValue(20)
+      );
+
+      // Draw yellow border for the actual drop target (inner border)
+      if (glowIntensity > 0) {
+        ctx.shadowColor = "rgba(255, 255, 0, " + glowIntensity + ")";
+        ctx.shadowBlur = this.game.getScaledValue(15);
+      }
+
+      ctx.strokeStyle = zone.sock
+        ? "rgba(255, 255, 0, 1.0)" // Bright yellow when occupied
+        : "rgba(255, 255, 0, 0.8)"; // Slightly transparent when empty
+      ctx.lineWidth = this.game.getScaledValue(4);
+      ctx.strokeRect(
+        zone.x - zone.width / 2,
+        zone.y - zone.height / 2,
+        zone.width,
+        zone.height
+      );
+
+      // Add yellow fill for the drop target
+      ctx.fillStyle = zone.sock
+        ? "rgba(255, 255, 0, 0.3)" // More visible when occupied
+        : "rgba(255, 255, 0, 0.15)"; // Subtle when empty
+      ctx.fillRect(
+        zone.x - zone.width / 2,
+        zone.y - zone.height / 2,
+        zone.width,
+        zone.height
+      );
+
+      // Add a pulsing effect for empty drop zones
+      if (!zone.sock) {
+        const pulseIntensity = Math.sin(Date.now() * 0.003) * 0.3 + 0.7;
+        ctx.strokeStyle = `rgba(255, 255, 0, ${pulseIntensity})`;
+        ctx.lineWidth = this.game.getScaledValue(2);
+        ctx.strokeRect(
+          zone.x - zone.width / 2,
+          zone.y - zone.height / 2,
+          zone.width,
+          zone.height
+        );
+      }
+
+      // Label with better visibility
+      ctx.fillStyle = "rgba(255, 255, 255, 1.0)";
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+      ctx.lineWidth = this.game.getScaledValue(2);
+
+      const labelText = index === 0 ? "Drop Zone 1" : "Drop Zone 2";
+      const labelY = zone.y - zone.height / 2 - this.game.getScaledValue(25);
+
+      // Draw text outline
+      ctx.strokeText(labelText, zone.x, labelY);
+      // Draw text fill
+      ctx.fillText(labelText, zone.x, labelY);
+
+      // Add instruction text
+      if (!zone.sock) {
+        ctx.fillStyle = "rgba(255, 215, 0, 0.9)";
+        ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+        ctx.lineWidth = this.game.getScaledValue(1);
+
+        const instructionText = "Drop socks here!";
+        const instructionY =
+          zone.y + zone.height / 2 + this.game.getScaledValue(20);
+
+        // Draw instruction outline
+        ctx.strokeText(instructionText, zone.x, instructionY);
+        // Draw instruction fill
+        ctx.fillText(instructionText, zone.x, instructionY);
+      }
+
+      ctx.restore();
+    });
+  }
+
+  // Enhanced renderMenuSocks method for better visibility
+  renderMenuSocks(ctx) {
+    this.menuSocks.forEach((sock) => {
+      ctx.save();
+
+      // Apply fade out effect
+      if (sock.alpha < 1) {
+        ctx.globalAlpha = sock.alpha;
+      }
+
+      // Enhanced glow effect for better visibility
+      if (sock.glowEffect > 0) {
+        ctx.shadowColor = "#FFD700";
+        ctx.shadowBlur = sock.glowEffect;
+        sock.glowEffect--;
+      } else {
+        // Add a subtle glow to all easter egg socks
+        ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
+        ctx.shadowBlur = this.game.getScaledValue(5);
+      }
+
+      // Apply transformations
+      ctx.translate(sock.x, sock.y);
+      ctx.rotate(sock.rotation);
+
+      // Draw sock with enhanced visibility
+      const sockImageName = `sock${sock.type}.png`;
+      if (this.game.images[sockImageName]) {
+        ctx.drawImage(
+          this.game.images[sockImageName],
+          -sock.size / 2,
+          -sock.size / 2,
+          sock.size,
+          sock.size
+        );
+      } else {
+        // Fallback: draw a colored circle if sock image not found
+        ctx.fillStyle = `hsl(${sock.type * 60}, 70%, 50%)`;
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = this.game.getScaledValue(3);
+        ctx.beginPath();
+        ctx.arc(0, 0, sock.size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Add type number
+        ctx.fillStyle = "white";
+        ctx.font = `${sock.size / 3}px "Courier New", monospace`;
+        ctx.textAlign = "center";
+        ctx.fillText(sock.type.toString(), 0, sock.size / 12);
+      }
+
+      ctx.restore();
+    });
+  }
+
+  // Also update the main onRender method to include the easter egg bounds
+  onRender(ctx) {
+    this.renderLogo(ctx);
+    this.renderInstructions(ctx);
+    this.renderMarthaImage(ctx);
+    this.renderLevelButtons(ctx);
+    this.renderPlayerStats(ctx);
+
+    // Render easter egg bounds first (behind everything else)
+    this.renderEasterEggBounds(ctx);
+
+    // Always render drop zones if easter egg is active
+    if (this.easterEggActive) {
+      this.renderEasterDropZones(ctx);
+    }
+
+    this.renderSockBallAnimations(ctx);
+
+    // Render easter egg socks last so they appear on top
+    if (this.easterEggActive) {
+      this.renderMenuSocks(ctx);
+    }
   }
 
   renderSockBallAnimations(ctx) {
