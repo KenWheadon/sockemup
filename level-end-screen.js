@@ -69,8 +69,9 @@ class LevelEndScreen extends Screen {
   prepareScoreAnimation() {
     const m = this.game.throwingScreen.marthaManager.collectedSockballs;
     const b = this.game.sockBalls;
-    const total = m * 5 + b * 10;
-    const final = this.game.playerPoints;
+    const consumedPoints = m * 5;
+    const extraPoints = b * 10;
+    const total = consumedPoints + extraPoints;
 
     this.scoreStages = [
       {
@@ -90,8 +91,9 @@ class LevelEndScreen extends Screen {
         valueName: "extraPointsDisplay",
       },
       { label: "totalPointsDisplay", start: 0, end: total, rate: 50 },
-      { label: "finalTotalDisplay", start: 0, end: final, rate: 30 },
+      { label: "finalTotalDisplay", start: 0, end: total, rate: 30 },
     ];
+
     this.currentStageIndex = 0;
     this.scoreAnimationTimer = 0;
   }
@@ -229,18 +231,6 @@ class LevelEndScreen extends Screen {
     this.renderMainContainer(ctx);
     this.renderContent(ctx);
     this.renderContinueButton(ctx);
-    ctx.restore();
-  }
-
-  renderParticles(ctx) {
-    ctx.save();
-    for (const p of this.particles) {
-      ctx.globalAlpha = p.life;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.restore();
   }
 

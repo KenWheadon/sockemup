@@ -48,8 +48,6 @@ class SockGame {
 
     // Game objects for shooting phase
     this.crosshair = { x: 600, y: 400 };
-
-    this.init();
   }
 
   initializeCanvas() {
@@ -144,10 +142,35 @@ class SockGame {
     }
 
     this.initializeCanvas();
-    this.loadImages();
+    this.loadImagesFromCache();
     this.setupEventListeners();
     this.loadGameData();
     this.startGameLoop();
+  }
+
+  loadImagesFromCache() {
+    // Get images from the loading screen cache
+    if (
+      window.loadingScreenManager &&
+      window.loadingScreenManager.getImageCache()
+    ) {
+      const imageCache = window.loadingScreenManager.getImageCache();
+
+      // Copy all cached images to the game's image object
+      imageCache.forEach((image, imageName) => {
+        this.images[imageName] = image;
+      });
+
+      this.loadedImages = imageCache.size;
+      this.totalImages = imageCache.size;
+
+      console.log(`Loaded ${this.loadedImages} images from cache`);
+    } else {
+      console.warn(
+        "Loading screen manager not available, falling back to direct loading"
+      );
+      this.loadImages();
+    }
   }
 
   loadImages() {
@@ -443,7 +466,17 @@ class SockGame {
   }
 }
 
-// Start the game when DOM is loaded
+// Set up the game initialization callback
+window.gameInitCallback = () => {
+  try {
+    const game = new SockGame();
+    game.init();
+  } catch (error) {
+    console.error("Failed to initialize game:", error);
+  }
+};
+
+// Start the game when DOM is loaded - but only if loading screen is not handling it
 document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("gameCanvas");
   const container = document.getElementById("gameContainer");
@@ -458,9 +491,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  try {
-    const game = new SockGame();
-  } catch (error) {
-    console.error("Failed to initialize game:", error);
+  // If loading screen manager is not available, start game directly
+  if (!window.loadingScreenManager) {
+    window.gameInitCallback();
   }
 });

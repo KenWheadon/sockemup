@@ -1,18 +1,23 @@
 /* Loading Screen Styles */
 .loading-screen {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
   background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-  display: flex;
+  display: flex !important;
   justify-content: center;
   align-items: center;
-  z-index: 4000;
+  z-index: 9999 !important;
   animation: fadeIn 0.5s ease-out;
-  margin: 0;
-  padding: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  transform: none !important;
+  overflow: visible !important;
 }
 
 .loading-content {
@@ -20,6 +25,8 @@
   color: white;
   max-width: 600px;
   padding: 40px;
+  position: relative;
+  z-index: 10000;
 }
 
 .loading-logo {
