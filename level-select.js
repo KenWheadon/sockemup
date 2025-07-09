@@ -15,11 +15,23 @@ class LevelSelect extends Screen {
     this.logoClickCount = 0;
     this.currentSockType = 1; // Cycles through sock types
 
-    // Physics for menu socks
+    // Martha display and animation
+    this.marthaImage = null;
+    this.marthaWiggleTimer = 0;
+    this.marthaWiggling = false;
+
+    // Easter egg drop zones
+    this.easterDropZones = [];
+
+    // Sock ball animations
+    this.sockBallAnimations = [];
+
+    // Physics for menu socks - using match screen physics instead of gravity
     this.menuPhysics = {
-      friction: 0.98,
-      bounce: 0.7,
-      gravity: 0.3,
+      friction: 0.992,
+      minVelocity: 0.05,
+      bounceRestitution: 0.4,
+      rotationFriction: 0.98,
       bounds: {
         left: this.game.getScaledValue(50),
         right: this.game.getCanvasWidth() - this.game.getScaledValue(50),
@@ -68,6 +80,18 @@ class LevelSelect extends Screen {
           this.game.getScaledValue(this.levelConfig.baseSpacing)) /
           2,
 
+      // Martha positioning
+      marthaX: canvasWidth - this.game.getScaledValue(150),
+      marthaY: this.game.getScaledValue(300),
+      marthaSize: this.game.getScaledValue(100),
+
+      // Easter egg drop zones
+      dropZoneSize: this.game.getScaledValue(60),
+      dropZone1X: canvasWidth - this.game.getScaledValue(250),
+      dropZone1Y: this.game.getScaledValue(400),
+      dropZone2X: canvasWidth - this.game.getScaledValue(250),
+      dropZone2Y: this.game.getScaledValue(500),
+
       // Player stats positioning
       statsY: canvasHeight - this.game.getScaledValue(80),
       statsPanelWidth: this.game.getScaledValue(200),
@@ -99,6 +123,39 @@ class LevelSelect extends Screen {
         sock.y = this.menuPhysics.bounds.bottom;
       }
     });
+
+    // Setup easter egg drop zones
+    this.setupEasterDropZones();
+  }
+
+  setupEasterDropZones() {
+    const layout = this.layoutCache;
+    this.easterDropZones = [
+      {
+        x: layout.dropZone1X,
+        y: layout.dropZone1Y,
+        width: layout.dropZoneSize,
+        height: layout.dropZoneSize,
+        sock: null,
+        glowEffect: 0,
+        id: 0,
+      },
+      {
+        x: layout.dropZone2X,
+        y: layout.dropZone2Y,
+        width: layout.dropZoneSize,
+        height: layout.dropZoneSize,
+        sock: null,
+        glowEffect: 0,
+        id: 1,
+      },
+    ];
+  }
+
+  setup() {
+    super.setup();
+    this.marthaImage = this.game.images["martha-demand.png"];
+    this.setupEasterDropZones();
   }
 
   onUpdate(deltaTime) {
@@ -106,6 +163,27 @@ class LevelSelect extends Screen {
     if (this.easterEggActive) {
       this.updateMenuSocks(deltaTime);
     }
+
+    // Update Martha wiggle animation
+    if (this.marthaWiggling) {
+      this.marthaWiggleTimer += deltaTime;
+      if (this.marthaWiggleTimer >= 1000) {
+        // 1 second
+        this.marthaWiggling = false;
+        this.marthaWiggleTimer = 0;
+      }
+    }
+
+    // Update drop zone effects
+    this.easterDropZones.forEach((zone) => {
+      if (zone.glowEffect > 0) zone.glowEffect--;
+    });
+
+    // Update sock ball animations
+    this.sockBallAnimations = this.sockBallAnimations.filter((animation) => {
+      animation.progress += deltaTime / 1000; // 1 second animation
+      return animation.progress < 1;
+    });
   }
 
   updateMenuSocks(deltaTime) {
@@ -135,10 +213,17 @@ class LevelSelect extends Screen {
         sock.alpha = 1 - fadeProgress;
       }
 
-      // Apply physics with delta time
-      sock.vy += this.menuPhysics.gravity * timeMultiplier;
+      // Apply match screen physics instead of gravity
       sock.vx *= Math.pow(this.menuPhysics.friction, timeMultiplier);
       sock.vy *= Math.pow(this.menuPhysics.friction, timeMultiplier);
+
+      // Apply friction to rotation
+      if (sock.rotationSpeed) {
+        sock.rotationSpeed *= Math.pow(
+          this.menuPhysics.rotationFriction,
+          timeMultiplier
+        );
+      }
 
       // Update position
       sock.x += sock.vx * timeMultiplier;
@@ -147,33 +232,48 @@ class LevelSelect extends Screen {
       // Update rotation
       sock.rotation += sock.rotationSpeed * timeMultiplier;
 
-      // Bounce off bounds
-      if (sock.x - sock.size / 2 < this.menuPhysics.bounds.left) {
-        sock.x = this.menuPhysics.bounds.left + sock.size / 2;
-        sock.vx = -sock.vx * this.menuPhysics.bounce;
-      }
-      if (sock.x + sock.size / 2 > this.menuPhysics.bounds.right) {
-        sock.x = this.menuPhysics.bounds.right - sock.size / 2;
-        sock.vx = -sock.vx * this.menuPhysics.bounce;
-      }
-      if (sock.y - sock.size / 2 < this.menuPhysics.bounds.top) {
-        sock.y = this.menuPhysics.bounds.top + sock.size / 2;
-        sock.vy = -sock.vy * this.menuPhysics.bounce;
-      }
-      if (sock.y + sock.size / 2 > this.menuPhysics.bounds.bottom) {
-        sock.y = this.menuPhysics.bounds.bottom - sock.size / 2;
-        sock.vy = -sock.vy * this.menuPhysics.bounce;
+      // Check bounds and bounce
+      this.checkSockBounds(sock);
 
-        // Add some randomness to prevent socks from getting stuck
-        sock.vx += (Math.random() - 0.5) * 2;
-      }
+      // Stop if velocity is too low
+      if (
+        Math.abs(sock.vx) < this.menuPhysics.minVelocity &&
+        Math.abs(sock.vy) < this.menuPhysics.minVelocity
+      ) {
+        sock.vx = 0;
+        sock.vy = 0;
 
-      // Gradually slow down rotation
-      sock.rotationSpeed *= Math.pow(0.99, timeMultiplier);
+        if (sock.rotationSpeed && Math.abs(sock.rotationSpeed) < 0.01) {
+          sock.rotationSpeed = 0;
+        }
+      }
     });
 
     // Clean up array if we removed items
     this.menuSocks = this.menuSocks.filter((sock) => sock !== undefined);
+  }
+
+  checkSockBounds(sock) {
+    const halfWidth = sock.size / 2;
+    const halfHeight = sock.size / 2;
+
+    // Left and right bounds
+    if (sock.x - halfWidth <= this.menuPhysics.bounds.left) {
+      sock.x = this.menuPhysics.bounds.left + halfWidth;
+      sock.vx = Math.abs(sock.vx) * this.menuPhysics.bounceRestitution;
+    } else if (sock.x + halfWidth >= this.menuPhysics.bounds.right) {
+      sock.x = this.menuPhysics.bounds.right - halfWidth;
+      sock.vx = -Math.abs(sock.vx) * this.menuPhysics.bounceRestitution;
+    }
+
+    // Top and bottom bounds
+    if (sock.y - halfHeight <= this.menuPhysics.bounds.top) {
+      sock.y = this.menuPhysics.bounds.top + halfHeight;
+      sock.vy = Math.abs(sock.vy) * this.menuPhysics.bounceRestitution;
+    } else if (sock.y + halfHeight >= this.menuPhysics.bounds.bottom) {
+      sock.y = this.menuPhysics.bounds.bottom - halfHeight;
+      sock.vy = -Math.abs(sock.vy) * this.menuPhysics.bounceRestitution;
+    }
   }
 
   onMouseMove(x, y) {
@@ -207,13 +307,36 @@ class LevelSelect extends Screen {
 
   onMouseUp(x, y) {
     if (this.isDragging && this.dragSock) {
-      // Give the sock some velocity based on mouse movement
-      this.dragSock.vx = (Math.random() - 0.5) * 10;
-      this.dragSock.vy = (Math.random() - 0.5) * 10;
-      this.dragSock.rotationSpeed = (Math.random() - 0.5) * 0.3;
+      const sock = this.dragSock;
+      let snapped = false;
+
+      // Check for drop zone snapping
+      this.easterDropZones.forEach((zone) => {
+        const distance = this.getDropZoneDistance(sock, zone);
+        const snapDistance = this.game.getScaledValue(40);
+
+        if (distance < snapDistance) {
+          if (zone.sock === null) {
+            zone.sock = sock;
+            this.snapSockToDropZone(sock, zone);
+            snapped = true;
+            this.createSnapEffect(zone);
+          }
+        }
+      });
+
+      // If not snapped, apply throw physics
+      if (!snapped) {
+        sock.vx = (Math.random() - 0.5) * 8;
+        sock.vy = (Math.random() - 0.5) * 8;
+        sock.rotationSpeed = (Math.random() - 0.5) * 0.1;
+      }
 
       this.isDragging = false;
       this.dragSock = null;
+
+      // Check for matches
+      this.checkForEasterEggMatches();
     }
   }
 
@@ -231,6 +354,7 @@ class LevelSelect extends Screen {
         this.game.startLevel(levelIndex);
         return true;
       } else if (this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex]) {
+        // Deduct points for unlocking
         this.game.playerPoints -= GameConfig.LEVEL_COSTS[levelIndex];
         this.game.unlockedLevels[levelIndex] = true;
         this.game.saveGameData();
@@ -240,6 +364,66 @@ class LevelSelect extends Screen {
     }
 
     return false;
+  }
+
+  getDropZoneDistance(sock, dropZone) {
+    return Math.sqrt(
+      Math.pow(sock.x - dropZone.x, 2) + Math.pow(sock.y - dropZone.y, 2)
+    );
+  }
+
+  snapSockToDropZone(sock, dropZone) {
+    sock.x = dropZone.x;
+    sock.y = dropZone.y;
+    sock.vx = 0;
+    sock.vy = 0;
+    sock.rotationSpeed = 0;
+  }
+
+  createSnapEffect(zone) {
+    zone.glowEffect = 20;
+  }
+
+  checkForEasterEggMatches() {
+    if (this.easterDropZones[0].sock && this.easterDropZones[1].sock) {
+      const sock1 = this.easterDropZones[0].sock;
+      const sock2 = this.easterDropZones[1].sock;
+
+      if (sock1.type === sock2.type) {
+        // Create sock ball animation
+        this.createSockBallAnimation(sock1, sock2);
+
+        // Remove socks from zones and menu
+        this.easterDropZones[0].sock = null;
+        this.easterDropZones[1].sock = null;
+        this.menuSocks = this.menuSocks.filter(
+          (s) => s !== sock1 && s !== sock2
+        );
+      }
+    }
+  }
+
+  createSockBallAnimation(sock1, sock2) {
+    const layout = this.layoutCache;
+    const startX = (sock1.x + sock2.x) / 2;
+    const startY = (sock1.y + sock2.y) / 2;
+
+    const animation = {
+      startX: startX,
+      startY: startY,
+      endX: layout.marthaX,
+      endY: layout.marthaY,
+      progress: 0,
+      type: sock1.type,
+    };
+
+    this.sockBallAnimations.push(animation);
+
+    // Start Martha wiggle when animation completes
+    setTimeout(() => {
+      this.marthaWiggling = true;
+      this.marthaWiggleTimer = 0;
+    }, 1000);
   }
 
   isLogoClicked(x, y) {
@@ -271,7 +455,9 @@ class LevelSelect extends Screen {
       type: this.currentSockType,
       x:
         canvasWidth / 2 + (Math.random() - 0.5) * this.game.getScaledValue(100),
-      y: -canvasHeight + (Math.random() - 0.5) * this.game.getScaledValue(100),
+      y:
+        canvasHeight / 2 +
+        (Math.random() - 0.5) * this.game.getScaledValue(100),
       size: this.game.getScaledValue((Math.random() + 0.5) * 60),
       vx: (Math.random() - 0.5) * 15,
       vy: (Math.random() - 0.5) * 15,
@@ -331,8 +517,11 @@ class LevelSelect extends Screen {
   onRender(ctx) {
     this.renderLogo(ctx);
     this.renderInstructions(ctx);
+    this.renderMarthaImage(ctx);
+    this.renderEasterDropZones(ctx);
     this.renderLevelButtons(ctx);
     this.renderPlayerStats(ctx);
+    this.renderSockBallAnimations(ctx);
 
     // Render easter egg socks
     if (this.easterEggActive) {
@@ -397,12 +586,111 @@ class LevelSelect extends Screen {
     if (this.easterEggActive && this.menuSocks.length > 0) {
       this.renderText(
         ctx,
-        "Drag the sock around! Click logo for next type!",
+        "Drag socks to the drop zones next to Martha!",
         layout.centerX,
         layout.instructionsY + layout.mediumSpacing * 2,
         { fontSize: layout.smallFontSize, color: "rgba(255, 215, 0, 0.8)" }
       );
     }
+  }
+
+  renderMarthaImage(ctx) {
+    const layout = this.layoutCache;
+
+    if (this.marthaImage) {
+      ctx.save();
+
+      // Apply wiggle effect if wiggling
+      if (this.marthaWiggling) {
+        const wiggleAmount = Math.sin(this.marthaWiggleTimer * 0.02) * 5;
+        ctx.translate(layout.marthaX + wiggleAmount, layout.marthaY);
+      } else {
+        ctx.translate(layout.marthaX, layout.marthaY);
+      }
+
+      ctx.drawImage(
+        this.marthaImage,
+        -layout.marthaSize / 2,
+        -layout.marthaSize / 2,
+        layout.marthaSize,
+        layout.marthaSize
+      );
+
+      ctx.restore();
+    }
+  }
+
+  renderEasterDropZones(ctx) {
+    if (!this.easterEggActive) return;
+
+    const layout = this.layoutCache;
+
+    this.easterDropZones.forEach((zone, index) => {
+      ctx.save();
+
+      // Base drop zone
+      let glowIntensity = 0;
+      if (zone.glowEffect > 0) {
+        glowIntensity = zone.glowEffect / 20;
+      }
+
+      if (glowIntensity > 0) {
+        ctx.shadowColor = "rgba(100, 255, 100, " + glowIntensity + ")";
+        ctx.shadowBlur = this.game.getScaledValue(15);
+      }
+
+      ctx.strokeStyle = zone.sock
+        ? "rgba(100, 255, 100, 0.8)"
+        : "rgba(255, 255, 255, 0.5)";
+      ctx.lineWidth = this.game.getScaledValue(2);
+      ctx.strokeRect(
+        zone.x - zone.width / 2,
+        zone.y - zone.height / 2,
+        zone.width,
+        zone.height
+      );
+
+      // Label
+      this.renderText(
+        ctx,
+        index === 0 ? "Drop Zone 1" : "Drop Zone 2",
+        zone.x,
+        zone.y - zone.height / 2 - this.game.getScaledValue(20),
+        {
+          fontSize: layout.smallFontSize,
+          color: "rgba(255, 255, 255, 0.7)",
+        }
+      );
+
+      ctx.restore();
+    });
+  }
+
+  renderSockBallAnimations(ctx) {
+    this.sockBallAnimations.forEach((animation) => {
+      const currentX =
+        animation.startX +
+        (animation.endX - animation.startX) * animation.progress;
+      const currentY =
+        animation.startY +
+        (animation.endY - animation.startY) * animation.progress;
+
+      const sockBallImageName = `sockball${animation.type}.png`;
+      if (this.game.images[sockBallImageName]) {
+        const size = this.game.getScaledValue(30);
+        ctx.save();
+        ctx.translate(currentX, currentY);
+        ctx.rotate(animation.progress * Math.PI * 4); // Spin during animation
+        ctx.drawImage(
+          this.game.images[sockBallImageName],
+          -size / 2,
+          -size / 2,
+          size,
+          size
+        );
+        ctx.restore();
+      }
+    });
   }
 
   renderLevelButtons(ctx) {

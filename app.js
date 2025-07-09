@@ -363,13 +363,12 @@ class SockGame {
       this.throwingScreen.cleanup();
     }
 
-    // Mark level as completed and unlock next level
-    this.completedLevels[this.currentLevel] = true;
+    // Unlock next level (but don't mark as completed - that's handled by level end screen)
     if (this.currentLevel + 1 < GameConfig.LEVELS.length) {
       this.unlockedLevels[this.currentLevel + 1] = true;
     }
 
-    // Points calculation is now handled in the level end screen
+    // Points calculation and level completion tracking is now handled in the level end screen
     this.levelEndScreen.setup();
     this.gameState = "gameOver";
   }
