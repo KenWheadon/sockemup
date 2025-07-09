@@ -1,6 +1,6 @@
 /* Enhanced Martha Scene Styles */
 
-/* Shooting Phase Styles */
+/* Shooting Phase Styles - FIXED: Only change cursor, don't interfere with positioning */
 .shooting-phase {
   cursor: crosshair;
 }

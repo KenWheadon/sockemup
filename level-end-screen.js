@@ -1,23 +1,16 @@
+// 📁 level-end-screen.js (cleaned)
+// Canvas-based animated level end screen with score animation and celebration particles
 class LevelEndScreen {
   constructor(game) {
     this.game = game;
-    this.animationState = "entering"; // entering, showing, exiting
+    this.animationState = "entering";
     this.animationProgress = 0;
     this.animationSpeed = 0.05;
 
-    // Score animation properties
-    this.consumedSocksDisplay = 0;
-    this.extraSockBallsDisplay = 0;
-    this.consumedPointsDisplay = 0;
-    this.extraPointsDisplay = 0;
-    this.totalPointsDisplay = 0;
-    this.finalTotalDisplay = 0;
+    this.resetScores();
+    this.particles = [];
+    this.particleTimer = 0;
 
-    // Animation timers
-    this.scoreAnimationTimer = 0;
-    this.scoreAnimationPhase = 0; // 0: consumed, 1: extra, 2: total, 3: final
-
-    // Button properties
     this.continueButton = {
       x: 0,
       y: 0,
@@ -26,24 +19,24 @@ class LevelEndScreen {
       hovered: false,
       pressed: false,
     };
-
-    // Celebration particles
-    this.particles = [];
-    this.particleTimer = 0;
   }
 
-  // Handle resize events from the main game
+  resetScores() {
+    this.consumedSocksDisplay = 0;
+    this.extraSockBallsDisplay = 0;
+    this.consumedPointsDisplay = 0;
+    this.extraPointsDisplay = 0;
+    this.totalPointsDisplay = 0;
+    this.finalTotalDisplay = 0;
+    this.scoreAnimationTimer = 0;
+    this.scoreAnimationPhase = 0;
+  }
+
   handleResize() {
-    this.setupButtonPosition();
-  }
-
-  setupButtonPosition() {
-    // Use centralized scaling for button positioning
-    const buttonSize = this.game.getScaledSize(200, 50);
-    this.continueButton.width = buttonSize.width;
-    this.continueButton.height = buttonSize.height;
-    this.continueButton.x =
-      this.game.getCanvasWidth() / 2 - buttonSize.width / 2;
+    const { width, height } = this.game.getScaledSize(200, 50);
+    this.continueButton.width = width;
+    this.continueButton.height = height;
+    this.continueButton.x = this.game.getCanvasWidth() / 2 - width / 2;
     this.continueButton.y =
       this.game.getCanvasHeight() / 2 + this.game.getScaledValue(200);
   }
@@ -51,40 +44,24 @@ class LevelEndScreen {
   setup() {
     this.animationState = "entering";
     this.animationProgress = 0;
-    this.scoreAnimationTimer = 0;
-    this.scoreAnimationPhase = 0;
-
-    // Reset display values
-    this.consumedSocksDisplay = 0;
-    this.extraSockBallsDisplay = 0;
-    this.consumedPointsDisplay = 0;
-    this.extraPointsDisplay = 0;
-    this.totalPointsDisplay = 0;
-    this.finalTotalDisplay = 0;
-
-    // Setup button position
-    this.setupButtonPosition();
-
-    // Initialize particles
+    this.resetScores();
+    this.handleResize();
     this.particles = [];
     this.particleTimer = 0;
-
-    // Create celebration particles
     this.createCelebrationParticles();
   }
 
   createCelebrationParticles() {
-    const canvasWidth = this.game.getCanvasWidth();
-    const canvasHeight = this.game.getCanvasHeight();
-    const particleSize = this.game.getScaledValue(6);
-
+    const w = this.game.getCanvasWidth();
+    const h = this.game.getCanvasHeight();
+    const s = this.game.getScaledValue(6);
     for (let i = 0; i < 20; i++) {
       this.particles.push({
-        x: Math.random() * canvasWidth,
-        y: Math.random() * canvasHeight,
+        x: Math.random() * w,
+        y: Math.random() * h,
         vx: (Math.random() - 0.5) * 4,
         vy: (Math.random() - 0.5) * 4,
-        size: particleSize + Math.random() * particleSize,
+        size: s + Math.random() * s,
         color: this.getRandomColor(),
         life: 1.0,
         decay: 0.005 + Math.random() * 0.005,
@@ -93,124 +70,92 @@ class LevelEndScreen {
   }
 
   getRandomColor() {
-    const colors = [
-      "#FFD700",
-      "#FF6B6B",
-      "#4ECDC4",
-      "#45B7D1",
-      "#96CEB4",
-      "#FFEAA7",
+    return ["#FFD700", "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"][
+      Math.floor(Math.random() * 6)
     ];
-    return colors[Math.floor(Math.random() * colors.length)];
   }
 
-  update(deltaTime) {
-    const timeMultiplier = deltaTime / 16.67; // Normalize to 60fps
-
-    // Update main animation
+  update(dt) {
+    const t = dt / 16.67;
     if (this.animationState === "entering") {
-      this.animationProgress += this.animationSpeed * timeMultiplier;
+      this.animationProgress += this.animationSpeed * t;
       if (this.animationProgress >= 1) {
         this.animationProgress = 1;
         this.animationState = "showing";
       }
     }
-
-    // Update score animation
-    if (this.animationState === "showing") {
-      this.updateScoreAnimation(timeMultiplier);
-    }
-
-    // Update particles
-    this.updateParticles(timeMultiplier);
-
-    // Update particle timer
-    this.particleTimer += timeMultiplier;
-    if (this.particleTimer >= 30) {
+    if (this.animationState === "showing") this.updateScoreAnimation(t);
+    this.updateParticles(t);
+    if ((this.particleTimer += t) >= 30) {
       this.particleTimer = 0;
       this.addRandomParticle();
     }
   }
 
-  updateScoreAnimation(timeMultiplier) {
-    this.scoreAnimationTimer += 2 * timeMultiplier;
+  updateScoreAnimation(t) {
+    const m = this.game.marthaScene.marthaManager.consumedSocks;
+    const b = this.game.sockBalls;
+    const c = m * 5;
+    const e = b * 10;
+    const total = c + e;
+    const final = this.game.playerPoints;
 
-    const consumedSocks = this.game.marthaScene.marthaManager.consumedSocks;
-    const extraSockBalls = this.game.sockBalls;
-    const consumedPoints = consumedSocks * 5;
-    const extraPoints = extraSockBalls * 10;
-    const totalPointsEarned = consumedPoints + extraPoints;
-    const finalTotal = this.game.playerPoints;
-
+    this.scoreAnimationTimer += 2 * t;
     switch (this.scoreAnimationPhase) {
-      case 0: // Animate consumed socks
+      case 0:
         this.consumedSocksDisplay = Math.min(
-          consumedSocks,
+          m,
           Math.floor(this.scoreAnimationTimer / 10)
         );
         this.consumedPointsDisplay = this.consumedSocksDisplay * 5;
-        if (this.consumedSocksDisplay >= consumedSocks) {
-          this.scoreAnimationPhase = 1;
-          this.scoreAnimationTimer = 0;
-        }
+        if (this.consumedSocksDisplay >= m)
+          this.scoreAnimationPhase++, (this.scoreAnimationTimer = 0);
         break;
-
-      case 1: // Animate extra sock balls
+      case 1:
         this.extraSockBallsDisplay = Math.min(
-          extraSockBalls,
+          b,
           Math.floor(this.scoreAnimationTimer / 10)
         );
         this.extraPointsDisplay = this.extraSockBallsDisplay * 10;
-        if (this.extraSockBallsDisplay >= extraSockBalls) {
-          this.scoreAnimationPhase = 2;
-          this.scoreAnimationTimer = 0;
-        }
+        if (this.extraSockBallsDisplay >= b)
+          this.scoreAnimationPhase++, (this.scoreAnimationTimer = 0);
         break;
-
-      case 2: // Animate total earned
+      case 2:
         this.totalPointsDisplay = Math.min(
-          totalPointsEarned,
+          total,
           Math.floor(this.scoreAnimationTimer / 5)
         );
-        if (this.totalPointsDisplay >= totalPointsEarned) {
-          this.scoreAnimationPhase = 3;
-          this.scoreAnimationTimer = 0;
-        }
+        if (this.totalPointsDisplay >= total)
+          this.scoreAnimationPhase++, (this.scoreAnimationTimer = 0);
         break;
-
-      case 3: // Animate final total
+      case 3:
         this.finalTotalDisplay = Math.min(
-          finalTotal,
+          final,
           Math.floor(this.scoreAnimationTimer / 3)
         );
         break;
     }
   }
 
-  updateParticles(timeMultiplier) {
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const particle = this.particles[i];
-      particle.x += particle.vx * timeMultiplier;
-      particle.y += particle.vy * timeMultiplier;
-      particle.life -= particle.decay * timeMultiplier;
-
-      if (particle.life <= 0) {
-        this.particles.splice(i, 1);
-      }
-    }
+  updateParticles(t) {
+    this.particles = this.particles.filter((p) => (p.life -= p.decay * t) > 0);
+    this.particles.forEach((p) => {
+      p.x += p.vx * t;
+      p.y += p.vy * t;
+    });
+    if (this.particles.length > 100) this.particles.shift();
   }
 
   addRandomParticle() {
-    const canvasWidth = this.game.getCanvasWidth();
-    const canvasHeight = this.game.getCanvasHeight();
-    const particleSize = this.game.getScaledValue(4);
-
+    const w = this.game.getCanvasWidth();
+    const h = this.game.getCanvasHeight();
+    const s = this.game.getScaledValue(4);
     this.particles.push({
-      x: Math.random() * canvasWidth,
-      y: canvasHeight + this.game.getScaledValue(10),
+      x: Math.random() * w,
+      y: h + this.game.getScaledValue(10),
       vx: (Math.random() - 0.5) * 2,
       vy: -Math.random() * 3 - 1,
-      size: particleSize + Math.random() * particleSize,
+      size: s + Math.random() * s,
       color: this.getRandomColor(),
       life: 1.0,
       decay: 0.01 + Math.random() * 0.01,
@@ -218,235 +163,142 @@ class LevelEndScreen {
   }
 
   handleMouseMove(x, y) {
-    // Check if mouse is over continue button
-    this.continueButton.hovered =
-      x >= this.continueButton.x &&
-      x <= this.continueButton.x + this.continueButton.width &&
-      y >= this.continueButton.y &&
-      y <= this.continueButton.y + this.continueButton.height;
+    const b = this.continueButton;
+    b.hovered =
+      x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height;
   }
-
   handleMouseDown(x, y) {
-    if (this.continueButton.hovered) {
-      this.continueButton.pressed = true;
-    }
+    if (this.continueButton.hovered) this.continueButton.pressed = true;
   }
-
   handleMouseUp() {
     this.continueButton.pressed = false;
   }
-
   handleClick(x, y) {
-    if (this.continueButton.hovered) {
-      this.game.gameState = "menu";
-    }
+    if (this.continueButton.hovered) this.game.gameState = "menu";
   }
 
   render(ctx) {
-    // Apply entrance animation transform
-    const scale = this.easeOutBack(this.animationProgress);
-    const alpha = this.animationProgress;
-
+    const s = this.easeOutBack(this.animationProgress);
     ctx.save();
-    ctx.globalAlpha = alpha;
+    ctx.globalAlpha = this.animationProgress;
     ctx.translate(
       this.game.getCanvasWidth() / 2,
       this.game.getCanvasHeight() / 2
     );
-    ctx.scale(scale, scale);
+    ctx.scale(s, s);
     ctx.translate(
       -this.game.getCanvasWidth() / 2,
       -this.game.getCanvasHeight() / 2
     );
-
-    // Draw particles
     this.renderParticles(ctx);
-
-    // Draw main container
     this.renderMainContainer(ctx);
-
-    // Draw content
     this.renderContent(ctx);
-
-    // Draw continue button
     this.renderContinueButton(ctx);
-
     ctx.restore();
   }
 
   renderParticles(ctx) {
     ctx.save();
-    for (const particle of this.particles) {
-      ctx.globalAlpha = particle.life;
-      ctx.fillStyle = particle.color;
+    for (const p of this.particles) {
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
       ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
   }
 
   renderMainContainer(ctx) {
-    const centerX = this.game.getCanvasWidth() / 2;
-    const centerY = this.game.getCanvasHeight() / 2;
+    const cx = this.game.getCanvasWidth() / 2;
+    const cy = this.game.getCanvasHeight() / 2;
+    const size = this.game.getScaledSize(500, 400);
+    const x = cx - size.width / 2;
+    const y = cy - size.height / 2;
 
-    // Draw backdrop
-    ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.fillRect(0, 0, this.game.getCanvasWidth(), this.game.getCanvasHeight());
-
-    // Draw main card using centralized scaling
-    const cardSize = this.game.getScaledSize(500, 400);
-    const cardX = centerX - cardSize.width / 2;
-    const cardY = centerY - cardSize.height / 2;
-
-    // Card shadow
-    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-    ctx.fillRect(
-      cardX + this.game.getScaledValue(5),
-      cardY + this.game.getScaledValue(5),
-      cardSize.width,
-      cardSize.height
-    );
-
-    // Card background
-    const gradient = ctx.createLinearGradient(
-      cardX,
-      cardY,
-      cardX,
-      cardY + cardSize.height
-    );
-    gradient.addColorStop(0, "#2c3e50");
-    gradient.addColorStop(1, "#34495e");
-    ctx.fillStyle = gradient;
-    ctx.fillRect(cardX, cardY, cardSize.width, cardSize.height);
-
-    // Card border
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillRect(x + 5, y + 5, size.width, size.height);
+    const grad = ctx.createLinearGradient(x, y, x, y + size.height);
+    grad.addColorStop(0, "#2c3e50");
+    grad.addColorStop(1, "#34495e");
+    ctx.fillStyle = grad;
+    ctx.fillRect(x, y, size.width, size.height);
     ctx.strokeStyle = "#3498db";
     ctx.lineWidth = this.game.getScaledValue(3);
-    ctx.strokeRect(cardX, cardY, cardSize.width, cardSize.height);
-
-    // Glow effect
     ctx.shadowColor = "#3498db";
     ctx.shadowBlur = this.game.getScaledValue(20);
-    ctx.strokeRect(cardX, cardY, cardSize.width, cardSize.height);
+    ctx.strokeRect(x, y, size.width, size.height);
     ctx.shadowBlur = 0;
   }
 
   renderContent(ctx) {
-    const centerX = this.game.getCanvasWidth() / 2;
-    const centerY = this.game.getCanvasHeight() / 2;
-
-    // Title using centralized scaling
-    const titleFontSize = this.game.getScaledValue(48);
-    ctx.fillStyle = "#FFD700";
-    ctx.font = `bold ${titleFontSize}px Courier New`;
+    const cx = this.game.getCanvasWidth() / 2;
+    const cy = this.game.getCanvasHeight() / 2;
+    const v = this.game.getScaledValue.bind(this.game);
     ctx.textAlign = "center";
-    ctx.fillText(
-      "LEVEL COMPLETE!",
-      centerX,
-      centerY - this.game.getScaledValue(150)
-    );
 
-    // Add title shadow
-    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillText(
-      "LEVEL COMPLETE!",
-      centerX + this.game.getScaledValue(2),
-      centerY - this.game.getScaledValue(148)
-    );
+    ctx.fillStyle = "#FFD700";
+    ctx.font = `bold ${v(48)}px Courier New`;
+    ctx.fillText("LEVEL COMPLETE!", cx, cy - v(150));
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillText("LEVEL COMPLETE!", cx + v(2), cy - v(148));
 
-    // Score breakdown using centralized scaling
     ctx.fillStyle = "#ecf0f1";
-    const contentFontSize = this.game.getScaledValue(20);
-    ctx.font = `${contentFontSize}px Courier New`;
-
-    const lineHeight = this.game.getScaledValue(30);
-    let currentY = centerY - this.game.getScaledValue(80);
-
-    // Consumed socks
+    ctx.font = `${v(20)}px Courier New`;
+    let y = cy - v(80);
+    const lh = v(30);
     ctx.fillText(
       `Socks Fed to Martha: ${this.consumedSocksDisplay} × 5 = ${this.consumedPointsDisplay} pts`,
-      centerX,
-      currentY
+      cx,
+      y
     );
-    currentY += lineHeight;
-
-    // Extra sock balls
+    y += lh;
     ctx.fillText(
       `Extra Sock Balls: ${this.extraSockBallsDisplay} × 10 = ${this.extraPointsDisplay} pts`,
-      centerX,
-      currentY
+      cx,
+      y
     );
-    currentY += lineHeight;
+    y += lh;
 
-    // Divider line
     ctx.strokeStyle = "#95a5a6";
-    ctx.lineWidth = this.game.getScaledValue(2);
+    ctx.lineWidth = v(2);
     ctx.beginPath();
-    ctx.moveTo(
-      centerX - this.game.getScaledValue(150),
-      currentY + this.game.getScaledValue(10)
-    );
-    ctx.lineTo(
-      centerX + this.game.getScaledValue(150),
-      currentY + this.game.getScaledValue(10)
-    );
+    ctx.moveTo(cx - v(150), y + v(10));
+    ctx.lineTo(cx + v(150), y + v(10));
     ctx.stroke();
-    currentY += this.game.getScaledValue(30);
+    y += v(30);
 
-    // Total earned
     ctx.fillStyle = "#2ecc71";
-    const totalFontSize = this.game.getScaledValue(24);
-    ctx.font = `bold ${totalFontSize}px Courier New`;
-    ctx.fillText(
-      `Points Earned: ${this.totalPointsDisplay}`,
-      centerX,
-      currentY
-    );
-    currentY += lineHeight + this.game.getScaledValue(10);
+    ctx.font = `bold ${v(24)}px Courier New`;
+    ctx.fillText(`Points Earned: ${this.totalPointsDisplay}`, cx, y);
+    y += lh + v(10);
 
-    // Final total
     ctx.fillStyle = "#f39c12";
-    const finalFontSize = this.game.getScaledValue(28);
-    ctx.font = `bold ${finalFontSize}px Courier New`;
-    ctx.fillText(`Total Points: ${this.finalTotalDisplay}`, centerX, currentY);
+    ctx.font = `bold ${v(28)}px Courier New`;
+    ctx.fillText(`Total Points: ${this.finalTotalDisplay}`, cx, y);
   }
 
   renderContinueButton(ctx) {
-    const button = this.continueButton;
+    const b = this.continueButton;
+    const s = this.game.getScaledValue.bind(this.game);
+    const color = b.pressed ? "#2980b9" : b.hovered ? "#5dade2" : "#3498db";
 
-    // Button background
-    let buttonColor = "#3498db";
-    if (button.pressed) {
-      buttonColor = "#2980b9";
-    } else if (button.hovered) {
-      buttonColor = "#5dade2";
-    }
-
-    ctx.fillStyle = buttonColor;
-    ctx.fillRect(button.x, button.y, button.width, button.height);
-
-    // Button border
+    ctx.fillStyle = color;
+    ctx.fillRect(b.x, b.y, b.width, b.height);
     ctx.strokeStyle = "#2980b9";
-    ctx.lineWidth = this.game.getScaledValue(2);
-    ctx.strokeRect(button.x, button.y, button.width, button.height);
-
-    // Button text
-    const buttonFontSize = this.game.getScaledValue(18);
+    ctx.lineWidth = s(2);
+    ctx.strokeRect(b.x, b.y, b.width, b.height);
     ctx.fillStyle = "white";
-    ctx.font = `bold ${buttonFontSize}px Courier New`;
+    ctx.font = `bold ${s(18)}px Courier New`;
     ctx.textAlign = "center";
-    ctx.fillText(
-      "CONTINUE",
-      button.x + button.width / 2,
-      button.y + button.height / 2 + this.game.getScaledValue(6)
-    );
+    ctx.fillText("CONTINUE", b.x + b.width / 2, b.y + b.height / 2 + s(6));
 
-    // Button glow effect when hovered
-    if (button.hovered) {
+    if (b.hovered) {
       ctx.shadowColor = "#3498db";
-      ctx.shadowBlur = this.game.getScaledValue(15);
-      ctx.strokeRect(button.x, button.y, button.width, button.height);
+      ctx.shadowBlur = s(15);
+      ctx.strokeRect(b.x, b.y, b.width, b.height);
       ctx.shadowBlur = 0;
     }
   }
