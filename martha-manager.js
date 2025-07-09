@@ -49,6 +49,19 @@ class MarthaManager {
     this.targetSockballs = 0;
     this.sockballsWanted = 0;
 
+    // Rent due meter
+    this.rentDueMeter = {
+      current: 0,
+      max: 0,
+      width: 60,
+      height: 8,
+      offsetY: -15, // Above Martha's head
+      backgroundColor: "#333333",
+      borderColor: "#666666",
+      fillColor: "#ff4444",
+      fullColor: "#ff0000",
+    };
+
     // Level configuration
     this.speed = 1;
     this.availablePatterns = ["horizontal"];
@@ -84,6 +97,10 @@ class MarthaManager {
     this.speed = level.marthaSpeed;
     this.availablePatterns = level.marthaPatterns;
     this.patternSpeed = level.marthaPatternSpeed;
+
+    // Setup rent due meter
+    this.rentDueMeter.current = 0;
+    this.rentDueMeter.max = level.marthaWantsSockballs;
 
     // Reset position to center area
     this.x = this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
@@ -203,7 +220,8 @@ class MarthaManager {
   }
 
   updateExitMovement(deltaTime) {
-    const exitSpeed = this.speed * 3; // Exit quickly
+    // Exit 5 times faster - changed from speed * 3 to speed * 15
+    const exitSpeed = this.speed * 15;
     this.velocity.x = this.exitDirection * exitSpeed;
     this.velocity.y = 0;
 
@@ -563,6 +581,9 @@ class MarthaManager {
 
     this.collectedSockballs++;
 
+    // Update rent due meter
+    this.rentDueMeter.current = this.collectedSockballs;
+
     // Activate hit effect
     this.hitEffect.active = true;
     this.hitEffect.timer = GameConfig.MARTHA_HIT_EFFECTS.FLASH_DURATION;
@@ -642,6 +663,37 @@ class MarthaManager {
     return this.collectedSockballs < this.sockballsWanted;
   }
 
+  renderRentDueMeter(ctx) {
+    const meter = this.rentDueMeter;
+    const meterX = this.x + (this.width - meter.width) / 2;
+    const meterY = this.y + meter.offsetY;
+
+    // Draw background
+    ctx.fillStyle = meter.backgroundColor;
+    ctx.fillRect(meterX, meterY, meter.width, meter.height);
+
+    // Draw border
+    ctx.strokeStyle = meter.borderColor;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(meterX, meterY, meter.width, meter.height);
+
+    // Draw fill
+    if (meter.current > 0) {
+      const fillWidth = (meter.current / meter.max) * meter.width;
+      const fillColor =
+        meter.current >= meter.max ? meter.fullColor : meter.fillColor;
+      ctx.fillStyle = fillColor;
+      ctx.fillRect(meterX, meterY, fillWidth, meter.height);
+    }
+
+    // Draw text label
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `${this.game.getScaledValue(10)}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.fillText("RENT DUE", meterX + meter.width / 2, meterY - 2);
+  }
+
   render(ctx) {
     if (!this.onScreen && !this.isEntering) return;
 
@@ -680,6 +732,9 @@ class MarthaManager {
       ctx.fillStyle = this.hitEffect.active ? "#ff6b6b" : "#8b4513";
       ctx.fillRect(this.x, this.y, this.width, this.height);
     }
+
+    // Draw rent due meter
+    this.renderRentDueMeter(ctx);
 
     // Draw debug bounds
     if (GameConfig.DEBUG_PHYSICS_BOUNDS) {

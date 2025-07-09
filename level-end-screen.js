@@ -1,3 +1,4 @@
+// 📁 level-end-screen.js - REWRITTEN with queue-based score animation
 class LevelEndScreen extends Screen {
   constructor(game) {
     super(game);
@@ -26,21 +27,15 @@ class LevelEndScreen extends Screen {
 
     return {
       ...baseLayout,
-
-      // Main container positioning
+      centerX: canvasWidth / 2,
+      centerY: canvasHeight / 2,
       containerWidth: this.game.getScaledValue(500),
       containerHeight: this.game.getScaledValue(400),
       containerX: canvasWidth / 2 - this.game.getScaledValue(250),
       containerY: canvasHeight / 2 - this.game.getScaledValue(200),
-
-      // Title positioning
       titleY: canvasHeight / 2 - this.game.getScaledValue(150),
-
-      // Score section positioning
       scoreY: canvasHeight / 2 - this.game.getScaledValue(80),
       scoreLineHeight: this.game.getScaledValue(30),
-
-      // Button positioning
       buttonWidth: this.game.getScaledValue(200),
       buttonHeight: this.game.getScaledValue(50),
       buttonY: canvasHeight / 2 + this.game.getScaledValue(200),
@@ -55,15 +50,8 @@ class LevelEndScreen extends Screen {
     this.totalPointsDisplay = 0;
     this.finalTotalDisplay = 0;
     this.scoreAnimationTimer = 0;
-    this.scoreAnimationPhase = 0;
-  }
-
-  onResize() {
-    const layout = this.layoutCache;
-    this.continueButton.width = layout.buttonWidth;
-    this.continueButton.height = layout.buttonHeight;
-    this.continueButton.x = layout.centerX - layout.buttonWidth / 2;
-    this.continueButton.y = layout.buttonY;
+    this.currentStageIndex = 0;
+    this.scoreStages = [];
   }
 
   setup() {
@@ -71,9 +59,74 @@ class LevelEndScreen extends Screen {
     this.animationState = "entering";
     this.animationProgress = 0;
     this.resetScores();
+    this.prepareScoreAnimation();
     this.particles = [];
     this.particleTimer = 0;
     this.createCelebrationParticles();
+    this.onResize();
+  }
+
+  prepareScoreAnimation() {
+    const m = this.game.throwingScreen.marthaManager.collectedSockballs;
+    const b = this.game.sockBalls;
+    const total = m * 5 + b * 10;
+    const final = this.game.playerPoints;
+
+    this.scoreStages = [
+      {
+        label: "consumedSocksDisplay",
+        start: 0,
+        end: m,
+        rate: 100,
+        pointsPerUnit: 5,
+        valueName: "consumedPointsDisplay",
+      },
+      {
+        label: "extraSockBallsDisplay",
+        start: 0,
+        end: b,
+        rate: 100,
+        pointsPerUnit: 10,
+        valueName: "extraPointsDisplay",
+      },
+      { label: "totalPointsDisplay", start: 0, end: total, rate: 50 },
+      { label: "finalTotalDisplay", start: 0, end: final, rate: 30 },
+    ];
+    this.currentStageIndex = 0;
+    this.scoreAnimationTimer = 0;
+  }
+
+  updateScoreAnimation(deltaTime) {
+    if (this.currentStageIndex >= this.scoreStages.length) return;
+    const t = deltaTime;
+    const stage = this.scoreStages[this.currentStageIndex];
+    this.scoreAnimationTimer += t;
+
+    const stepsToAdd = Math.floor(this.scoreAnimationTimer / stage.rate);
+    if (stepsToAdd > 0) {
+      this.scoreAnimationTimer -= stepsToAdd * stage.rate;
+      const currentValue = this[stage.label] || 0;
+      const newValue = Math.min(currentValue + stepsToAdd, stage.end);
+      this[stage.label] = newValue;
+
+      if (stage.valueName) {
+        this[stage.valueName] = newValue * stage.pointsPerUnit;
+      }
+
+      if (newValue >= stage.end) {
+        this.currentStageIndex++;
+        this.scoreAnimationTimer = 0;
+      }
+    }
+  }
+
+  updateParticles(t) {
+    this.particles = this.particles.filter((p) => (p.life -= p.decay * t) > 0);
+    this.particles.forEach((p) => {
+      p.x += p.vx * t;
+      p.y += p.vy * t;
+    });
+    if (this.particles.length > 100) this.particles.shift();
   }
 
   createCelebrationParticles() {
@@ -94,87 +147,6 @@ class LevelEndScreen extends Screen {
     }
   }
 
-  getRandomColor() {
-    return ["#FFD700", "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"][
-      Math.floor(Math.random() * 6)
-    ];
-  }
-
-  onUpdate(deltaTime) {
-    const t = deltaTime / 16.67;
-    if (this.animationState === "entering") {
-      this.animationProgress += this.animationSpeed * t;
-      if (this.animationProgress >= 1) {
-        this.animationProgress = 1;
-        this.animationState = "showing";
-      }
-    }
-    if (this.animationState === "showing") this.updateScoreAnimation(t);
-    this.updateParticles(t);
-    if ((this.particleTimer += t) >= 30) {
-      this.particleTimer = 0;
-      this.addRandomParticle();
-    }
-  }
-
-  updateScoreAnimation(t) {
-    const m = this.game.throwingScreen.marthaManager.collectedSockballs;
-    const b = this.game.sockBalls;
-    const c = m * 5;
-    const e = b * 10;
-    const total = c + e;
-    const final = this.game.playerPoints;
-
-    this.scoreAnimationTimer += 2 * t;
-    switch (this.scoreAnimationPhase) {
-      case 0:
-        this.consumedSocksDisplay = Math.min(
-          m,
-          Math.floor(this.scoreAnimationTimer / 10)
-        );
-        this.consumedPointsDisplay = this.consumedSocksDisplay * 5;
-        if (this.consumedSocksDisplay >= m)
-          this.scoreAnimationPhase++, (this.scoreAnimationTimer = 0);
-        break;
-      case 1:
-        this.extraSockBallsDisplay = Math.min(
-          b,
-          Math.floor(this.scoreAnimationTimer / 10)
-        );
-        this.extraPointsDisplay = this.extraSockBallsDisplay * 10;
-        if (this.extraSockBallsDisplay >= b)
-          this.scoreAnimationPhase++, (this.scoreAnimationTimer = 0);
-        break;
-      case 2:
-        this.totalPointsDisplay = Math.min(
-          total,
-          Math.floor(this.scoreAnimationTimer / 5)
-        );
-        if (this.totalPointsDisplay >= total)
-          this.scoreAnimationPhase++, (this.scoreAnimationTimer = 0);
-        break;
-      case 3:
-        this.finalTotalDisplay = Math.min(
-          final,
-          Math.floor(this.scoreAnimationTimer / 3)
-        );
-        if (this.finalTotalDisplay >= final) {
-          this.scoreAnimationPhase++;
-          this.scoreAnimationTimer = 0;
-        }
-        break;
-    }
-  }
-
-  updateParticles(t) {
-    this.particles = this.particles.filter((p) => (p.life -= p.decay * t) > 0);
-    this.particles.forEach((p) => {
-      p.x += p.vx * t;
-      p.y += p.vy * t;
-    });
-    if (this.particles.length > 100) this.particles.shift();
-  }
-
   addRandomParticle() {
     const w = this.game.getCanvasWidth();
     const h = this.game.getCanvasHeight();
@@ -189,6 +161,37 @@ class LevelEndScreen extends Screen {
       life: 1.0,
       decay: 0.01 + Math.random() * 0.01,
     });
+  }
+
+  getRandomColor() {
+    return ["#FFD700", "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"][
+      Math.floor(Math.random() * 6)
+    ];
+  }
+
+  onResize() {
+    const layout = this.layoutCache;
+    this.continueButton.width = layout.buttonWidth;
+    this.continueButton.height = layout.buttonHeight;
+    this.continueButton.x = layout.centerX - layout.buttonWidth / 2;
+    this.continueButton.y = layout.buttonY;
+  }
+
+  onUpdate(deltaTime) {
+    const t = deltaTime / 16.67;
+    if (this.animationState === "entering") {
+      this.animationProgress += this.animationSpeed * t;
+      if (this.animationProgress >= 1) {
+        this.animationProgress = 1;
+        this.animationState = "showing";
+      }
+    }
+    if (this.animationState === "showing") this.updateScoreAnimation(deltaTime);
+    this.updateParticles(t);
+    if ((this.particleTimer += t) >= 30) {
+      this.particleTimer = 0;
+      this.addRandomParticle();
+    }
   }
 
   onMouseMove(x, y) {
@@ -243,12 +246,8 @@ class LevelEndScreen extends Screen {
 
   renderMainContainer(ctx) {
     const layout = this.layoutCache;
-
-    // Background overlay
     ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.fillRect(0, 0, this.game.getCanvasWidth(), this.game.getCanvasHeight());
-
-    // Shadow
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.fillRect(
       layout.containerX + 5,
@@ -256,8 +255,6 @@ class LevelEndScreen extends Screen {
       layout.containerWidth,
       layout.containerHeight
     );
-
-    // Main container using shared panel rendering
     this.renderPanel(
       ctx,
       layout.containerX,
@@ -270,103 +267,51 @@ class LevelEndScreen extends Screen {
 
   renderContent(ctx) {
     const layout = this.layoutCache;
-
-    // Title with glow effect
     ctx.save();
     ctx.shadowColor = "#FFD700";
     ctx.shadowBlur = this.game.getScaledValue(10);
-
     this.renderText(ctx, "LEVEL COMPLETE!", layout.centerX, layout.titleY, {
       fontSize: this.game.getScaledValue(48),
-      weight: "bold",
-      color: "#FFD700",
+      fontWeight: "bold",
+      textAlign: "center",
     });
     ctx.restore();
 
-    // Score breakdown
-    let y = layout.scoreY;
-    const lineHeight = layout.scoreLineHeight;
+    const lines = [
+      ["Sockballs collected", this.consumedSocksDisplay],
+      ["Points from Martha", this.consumedPointsDisplay],
+      ["Leftover sockballs", this.extraSockBallsDisplay],
+      ["Bonus points", this.extraPointsDisplay],
+      ["Total round score", this.totalPointsDisplay],
+      ["Final total score", this.finalTotalDisplay],
+    ];
 
-    this.renderText(
-      ctx,
-      `Socks Fed to Martha: ${this.consumedSocksDisplay} × 5 = ${this.consumedPointsDisplay} pts`,
-      layout.centerX,
-      y,
-      { fontSize: layout.headerFontSize }
-    );
-    y += lineHeight;
-
-    this.renderText(
-      ctx,
-      `Extra Sock Balls: ${this.extraSockBallsDisplay} × 10 = ${this.extraPointsDisplay} pts`,
-      layout.centerX,
-      y,
-      { fontSize: layout.headerFontSize }
-    );
-    y += lineHeight;
-
-    // Separator line
-    ctx.strokeStyle = "#95a5a6";
-    ctx.lineWidth = this.game.getScaledValue(2);
-    ctx.beginPath();
-    ctx.moveTo(
-      layout.centerX - this.game.getScaledValue(150),
-      y + this.game.getScaledValue(10)
-    );
-    ctx.lineTo(
-      layout.centerX + this.game.getScaledValue(150),
-      y + this.game.getScaledValue(10)
-    );
-    ctx.stroke();
-    y += this.game.getScaledValue(30);
-
-    // Total points earned
-    this.renderText(
-      ctx,
-      `Points Earned: ${this.totalPointsDisplay}`,
-      layout.centerX,
-      y,
-      {
-        fontSize: layout.titleFontSize,
-        weight: "bold",
-        color: "#2ecc71",
-      }
-    );
-    y += lineHeight + this.game.getScaledValue(10);
-
-    // Final total
-    this.renderText(
-      ctx,
-      `Total Points: ${this.finalTotalDisplay}`,
-      layout.centerX,
-      y,
-      {
-        fontSize: this.game.getScaledValue(28),
-        weight: "bold",
-        color: "#f39c12",
-      }
-    );
-  }
-
-  renderContinueButton(ctx) {
-    const button = this.continueButton;
-
-    // Use shared button rendering
-    this.renderButton(ctx, {
-      x: button.x,
-      y: button.y,
-      width: button.width,
-      height: button.height,
-      text: "CONTINUE",
-      hovered: button.hovered,
-      pressed: button.pressed,
-      enabled: true,
+    lines.forEach((line, i) => {
+      const y = layout.scoreY + i * layout.scoreLineHeight;
+      this.renderScoreLine(ctx, line[0], line[1], layout.centerX, y);
     });
   }
 
-  easeOutBack(t) {
-    const c1 = 1.70158;
-    const c3 = c1 + 1;
-    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  renderScoreLine(ctx, label, value, x, y) {
+    ctx.fillStyle = "#fff";
+    ctx.font = `${this.game.getScaledValue(18)}px ${this.game.font}`;
+    ctx.textAlign = "right";
+    ctx.fillText(label, x - 20, y);
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#FFD700";
+    ctx.fillText(value, x + 20, y);
+  }
+
+  renderContinueButton(ctx) {
+    const b = this.continueButton;
+    ctx.save();
+    ctx.fillStyle = b.hovered ? "#4ECDC4" : "#3498DB";
+    ctx.fillRect(b.x, b.y, b.width, b.height);
+    ctx.fillStyle = "#fff";
+    ctx.font = `${this.game.getScaledValue(18)}px ${this.game.font}`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("CONTINUE", b.x + b.width / 2, b.y + b.height / 2);
+    ctx.restore();
   }
 }
