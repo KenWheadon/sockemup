@@ -256,6 +256,7 @@ const GameConfig = {
       "martha3.png",
       "martha-rentdue.png",
       "martha-win.png",
+      "martha-demand.png",
     ],
     UI: ["background.png", "logo.png", "star.png"],
   },
