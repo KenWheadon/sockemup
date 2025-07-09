@@ -25,6 +25,8 @@ class MarthaManager {
     // Animation state
     this.animationFrame = 0;
     this.animationSpeed = 5;
+    this.animationTimer = 0;
+    this.currentFrameIndex = 0;
     this.facingRight = true;
 
     // Hit effects
@@ -52,13 +54,20 @@ class MarthaManager {
     this.availablePatterns = ["horizontal"];
     this.patternSpeed = 1;
 
-    // Bounds
+    // Bounds with buffer zones
     this.bounds = {
       left: GameConfig.THROWING_BOUNDS.LEFT,
       right: GameConfig.THROWING_BOUNDS.RIGHT,
       top: GameConfig.THROWING_BOUNDS.TOP,
       bottom: GameConfig.THROWING_BOUNDS.BOTTOM,
     };
+
+    // AI improvement properties
+    this.edgeBuffer = 30; // Distance from edge to start avoiding
+    this.centerAttraction = 0.1; // How much Martha is attracted to center
+    this.edgeRepulsion = 0.3; // How much Martha avoids edges
+    this.lastEdgeHit = 0; // Timer to prevent rapid edge bouncing
+    this.edgeHitCooldown = 500; // milliseconds
   }
 
   setup(level) {
@@ -70,7 +79,7 @@ class MarthaManager {
     this.availablePatterns = level.marthaPatterns;
     this.patternSpeed = level.marthaPatternSpeed;
 
-    // Reset position
+    // Reset position to center area
     this.x = this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
     this.y = this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
 
@@ -83,12 +92,19 @@ class MarthaManager {
     this.hitEffect.active = false;
     this.hitEffect.pointPopups = [];
 
+    // Reset animation
+    this.animationFrame = 0;
+    this.animationTimer = 0;
+    this.currentFrameIndex = 0;
+
     // Initialize first pattern
     this.switchPattern();
   }
 
   update(deltaTime) {
-    this.animationFrame += deltaTime / 16.67; // Normalize to 60fps
+    // Update animation
+    this.updateAnimation(deltaTime);
+
     this.patternTimer += deltaTime;
     this.patternSwitchTimer += deltaTime;
 
@@ -110,8 +126,30 @@ class MarthaManager {
       this.updatePatternMovement(deltaTime);
     }
 
-    // Apply velocity and bounds checking
-    this.applyMovement(deltaTime);
+    // Apply velocity and intelligent bounds checking
+    this.applyIntelligentMovement(deltaTime);
+  }
+
+  updateAnimation(deltaTime) {
+    // Only animate if moving
+    const isMoving =
+      Math.abs(this.velocity.x) > 0.1 || Math.abs(this.velocity.y) > 0.1;
+
+    if (isMoving) {
+      this.animationTimer += deltaTime;
+
+      // Animation speed should be proportional to movement speed
+      const movementSpeed = Math.sqrt(
+        this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y
+      );
+      const animationSpeed = Math.max(200, 400 - movementSpeed * 50); // Faster animation for faster movement
+
+      if (this.animationTimer >= animationSpeed) {
+        this.currentFrameIndex =
+          (this.currentFrameIndex + 1) % GameConfig.MARTHA_FRAMES.length;
+        this.animationTimer = 0;
+      }
+    }
   }
 
   updateHitEffects(deltaTime) {
@@ -177,6 +215,7 @@ class MarthaManager {
   updatePatternMovement(deltaTime) {
     const timeMultiplier = deltaTime / 16.67;
 
+    // Calculate base movement from pattern
     switch (this.currentPattern) {
       case "horizontal":
         this.updateHorizontalPattern(timeMultiplier);
@@ -194,6 +233,59 @@ class MarthaManager {
         this.updateRandomPattern(timeMultiplier);
         break;
     }
+
+    // Apply AI improvements
+    this.applyAIImprovements(timeMultiplier);
+  }
+
+  applyAIImprovements(timeMultiplier) {
+    // Calculate center attraction
+    const centerX =
+      this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
+    const centerY =
+      this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
+
+    const distanceFromCenterX = centerX - this.x;
+    const distanceFromCenterY = centerY - this.y;
+
+    // Apply gentle attraction to center
+    this.velocity.x +=
+      distanceFromCenterX * this.centerAttraction * timeMultiplier;
+    this.velocity.y +=
+      distanceFromCenterY * this.centerAttraction * timeMultiplier;
+
+    // Apply edge repulsion
+    const currentTime = Date.now();
+
+    // Left edge repulsion
+    if (this.x < this.bounds.left + this.edgeBuffer) {
+      const repulsionForce =
+        (this.bounds.left + this.edgeBuffer - this.x) / this.edgeBuffer;
+      this.velocity.x += repulsionForce * this.edgeRepulsion * timeMultiplier;
+    }
+
+    // Right edge repulsion
+    if (this.x > this.bounds.right - this.width - this.edgeBuffer) {
+      const repulsionForce =
+        (this.x - (this.bounds.right - this.width - this.edgeBuffer)) /
+        this.edgeBuffer;
+      this.velocity.x -= repulsionForce * this.edgeRepulsion * timeMultiplier;
+    }
+
+    // Top edge repulsion
+    if (this.y < this.bounds.top + this.edgeBuffer) {
+      const repulsionForce =
+        (this.bounds.top + this.edgeBuffer - this.y) / this.edgeBuffer;
+      this.velocity.y += repulsionForce * this.edgeRepulsion * timeMultiplier;
+    }
+
+    // Bottom edge repulsion
+    if (this.y > this.bounds.bottom - this.height - this.edgeBuffer) {
+      const repulsionForce =
+        (this.y - (this.bounds.bottom - this.height - this.edgeBuffer)) /
+        this.edgeBuffer;
+      this.velocity.y -= repulsionForce * this.edgeRepulsion * timeMultiplier;
+    }
   }
 
   updateHorizontalPattern(timeMultiplier) {
@@ -202,10 +294,10 @@ class MarthaManager {
       this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
     this.velocity.y = 0;
 
-    // Bounce off horizontal bounds
+    // Check for direction change at bounds
     if (
-      this.x <= this.bounds.left ||
-      this.x >= this.bounds.right - this.width
+      this.x <= this.bounds.left + this.edgeBuffer ||
+      this.x >= this.bounds.right - this.width - this.edgeBuffer
     ) {
       this.direction *= -1;
       this.facingRight = this.direction > 0;
@@ -218,10 +310,10 @@ class MarthaManager {
     this.velocity.y =
       this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
 
-    // Bounce off vertical bounds
+    // Check for direction change at bounds
     if (
-      this.y <= this.bounds.top ||
-      this.y >= this.bounds.bottom - this.height
+      this.y <= this.bounds.top + this.edgeBuffer ||
+      this.y >= this.bounds.bottom - this.height - this.edgeBuffer
     ) {
       this.direction *= -1;
     }
@@ -244,17 +336,17 @@ class MarthaManager {
       this.patternSpeed *
       timeMultiplier;
 
-    // Bounce off bounds
+    // Check for direction change at bounds
     if (
-      this.x <= this.bounds.left ||
-      this.x >= this.bounds.right - this.width
+      this.x <= this.bounds.left + this.edgeBuffer ||
+      this.x >= this.bounds.right - this.width - this.edgeBuffer
     ) {
       this.patternData.diagonalDirection.x *= -1;
       this.facingRight = this.patternData.diagonalDirection.x > 0;
     }
     if (
-      this.y <= this.bounds.top ||
-      this.y >= this.bounds.bottom - this.height
+      this.y <= this.bounds.top + this.edgeBuffer ||
+      this.y >= this.bounds.bottom - this.height - this.edgeBuffer
     ) {
       this.patternData.diagonalDirection.y *= -1;
     }
@@ -268,9 +360,10 @@ class MarthaManager {
         this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
       this.patternData.centerY =
         this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
+      // Reduce radius to keep Martha away from edges
       this.patternData.radius = Math.min(
-        (this.bounds.right - this.bounds.left) / 4,
-        (this.bounds.bottom - this.bounds.top) / 4
+        (this.bounds.right - this.bounds.left) / 3,
+        (this.bounds.bottom - this.bounds.top) / 3
       );
     }
 
@@ -293,8 +386,8 @@ class MarthaManager {
   updateRandomPattern(timeMultiplier) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.RANDOM.baseSpeed;
 
-    // Change direction randomly
-    if (Math.random() < 0.02) {
+    // Change direction randomly, but less frequently
+    if (Math.random() < 0.01) {
       this.patternData.randomDirection = {
         x: (Math.random() - 0.5) * 2,
         y: (Math.random() - 0.5) * 2,
@@ -319,19 +412,60 @@ class MarthaManager {
     this.facingRight = this.velocity.x > 0;
   }
 
-  applyMovement(deltaTime) {
+  applyIntelligentMovement(deltaTime) {
+    const currentTime = Date.now();
+
     // Apply velocity
     this.x += this.velocity.x;
     this.y += this.velocity.y;
 
-    // Bounds checking for normal movement (not exit/enter)
+    // Intelligent bounds checking with bouncing for normal movement
     if (!this.isExiting && !this.isEntering) {
-      if (this.x < this.bounds.left) this.x = this.bounds.left;
-      if (this.x > this.bounds.right - this.width)
-        this.x = this.bounds.right - this.width;
-      if (this.y < this.bounds.top) this.y = this.bounds.top;
-      if (this.y > this.bounds.bottom - this.height)
-        this.y = this.bounds.bottom - this.height;
+      let bounced = false;
+
+      // Left boundary
+      if (this.x < this.bounds.left) {
+        this.x = this.bounds.left + Math.abs(this.bounds.left - this.x); // Bounce back
+        this.velocity.x = Math.abs(this.velocity.x) * 0.5; // Reduce speed and reverse direction
+        bounced = true;
+      }
+
+      // Right boundary
+      if (this.x > this.bounds.right - this.width) {
+        this.x =
+          this.bounds.right -
+          this.width -
+          Math.abs(this.x - (this.bounds.right - this.width));
+        this.velocity.x = -Math.abs(this.velocity.x) * 0.5;
+        bounced = true;
+      }
+
+      // Top boundary
+      if (this.y < this.bounds.top) {
+        this.y = this.bounds.top + Math.abs(this.bounds.top - this.y);
+        this.velocity.y = Math.abs(this.velocity.y) * 0.5;
+        bounced = true;
+      }
+
+      // Bottom boundary
+      if (this.y > this.bounds.bottom - this.height) {
+        this.y =
+          this.bounds.bottom -
+          this.height -
+          Math.abs(this.y - (this.bounds.bottom - this.height));
+        this.velocity.y = -Math.abs(this.velocity.y) * 0.5;
+        bounced = true;
+      }
+
+      // Update facing direction based on velocity
+      if (Math.abs(this.velocity.x) > 0.1) {
+        this.facingRight = this.velocity.x > 0;
+      }
+
+      // Record bounce time to prevent rapid bouncing
+      if (bounced) {
+        this.lastEdgeHit = currentTime;
+      }
     }
   }
 
@@ -447,8 +581,12 @@ class MarthaManager {
       }%)`;
     }
 
+    // Get the current animation frame
+    const frameIndex = GameConfig.MARTHA_FRAMES[this.currentFrameIndex];
+    const marthaImage =
+      this.game.images[GameConfig.IMAGES.CHARACTERS[frameIndex]];
+
     // Draw Martha
-    const marthaImage = this.game.images["martha.png"];
     if (marthaImage) {
       ctx.save();
 
@@ -477,6 +615,16 @@ class MarthaManager {
         this.bounds.top,
         this.bounds.right - this.bounds.left,
         this.bounds.bottom - this.bounds.top
+      );
+
+      // Draw edge buffer zones
+      ctx.strokeStyle = "rgba(255, 255, 0, 0.3)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(
+        this.bounds.left + this.edgeBuffer,
+        this.bounds.top + this.edgeBuffer,
+        this.bounds.right - this.bounds.left - this.edgeBuffer * 2,
+        this.bounds.bottom - this.bounds.top - this.edgeBuffer * 2
       );
     }
 
