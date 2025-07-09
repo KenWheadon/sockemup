@@ -234,6 +234,18 @@ class LevelEndScreen extends Screen {
     ctx.restore();
   }
 
+  renderParticles(ctx) {
+    ctx.save();
+    for (const p of this.particles) {
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
   renderMainContainer(ctx) {
     const layout = this.layoutCache;
     ctx.fillStyle = "rgba(0,0,0,0.8)";

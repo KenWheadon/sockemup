@@ -30,10 +30,18 @@
 }
 
 .loading-logo {
-  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.loading-logo-image {
+  max-width: 150px;
   width: 100%;
   height: auto;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
 }
 
 .loading-text {

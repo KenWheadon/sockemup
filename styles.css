@@ -10,7 +10,6 @@ body {
 
 canvas {
   display: block;
-  background: #34495e;
   cursor: default;
   position: absolute;
   /* Canvas positioning handled by JavaScript */

@@ -23,6 +23,7 @@ class LoadingScreen {
         <div class="loading-screen">
           <div class="loading-content">
             <div class="loading-logo">
+              <img src="images/company-logo.png" alt="Company Logo" class="loading-logo-image" />
               <div class="loading-text">Loading Sock Game...</div>
             </div>
             <div class="loading-bar-container">
@@ -87,18 +88,24 @@ class LoadingScreen {
   }
 
   transitionToGame() {
+    // Initialize the main game immediately to show level selection behind loading screen
+    if (window.gameInitCallback) {
+      window.gameInitCallback();
+    }
+
     setTimeout(() => {
       const loadingScreen = document.querySelector(".loading-screen");
 
       if (loadingScreen) {
+        // Disable pointer events immediately so clicks can pass through
+        loadingScreen.style.pointerEvents = "none";
         loadingScreen.style.opacity = "0";
         loadingScreen.style.transition = "opacity 0.5s ease-out";
 
         setTimeout(() => {
-          loadingScreen.style.display = "none";
-          // Initialize the main game
-          if (window.gameInitCallback) {
-            window.gameInitCallback();
+          // Remove from DOM completely after fade out
+          if (loadingScreen.parentNode) {
+            loadingScreen.parentNode.removeChild(loadingScreen);
           }
         }, 500);
       }
@@ -113,6 +120,7 @@ class LoadingScreen {
       ...GameConfig.IMAGES.SOCK_PILES,
       ...GameConfig.IMAGES.CHARACTERS,
       ...GameConfig.IMAGES.UI,
+      "company-logo.png", // Add company logo
     ];
 
     this.assetsToLoad = imagesToLoad.length;
