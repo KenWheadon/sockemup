@@ -1,12 +1,9 @@
 class MatchPhysics {
   constructor(game) {
     this.game = game;
-    this.bounds = {
-      left: GameConfig.PHYSICS_BOUNDS.LEFT,
-      right: GameConfig.PHYSICS_BOUNDS.RIGHT,
-      top: GameConfig.PHYSICS_BOUNDS.TOP,
-      bottom: GameConfig.PHYSICS_BOUNDS.BOTTOM,
-    };
+
+    // Calculate bounds based on current canvas size using scaled values
+    this.updateBounds();
 
     // Smoother friction-based physics constants
     this.friction = 0.992; // Increased from 0.985 for smoother slowdown
@@ -15,7 +12,20 @@ class MatchPhysics {
     this.rotationFriction = 0.98; // Increased from 0.95 for smoother rotation slowdown
   }
 
+  // Update bounds when canvas size changes
+  updateBounds() {
+    this.bounds = {
+      left: this.game.getScaledValue(50),
+      right: this.game.getCanvasWidth() - this.game.getScaledValue(50),
+      top: this.game.getScaledValue(70),
+      bottom: this.game.getCanvasHeight() - this.game.getScaledValue(100),
+    };
+  }
+
   updateSock(sock) {
+    // Update bounds in case canvas was resized
+    this.updateBounds();
+
     // Apply friction to velocity
     sock.vx *= this.friction;
     sock.vy *= this.friction;
@@ -185,8 +195,8 @@ class MatchPhysics {
 
     ctx.save();
     ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = this.game.getScaledValue(2);
+    ctx.setLineDash([this.game.getScaledValue(5), this.game.getScaledValue(5)]);
 
     ctx.strokeRect(
       this.bounds.left,
@@ -197,18 +207,18 @@ class MatchPhysics {
 
     // Draw corner labels
     ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
-    ctx.font = "12px Courier New";
+    ctx.font = `${this.game.getScaledValue(12)}px Courier New`;
     ctx.textAlign = "left";
     ctx.fillText(
-      `${this.bounds.left}, ${this.bounds.top}`,
-      this.bounds.left + 5,
-      this.bounds.top + 15
+      `${Math.round(this.bounds.left)}, ${Math.round(this.bounds.top)}`,
+      this.bounds.left + this.game.getScaledValue(5),
+      this.bounds.top + this.game.getScaledValue(15)
     );
     ctx.textAlign = "right";
     ctx.fillText(
-      `${this.bounds.right}, ${this.bounds.bottom}`,
-      this.bounds.right - 5,
-      this.bounds.bottom - 5
+      `${Math.round(this.bounds.right)}, ${Math.round(this.bounds.bottom)}`,
+      this.bounds.right - this.game.getScaledValue(5),
+      this.bounds.bottom - this.game.getScaledValue(5)
     );
 
     ctx.restore();

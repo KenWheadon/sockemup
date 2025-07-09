@@ -24,10 +24,10 @@ class LevelSelect {
       bounce: 0.7,
       gravity: 0.3,
       bounds: {
-        left: 50,
-        right: this.game.getCanvasWidth() - 50,
-        top: 50,
-        bottom: this.game.getCanvasHeight() - 50,
+        left: this.game.getScaledValue(50),
+        right: this.game.getCanvasWidth() - this.game.getScaledValue(50),
+        top: this.game.getScaledValue(50),
+        bottom: this.game.getCanvasHeight() - this.game.getScaledValue(50),
       },
     };
 
@@ -217,7 +217,10 @@ class LevelSelect {
   }
 
   isLogoClicked(x, y) {
-    const logoPos = this.game.getScaledPosition(600, 150); // Base: 600, 150
+    const logoPos = this.game.getScaledPosition(
+      this.game.getCanvasWidth() / 2,
+      150
+    ); // Center horizontally, 150 from top
     const logoSize = this.game.getScaledSize(200, 100); // Base: 200x100
 
     return (
@@ -325,7 +328,10 @@ class LevelSelect {
   }
 
   renderLogo(ctx) {
-    const logoPos = this.game.getScaledPosition(600, 150); // Base: 600, 150
+    const logoPos = this.game.getScaledPosition(
+      this.game.getCanvasWidth() / 2,
+      150
+    ); // Center horizontally, 150 from top
     const logoSize = this.game.getScaledSize(200, 100); // Base: 200x100
 
     // Add glow effect if easter egg is active

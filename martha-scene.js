@@ -39,6 +39,30 @@ class MarthaScene {
     this.messageFlashTimer = 0;
   }
 
+  // Clean up when leaving Martha scene
+  cleanup() {
+    // Remove CSS class that affects canvas styling
+    this.game.canvas.className = "";
+
+    // Reset canvas context to default state
+    this.game.ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform matrix
+    this.game.ctx.globalAlpha = 1;
+    this.game.ctx.filter = "none";
+    this.game.ctx.shadowColor = "transparent";
+    this.game.ctx.shadowBlur = 0;
+    this.game.ctx.shadowOffsetX = 0;
+    this.game.ctx.shadowOffsetY = 0;
+    this.game.ctx.lineDashOffset = 0;
+    this.game.ctx.setLineDash([]);
+
+    // Reset crosshair to center
+    this.game.crosshair.x = this.game.getCanvasWidth() / 2;
+    this.game.crosshair.y = this.game.getCanvasHeight() / 2;
+
+    // Clear thrown socks
+    this.thrownSocks = [];
+  }
+
   fireSock(cursorX, cursorY) {
     // Block firing if Martha is away or no sock balls remaining
     if (this.marthaManager.isMarthaAway() || this.game.sockBalls <= 0) {
@@ -115,6 +139,9 @@ class MarthaScene {
   }
 
   endLevel() {
+    // Clean up before transitioning
+    this.cleanup();
+
     // Calculate score based on extra sock balls
     const extraSockBalls = this.game.sockBalls;
     const extraPoints = extraSockBalls * 10;
