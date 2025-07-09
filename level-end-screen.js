@@ -118,7 +118,7 @@ class LevelEndScreen extends Screen {
   }
 
   updateScoreAnimation(t) {
-    const m = this.game.marthaScene.marthaManager.consumedSocks;
+    const m = this.game.throwingScreen.marthaManager.collectedSockballs;
     const b = this.game.sockBalls;
     const c = m * 5;
     const e = b * 10;

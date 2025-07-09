@@ -43,7 +43,7 @@ class SockGame {
     // Initialize screens - now using the base Screen class
     this.levelSelect = new LevelSelect(this);
     this.matchScreen = new MatchScreen(this);
-    this.marthaScene = new MarthaScene(this);
+    this.throwingScreen = new ThrowingScreen(this);
     this.levelEndScreen = new LevelEndScreen(this);
 
     // Game objects for shooting phase
@@ -189,7 +189,7 @@ class SockGame {
     // Notify screens about resize using new base class method
     if (this.levelSelect) this.levelSelect.handleResize();
     if (this.matchScreen) this.matchScreen.handleResize();
-    if (this.marthaScene) this.marthaScene.handleResize();
+    if (this.throwingScreen) this.throwingScreen.handleResize();
     if (this.levelEndScreen) this.levelEndScreen.handleResize();
 
     // Update crosshair position if in shooting mode
@@ -273,6 +273,8 @@ class SockGame {
       this.levelSelect.handleMouseDown(x, y);
     } else if (this.gameState === "matching") {
       this.matchScreen.handleMouseDown(x, y);
+    } else if (this.gameState === "throwing") {
+      this.throwingScreen.handleMouseDown(x, y);
     } else if (this.gameState === "gameOver") {
       this.levelEndScreen.handleMouseDown(x, y);
     }
@@ -288,9 +290,8 @@ class SockGame {
       this.levelSelect.handleMouseMove(x, y);
     } else if (this.gameState === "matching") {
       this.matchScreen.handleMouseMove(x, y);
-    } else if (this.gameState === "shooting") {
-      this.crosshair.x = x;
-      this.crosshair.y = y;
+    } else if (this.gameState === "throwing") {
+      this.throwingScreen.handleMouseMove(x, y);
     } else if (this.gameState === "gameOver") {
       this.levelEndScreen.handleMouseMove(x, y);
     }
@@ -306,6 +307,8 @@ class SockGame {
       this.levelSelect.handleMouseUp(x, y);
     } else if (this.gameState === "matching") {
       this.matchScreen.handleMouseUp();
+    } else if (this.gameState === "throwing") {
+      this.throwingScreen.handleMouseUp(x, y);
     } else if (this.gameState === "gameOver") {
       this.levelEndScreen.handleMouseUp();
     }
@@ -319,25 +322,22 @@ class SockGame {
     // Use the new Screen base class method
     if (this.gameState === "menu") {
       this.levelSelect.handleClick(x, y);
-    } else if (this.gameState === "shooting") {
-      this.handleShootingClick(x, y);
+    } else if (this.gameState === "throwing") {
+      this.throwingScreen.handleClick(x, y);
     } else if (this.gameState === "gameOver") {
       this.levelEndScreen.handleClick(x, y);
     }
   }
 
-  handleShootingClick(x, y) {
-    this.marthaScene.fireSock(x, y);
-  }
-
-  startShootingPhase() {
-    this.marthaScene.setup();
+  startThrowingPhase() {
+    this.throwingScreen.setup();
+    this.gameState = "throwing";
   }
 
   completeLevel() {
-    // Clean up Martha scene before transitioning
-    if (this.gameState === "shooting") {
-      this.marthaScene.cleanup();
+    // Clean up throwing screen before transitioning
+    if (this.gameState === "throwing") {
+      this.throwingScreen.cleanup();
     }
 
     this.completedLevels[this.currentLevel] = true;
@@ -346,8 +346,8 @@ class SockGame {
       this.unlockedLevels[this.currentLevel + 1] = true;
     }
 
-    const consumedSocks = this.marthaScene.marthaManager.consumedSocks;
-    const extraSockBalls = this.sockBalls;
+    const consumedSocks = this.throwingScreen.marthaManager.collectedSockballs;
+    const extraSockBalls = this.sockBalls - consumedSocks;
     const consumedPoints = consumedSocks * 5;
     const extraPoints = extraSockBalls * 10;
     const totalPointsEarned = consumedPoints + extraPoints;
@@ -365,8 +365,8 @@ class SockGame {
       this.levelSelect.update(deltaTime);
     } else if (this.gameState === "matching") {
       this.matchScreen.update(deltaTime);
-    } else if (this.gameState === "shooting") {
-      this.marthaScene.update(deltaTime);
+    } else if (this.gameState === "throwing") {
+      this.throwingScreen.update(deltaTime);
     } else if (this.gameState === "gameOver") {
       this.levelEndScreen.update(deltaTime);
     }
@@ -399,8 +399,8 @@ class SockGame {
       this.levelSelect.render(this.ctx);
     } else if (this.gameState === "matching") {
       this.matchScreen.render(this.ctx);
-    } else if (this.gameState === "shooting") {
-      this.marthaScene.render(this.ctx);
+    } else if (this.gameState === "throwing") {
+      this.throwingScreen.render(this.ctx);
     } else if (this.gameState === "gameOver") {
       this.levelEndScreen.render(this.ctx);
     }

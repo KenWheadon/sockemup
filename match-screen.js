@@ -262,7 +262,7 @@ class MatchScreen extends Screen {
     this.game.timeRemaining -= timeDecrement;
 
     if (this.game.timeRemaining <= 0) {
-      this.game.startShootingPhase();
+      this.game.startThrowingPhase();
       return;
     }
 
@@ -290,7 +290,7 @@ class MatchScreen extends Screen {
       this.sockManager.getSockListLength() === 0 &&
       this.game.sockBalls >= GameConfig.LEVELS[this.game.currentLevel].sockPairs
     ) {
-      this.game.startShootingPhase();
+      this.game.startThrowingPhase();
     }
   }
 
