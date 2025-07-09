@@ -387,7 +387,7 @@ class LevelSelect extends Screen {
 
     this.renderText(
       ctx,
-      "Match pairs to create sock balls, then throw them at Martha!",
+      "Match pairs to create sock balls, then give Martha your rent!",
       layout.centerX,
       layout.instructionsY + layout.mediumSpacing,
       { fontSize: layout.bodyFontSize, color: "rgba(255, 255, 255, 0.9)" }
