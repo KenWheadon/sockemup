@@ -53,6 +53,7 @@ class ThrowingScreen extends Screen {
     this.waitingForMartha = false;
     this.sockballProjectiles = [];
     this.lastThrowTime = 0;
+    this.sockballsThrown = 0;
 
     // Clear messages
     this.showingMessage = false;
@@ -133,6 +134,7 @@ class ThrowingScreen extends Screen {
   throwSockball(targetX, targetY) {
     if (!this.canThrow()) return;
 
+    this.sockballsThrown++;
     this.availableSockballs--;
     this.lastThrowTime = Date.now();
 

@@ -363,21 +363,13 @@ class SockGame {
       this.throwingScreen.cleanup();
     }
 
+    // Mark level as completed and unlock next level
     this.completedLevels[this.currentLevel] = true;
-
     if (this.currentLevel + 1 < GameConfig.LEVELS.length) {
       this.unlockedLevels[this.currentLevel + 1] = true;
     }
 
-    const consumedSocks = this.throwingScreen.marthaManager.collectedSockballs;
-    const extraSockBalls = this.sockBalls - consumedSocks;
-    const consumedPoints = consumedSocks * 5;
-    const extraPoints = extraSockBalls * 10;
-    const totalPointsEarned = consumedPoints + extraPoints;
-
-    this.playerPoints += totalPointsEarned;
-    this.saveGameData();
-
+    // Points calculation is now handled in the level end screen
     this.levelEndScreen.setup();
     this.gameState = "gameOver";
   }

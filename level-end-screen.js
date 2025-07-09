@@ -1,14 +1,9 @@
-// 📁 level-end-screen.js - REWRITTEN with queue-based score animation
+// 📁 level-end-screen.js - Updated with simplified scoring and Martha images
 class LevelEndScreen extends Screen {
   constructor(game) {
     super(game);
-    this.animationState = "entering";
-    this.animationProgress = 0;
-    this.animationSpeed = 0.05;
-
+    // Removed animation state properties
     this.resetScores();
-    this.particles = [];
-    this.particleTimer = 0;
 
     this.continueButton = {
       x: 0,
@@ -18,6 +13,10 @@ class LevelEndScreen extends Screen {
       hovered: false,
       pressed: false,
     };
+
+    // Martha image state
+    this.marthaImage = null;
+    this.showRentDue = false;
   }
 
   createLayoutCache() {
@@ -25,30 +24,40 @@ class LevelEndScreen extends Screen {
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
 
+    // Add margin between Martha image and stats
+    const marthaImageSize = this.game.getScaledValue(80);
+    const marthaToStatsMargin = this.game.getScaledValue(30);
+
     return {
       ...baseLayout,
       centerX: canvasWidth / 2,
       centerY: canvasHeight / 2,
-      containerWidth: this.game.getScaledValue(500),
-      containerHeight: this.game.getScaledValue(400),
-      containerX: canvasWidth / 2 - this.game.getScaledValue(250),
-      containerY: canvasHeight / 2 - this.game.getScaledValue(200),
-      titleY: canvasHeight / 2 - this.game.getScaledValue(150),
-      scoreY: canvasHeight / 2 - this.game.getScaledValue(80),
-      scoreLineHeight: this.game.getScaledValue(30),
+      containerWidth: this.game.getScaledValue(600),
+      containerHeight: this.game.getScaledValue(550),
+      containerX: canvasWidth / 2 - this.game.getScaledValue(300),
+      containerY: canvasHeight / 2 - this.game.getScaledValue(275),
+      titleY: canvasHeight / 2 - this.game.getScaledValue(200),
+      marthaImageY: canvasHeight / 2 - this.game.getScaledValue(130),
+      marthaImageSize: marthaImageSize,
+      // Add margin between Martha image and stats
+      scoreStartY:
+        canvasHeight / 2 -
+        this.game.getScaledValue(130) +
+        marthaImageSize +
+        marthaToStatsMargin,
+      scoreLineHeight: this.game.getScaledValue(35),
       buttonWidth: this.game.getScaledValue(200),
       buttonHeight: this.game.getScaledValue(50),
-      buttonY: canvasHeight / 2 + this.game.getScaledValue(200),
+      buttonY: canvasHeight / 2 + this.game.getScaledValue(240),
+      gapAboveButton: this.game.getScaledValue(20),
     };
   }
 
   resetScores() {
-    this.consumedSocksDisplay = 0;
-    this.extraSockBallsDisplay = 0;
-    this.consumedPointsDisplay = 0;
-    this.extraPointsDisplay = 0;
-    this.totalPointsDisplay = 0;
-    this.finalTotalDisplay = 0;
+    this.sockballsPaidDisplay = 0;
+    this.sockballsLeftoverDisplay = 0;
+    this.rentPenaltyDisplay = 0;
+    this.totalScoreDisplay = 0;
     this.scoreAnimationTimer = 0;
     this.currentStageIndex = 0;
     this.scoreStages = [];
@@ -56,42 +65,70 @@ class LevelEndScreen extends Screen {
 
   setup() {
     super.setup();
-    this.animationState = "entering";
-    this.animationProgress = 0;
+    // Removed animation state setup
     this.resetScores();
+    this.calculateScoresAndRent();
     this.prepareScoreAnimation();
-    this.particles = [];
-    this.particleTimer = 0;
-    this.createCelebrationParticles();
     this.onResize();
   }
 
-  prepareScoreAnimation() {
-    const m = this.game.throwingScreen.marthaManager.collectedSockballs;
-    const b = this.game.sockBalls;
-    const consumedPoints = m * 5;
-    const extraPoints = b * 10;
-    const total = consumedPoints + extraPoints;
+  calculateScoresAndRent() {
+    const marthaWanted = this.game.throwingScreen.marthaManager.sockballsWanted;
+    const marthaGot = this.game.throwingScreen.marthaManager.collectedSockballs;
+    const totalSockballsCreated = this.game.sockBalls;
 
+    // Get sockballs thrown from throwing screen, default to 0 if not available
+    const sockballsThrown = this.game.throwingScreen.sockballsThrown || 0;
+
+    this.sockballsPaid = marthaGot;
+    // Only count sockballs that are physically leftover (not thrown)
+    this.sockballsLeftover = Math.max(
+      0,
+      totalSockballsCreated - sockballsThrown
+    );
+    this.rentPenalty = Math.max(0, marthaWanted - marthaGot);
+
+    this.sockballsPaidPoints = this.sockballsPaid * 5;
+    this.sockballsLeftoverPoints = this.sockballsLeftover * 10;
+    this.rentPenaltyPoints = this.rentPenalty * -10;
+    this.totalScore =
+      this.sockballsPaidPoints +
+      this.sockballsLeftoverPoints +
+      this.rentPenaltyPoints;
+
+    // Determine which Martha image to show
+    this.showRentDue = this.rentPenalty > 0;
+    this.marthaImage = this.showRentDue
+      ? this.game.images["martha-rentdue.png"]
+      : this.game.images["martha-win.png"];
+  }
+
+  prepareScoreAnimation() {
     this.scoreStages = [
       {
-        label: "consumedSocksDisplay",
+        label: "sockballsPaidDisplay",
         start: 0,
-        end: m,
-        rate: 100,
-        pointsPerUnit: 5,
-        valueName: "consumedPointsDisplay",
+        end: this.sockballsPaid,
+        rate: 80,
       },
       {
-        label: "extraSockBallsDisplay",
+        label: "sockballsLeftoverDisplay",
         start: 0,
-        end: b,
-        rate: 100,
-        pointsPerUnit: 10,
-        valueName: "extraPointsDisplay",
+        end: this.sockballsLeftover,
+        rate: 80,
       },
-      { label: "totalPointsDisplay", start: 0, end: total, rate: 50 },
-      { label: "finalTotalDisplay", start: 0, end: total, rate: 30 },
+      {
+        label: "rentPenaltyDisplay",
+        start: 0,
+        end: this.rentPenalty,
+        rate: 80,
+      },
+      {
+        label: "totalScoreDisplay",
+        start: 0,
+        end: this.totalScore,
+        rate: 60,
+      },
     ];
 
     this.currentStageIndex = 0;
@@ -100,9 +137,9 @@ class LevelEndScreen extends Screen {
 
   updateScoreAnimation(deltaTime) {
     if (this.currentStageIndex >= this.scoreStages.length) return;
-    const t = deltaTime;
+
     const stage = this.scoreStages[this.currentStageIndex];
-    this.scoreAnimationTimer += t;
+    this.scoreAnimationTimer += deltaTime;
 
     const stepsToAdd = Math.floor(this.scoreAnimationTimer / stage.rate);
     if (stepsToAdd > 0) {
@@ -111,64 +148,11 @@ class LevelEndScreen extends Screen {
       const newValue = Math.min(currentValue + stepsToAdd, stage.end);
       this[stage.label] = newValue;
 
-      if (stage.valueName) {
-        this[stage.valueName] = newValue * stage.pointsPerUnit;
-      }
-
       if (newValue >= stage.end) {
         this.currentStageIndex++;
         this.scoreAnimationTimer = 0;
       }
     }
-  }
-
-  updateParticles(t) {
-    this.particles = this.particles.filter((p) => (p.life -= p.decay * t) > 0);
-    this.particles.forEach((p) => {
-      p.x += p.vx * t;
-      p.y += p.vy * t;
-    });
-    if (this.particles.length > 100) this.particles.shift();
-  }
-
-  createCelebrationParticles() {
-    const w = this.game.getCanvasWidth();
-    const h = this.game.getCanvasHeight();
-    const s = this.game.getScaledValue(6);
-    for (let i = 0; i < 20; i++) {
-      this.particles.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 4,
-        vy: (Math.random() - 0.5) * 4,
-        size: s + Math.random() * s,
-        color: this.getRandomColor(),
-        life: 1.0,
-        decay: 0.005 + Math.random() * 0.005,
-      });
-    }
-  }
-
-  addRandomParticle() {
-    const w = this.game.getCanvasWidth();
-    const h = this.game.getCanvasHeight();
-    const s = this.game.getScaledValue(4);
-    this.particles.push({
-      x: Math.random() * w,
-      y: h + this.game.getScaledValue(10),
-      vx: (Math.random() - 0.5) * 2,
-      vy: -Math.random() * 3 - 1,
-      size: s + Math.random() * s,
-      color: this.getRandomColor(),
-      life: 1.0,
-      decay: 0.01 + Math.random() * 0.01,
-    });
-  }
-
-  getRandomColor() {
-    return ["#FFD700", "#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"][
-      Math.floor(Math.random() * 6)
-    ];
   }
 
   onResize() {
@@ -180,20 +164,8 @@ class LevelEndScreen extends Screen {
   }
 
   onUpdate(deltaTime) {
-    const t = deltaTime / 16.67;
-    if (this.animationState === "entering") {
-      this.animationProgress += this.animationSpeed * t;
-      if (this.animationProgress >= 1) {
-        this.animationProgress = 1;
-        this.animationState = "showing";
-      }
-    }
-    if (this.animationState === "showing") this.updateScoreAnimation(deltaTime);
-    this.updateParticles(t);
-    if ((this.particleTimer += t) >= 30) {
-      this.particleTimer = 0;
-      this.addRandomParticle();
-    }
+    // Removed animation update logic - screen now shows immediately
+    this.updateScoreAnimation(deltaTime);
   }
 
   onMouseMove(x, y) {
@@ -211,45 +183,33 @@ class LevelEndScreen extends Screen {
   }
 
   onClick(x, y) {
-    if (this.continueButton.hovered) this.game.gameState = "menu";
+    if (this.continueButton.hovered) {
+      // Add points to player total
+      this.game.playerPoints += this.totalScore;
+      this.game.saveGameData();
+      this.game.gameState = "menu";
+    }
   }
 
   onRender(ctx) {
-    const s = this.easeOutBack(this.animationProgress);
+    // Removed animation transforms - screen shows immediately without scaling/fading
     ctx.save();
-    ctx.globalAlpha = this.animationProgress;
-    ctx.translate(
-      this.game.getCanvasWidth() / 2,
-      this.game.getCanvasHeight() / 2
-    );
-    ctx.scale(s, s);
-    ctx.translate(
-      -this.game.getCanvasWidth() / 2,
-      -this.game.getCanvasHeight() / 2
-    );
-    this.renderParticles(ctx);
+
     this.renderMainContainer(ctx);
     this.renderContent(ctx);
     this.renderContinueButton(ctx);
-    ctx.restore();
-  }
 
-  renderParticles(ctx) {
-    ctx.save();
-    for (const p of this.particles) {
-      ctx.globalAlpha = p.life;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
     ctx.restore();
   }
 
   renderMainContainer(ctx) {
     const layout = this.layoutCache;
+
+    // Dark overlay
     ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.fillRect(0, 0, this.game.getCanvasWidth(), this.game.getCanvasHeight());
+
+    // Main container with shadow
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.fillRect(
       layout.containerX + 5,
@@ -257,6 +217,7 @@ class LevelEndScreen extends Screen {
       layout.containerWidth,
       layout.containerHeight
     );
+
     this.renderPanel(
       ctx,
       layout.containerX,
@@ -269,51 +230,128 @@ class LevelEndScreen extends Screen {
 
   renderContent(ctx) {
     const layout = this.layoutCache;
+
+    // Title
     ctx.save();
     ctx.shadowColor = "#FFD700";
     ctx.shadowBlur = this.game.getScaledValue(10);
     this.renderText(ctx, "LEVEL COMPLETE!", layout.centerX, layout.titleY, {
       fontSize: this.game.getScaledValue(48),
-      fontWeight: "bold",
-      textAlign: "center",
+      weight: "bold",
+      align: "center",
     });
     ctx.restore();
 
+    // Martha image
+    this.renderMarthaImage(ctx, layout);
+
+    // Score lines (now with proper margin from Martha image)
+    this.renderScoreLines(ctx, layout);
+  }
+
+  renderMarthaImage(ctx, layout) {
+    if (this.marthaImage) {
+      const imageSize = layout.marthaImageSize;
+      const imageX = layout.centerX - imageSize / 2;
+      const imageY = layout.marthaImageY;
+
+      ctx.save();
+      ctx.drawImage(this.marthaImage, imageX, imageY, imageSize, imageSize);
+      ctx.restore();
+    }
+  }
+
+  renderScoreLines(ctx, layout) {
     const lines = [
-      ["Sockballs collected", this.consumedSocksDisplay],
-      ["Points from Martha", this.consumedPointsDisplay],
-      ["Leftover sockballs", this.extraSockBallsDisplay],
-      ["Bonus points", this.extraPointsDisplay],
-      ["Total round score", this.totalPointsDisplay],
-      ["Final total score", this.finalTotalDisplay],
+      {
+        label: `${this.sockballsPaidDisplay}x SOCKBALLS PAID:`,
+        value: this.sockballsPaidDisplay * 5,
+        color: "#4ECDC4",
+      },
+      {
+        label: `SOCKBALLS LEFTOVER:`,
+        value: this.sockballsLeftoverDisplay * 10,
+        color: "#4ECDC4",
+      },
+      {
+        label: `RENT PENALTY:`,
+        value: this.rentPenaltyDisplay * -10,
+        color: "#FF6B6B",
+      },
+      {
+        label: `TOTAL SCORE:`,
+        value: this.totalScoreDisplay,
+        color: "#FFD700",
+      },
     ];
 
     lines.forEach((line, i) => {
-      const y = layout.scoreY + i * layout.scoreLineHeight;
-      this.renderScoreLine(ctx, line[0], line[1], layout.centerX, y);
+      const y = layout.scoreStartY + i * layout.scoreLineHeight;
+      this.renderScoreLine(
+        ctx,
+        line.label,
+        line.value,
+        layout.centerX,
+        y,
+        line.color
+      );
     });
   }
 
-  renderScoreLine(ctx, label, value, x, y) {
-    ctx.fillStyle = "#fff";
-    ctx.font = `${this.game.getScaledValue(18)}px ${this.game.font}`;
+  renderScoreLine(ctx, label, value, centerX, y, valueColor = "#FFD700") {
+    const fontSize = this.game.getScaledValue(20);
+
+    ctx.save();
+    ctx.font = `${fontSize}px Courier New`;
+    ctx.textBaseline = "middle";
+
+    // Label (left aligned)
+    ctx.fillStyle = "#ffffff";
     ctx.textAlign = "right";
-    ctx.fillText(label, x - 20, y);
+    ctx.fillText(label, centerX - 20, y);
+
+    // Value (right aligned)
+    ctx.fillStyle = valueColor;
     ctx.textAlign = "left";
-    ctx.fillStyle = "#FFD700";
-    ctx.fillText(value, x + 20, y);
+    ctx.fillText(`${value} points`, centerX + 20, y);
+
+    ctx.restore();
   }
 
   renderContinueButton(ctx) {
     const b = this.continueButton;
+    const layout = this.layoutCache;
+
     ctx.save();
-    ctx.fillStyle = b.hovered ? "#4ECDC4" : "#3498DB";
+
+    // Button background
+    let fillColor = "#3498DB";
+    if (b.hovered) fillColor = "#4ECDC4";
+    if (b.pressed) fillColor = "#2980B9";
+
+    ctx.fillStyle = fillColor;
     ctx.fillRect(b.x, b.y, b.width, b.height);
-    ctx.fillStyle = "#fff";
-    ctx.font = `${this.game.getScaledValue(18)}px ${this.game.font}`;
+
+    // Button border
+    ctx.strokeStyle = "#2980B9";
+    ctx.lineWidth = this.game.getScaledValue(2);
+    ctx.strokeRect(b.x, b.y, b.width, b.height);
+
+    // Button glow when hovered
+    if (b.hovered) {
+      ctx.shadowColor = "#4ECDC4";
+      ctx.shadowBlur = this.game.getScaledValue(15);
+      ctx.strokeRect(b.x, b.y, b.width, b.height);
+      ctx.shadowBlur = 0;
+    }
+
+    // Button text
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${this.game.getScaledValue(18)}px Courier New`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("CONTINUE", b.x + b.width / 2, b.y + b.height / 2);
+
     ctx.restore();
   }
 }

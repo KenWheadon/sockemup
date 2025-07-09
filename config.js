@@ -249,7 +249,14 @@ const GameConfig = {
       "sockpile3.png",
       "sockpile4.png",
     ],
-    CHARACTERS: ["martha.png", "martha2.png", "martha3.png", "martha3.png"],
+    CHARACTERS: [
+      "martha.png",
+      "martha2.png",
+      "martha3.png",
+      "martha3.png",
+      "martha-rentdue.png",
+      "martha-win.png",
+    ],
     UI: ["background.png", "logo.png", "star.png"],
   },
 };
