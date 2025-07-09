@@ -32,6 +32,22 @@ class LevelEndScreen {
     this.particleTimer = 0;
   }
 
+  // Handle resize events from the main game
+  handleResize() {
+    this.setupButtonPosition();
+  }
+
+  setupButtonPosition() {
+    // Use centralized scaling for button positioning
+    const buttonSize = this.game.getScaledSize(200, 50);
+    this.continueButton.width = buttonSize.width;
+    this.continueButton.height = buttonSize.height;
+    this.continueButton.x =
+      this.game.getCanvasWidth() / 2 - buttonSize.width / 2;
+    this.continueButton.y =
+      this.game.getCanvasHeight() / 2 + this.game.getScaledValue(200);
+  }
+
   setup() {
     this.animationState = "entering";
     this.animationProgress = 0;
@@ -46,10 +62,8 @@ class LevelEndScreen {
     this.totalPointsDisplay = 0;
     this.finalTotalDisplay = 0;
 
-    // Calculate button position
-    this.continueButton.x =
-      this.game.canvas.width / 2 - this.continueButton.width / 2;
-    this.continueButton.y = this.game.canvas.height / 2 + 200;
+    // Setup button position
+    this.setupButtonPosition();
 
     // Initialize particles
     this.particles = [];
@@ -60,13 +74,17 @@ class LevelEndScreen {
   }
 
   createCelebrationParticles() {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const particleSize = this.game.getScaledValue(6);
+
     for (let i = 0; i < 20; i++) {
       this.particles.push({
-        x: Math.random() * this.game.canvas.width,
-        y: Math.random() * this.game.canvas.height,
+        x: Math.random() * canvasWidth,
+        y: Math.random() * canvasHeight,
         vx: (Math.random() - 0.5) * 4,
         vy: (Math.random() - 0.5) * 4,
-        size: Math.random() * 6 + 2,
+        size: particleSize + Math.random() * particleSize,
         color: this.getRandomColor(),
         life: 1.0,
         decay: 0.005 + Math.random() * 0.005,
@@ -86,10 +104,12 @@ class LevelEndScreen {
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
-  update() {
+  update(deltaTime) {
+    const timeMultiplier = deltaTime / 16.67; // Normalize to 60fps
+
     // Update main animation
     if (this.animationState === "entering") {
-      this.animationProgress += this.animationSpeed;
+      this.animationProgress += this.animationSpeed * timeMultiplier;
       if (this.animationProgress >= 1) {
         this.animationProgress = 1;
         this.animationState = "showing";
@@ -98,21 +118,22 @@ class LevelEndScreen {
 
     // Update score animation
     if (this.animationState === "showing") {
-      this.updateScoreAnimation();
+      this.updateScoreAnimation(timeMultiplier);
     }
 
     // Update particles
-    this.updateParticles();
+    this.updateParticles(timeMultiplier);
 
     // Update particle timer
-    this.particleTimer++;
-    if (this.particleTimer % 30 === 0) {
+    this.particleTimer += timeMultiplier;
+    if (this.particleTimer >= 30) {
+      this.particleTimer = 0;
       this.addRandomParticle();
     }
   }
 
-  updateScoreAnimation() {
-    this.scoreAnimationTimer += 2;
+  updateScoreAnimation(timeMultiplier) {
+    this.scoreAnimationTimer += 2 * timeMultiplier;
 
     const consumedSocks = this.game.marthaScene.marthaManager.consumedSocks;
     const extraSockBalls = this.game.sockBalls;
@@ -166,12 +187,12 @@ class LevelEndScreen {
     }
   }
 
-  updateParticles() {
+  updateParticles(timeMultiplier) {
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const particle = this.particles[i];
-      particle.x += particle.vx;
-      particle.y += particle.vy;
-      particle.life -= particle.decay;
+      particle.x += particle.vx * timeMultiplier;
+      particle.y += particle.vy * timeMultiplier;
+      particle.life -= particle.decay * timeMultiplier;
 
       if (particle.life <= 0) {
         this.particles.splice(i, 1);
@@ -180,12 +201,16 @@ class LevelEndScreen {
   }
 
   addRandomParticle() {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const particleSize = this.game.getScaledValue(4);
+
     this.particles.push({
-      x: Math.random() * this.game.canvas.width,
-      y: this.game.canvas.height + 10,
+      x: Math.random() * canvasWidth,
+      y: canvasHeight + this.game.getScaledValue(10),
       vx: (Math.random() - 0.5) * 2,
       vy: -Math.random() * 3 - 1,
-      size: Math.random() * 4 + 1,
+      size: particleSize + Math.random() * particleSize,
       color: this.getRandomColor(),
       life: 1.0,
       decay: 0.01 + Math.random() * 0.01,
@@ -224,9 +249,15 @@ class LevelEndScreen {
 
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(this.game.canvas.width / 2, this.game.canvas.height / 2);
+    ctx.translate(
+      this.game.getCanvasWidth() / 2,
+      this.game.getCanvasHeight() / 2
+    );
     ctx.scale(scale, scale);
-    ctx.translate(-this.game.canvas.width / 2, -this.game.canvas.height / 2);
+    ctx.translate(
+      -this.game.getCanvasWidth() / 2,
+      -this.game.getCanvasHeight() / 2
+    );
 
     // Draw particles
     this.renderParticles(ctx);
@@ -256,67 +287,81 @@ class LevelEndScreen {
   }
 
   renderMainContainer(ctx) {
-    const centerX = this.game.canvas.width / 2;
-    const centerY = this.game.canvas.height / 2;
+    const centerX = this.game.getCanvasWidth() / 2;
+    const centerY = this.game.getCanvasHeight() / 2;
 
     // Draw backdrop
     ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
-    ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+    ctx.fillRect(0, 0, this.game.getCanvasWidth(), this.game.getCanvasHeight());
 
-    // Draw main card
-    const cardWidth = 500;
-    const cardHeight = 400;
-    const cardX = centerX - cardWidth / 2;
-    const cardY = centerY - cardHeight / 2;
+    // Draw main card using centralized scaling
+    const cardSize = this.game.getScaledSize(500, 400);
+    const cardX = centerX - cardSize.width / 2;
+    const cardY = centerY - cardSize.height / 2;
 
     // Card shadow
     ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-    ctx.fillRect(cardX + 5, cardY + 5, cardWidth, cardHeight);
+    ctx.fillRect(
+      cardX + this.game.getScaledValue(5),
+      cardY + this.game.getScaledValue(5),
+      cardSize.width,
+      cardSize.height
+    );
 
     // Card background
     const gradient = ctx.createLinearGradient(
       cardX,
       cardY,
       cardX,
-      cardY + cardHeight
+      cardY + cardSize.height
     );
     gradient.addColorStop(0, "#2c3e50");
     gradient.addColorStop(1, "#34495e");
     ctx.fillStyle = gradient;
-    ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
+    ctx.fillRect(cardX, cardY, cardSize.width, cardSize.height);
 
     // Card border
     ctx.strokeStyle = "#3498db";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(cardX, cardY, cardWidth, cardHeight);
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.strokeRect(cardX, cardY, cardSize.width, cardSize.height);
 
     // Glow effect
     ctx.shadowColor = "#3498db";
-    ctx.shadowBlur = 20;
-    ctx.strokeRect(cardX, cardY, cardWidth, cardHeight);
+    ctx.shadowBlur = this.game.getScaledValue(20);
+    ctx.strokeRect(cardX, cardY, cardSize.width, cardSize.height);
     ctx.shadowBlur = 0;
   }
 
   renderContent(ctx) {
-    const centerX = this.game.canvas.width / 2;
-    const centerY = this.game.canvas.height / 2;
+    const centerX = this.game.getCanvasWidth() / 2;
+    const centerY = this.game.getCanvasHeight() / 2;
 
-    // Title
+    // Title using centralized scaling
+    const titleFontSize = this.game.getScaledValue(48);
     ctx.fillStyle = "#FFD700";
-    ctx.font = "bold 48px Courier New";
+    ctx.font = `bold ${titleFontSize}px Courier New`;
     ctx.textAlign = "center";
-    ctx.fillText("LEVEL COMPLETE!", centerX, centerY - 150);
+    ctx.fillText(
+      "LEVEL COMPLETE!",
+      centerX,
+      centerY - this.game.getScaledValue(150)
+    );
 
     // Add title shadow
     ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillText("LEVEL COMPLETE!", centerX + 2, centerY - 148);
+    ctx.fillText(
+      "LEVEL COMPLETE!",
+      centerX + this.game.getScaledValue(2),
+      centerY - this.game.getScaledValue(148)
+    );
 
-    // Score breakdown
+    // Score breakdown using centralized scaling
     ctx.fillStyle = "#ecf0f1";
-    ctx.font = "20px Courier New";
+    const contentFontSize = this.game.getScaledValue(20);
+    ctx.font = `${contentFontSize}px Courier New`;
 
-    const lineHeight = 30;
-    let currentY = centerY - 80;
+    const lineHeight = this.game.getScaledValue(30);
+    let currentY = centerY - this.game.getScaledValue(80);
 
     // Consumed socks
     ctx.fillText(
@@ -336,26 +381,34 @@ class LevelEndScreen {
 
     // Divider line
     ctx.strokeStyle = "#95a5a6";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = this.game.getScaledValue(2);
     ctx.beginPath();
-    ctx.moveTo(centerX - 150, currentY + 10);
-    ctx.lineTo(centerX + 150, currentY + 10);
+    ctx.moveTo(
+      centerX - this.game.getScaledValue(150),
+      currentY + this.game.getScaledValue(10)
+    );
+    ctx.lineTo(
+      centerX + this.game.getScaledValue(150),
+      currentY + this.game.getScaledValue(10)
+    );
     ctx.stroke();
-    currentY += 30;
+    currentY += this.game.getScaledValue(30);
 
     // Total earned
     ctx.fillStyle = "#2ecc71";
-    ctx.font = "bold 24px Courier New";
+    const totalFontSize = this.game.getScaledValue(24);
+    ctx.font = `bold ${totalFontSize}px Courier New`;
     ctx.fillText(
       `Points Earned: ${this.totalPointsDisplay}`,
       centerX,
       currentY
     );
-    currentY += lineHeight + 10;
+    currentY += lineHeight + this.game.getScaledValue(10);
 
     // Final total
     ctx.fillStyle = "#f39c12";
-    ctx.font = "bold 28px Courier New";
+    const finalFontSize = this.game.getScaledValue(28);
+    ctx.font = `bold ${finalFontSize}px Courier New`;
     ctx.fillText(`Total Points: ${this.finalTotalDisplay}`, centerX, currentY);
   }
 
@@ -375,23 +428,24 @@ class LevelEndScreen {
 
     // Button border
     ctx.strokeStyle = "#2980b9";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = this.game.getScaledValue(2);
     ctx.strokeRect(button.x, button.y, button.width, button.height);
 
     // Button text
+    const buttonFontSize = this.game.getScaledValue(18);
     ctx.fillStyle = "white";
-    ctx.font = "bold 18px Courier New";
+    ctx.font = `bold ${buttonFontSize}px Courier New`;
     ctx.textAlign = "center";
     ctx.fillText(
       "CONTINUE",
       button.x + button.width / 2,
-      button.y + button.height / 2 + 6
+      button.y + button.height / 2 + this.game.getScaledValue(6)
     );
 
     // Button glow effect when hovered
     if (button.hovered) {
       ctx.shadowColor = "#3498db";
-      ctx.shadowBlur = 15;
+      ctx.shadowBlur = this.game.getScaledValue(15);
       ctx.strokeRect(button.x, button.y, button.width, button.height);
       ctx.shadowBlur = 0;
     }

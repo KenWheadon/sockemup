@@ -6,7 +6,7 @@ class MarthaManager {
     this.targetSocks = 0;
     this.isAway = false;
     this.awayTimer = 0;
-    this.awayDuration = 90; // Reduced from 120 to 90 frames (1.5 seconds)
+    this.awayDuration = 90; // 1.5 seconds at 60 FPS
     this.movementPattern = 0;
     this.patternTimer = 0;
     this.movementPatterns = [
@@ -17,25 +17,11 @@ class MarthaManager {
       "diagonal",
     ];
 
-    // Animation properties - using array indices instead of filenames
+    // Animation properties
     this.animationFrames = [0, 1, 0, 2]; // martha.png, martha2.png, martha.png, martha3.png
     this.currentFrameIndex = 0;
     this.animationTimer = 0;
-    this.animationSpeed = 15; // Change frame every 15 game ticks for smoother animation
-  }
-
-  // Get responsive canvas dimensions
-  getCanvasWidth() {
-    return this.game.canvas.width;
-  }
-
-  getCanvasHeight() {
-    return this.game.canvas.height;
-  }
-
-  // Get scaled value for responsive elements
-  getScaledValue(baseValue) {
-    return this.game.getScaledValue(baseValue);
+    this.animationSpeed = 15; // Change frame every 15 game ticks
   }
 
   // Initialize Martha for the current level
@@ -55,112 +41,104 @@ class MarthaManager {
       Math.random() * this.movementPatterns.length
     );
 
-    // Random spawn height within safe bounds - responsive to screen size
-    const minY = this.getCanvasHeight() * 0.125; // 12.5% from top
-    const maxY = this.getCanvasHeight() * 0.75; // 75% from top
-    const randomY = minY + Math.random() * (maxY - minY);
+    // Martha spawns in bottom 2/3 of screen (33.33% to 100% from top)
+    const topBound = this.game.getCanvasHeight() * 0.3333; // 33.33% from top
+    const bottomBound = this.game.getCanvasHeight() * 0.9; // 90% from top (leave space for Martha height)
+    const randomY = topBound + Math.random() * (bottomBound - topBound);
+
+    // Use centralized scaling for Martha size
+    const marthaSize = this.game.getScaledSize(
+      GameConfig.MARTHA_SIZE.width,
+      GameConfig.MARTHA_SIZE.height
+    );
 
     this.martha = {
-      x: this.getCanvasWidth() / 2, // Start Martha in the middle for visibility
+      x: this.game.getCanvasWidth() / 2,
       y: randomY,
-      width: GameConfig.MARTHA_SIZE.width,
-      height: GameConfig.MARTHA_SIZE.height,
+      width: marthaSize.width,
+      height: marthaSize.height,
       vx: -GameConfig.LEVELS[level].marthaSpeed,
       vy: 0,
       direction: -1,
       hitEffect: 0,
-      centerX: this.getCanvasWidth() / 2, // For circular patterns
-      centerY: randomY, // For circular patterns
-      radius: Math.min(this.getCanvasWidth(), this.getCanvasHeight()) * 0.125, // 12.5% of smaller dimension
-      angle: 0, // For circular patterns
+      centerX: this.game.getCanvasWidth() / 2,
+      centerY: randomY,
+      radius:
+        Math.min(this.game.getCanvasWidth(), this.game.getCanvasHeight()) *
+        0.125,
+      angle: 0,
       originalSpeed: GameConfig.LEVELS[level].marthaSpeed,
     };
-
-    console.log("Martha setup complete:", {
-      position: { x: this.martha.x, y: this.martha.y },
-      targetSocks: this.targetSocks,
-      movementPattern: this.movementPatterns[this.movementPattern],
-      canvasSize: {
-        width: this.getCanvasWidth(),
-        height: this.getCanvasHeight(),
-      },
-    });
   }
 
   // Update Martha's position and behavior
-  update() {
+  update(deltaTime) {
     if (!this.martha) return;
 
-    // Handle away state with improved logging
+    const timeMultiplier = deltaTime / 16.67; // Normalize to 60fps
+
+    // Handle away state
     if (this.isAway) {
-      console.log(`Martha is away, timer: ${this.awayTimer}`);
-      this.awayTimer--;
+      this.awayTimer -= timeMultiplier;
       if (this.awayTimer <= 0) {
-        console.log("Martha away timer expired, respawning...");
         this.respawnMartha();
       }
       return;
     }
 
     // Update pattern timer
-    this.patternTimer++;
+    this.patternTimer += timeMultiplier;
 
     // Update Martha's position based on movement pattern
-    this.updateMovementPattern();
+    this.updateMovementPattern(timeMultiplier);
 
     // Update animation frame
-    this.updateAnimation();
+    this.updateAnimation(timeMultiplier);
 
     // Update hit effect
     if (this.martha.hitEffect > 0) {
-      this.martha.hitEffect--;
+      this.martha.hitEffect -= timeMultiplier;
     }
   }
 
   // Update animation frame cycling
-  updateAnimation() {
-    this.animationTimer++;
+  updateAnimation(timeMultiplier) {
+    this.animationTimer += timeMultiplier;
 
     if (this.animationTimer >= this.animationSpeed) {
       this.animationTimer = 0;
       this.currentFrameIndex =
         (this.currentFrameIndex + 1) % this.animationFrames.length;
-
-      const currentImageIndex = this.animationFrames[this.currentFrameIndex];
-      const imageName = GameConfig.IMAGES.CHARACTERS[currentImageIndex];
-      console.log(
-        `Martha animation frame changed to index ${currentImageIndex} (${imageName})`
-      );
     }
   }
 
-  updateMovementPattern() {
+  updateMovementPattern(timeMultiplier) {
     const pattern = this.movementPatterns[this.movementPattern];
 
     switch (pattern) {
       case "horizontal":
-        this.updateHorizontalMovement();
+        this.updateHorizontalMovement(timeMultiplier);
         break;
       case "vertical":
-        this.updateVerticalMovement();
+        this.updateVerticalMovement(timeMultiplier);
         break;
       case "circular":
-        this.updateCircularMovement();
+        this.updateCircularMovement(timeMultiplier);
         break;
       case "figure8":
-        this.updateFigure8Movement();
+        this.updateFigure8Movement(timeMultiplier);
         break;
       case "diagonal":
-        this.updateDiagonalMovement();
+        this.updateDiagonalMovement(timeMultiplier);
         break;
     }
   }
 
-  updateHorizontalMovement() {
-    this.martha.x += this.martha.vx;
+  updateHorizontalMovement(timeMultiplier) {
+    this.martha.x += this.martha.vx * timeMultiplier;
 
-    const leftBound = this.getCanvasWidth() * 0.05; // 5% from left
-    const rightBound = this.getCanvasWidth() * 0.95; // 95% from left
+    const leftBound = this.game.getCanvasWidth() * 0.05;
+    const rightBound = this.game.getCanvasWidth() * 0.95;
 
     if (this.martha.x <= leftBound) {
       this.martha.vx = this.martha.originalSpeed;
@@ -171,15 +149,16 @@ class MarthaManager {
     }
   }
 
-  updateVerticalMovement() {
-    this.martha.y += this.martha.vy;
+  updateVerticalMovement(timeMultiplier) {
+    this.martha.y += this.martha.vy * timeMultiplier;
 
     if (this.martha.vy === 0) {
       this.martha.vy = this.martha.originalSpeed;
     }
 
-    const topBound = this.getCanvasHeight() * 0.125; // 12.5% from top
-    const bottomBound = this.getCanvasHeight() * 0.75; // 75% from top
+    // Movement bounds for bottom 2/3 of screen
+    const topBound = this.game.getCanvasHeight() * 0.3333;
+    const bottomBound = this.game.getCanvasHeight() * 0.9;
 
     if (this.martha.y <= topBound) {
       this.martha.vy = this.martha.originalSpeed;
@@ -188,19 +167,19 @@ class MarthaManager {
     }
   }
 
-  updateCircularMovement() {
-    this.martha.angle += this.martha.originalSpeed * 0.02;
+  updateCircularMovement(timeMultiplier) {
+    this.martha.angle += this.martha.originalSpeed * 0.02 * timeMultiplier;
     this.martha.x =
       this.martha.centerX + Math.cos(this.martha.angle) * this.martha.radius;
     this.martha.y =
       this.martha.centerY +
       Math.sin(this.martha.angle) * this.martha.radius * 0.5;
 
-    // Keep within responsive bounds
-    const leftBound = this.getCanvasWidth() * 0.05;
-    const rightBound = this.getCanvasWidth() * 0.95;
-    const topBound = this.getCanvasHeight() * 0.125;
-    const bottomBound = this.getCanvasHeight() * 0.75;
+    // Keep within bottom 2/3 bounds
+    const leftBound = this.game.getCanvasWidth() * 0.05;
+    const rightBound = this.game.getCanvasWidth() * 0.95;
+    const topBound = this.game.getCanvasHeight() * 0.3333;
+    const bottomBound = this.game.getCanvasHeight() * 0.9;
 
     if (this.martha.x < leftBound) this.martha.x = leftBound;
     if (this.martha.x > rightBound) this.martha.x = rightBound;
@@ -208,19 +187,19 @@ class MarthaManager {
     if (this.martha.y > bottomBound) this.martha.y = bottomBound;
   }
 
-  updateFigure8Movement() {
-    this.martha.angle += this.martha.originalSpeed * 0.015;
+  updateFigure8Movement(timeMultiplier) {
+    this.martha.angle += this.martha.originalSpeed * 0.015 * timeMultiplier;
     this.martha.x =
       this.martha.centerX + Math.cos(this.martha.angle) * this.martha.radius;
     this.martha.y =
       this.martha.centerY +
       Math.sin(this.martha.angle * 2) * this.martha.radius * 0.3;
 
-    // Keep within responsive bounds
-    const leftBound = this.getCanvasWidth() * 0.05;
-    const rightBound = this.getCanvasWidth() * 0.95;
-    const topBound = this.getCanvasHeight() * 0.125;
-    const bottomBound = this.getCanvasHeight() * 0.75;
+    // Keep within bottom 2/3 bounds
+    const leftBound = this.game.getCanvasWidth() * 0.05;
+    const rightBound = this.game.getCanvasWidth() * 0.95;
+    const topBound = this.game.getCanvasHeight() * 0.3333;
+    const bottomBound = this.game.getCanvasHeight() * 0.9;
 
     if (this.martha.x < leftBound) this.martha.x = leftBound;
     if (this.martha.x > rightBound) this.martha.x = rightBound;
@@ -228,19 +207,19 @@ class MarthaManager {
     if (this.martha.y > bottomBound) this.martha.y = bottomBound;
   }
 
-  updateDiagonalMovement() {
-    this.martha.x += this.martha.vx;
-    this.martha.y += this.martha.vy;
+  updateDiagonalMovement(timeMultiplier) {
+    this.martha.x += this.martha.vx * timeMultiplier;
+    this.martha.y += this.martha.vy * timeMultiplier;
 
     if (this.martha.vy === 0) {
       this.martha.vy = this.martha.originalSpeed * 0.5;
     }
 
-    // Bounce off walls - responsive bounds
-    const leftBound = this.getCanvasWidth() * 0.05;
-    const rightBound = this.getCanvasWidth() * 0.95;
-    const topBound = this.getCanvasHeight() * 0.125;
-    const bottomBound = this.getCanvasHeight() * 0.75;
+    // Bounce off walls within bottom 2/3 bounds
+    const leftBound = this.game.getCanvasWidth() * 0.05;
+    const rightBound = this.game.getCanvasWidth() * 0.95;
+    const topBound = this.game.getCanvasHeight() * 0.3333;
+    const bottomBound = this.game.getCanvasHeight() * 0.9;
 
     if (this.martha.x <= leftBound || this.martha.x >= rightBound) {
       this.martha.vx = -this.martha.vx;
@@ -254,13 +233,10 @@ class MarthaManager {
   makeAway() {
     this.isAway = true;
     this.awayTimer = this.awayDuration;
-    console.log("Martha is going away for", this.awayDuration, "frames");
   }
 
-  // Respawn Martha at a new random position - IMPROVED
+  // Respawn Martha with bottom 2/3 bounds
   respawnMartha() {
-    console.log("=== RESPAWNING MARTHA ===");
-
     this.isAway = false;
     this.awayTimer = 0;
     this.patternTimer = 0;
@@ -274,40 +250,31 @@ class MarthaManager {
       Math.random() * this.movementPatterns.length
     );
 
-    // Random spawn height within safe bounds - responsive
-    const minY = this.getCanvasHeight() * 0.125; // 12.5% from top
-    const maxY = this.getCanvasHeight() * 0.75; // 75% from top
-    const randomY = minY + Math.random() * (maxY - minY);
+    // Random spawn in bottom 2/3 of screen
+    const topBound = this.game.getCanvasHeight() * 0.3333;
+    const bottomBound = this.game.getCanvasHeight() * 0.9;
+    const randomY = topBound + Math.random() * (bottomBound - topBound);
 
-    // Spawn from random side - but ensure Martha is visible
+    // Spawn from random side
     const spawnFromLeft = Math.random() < 0.5;
-    const spawnMargin = this.getCanvasWidth() * 0.1; // 10% margin
+    const spawnMargin = this.game.getCanvasWidth() * 0.1;
 
     // Update Martha properties
     this.martha.x = spawnFromLeft
       ? -spawnMargin
-      : this.getCanvasWidth() + spawnMargin;
+      : this.game.getCanvasWidth() + spawnMargin;
     this.martha.y = randomY;
     this.martha.vx = spawnFromLeft
       ? this.martha.originalSpeed
       : -this.martha.originalSpeed;
     this.martha.vy = 0;
     this.martha.direction = spawnFromLeft ? 1 : -1;
-    this.martha.centerX = this.getCanvasWidth() / 2;
+    this.martha.centerX = this.game.getCanvasWidth() / 2;
     this.martha.centerY = randomY;
     this.martha.angle = 0;
-    this.martha.hitEffect = 0; // Reset hit effect
+    this.martha.hitEffect = 0;
     this.martha.radius =
-      Math.min(this.getCanvasWidth(), this.getCanvasHeight()) * 0.125;
-
-    console.log("Martha respawned:", {
-      position: { x: this.martha.x, y: this.martha.y },
-      pattern: this.movementPatterns[this.movementPattern],
-      spawnFromLeft: spawnFromLeft,
-      isAway: this.isAway,
-      awayTimer: this.awayTimer,
-    });
-    console.log("=== RESPAWN COMPLETE ===");
+      Math.min(this.game.getCanvasWidth(), this.game.getCanvasHeight()) * 0.125;
   }
 
   // Check if Martha is currently away
@@ -319,11 +286,12 @@ class MarthaManager {
   checkSockCollision(sock) {
     if (!this.martha || this.isAway) return false;
 
+    const sockSize = this.game.getScaledValue(20);
     const sockBounds = {
-      left: sock.x - 20,
-      right: sock.x + 20,
-      top: sock.y - 20,
-      bottom: sock.y + 20,
+      left: sock.x - sockSize,
+      right: sock.x + sockSize,
+      top: sock.y - sockSize,
+      bottom: sock.y + sockSize,
     };
 
     const marthaBounds = {
@@ -346,12 +314,8 @@ class MarthaManager {
     this.martha.hitEffect = GameConfig.MARTHA_HIT_EFFECT_DURATION;
     this.consumedSocks++;
 
-    console.log(
-      `Martha consumed sock! Total: ${this.consumedSocks}/${this.targetSocks}`
-    );
-
     // Award points immediately when Martha consumes a sock
-    this.game.playerPoints += 5; // 5 points per sock consumed
+    this.game.playerPoints += 5;
 
     // Make Martha go away after being hit
     this.makeAway();
@@ -382,25 +346,16 @@ class MarthaManager {
   render(ctx) {
     if (!this.martha || this.isAway) return;
 
-    // Get current animation frame index
+    // Get current animation frame
     const currentImageIndex = this.animationFrames[this.currentFrameIndex];
     const imageName = GameConfig.IMAGES.CHARACTERS[currentImageIndex];
     const marthaImage = this.game.images[imageName];
-
-    console.log("Rendering Martha:", {
-      currentFrameIndex: this.currentFrameIndex,
-      imageIndex: currentImageIndex,
-      imageName: imageName,
-      imageLoaded: marthaImage && marthaImage.complete,
-      position: { x: this.martha.x, y: this.martha.y },
-      isAway: this.isAway,
-    });
 
     // Draw Martha with current animation frame
     if (marthaImage && marthaImage.complete) {
       ctx.save();
 
-      // Apply hit effect with enhanced visual feedback
+      // Apply hit effect
       if (this.martha.hitEffect > 0) {
         ctx.globalAlpha = 0.7;
         ctx.filter = "brightness(180%) saturate(150%)";
@@ -424,10 +379,10 @@ class MarthaManager {
 
       ctx.restore();
     } else {
-      // Enhanced fallback rendering
+      // Fallback rendering
       ctx.save();
 
-      // Apply hit effect to fallback too
+      // Apply hit effect to fallback
       if (this.martha.hitEffect > 0) {
         ctx.globalAlpha = 0.7;
         const hitPulse = 1 + Math.sin(this.martha.hitEffect * 0.5) * 0.1;
@@ -458,7 +413,7 @@ class MarthaManager {
 
       // Add border
       ctx.strokeStyle = "white";
-      ctx.lineWidth = 2;
+      ctx.lineWidth = this.game.getScaledValue(2);
       ctx.strokeRect(
         this.martha.x - this.martha.width / 2,
         this.martha.y - this.martha.height / 2,
@@ -466,38 +421,36 @@ class MarthaManager {
         this.martha.height
       );
 
-      // Add enhanced label
+      // Add label
       ctx.fillStyle = "white";
-      ctx.font = "bold 14px Arial";
+      ctx.font = `bold ${this.game.getScaledValue(14)}px Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-      ctx.shadowBlur = 3;
+      ctx.shadowBlur = this.game.getScaledValue(3);
       ctx.fillText("MARTHA", this.martha.x, this.martha.y);
 
       ctx.restore();
-
-      console.log("Drew enhanced fallback Martha rectangle");
     }
 
-    // Draw Martha's enhanced fullness bar
+    // Draw Martha's fullness bar
     this.renderFullnessBar(ctx);
   }
 
-  // Render Martha's fullness bar - responsive
+  // Render Martha's fullness bar
   renderFullnessBar(ctx) {
     if (!this.martha || this.isAway) return;
 
-    // Proportional bar sizing based on target canvas
-    const barWidth = this.getScaledValue(70);
-    const barHeight = this.getScaledValue(12);
+    // Use centralized scaling for bar sizing
+    const barWidth = this.game.getScaledValue(70);
+    const barHeight = this.game.getScaledValue(12);
     const barX = this.martha.x - barWidth / 2;
     const barY =
-      this.martha.y + this.martha.height / 2 + this.getScaledValue(15);
+      this.martha.y + this.martha.height / 2 + this.game.getScaledValue(15);
 
     ctx.save();
 
-    // Draw bar background with gradient
+    // Draw bar background
     const bgGradient = ctx.createLinearGradient(
       barX,
       barY,
@@ -510,11 +463,11 @@ class MarthaManager {
     ctx.fillStyle = bgGradient;
     ctx.fillRect(barX, barY, barWidth, barHeight);
 
-    // Draw bar border with glow
+    // Draw bar border
     ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.lineWidth = this.getScaledValue(2);
+    ctx.lineWidth = this.game.getScaledValue(2);
     ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
-    ctx.shadowBlur = this.getScaledValue(3);
+    ctx.shadowBlur = this.game.getScaledValue(3);
     ctx.strokeRect(barX, barY, barWidth, barHeight);
 
     // Draw fill based on consumed socks
@@ -522,18 +475,18 @@ class MarthaManager {
     const fillWidth = barWidth * progress.percentage;
 
     if (fillWidth > 0) {
-      // Color changes based on how full Martha is
-      let fillColor1 = "#4CAF50"; // Green
+      // Color changes based on fullness
+      let fillColor1 = "#4CAF50";
       let fillColor2 = "#8BC34A";
       let glowColor = "rgba(76, 175, 80, 0.5)";
 
       if (progress.percentage > 0.7) {
-        fillColor1 = "#FFC107"; // Yellow
+        fillColor1 = "#FFC107";
         fillColor2 = "#FF9800";
         glowColor = "rgba(255, 193, 7, 0.5)";
       }
       if (progress.percentage >= 1) {
-        fillColor1 = "#FF5722"; // Red
+        fillColor1 = "#FF5722";
         fillColor2 = "#F44336";
         glowColor = "rgba(255, 87, 34, 0.5)";
       }
@@ -550,37 +503,31 @@ class MarthaManager {
 
       ctx.fillStyle = fillGradient;
       ctx.shadowColor = glowColor;
-      ctx.shadowBlur = this.getScaledValue(5);
+      ctx.shadowBlur = this.game.getScaledValue(5);
       ctx.fillRect(barX, barY, fillWidth, barHeight);
 
       // Add inner highlight
       ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-      ctx.fillRect(barX, barY, fillWidth, this.getScaledValue(2));
+      ctx.fillRect(barX, barY, fillWidth, this.game.getScaledValue(2));
     }
 
     ctx.restore();
 
-    // Draw text showing progress with better styling
+    // Draw progress text
     ctx.save();
     ctx.fillStyle = "white";
-    const fontSize = this.getScaledValue(14);
+    const fontSize = this.game.getScaledValue(14);
     ctx.font = `bold ${fontSize}px Courier New`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-    ctx.shadowBlur = this.getScaledValue(3);
+    ctx.shadowBlur = this.game.getScaledValue(3);
     ctx.fillText(
       `${progress.consumed}/${progress.target}`,
       this.martha.x,
-      barY + barHeight + this.getScaledValue(8)
+      barY + barHeight + this.game.getScaledValue(8)
     );
     ctx.restore();
-  }
-
-  // Render Martha's dialogue (this method is called from MarthaScene now)
-  renderDialogue(ctx) {
-    // This method is now handled by MarthaScene.renderEnhancedDialogue()
-    // Keeping for compatibility but functionality moved to scene
   }
 
   // Get Martha's bounds for collision detection

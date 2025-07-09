@@ -13,12 +13,12 @@ class SockManager {
   }
 
   initialize() {
-    // Initialize sock pile with responsive positioning
+    // Initialize sock pile with centralized scaling
     this.sockPile = {
-      x: this.game.canvas.width / 2, // Will be updated by match screen
-      y: this.game.canvas.height - 100,
-      width: Math.min(120, this.game.canvas.width / 10),
-      height: Math.min(120, this.game.canvas.width / 10),
+      x: this.game.getCanvasWidth() / 2, // Will be updated by match screen
+      y: this.game.getCanvasHeight() - this.game.getScaledValue(100),
+      width: this.game.getScaledValue(120),
+      height: this.game.getScaledValue(120),
       currentImage: "sockpile1.png",
       glowEffect: 0,
       bounceEffect: 0,
@@ -60,13 +60,15 @@ class SockManager {
     const angle = Math.PI / 4 + (Math.random() * Math.PI) / 2;
     const speed = GameConfig.SOCK_SHOOT_SPEED + Math.random() * 4;
 
+    const sockSize = this.game.getScaledValue(GameConfig.SOCK_SIZE);
+
     const newSock = {
       id: Date.now(),
       type: sockType,
       x: this.sockPile.x,
       y: this.sockPile.y,
-      width: GameConfig.SOCK_SIZE,
-      height: GameConfig.SOCK_SIZE,
+      width: sockSize,
+      height: sockSize,
       vx: Math.cos(angle) * speed,
       vy: -Math.sin(angle) * speed,
       rotation: 0,
@@ -86,14 +88,14 @@ class SockManager {
     // Create simple particles when shooting
     for (let i = 0; i < 6; i++) {
       this.particleEffects.push({
-        x: sock.x + (Math.random() - 0.5) * 20,
-        y: sock.y + (Math.random() - 0.5) * 20,
+        x: sock.x + (Math.random() - 0.5) * this.game.getScaledValue(20),
+        y: sock.y + (Math.random() - 0.5) * this.game.getScaledValue(20),
         vx: (Math.random() - 0.5) * 6,
         vy: (Math.random() - 0.5) * 6,
         life: 30,
         maxLife: 30,
         color: "#FFD700",
-        size: 2 + Math.random() * 2,
+        size: this.game.getScaledValue(2 + Math.random() * 2),
       });
     }
   }
@@ -168,24 +170,28 @@ class SockManager {
   createMatchStartEffect(animation) {
     // Create excitement particles
     const colors = ["#FFD700", "#FF69B4", "#00CED1", "#98FB98", "#DDA0DD"];
+    const particleSpread = this.game.getScaledValue(80);
+    const particleSize = this.game.getScaledValue(3);
 
     for (let i = 0; i < 15; i++) {
       this.particleEffects.push({
-        x: animation.centerX + (Math.random() - 0.5) * 80,
-        y: animation.centerY + (Math.random() - 0.5) * 80,
+        x: animation.centerX + (Math.random() - 0.5) * particleSpread,
+        y: animation.centerY + (Math.random() - 0.5) * particleSpread,
         vx: (Math.random() - 0.5) * 8,
         vy: (Math.random() - 0.5) * 8,
         life: 50,
         maxLife: 50,
         color: colors[Math.floor(Math.random() * colors.length)],
-        size: 3 + Math.random() * 4,
+        size: particleSize + Math.random() * particleSize,
       });
     }
   }
 
-  updateMatchAnimations() {
+  updateMatchAnimations(deltaTime) {
+    const timeMultiplier = deltaTime / 16.67; // Normalize to 60fps
+
     this.matchAnimations.forEach((animation, index) => {
-      animation.timer++;
+      animation.timer += timeMultiplier;
 
       if (animation.phase === "wiggle") {
         // Smooth wiggle and grow phase with easing
@@ -197,20 +203,25 @@ class SockManager {
 
         // Smoother wiggle with less intensity
         const wiggleFreq = progress * Math.PI * 3; // Reduced frequency
-        animation.wiggleIntensity = Math.sin(wiggleFreq) * 3 * easeProgress; // Reduced intensity
+        animation.wiggleIntensity =
+          Math.sin(wiggleFreq) * this.game.getScaledValue(3) * easeProgress; // Use scaled value
 
         // Less frequent particle generation
         if (animation.timer % 8 === 0) {
           // Reduced from every 3 frames to every 8
           this.particleEffects.push({
-            x: animation.centerX + (Math.random() - 0.5) * 40,
-            y: animation.centerY + (Math.random() - 0.5) * 40,
+            x:
+              animation.centerX +
+              (Math.random() - 0.5) * this.game.getScaledValue(40),
+            y:
+              animation.centerY +
+              (Math.random() - 0.5) * this.game.getScaledValue(40),
             vx: (Math.random() - 0.5) * 2,
             vy: (Math.random() - 0.5) * 2,
             life: 40,
             maxLife: 40,
             color: "#FFD700",
-            size: 1 + Math.random() * 1.5,
+            size: this.game.getScaledValue(1 + Math.random() * 1.5),
           });
         }
 
@@ -260,8 +271,8 @@ class SockManager {
 
   createSockballAnimation(animation) {
     const sockballImage = GameConfig.IMAGES.SOCK_BALLS[animation.sockType - 1];
-    const targetX = this.game.canvas.width - 50;
-    const targetY = 20;
+    const targetX = this.game.getCanvasWidth() - this.game.getScaledValue(50);
+    const targetY = this.game.getScaledValue(20);
 
     const sockballAnim = {
       image: sockballImage,
@@ -288,15 +299,17 @@ class SockManager {
     );
   }
 
-  updateSockballAnimations() {
+  updateSockballAnimations(deltaTime) {
+    const timeMultiplier = deltaTime / 16.67; // Normalize to 60fps
+
     this.sockballAnimations.forEach((animation, index) => {
-      animation.wiggleOffset += 0.1; // Reduced from 0.4 to 0.1 for gentler wiggle
-      animation.rotation += animation.rotationSpeed;
-      animation.rainbowOffset += 0.05; // Reduced from 0.1 to 0.05 for smoother rainbow
+      animation.wiggleOffset += 0.1 * timeMultiplier; // Reduced from 0.4 to 0.1 for gentler wiggle
+      animation.rotation += animation.rotationSpeed * timeMultiplier;
+      animation.rainbowOffset += 0.05 * timeMultiplier; // Reduced from 0.1 to 0.05 for smoother rainbow
 
       if (animation.phase === "entrance") {
         // Smooth entrance phase
-        animation.entranceTimer += 1;
+        animation.entranceTimer += timeMultiplier;
         const entranceProgress = animation.entranceTimer / 60; // 60 frames = 1 second entrance
 
         // Gentle pulsing scale with smooth easing
@@ -312,7 +325,7 @@ class SockManager {
         }
       } else if (animation.phase === "traveling") {
         // Smooth traveling phase
-        animation.progress += 0.012; // Reduced from GameConfig.SOCKBALL_ANIMATION_SPEED/100 for slower travel
+        animation.progress += 0.012 * timeMultiplier; // Reduced from GameConfig.SOCKBALL_ANIMATION_SPEED/100 for slower travel
 
         // Smooth scale transition
         const scaleProgress = this.easeOutCubic(animation.progress);
@@ -346,24 +359,28 @@ class SockManager {
       }
 
       // Gentler effect diminishing
-      if (animation.glowEffect > 0) animation.glowEffect -= 0.3; // Reduced from 0.5
-      if (animation.rainbowEffect > 0) animation.rainbowEffect -= 0.4; // Reduced from 0.8
+      if (animation.glowEffect > 0)
+        animation.glowEffect -= 0.3 * timeMultiplier; // Reduced from 0.5
+      if (animation.rainbowEffect > 0)
+        animation.rainbowEffect -= 0.4 * timeMultiplier; // Reduced from 0.8
     });
   }
 
   createArrivalEffect(x, y) {
     const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"];
+    const particleSpread = this.game.getScaledValue(60);
+    const particleSize = this.game.getScaledValue(2);
 
     for (let i = 0; i < 20; i++) {
       this.particleEffects.push({
-        x: x + (Math.random() - 0.5) * 60,
-        y: y + (Math.random() - 0.5) * 60,
+        x: x + (Math.random() - 0.5) * particleSpread,
+        y: y + (Math.random() - 0.5) * particleSpread,
         vx: (Math.random() - 0.5) * 12,
         vy: (Math.random() - 0.5) * 12,
         life: 40,
         maxLife: 40,
         color: colors[Math.floor(Math.random() * colors.length)],
-        size: 2 + Math.random() * 3,
+        size: particleSize + Math.random() * particleSize,
       });
     }
   }
@@ -375,13 +392,15 @@ class SockManager {
     );
   }
 
-  updateParticleEffects() {
+  updateParticleEffects(deltaTime) {
+    const timeMultiplier = deltaTime / 16.67; // Normalize to 60fps
+
     this.particleEffects.forEach((particle, index) => {
-      particle.x += particle.vx;
-      particle.y += particle.vy;
-      particle.vx *= 0.98;
-      particle.vy *= 0.98;
-      particle.life--;
+      particle.x += particle.vx * timeMultiplier;
+      particle.y += particle.vy * timeMultiplier;
+      particle.vx *= Math.pow(0.98, timeMultiplier);
+      particle.vy *= Math.pow(0.98, timeMultiplier);
+      particle.life -= timeMultiplier;
 
       if (particle.life <= 0) {
         this.particleEffects.splice(index, 1);
@@ -389,23 +408,28 @@ class SockManager {
     });
   }
 
-  updateEffects() {
+  updateEffects(deltaTime) {
+    const timeMultiplier = deltaTime / 16.67; // Normalize to 60fps
+
     // Update sock pile effects
-    if (this.sockPile.bounceEffect > 0) this.sockPile.bounceEffect--;
-    if (this.sockPile.glowEffect > 0) this.sockPile.glowEffect--;
-    if (this.sockPile.pulseEffect > 0) this.sockPile.pulseEffect--;
+    if (this.sockPile.bounceEffect > 0)
+      this.sockPile.bounceEffect -= timeMultiplier;
+    if (this.sockPile.glowEffect > 0)
+      this.sockPile.glowEffect -= timeMultiplier;
+    if (this.sockPile.pulseEffect > 0)
+      this.sockPile.pulseEffect -= timeMultiplier;
 
     // Update sock effects
     this.socks.forEach((sock) => {
-      if (sock.glowEffect > 0) sock.glowEffect--;
+      if (sock.glowEffect > 0) sock.glowEffect -= timeMultiplier;
     });
   }
 
-  update() {
-    this.updateMatchAnimations();
-    this.updateSockballAnimations();
-    this.updateParticleEffects();
-    this.updateEffects();
+  update(deltaTime) {
+    this.updateMatchAnimations(deltaTime);
+    this.updateSockballAnimations(deltaTime);
+    this.updateParticleEffects(deltaTime);
+    this.updateEffects(deltaTime);
   }
 
   renderSockPile(ctx) {
@@ -427,14 +451,16 @@ class SockManager {
     }
 
     if (this.sockPile.bounceEffect > 0) {
-      bounceOffset = Math.sin(this.sockPile.bounceEffect * 0.5) * 8;
+      bounceOffset =
+        Math.sin(this.sockPile.bounceEffect * 0.5) *
+        this.game.getScaledValue(8);
     }
 
     if (this.sockPile.pulseEffect > 0) {
       scale = 1 + Math.sin(this.sockPile.pulseEffect * 0.3) * 0.1;
     }
 
-    // Draw sock pile with full width consideration
+    // Draw sock pile with centralized scaling
     const drawWidth = this.sockPile.width * scale;
     const drawHeight = this.sockPile.height * scale;
 
@@ -448,13 +474,13 @@ class SockManager {
 
     // Draw border around sock pile area to show full width
     ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = this.game.getScaledValue(2);
+    ctx.setLineDash([this.game.getScaledValue(5), this.game.getScaledValue(5)]);
     ctx.strokeRect(
-      50, // Full width border
-      this.sockPile.y - drawHeight / 2 - 20,
-      this.game.canvas.width - 100,
-      drawHeight + 40
+      this.game.getScaledValue(50), // Full width border
+      this.sockPile.y - drawHeight / 2 - this.game.getScaledValue(20),
+      this.game.getCanvasWidth() - this.game.getScaledValue(100),
+      drawHeight + this.game.getScaledValue(40)
     );
 
     ctx.restore();
@@ -483,7 +509,7 @@ class SockManager {
 
           // Add glow during animation
           ctx.shadowColor = "#FFD700";
-          ctx.shadowBlur = 20;
+          ctx.shadowBlur = this.game.getScaledValue(20);
         }
       });
 
@@ -528,23 +554,26 @@ class SockManager {
         const hue = (animation.rainbowOffset * 180) % 360; // Reduced speed
         const intensity = Math.min(animation.rainbowEffect / 60, 1);
         ctx.shadowColor = `hsl(${hue}, 70%, 60%)`;
-        ctx.shadowBlur = 10 * intensity; // Reduced blur intensity
+        ctx.shadowBlur = this.game.getScaledValue(10 * intensity); // Reduced blur intensity
       }
 
       // Gentler glow effect
       if (animation.glowEffect > 0) {
         ctx.shadowColor = "#FFD700";
-        ctx.shadowBlur = Math.min(animation.glowEffect, 15); // Capped blur
+        ctx.shadowBlur = this.game.getScaledValue(
+          Math.min(animation.glowEffect, 15)
+        ); // Capped blur
       }
 
       // Subtle wiggle and rotation
-      const wiggle = Math.sin(animation.wiggleOffset) * 1.5; // Reduced from 4 to 1.5
+      const wiggle =
+        Math.sin(animation.wiggleOffset) * this.game.getScaledValue(1.5); // Reduced from 4 to 1.5
       ctx.translate(animation.x, animation.y);
       ctx.rotate(animation.rotation);
       ctx.scale(animation.scale, animation.scale);
 
       // Draw the sockball
-      const size = GameConfig.SOCKBALL_SIZE;
+      const size = this.game.getScaledValue(GameConfig.SOCKBALL_SIZE);
       ctx.drawImage(
         this.game.images[animation.image],
         -size / 2 + wiggle,
@@ -556,7 +585,7 @@ class SockManager {
       // Debug: draw a circle to show position
       if (GameConfig.DEBUG_PHYSICS_BOUNDS) {
         ctx.strokeStyle = "red";
-        ctx.lineWidth = 2;
+        ctx.lineWidth = this.game.getScaledValue(2);
         ctx.strokeRect(-size / 2, -size / 2, size, size);
       }
 
@@ -582,7 +611,6 @@ class SockManager {
 
   checkSockPileClick(x, y) {
     if (!this.sockPile || !this.sockPile.currentImage) {
-      // console.log("No sock pile or image");
       return false;
     }
 

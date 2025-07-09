@@ -25,40 +25,66 @@ class LevelSelect {
       gravity: 0.3,
       bounds: {
         left: 50,
-        right: this.canvas.width - 50,
+        right: this.game.getCanvasWidth() - 50,
         top: 50,
-        bottom: this.canvas.height - 50,
+        bottom: this.game.getCanvasHeight() - 50,
       },
     };
 
-    // Level button configuration
+    // Level button configuration - use base values, scaling applied by game
     this.levelConfig = {
-      spacing: 150,
-      buttonSize: 80,
+      baseSpacing: 150,
+      baseButtonSize: 80,
       wiggleSpeed: 0.01,
       wiggleAmount: 3,
       hoverScale: 1.1,
       clickScale: 0.95,
     };
-
-    this.setupEventListeners();
   }
 
-  setupEventListeners() {
-    // We'll handle events through the main game loop
-    // This is just for organization
+  // Handle resize events from the main game
+  handleResize() {
+    // Update physics bounds based on new canvas size
+    this.menuPhysics.bounds = {
+      left: this.game.getScaledValue(50),
+      right: this.game.getCanvasWidth() - this.game.getScaledValue(50),
+      top: this.game.getScaledValue(50),
+      bottom: this.game.getCanvasHeight() - this.game.getScaledValue(50),
+    };
+
+    // Update any existing menu socks to stay within bounds
+    this.menuSocks.forEach((sock) => {
+      if (sock.x < this.menuPhysics.bounds.left) {
+        sock.x = this.menuPhysics.bounds.left;
+      }
+      if (sock.x > this.menuPhysics.bounds.right) {
+        sock.x = this.menuPhysics.bounds.right;
+      }
+      if (sock.y < this.menuPhysics.bounds.top) {
+        sock.y = this.menuPhysics.bounds.top;
+      }
+      if (sock.y > this.menuPhysics.bounds.bottom) {
+        sock.y = this.menuPhysics.bounds.bottom;
+      }
+    });
   }
 
-  update() {
-    this.animationFrame++;
+  update(deltaTime) {
+    // Use delta time for frame-rate independent animation
+    const frameRate = deltaTime > 0 ? 1000 / deltaTime : 60;
+    const animationSpeed = 60 / frameRate; // Normalize to 60fps
+
+    this.animationFrame += animationSpeed;
 
     // Update easter egg socks if active
     if (this.easterEggActive) {
-      this.updateMenuSocks();
+      this.updateMenuSocks(deltaTime);
     }
   }
 
-  updateMenuSocks() {
+  updateMenuSocks(deltaTime) {
+    const timeMultiplier = deltaTime / 16.67; // Normalize to 60fps (16.67ms per frame)
+
     this.menuSocks.forEach((sock, index) => {
       if (sock === this.dragSock) return; // Skip dragged sock
 
@@ -83,17 +109,17 @@ class LevelSelect {
         sock.alpha = 1 - fadeProgress;
       }
 
-      // Apply physics
-      sock.vy += this.menuPhysics.gravity;
-      sock.vx *= this.menuPhysics.friction;
-      sock.vy *= this.menuPhysics.friction;
+      // Apply physics with delta time
+      sock.vy += this.menuPhysics.gravity * timeMultiplier;
+      sock.vx *= Math.pow(this.menuPhysics.friction, timeMultiplier);
+      sock.vy *= Math.pow(this.menuPhysics.friction, timeMultiplier);
 
       // Update position
-      sock.x += sock.vx;
-      sock.y += sock.vy;
+      sock.x += sock.vx * timeMultiplier;
+      sock.y += sock.vy * timeMultiplier;
 
       // Update rotation
-      sock.rotation += sock.rotationSpeed;
+      sock.rotation += sock.rotationSpeed * timeMultiplier;
 
       // Bounce off bounds
       if (sock.x - sock.size / 2 < this.menuPhysics.bounds.left) {
@@ -117,7 +143,7 @@ class LevelSelect {
       }
 
       // Gradually slow down rotation
-      sock.rotationSpeed *= 0.99;
+      sock.rotationSpeed *= Math.pow(0.99, timeMultiplier);
     });
 
     // Clean up array if we removed items
@@ -191,16 +217,14 @@ class LevelSelect {
   }
 
   isLogoClicked(x, y) {
-    const logoX = this.canvas.width / 2;
-    const logoY = 150; // Logo center position
-    const logoWidth = 200;
-    const logoHeight = 100;
+    const logoPos = this.game.getScaledPosition(600, 150); // Base: 600, 150
+    const logoSize = this.game.getScaledSize(200, 100); // Base: 200x100
 
     return (
-      x >= logoX - logoWidth / 2 &&
-      x <= logoX + logoWidth / 2 &&
-      y >= logoY - logoHeight / 2 &&
-      y <= logoY + logoHeight / 2
+      x >= logoPos.x - logoSize.width / 2 &&
+      x <= logoPos.x + logoSize.width / 2 &&
+      y >= logoPos.y - logoSize.height / 2 &&
+      y <= logoPos.y + logoSize.height / 2
     );
   }
 
@@ -216,11 +240,15 @@ class LevelSelect {
   }
 
   spawnSingleSock() {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
     const sock = {
       type: this.currentSockType,
-      x: this.canvas.width / 2 + (Math.random() - 0.5) * 100,
-      y: -this.canvas.height + (Math.random() - 0.5) * 100,
-      size: (Math.random() + 0.5) * 60,
+      x:
+        canvasWidth / 2 + (Math.random() - 0.5) * this.game.getScaledValue(100),
+      y: -canvasHeight + (Math.random() - 0.5) * this.game.getScaledValue(100),
+      size: this.game.getScaledValue((Math.random() + 0.5) * 60),
       vx: (Math.random() - 0.5) * 15,
       vy: (Math.random() - 0.5) * 15,
       rotation: Math.random() * Math.PI * 2,
@@ -240,12 +268,20 @@ class LevelSelect {
   }
 
   getLevelAtPosition(x, y) {
-    const startX = this.canvas.width / 3.5 - this.levelConfig.spacing;
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const spacing = this.game.getScaledValue(this.levelConfig.baseSpacing);
+    const buttonSize = this.game.getScaledValue(
+      this.levelConfig.baseButtonSize
+    );
+
+    const startX =
+      canvasWidth / 2 - ((GameConfig.LEVELS.length - 1) * spacing) / 2;
 
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
-      const levelX = startX + i * this.levelConfig.spacing;
-      const levelY = this.canvas.height / 2 + 50;
-      const halfSize = this.levelConfig.buttonSize / 2;
+      const levelX = startX + i * spacing;
+      const levelY = canvasHeight / 2 + this.game.getScaledValue(50);
+      const halfSize = buttonSize / 2;
 
       if (
         x >= levelX - halfSize &&
@@ -289,8 +325,8 @@ class LevelSelect {
   }
 
   renderLogo(ctx) {
-    const logoX = this.canvas.width / 2;
-    const logoY = 150;
+    const logoPos = this.game.getScaledPosition(600, 150); // Base: 600, 150
+    const logoSize = this.game.getScaledSize(200, 100); // Base: 200x100
 
     // Add glow effect if easter egg is active
     if (this.easterEggActive) {
@@ -302,10 +338,10 @@ class LevelSelect {
       if (this.game.images["logo.png"]) {
         ctx.drawImage(
           this.game.images["logo.png"],
-          logoX - 100,
-          logoY - 50,
-          200,
-          100
+          logoPos.x - logoSize.width / 2,
+          logoPos.y - logoSize.height / 2,
+          logoSize.width,
+          logoSize.height
         );
       }
 
@@ -314,61 +350,76 @@ class LevelSelect {
       if (this.game.images["logo.png"]) {
         ctx.drawImage(
           this.game.images["logo.png"],
-          logoX - 100,
-          logoY - 50,
-          200,
-          100
+          logoPos.x - logoSize.width / 2,
+          logoPos.y - logoSize.height / 2,
+          logoSize.width,
+          logoSize.height
         );
       }
     }
   }
 
   renderInstructions(ctx) {
+    const canvasWidth = this.game.getCanvasWidth();
+    const fontSize = this.game.getScaledValue(18);
+    const lineHeight = this.game.getScaledValue(25);
+    const baseY = this.game.getScaledValue(220);
+
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.font = "18px Courier New";
+    ctx.font = `${fontSize}px Courier New`;
     ctx.textAlign = "center";
     ctx.fillText(
       "Click sock pile to shoot socks, drag socks to drop zones",
-      this.canvas.width / 2,
-      220
+      canvasWidth / 2,
+      baseY
     );
     ctx.fillText(
       "Match pairs to create sock balls, then throw them at Martha!",
-      this.canvas.width / 2,
-      245
+      canvasWidth / 2,
+      baseY + lineHeight
     );
 
     // Easter egg hint
     if (this.easterEggActive && this.menuSocks.length > 0) {
       ctx.fillStyle = "rgba(255, 215, 0, 0.8)";
-      ctx.font = "14px Courier New";
+      ctx.font = `${this.game.getScaledValue(14)}px Courier New`;
       ctx.fillText(
         "Drag the sock around! Click logo for next type!",
-        this.canvas.width / 2,
-        270
+        canvasWidth / 2,
+        baseY + lineHeight * 2
       );
     }
   }
 
   renderLevelButtons(ctx) {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const fontSize = this.game.getScaledValue(24);
+    const spacing = this.game.getScaledValue(this.levelConfig.baseSpacing);
+    const buttonSize = this.game.getScaledValue(
+      this.levelConfig.baseButtonSize
+    );
+
     ctx.fillStyle = "white";
-    ctx.font = "24px Courier New";
+    ctx.font = `${fontSize}px Courier New`;
     ctx.textAlign = "center";
     ctx.fillText(
       "Select Level",
-      this.canvas.width / 2,
-      this.canvas.height / 2 - 50
+      canvasWidth / 2,
+      canvasHeight / 2 - this.game.getScaledValue(50)
     );
 
-    const startX = this.canvas.width / 3.5 - this.levelConfig.spacing;
+    const startX =
+      canvasWidth / 2 - ((GameConfig.LEVELS.length - 1) * spacing) / 2;
 
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
-      this.renderLevelButton(ctx, i, startX + i * this.levelConfig.spacing);
+      this.renderLevelButton(ctx, i, startX + i * spacing, buttonSize);
     }
   }
 
-  renderLevelButton(ctx, levelIndex, x) {
-    const y = this.canvas.height / 2 + 50;
+  renderLevelButton(ctx, levelIndex, x, buttonSize) {
+    const canvasHeight = this.game.getCanvasHeight();
+    const y = canvasHeight / 2 + this.game.getScaledValue(50);
     const sockImageName = `sock${levelIndex + 1}.png`;
     const sockImage = this.game.images[sockImageName];
 
@@ -388,19 +439,34 @@ class LevelSelect {
       ctx.translate(-x, -y);
     }
 
+    const halfSize = buttonSize / 2;
+
     if (isUnlocked) {
       if (isCompleted) {
         // Completed level: show sock without animation and star above
         if (sockImage) {
-          ctx.drawImage(sockImage, x - 40, y - 40, 80, 80);
+          ctx.drawImage(
+            sockImage,
+            x - halfSize,
+            y - halfSize,
+            buttonSize,
+            buttonSize
+          );
         }
 
         // Draw star with glow effect
         if (this.game.images["star.png"]) {
           ctx.save();
           ctx.shadowColor = "#FFD700";
-          ctx.shadowBlur = 10;
-          ctx.drawImage(this.game.images["star.png"], x - 20, y - 80, 40, 40);
+          ctx.shadowBlur = this.game.getScaledValue(10);
+          const starSize = this.game.getScaledValue(40);
+          ctx.drawImage(
+            this.game.images["star.png"],
+            x - starSize / 2,
+            y - this.game.getScaledValue(80),
+            starSize,
+            starSize
+          );
           ctx.restore();
         }
       } else {
@@ -408,41 +474,65 @@ class LevelSelect {
         const wiggle =
           Math.sin(
             this.animationFrame * this.levelConfig.wiggleSpeed + levelIndex
-          ) * this.levelConfig.wiggleAmount;
+          ) * this.game.getScaledValue(this.levelConfig.wiggleAmount);
         if (sockImage) {
-          ctx.drawImage(sockImage, x - 40 + wiggle, y - 40, 80, 80);
+          ctx.drawImage(
+            sockImage,
+            x - halfSize + wiggle,
+            y - halfSize,
+            buttonSize,
+            buttonSize
+          );
         }
       }
 
       // Level number
       ctx.fillStyle = "white";
-      ctx.font = "16px Courier New";
+      ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
       ctx.textAlign = "center";
-      ctx.fillText(`Level ${levelIndex + 1}`, x, y + 60);
+      ctx.fillText(
+        `Level ${levelIndex + 1}`,
+        x,
+        y + this.game.getScaledValue(60)
+      );
     } else {
       // Locked level
       if (sockImage) {
         ctx.save();
         ctx.globalAlpha = isAffordable ? 0.7 : 0.3;
         ctx.filter = isAffordable ? "brightness(0.6)" : "brightness(0.3)";
-        ctx.drawImage(sockImage, x - 40, y - 40, 80, 80);
+        ctx.drawImage(
+          sockImage,
+          x - halfSize,
+          y - halfSize,
+          buttonSize,
+          buttonSize
+        );
         ctx.restore();
       }
 
       // Cost and level info
       ctx.fillStyle = isAffordable ? "#90EE90" : "#FFB6C1";
-      ctx.font = "14px Courier New";
+      ctx.font = `${this.game.getScaledValue(14)}px Courier New`;
       ctx.textAlign = "center";
-      ctx.fillText(`Cost: ${GameConfig.LEVEL_COSTS[levelIndex]}`, x, y - 50);
+      ctx.fillText(
+        `Cost: ${GameConfig.LEVEL_COSTS[levelIndex]}`,
+        x,
+        y - this.game.getScaledValue(50)
+      );
 
       ctx.fillStyle = "white";
-      ctx.font = "16px Courier New";
-      ctx.fillText(`Level ${levelIndex + 1}`, x, y + 60);
+      ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
+      ctx.fillText(
+        `Level ${levelIndex + 1}`,
+        x,
+        y + this.game.getScaledValue(60)
+      );
 
       if (isAffordable) {
         ctx.fillStyle = "#90EE90";
-        ctx.font = "12px Courier New";
-        ctx.fillText("Click to unlock!", x, y + 80);
+        ctx.font = `${this.game.getScaledValue(12)}px Courier New`;
+        ctx.fillText("Click to unlock!", x, y + this.game.getScaledValue(80));
       }
     }
 
@@ -450,23 +540,26 @@ class LevelSelect {
   }
 
   renderPlayerStats(ctx) {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const fontSize = this.game.getScaledValue(20);
+    const panelWidth = this.game.getScaledValue(200);
+    const panelHeight = this.game.getScaledValue(40);
+    const panelX = canvasWidth / 2 - panelWidth / 2;
+    const panelY = canvasHeight - this.game.getScaledValue(80);
+
     // Points display with background
     ctx.save();
     ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillRect(
-      this.canvas.width / 2 - 100,
-      this.canvas.height - 185,
-      200,
-      40
-    );
+    ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
 
     ctx.fillStyle = "#FFD700";
-    ctx.font = "20px Courier New";
+    ctx.font = `${fontSize}px Courier New`;
     ctx.textAlign = "center";
     ctx.fillText(
       `Points: ${this.game.playerPoints}`,
-      this.canvas.width / 2,
-      this.canvas.height - 160
+      canvasWidth / 2,
+      panelY + this.game.getScaledValue(25)
     );
     ctx.restore();
   }
