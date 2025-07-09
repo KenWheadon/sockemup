@@ -2,8 +2,9 @@ class SockGame {
   constructor() {
     this.canvas = document.getElementById("gameCanvas");
     this.ctx = this.canvas.getContext("2d");
-    this.canvas.width = GameConfig.CANVAS_WIDTH;
-    this.canvas.height = GameConfig.CANVAS_HEIGHT;
+
+    // Initialize canvas with proper aspect ratio
+    this.initializeCanvas();
 
     this.gameState = "menu"; // menu, matching, shooting, gameOver
     this.currentLevel = 0;
@@ -18,6 +19,9 @@ class SockGame {
 
     this.unlockedLevels = [...GameConfig.INITIAL_UNLOCKED_LEVELS];
     this.completedLevels = [...GameConfig.INITIAL_COMPLETED_LEVELS];
+
+    // Scale factor for responsive UI
+    this.scaleFactor = 1;
 
     // Initialize level select screen
     this.levelSelect = new LevelSelect(this);
@@ -35,6 +39,74 @@ class SockGame {
     this.crosshair = { x: 600, y: 400 };
 
     this.init();
+  }
+
+  initializeCanvas() {
+    // Get viewport dimensions
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Calculate optimal canvas size maintaining aspect ratio
+    const canvasSize = GameConfig.calculateCanvasSize(
+      viewportWidth,
+      viewportHeight
+    );
+
+    // Set canvas dimensions
+    this.canvas.width = canvasSize.width;
+    this.canvas.height = canvasSize.height;
+
+    // Store scale factor for responsive UI
+    this.scaleFactor = canvasSize.scale;
+
+    // Center canvas in viewport
+    this.centerCanvas();
+
+    console.log("Canvas initialized:", {
+      viewport: { width: viewportWidth, height: viewportHeight },
+      canvas: { width: canvasSize.width, height: canvasSize.height },
+      scaleFactor: this.scaleFactor,
+    });
+  }
+
+  centerCanvas() {
+    const container = document.getElementById("gameContainer");
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Center canvas in viewport
+    const leftOffset = (viewportWidth - this.canvas.width) / 2;
+    const topOffset = (viewportHeight - this.canvas.height) / 2;
+
+    this.canvas.style.position = "absolute";
+    this.canvas.style.left = `${leftOffset}px`;
+    this.canvas.style.top = `${topOffset}px`;
+
+    // Set container background to black for letterboxing
+    container.style.backgroundColor = "#000000";
+  }
+
+  // Get scaled dimensions for responsive UI
+  getScaledValue(baseValue) {
+    return baseValue * this.scaleFactor;
+  }
+
+  // Get canvas dimensions (for backward compatibility)
+  getCanvasWidth() {
+    return this.canvas.width;
+  }
+
+  getCanvasHeight() {
+    return this.canvas.height;
+  }
+
+  // Convert screen coordinates to canvas coordinates
+  screenToCanvas(screenX, screenY) {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: screenX - rect.left,
+      y: screenY - rect.top,
+    };
   }
 
   init() {
@@ -89,27 +161,18 @@ class SockGame {
   }
 
   handleResize() {
-    // Update canvas size if needed for responsive design
-    const container = document.getElementById("gameContainer");
-    const rect = container.getBoundingClientRect();
+    console.log("Window resized, updating canvas...");
 
-    // Maintain aspect ratio while fitting container
-    const aspectRatio = GameConfig.CANVAS_WIDTH / GameConfig.CANVAS_HEIGHT;
-    let newWidth = rect.width;
-    let newHeight = rect.height;
+    // Recalculate canvas size maintaining aspect ratio
+    this.initializeCanvas();
 
-    if (newWidth / newHeight > aspectRatio) {
-      newWidth = newHeight * aspectRatio;
-    } else {
-      newHeight = newWidth / aspectRatio;
-    }
-
-    this.canvas.width = newWidth;
-    this.canvas.height = newHeight;
-
-    // Update match screen responsive elements
+    // Update any screen-dependent elements
     if (this.gameState === "matching") {
       this.matchScreen.setup();
+    } else if (this.gameState === "shooting") {
+      // Update crosshair position to maintain relative position
+      this.crosshair.x = this.canvas.width / 2;
+      this.crosshair.y = this.canvas.height / 2;
     }
   }
 
@@ -181,9 +244,9 @@ class SockGame {
   }
 
   handleMouseDown(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = this.screenToCanvas(e.clientX, e.clientY);
+    const x = coords.x;
+    const y = coords.y;
 
     if (this.gameState === "menu") {
       this.levelSelect.handleMouseDown(x, y);
@@ -195,9 +258,9 @@ class SockGame {
   }
 
   handleMouseMove(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = this.screenToCanvas(e.clientX, e.clientY);
+    const x = coords.x;
+    const y = coords.y;
 
     if (this.gameState === "menu") {
       this.levelSelect.handleMouseMove(x, y);
@@ -212,9 +275,9 @@ class SockGame {
   }
 
   handleMouseUp(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = this.screenToCanvas(e.clientX, e.clientY);
+    const x = coords.x;
+    const y = coords.y;
 
     if (this.gameState === "menu") {
       this.levelSelect.handleMouseUp(x, y);
@@ -226,9 +289,9 @@ class SockGame {
   }
 
   handleClick(e) {
-    const rect = this.canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+    const coords = this.screenToCanvas(e.clientX, e.clientY);
+    const x = coords.x;
+    const y = coords.y;
 
     if (this.gameState === "menu") {
       this.levelSelect.handleClick(x, y);
@@ -287,7 +350,7 @@ class SockGame {
   render() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // Draw background
+    // Draw background with proper scaling
     if (this.images["background.png"]) {
       this.ctx.drawImage(
         this.images["background.png"],

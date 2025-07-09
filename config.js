@@ -1,13 +1,64 @@
 const GameConfig = {
+  // Target canvas dimensions and aspect ratio
+  TARGET_WIDTH: 1200,
+  TARGET_HEIGHT: 800,
+  TARGET_ASPECT_RATIO: 1200 / 800, // 1.5 (3:2 ratio)
+
+  // Canvas sizing constraints
+  MIN_WIDTH: 600,
+  MIN_HEIGHT: 400,
+  MAX_WIDTH: 1920,
+  MAX_HEIGHT: 1080,
+
+  // Original canvas dimensions for backwards compatibility
   CANVAS_WIDTH: 1200,
   CANVAS_HEIGHT: 800,
+
+  // Canvas sizing utility functions
+  calculateCanvasSize: function (viewportWidth, viewportHeight) {
+    const viewportRatio = viewportWidth / viewportHeight;
+    const targetRatio = this.TARGET_ASPECT_RATIO;
+
+    let canvasWidth, canvasHeight;
+
+    if (viewportRatio > targetRatio) {
+      // Viewport is wider than target ratio - fit to height
+      canvasHeight = Math.min(viewportHeight, this.MAX_HEIGHT);
+      canvasWidth = canvasHeight * targetRatio;
+    } else {
+      // Viewport is taller than target ratio - fit to width
+      canvasWidth = Math.min(viewportWidth, this.MAX_WIDTH);
+      canvasHeight = canvasWidth / targetRatio;
+    }
+
+    // Ensure minimum size constraints
+    if (canvasWidth < this.MIN_WIDTH) {
+      canvasWidth = this.MIN_WIDTH;
+      canvasHeight = canvasWidth / targetRatio;
+    }
+    if (canvasHeight < this.MIN_HEIGHT) {
+      canvasHeight = this.MIN_HEIGHT;
+      canvasWidth = canvasHeight * targetRatio;
+    }
+
+    return {
+      width: Math.round(canvasWidth),
+      height: Math.round(canvasHeight),
+      scale: canvasWidth / this.TARGET_WIDTH,
+    };
+  },
+
+  // Get scale factor for responsive UI elements
+  getScaleFactor: function (currentWidth) {
+    return currentWidth / this.TARGET_WIDTH;
+  },
 
   // Physics bounds (adjust these to match your background graphic)
   PHYSICS_BOUNDS: {
     LEFT: 50,
-    RIGHT: 1150,
-    TOP: 60,
-    BOTTOM: 600,
+    RIGHT: 1300,
+    TOP: 70,
+    BOTTOM: 700,
   },
 
   // Game settings
@@ -23,32 +74,15 @@ const GameConfig = {
   SOCK_BOUNCE_VELOCITY: 8,
   SOCK_SHOOT_SPEED: 12,
 
+  // dropssss
+  DROP_TARGET_PAIRS: 5,
+
   // Martha settings
   MARTHA_SIZE: { width: 60, height: 80 },
   MARTHA_HIT_EFFECT_DURATION: 60, // frames
 
   // UI positions - Updated for full-width drawer and 3 pairs of drop zones
   SOCK_PILE_POS: { x: 600, y: 700 }, // Will be calculated dynamically for full width
-  DROP_ZONE_POSITIONS: [
-    // Pair 1 (left side)
-    { x: 200, y: 150, width: 80, height: 80, pairId: 0 },
-    { x: 200, y: 250, width: 80, height: 80, pairId: 0 },
-
-    // Pair 2 (center)
-    { x: 600, y: 150, width: 80, height: 80, pairId: 1 },
-    { x: 600, y: 250, width: 80, height: 80, pairId: 1 },
-
-    // Pair 3 (right side)
-    { x: 1000, y: 150, width: 80, height: 80, pairId: 2 },
-    { x: 1000, y: 250, width: 80, height: 80, pairId: 2 },
-  ],
-
-  // Drop zone pair boxes
-  DROP_ZONE_PAIR_BOXES: [
-    { x: 200, y: 200, width: 120, height: 160, pairId: 0 },
-    { x: 600, y: 200, width: 120, height: 160, pairId: 1 },
-    { x: 1000, y: 200, width: 120, height: 160, pairId: 2 },
-  ],
 
   // Sock pile image thresholds
   SOCK_PILE_THRESHOLDS: {

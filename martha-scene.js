@@ -13,13 +13,36 @@ class MarthaScene {
     this.messageFlashTimer = 0;
   }
 
-  // Get responsive dimensions
+  // Get responsive dimensions based on target canvas size
   getCanvasWidth() {
     return this.game.canvas.width;
   }
 
   getCanvasHeight() {
     return this.game.canvas.height;
+  }
+
+  // Get scaled value for responsive UI
+  getScaledValue(baseValue) {
+    return this.game.getScaledValue(baseValue);
+  }
+
+  // Get relative position based on target canvas dimensions
+  getRelativePosition(targetX, targetY) {
+    return {
+      x: (targetX / GameConfig.TARGET_WIDTH) * this.getCanvasWidth(),
+      y: (targetY / GameConfig.TARGET_HEIGHT) * this.getCanvasHeight(),
+    };
+  }
+
+  // Get relative size based on target canvas dimensions
+  getRelativeSize(targetSize) {
+    return {
+      width:
+        (targetSize.width / GameConfig.TARGET_WIDTH) * this.getCanvasWidth(),
+      height:
+        (targetSize.height / GameConfig.TARGET_HEIGHT) * this.getCanvasHeight(),
+    };
   }
 
   setup() {
@@ -63,15 +86,16 @@ class MarthaScene {
       return;
     }
 
-    // Fire from bottom of screen - responsive
+    // Fire from bottom of screen - proportional to target canvas
     const startX = cursorX;
-    const startY = this.getCanvasHeight() - this.getCanvasHeight() * 0.04; // 4% from bottom
+    const startY = this.getCanvasHeight() - this.getScaledValue(30); // Proportional distance from bottom
     const targetX = cursorX;
     const targetY = cursorY;
 
     console.log("Launch parameters:", {
       start: { x: startX, y: startY },
       target: { x: targetX, y: targetY },
+      scaleFactor: this.game.scaleFactor,
     });
 
     // Create sock with simple physics
@@ -233,8 +257,8 @@ class MarthaScene {
     const x = this.game.crosshair.x;
     const y = this.game.crosshair.y;
 
-    // Responsive crosshair size
-    const crosshairSize = Math.max(12, this.getCanvasWidth() * 0.015); // 1.5% of canvas width, min 12px
+    // Proportional crosshair size based on target canvas
+    const crosshairSize = this.getScaledValue(12); // 12px at target size
 
     // Pulsing animation
     const pulseScale = 1 + Math.sin(this.crosshairPulseTimer * 0.1) * 0.1;
@@ -256,7 +280,7 @@ class MarthaScene {
 
     // Draw crosshair
     ctx.strokeStyle = crosshairColor;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = this.getScaledValue(3);
     ctx.lineCap = "round";
 
     ctx.beginPath();
@@ -269,7 +293,7 @@ class MarthaScene {
     // Draw center dot
     ctx.fillStyle = crosshairColor;
     ctx.beginPath();
-    ctx.arc(0, 0, 2, 0, Math.PI * 2);
+    ctx.arc(0, 0, this.getScaledValue(2), 0, Math.PI * 2);
     ctx.fill();
 
     ctx.restore();
@@ -278,7 +302,7 @@ class MarthaScene {
   renderEnhancedTrajectoryPreview(ctx) {
     // Show trajectory from bottom of screen to cursor
     const startX = this.game.crosshair.x;
-    const startY = this.getCanvasHeight() - this.getCanvasHeight() * 0.04; // 4% from bottom
+    const startY = this.getCanvasHeight() - this.getScaledValue(30); // Proportional distance from bottom
     const targetX = this.game.crosshair.x;
     const targetY = this.game.crosshair.y;
 
@@ -293,17 +317,17 @@ class MarthaScene {
 
     ctx.save();
     ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = this.getScaledValue(3);
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
 
     // Add glow effect
     ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
-    ctx.shadowBlur = 5;
+    ctx.shadowBlur = this.getScaledValue(5);
 
     // Draw dashed line with animation
     const dashOffset = (this.uiAnimationTimer * 0.5) % 16;
-    ctx.setLineDash([8, 8]);
+    ctx.setLineDash([this.getScaledValue(8), this.getScaledValue(8)]);
     ctx.lineDashOffset = dashOffset;
 
     ctx.beginPath();
@@ -317,12 +341,12 @@ class MarthaScene {
 
     ctx.stroke();
 
-    // Enhanced target indicator - responsive sizing
-    const targetSize = Math.max(6, this.getCanvasWidth() * 0.008); // 0.8% of canvas width, min 6px
+    // Enhanced target indicator - proportional sizing
+    const targetSize = this.getScaledValue(8);
     const targetPulse = 1 + Math.sin(this.uiAnimationTimer * 0.15) * 0.3;
     ctx.fillStyle = "rgba(255, 255, 0, 0.9)";
     ctx.shadowColor = "rgba(255, 255, 0, 0.6)";
-    ctx.shadowBlur = 15;
+    ctx.shadowBlur = this.getScaledValue(15);
 
     ctx.beginPath();
     ctx.arc(targetX, targetY, targetSize * targetPulse, 0, Math.PI * 2);
@@ -331,7 +355,7 @@ class MarthaScene {
     // Start point indicator
     ctx.fillStyle = "rgba(0, 255, 0, 0.9)";
     ctx.shadowColor = "rgba(0, 255, 0, 0.6)";
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = this.getScaledValue(10);
 
     ctx.beginPath();
     ctx.arc(startX, startY, targetSize * 0.75, 0, Math.PI * 2);
@@ -341,109 +365,120 @@ class MarthaScene {
   }
 
   renderEnhancedPoints(ctx) {
-    // Enhanced points panel - responsive sizing
-    const panelX = this.getCanvasWidth() * 0.01; // 1% from left
-    const panelY = this.getCanvasHeight() * 0.01; // 1% from top
-    const panelWidth = Math.max(120, this.getCanvasWidth() * 0.12); // 12% of canvas width, min 120px
-    const panelHeight = Math.max(40, this.getCanvasHeight() * 0.06); // 6% of canvas height, min 40px
+    // Enhanced points panel - proportional sizing
+    const basePanel = { x: 10, y: 10, width: 150, height: 50 };
+    const panel = this.getRelativePosition(basePanel.x, basePanel.y);
+    const panelSize = this.getRelativeSize({
+      width: basePanel.width,
+      height: basePanel.height,
+    });
 
     ctx.save();
 
     // Panel background with gradient
     const gradient = ctx.createLinearGradient(
-      panelX,
-      panelY,
-      panelX + panelWidth,
-      panelY + panelHeight
+      panel.x,
+      panel.y,
+      panel.x + panelSize.width,
+      panel.y + panelSize.height
     );
     gradient.addColorStop(0, "rgba(0, 0, 0, 0.8)");
     gradient.addColorStop(1, "rgba(0, 0, 0, 0.6)");
 
     ctx.fillStyle = gradient;
-    ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
+    ctx.fillRect(panel.x, panel.y, panelSize.width, panelSize.height);
 
     // Panel border
     ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(panelX, panelY, panelWidth, panelHeight);
+    ctx.lineWidth = this.getScaledValue(2);
+    ctx.strokeRect(panel.x, panel.y, panelSize.width, panelSize.height);
 
-    // Points text - responsive font size
-    const fontSize = Math.max(14, this.getCanvasWidth() * 0.015); // 1.5% of canvas width, min 14px
+    // Points text - proportional font size
+    const fontSize = this.getScaledValue(18);
     ctx.fillStyle = "#ffd700";
     ctx.font = `bold ${fontSize}px Courier New`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText("Points", panelX + 10, panelY + panelHeight * 0.35);
+    ctx.fillText(
+      "Points",
+      panel.x + this.getScaledValue(10),
+      panel.y + panelSize.height * 0.35
+    );
 
     ctx.fillStyle = "#ffffff";
     ctx.font = `bold ${fontSize * 0.9}px Courier New`;
     ctx.fillText(
       `${this.game.playerPoints}`,
-      panelX + 10,
-      panelY + panelHeight * 0.7
+      panel.x + this.getScaledValue(10),
+      panel.y + panelSize.height * 0.7
     );
 
     ctx.restore();
   }
 
   renderEnhancedSockBalls(ctx) {
-    // Enhanced sock balls panel - responsive sizing
-    const panelWidth = Math.max(120, this.getCanvasWidth() * 0.12); // 12% of canvas width, min 120px
-    const panelHeight = Math.max(40, this.getCanvasHeight() * 0.06); // 6% of canvas height, min 40px
-    const panelX =
-      this.getCanvasWidth() - panelWidth - this.getCanvasWidth() * 0.01; // 1% from right
-    const panelY = this.getCanvasHeight() * 0.01; // 1% from top
+    // Enhanced sock balls panel - proportional sizing
+    const basePanel = { width: 150, height: 50 };
+    const panelSize = this.getRelativeSize(basePanel);
+    const panel = {
+      x: this.getCanvasWidth() - panelSize.width - this.getScaledValue(10),
+      y: this.getScaledValue(10),
+    };
 
     ctx.save();
 
     // Panel background with gradient
     const gradient = ctx.createLinearGradient(
-      panelX,
-      panelY,
-      panelX + panelWidth,
-      panelY + panelHeight
+      panel.x,
+      panel.y,
+      panel.x + panelSize.width,
+      panel.y + panelSize.height
     );
     gradient.addColorStop(0, "rgba(0, 0, 0, 0.6)");
     gradient.addColorStop(1, "rgba(0, 0, 0, 0.8)");
 
     ctx.fillStyle = gradient;
-    ctx.fillRect(panelX, panelY, panelWidth, panelHeight);
+    ctx.fillRect(panel.x, panel.y, panelSize.width, panelSize.height);
 
     // Panel border
     ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(panelX, panelY, panelWidth, panelHeight);
+    ctx.lineWidth = this.getScaledValue(2);
+    ctx.strokeRect(panel.x, panel.y, panelSize.width, panelSize.height);
 
-    // Sock balls text - responsive font size
-    const fontSize = Math.max(14, this.getCanvasWidth() * 0.015); // 1.5% of canvas width, min 14px
+    // Sock balls text - proportional font size
+    const fontSize = this.getScaledValue(18);
     ctx.fillStyle = "#87ceeb";
     ctx.font = `bold ${fontSize}px Courier New`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillText("Sock Balls", panelX + 10, panelY + panelHeight * 0.35);
+    ctx.fillText(
+      "Sock Balls",
+      panel.x + this.getScaledValue(10),
+      panel.y + panelSize.height * 0.35
+    );
 
     ctx.fillStyle = "#ffffff";
     ctx.font = `bold ${fontSize * 0.9}px Courier New`;
     ctx.fillText(
       `${this.game.sockBalls}`,
-      panelX + 10,
-      panelY + panelHeight * 0.7
+      panel.x + this.getScaledValue(10),
+      panel.y + panelSize.height * 0.7
     );
 
-    // Visual sock ball indicators - responsive sizing
-    const ballSize = Math.max(4, this.getCanvasWidth() * 0.005); // 0.5% of canvas width, min 4px
-    const ballSpacing = Math.max(8, this.getCanvasWidth() * 0.008); // 0.8% of canvas width, min 8px
+    // Visual sock ball indicators - proportional sizing
+    const ballSize = this.getScaledValue(6);
+    const ballSpacing = this.getScaledValue(10);
     const maxBalls = Math.min(this.game.sockBalls, 8); // Show max 8 balls
 
     for (let i = 0; i < maxBalls; i++) {
-      const ballX = panelX + panelWidth * 0.65 + i * ballSpacing;
-      const ballY = panelY + panelHeight * 0.5;
+      const ballX = panel.x + panelSize.width * 0.65 + i * ballSpacing;
+      const ballY = panel.y + panelSize.height * 0.5;
 
       // Glowing effect
       const glowIntensity =
         0.5 + Math.sin(this.uiAnimationTimer * 0.1 + i * 0.5) * 0.3;
       ctx.shadowColor = `rgba(135, 206, 235, ${glowIntensity})`;
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = this.getScaledValue(8);
 
       ctx.fillStyle = "#87ceeb";
       ctx.beginPath();
@@ -457,32 +492,44 @@ class MarthaScene {
   renderEnhancedDialogue(ctx) {
     const progress = this.marthaManager.getProgress();
 
-    // Enhanced dialogue panel - responsive sizing
-    const panelWidth = Math.max(300, this.getCanvasWidth() * 0.33); // 33% of canvas width, min 300px
-    const panelHeight = Math.max(60, this.getCanvasHeight() * 0.08); // 8% of canvas height, min 60px
-    const panelX = this.getCanvasWidth() / 2;
-    const panelY = this.getCanvasHeight() * 0.09; // 9% from top
+    // Enhanced dialogue panel - proportional sizing
+    const basePanel = { width: 400, height: 80 };
+    const panelSize = this.getRelativeSize(basePanel);
+    const panel = {
+      x: this.getCanvasWidth() / 2,
+      y: this.getScaledValue(70),
+    };
 
     ctx.save();
-    ctx.translate(panelX, panelY);
+    ctx.translate(panel.x, panel.y);
 
     // Panel background with gradient
     const gradient = ctx.createLinearGradient(
-      -panelWidth / 2,
-      -panelHeight / 2,
-      panelWidth / 2,
-      panelHeight / 2
+      -panelSize.width / 2,
+      -panelSize.height / 2,
+      panelSize.width / 2,
+      panelSize.height / 2
     );
     gradient.addColorStop(0, "rgba(75, 0, 130, 0.9)");
     gradient.addColorStop(1, "rgba(138, 43, 226, 0.8)");
 
     ctx.fillStyle = gradient;
-    ctx.fillRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
+    ctx.fillRect(
+      -panelSize.width / 2,
+      -panelSize.height / 2,
+      panelSize.width,
+      panelSize.height
+    );
 
     // Panel border
     ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
+    ctx.lineWidth = this.getScaledValue(3);
+    ctx.strokeRect(
+      -panelSize.width / 2,
+      -panelSize.height / 2,
+      panelSize.width,
+      panelSize.height
+    );
 
     // Dynamic dialogue text based on progress
     let dialogueText = `I DEMAND ${this.marthaManager.targetSocks} PAIRS OF SOCKS!`;
@@ -493,8 +540,8 @@ class MarthaScene {
       dialogueText = `ALMOST SATISFIED! ${progress.consumed}/${progress.target}!`;
     }
 
-    // Dialogue text with pulse effect - responsive font size
-    const fontSize = Math.max(14, this.getCanvasWidth() * 0.014); // 1.4% of canvas width, min 14px
+    // Dialogue text with pulse effect - proportional font size
+    const fontSize = this.getScaledValue(16);
     const textScale = 1 + Math.sin(this.uiAnimationTimer * 0.08) * 0.02;
     ctx.scale(textScale, textScale);
 
@@ -502,40 +549,42 @@ class MarthaScene {
     ctx.font = `bold ${fontSize}px Courier New`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(dialogueText, 0, -panelHeight * 0.15);
+    ctx.fillText(dialogueText, 0, -panelSize.height * 0.15);
 
     ctx.restore();
 
-    // Progress bar - responsive sizing
-    const barWidth = Math.max(150, this.getCanvasWidth() * 0.17); // 17% of canvas width, min 150px
-    const barHeight = Math.max(8, this.getCanvasHeight() * 0.01); // 1% of canvas height, min 8px
-    const barX = panelX - barWidth / 2;
-    const barY = panelY + panelHeight * 0.25;
+    // Progress bar - proportional sizing
+    const baseBar = { width: 200, height: 10 };
+    const barSize = this.getRelativeSize(baseBar);
+    const bar = {
+      x: panel.x - barSize.width / 2,
+      y: panel.y + panelSize.height * 0.25,
+    };
 
     ctx.save();
 
     // Progress bar background
     ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
-    ctx.fillRect(barX, barY, barWidth, barHeight);
+    ctx.fillRect(bar.x, bar.y, barSize.width, barSize.height);
 
     // Progress bar border
     ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(barX, barY, barWidth, barHeight);
+    ctx.lineWidth = this.getScaledValue(1);
+    ctx.strokeRect(bar.x, bar.y, barSize.width, barSize.height);
 
     // Progress bar fill
-    const fillWidth = barWidth * progress.percentage;
+    const fillWidth = barSize.width * progress.percentage;
     let fillColor = "#4caf50";
     if (progress.percentage > 0.7) fillColor = "#ffc107";
     if (progress.percentage >= 1) fillColor = "#ff5722";
 
     ctx.fillStyle = fillColor;
-    ctx.fillRect(barX, barY, fillWidth, barHeight);
+    ctx.fillRect(bar.x, bar.y, fillWidth, barSize.height);
 
     // Progress bar glow
     ctx.shadowColor = fillColor;
-    ctx.shadowBlur = 5;
-    ctx.fillRect(barX, barY, fillWidth, barHeight);
+    ctx.shadowBlur = this.getScaledValue(5);
+    ctx.fillRect(bar.x, bar.y, fillWidth, barSize.height);
 
     ctx.restore();
   }
@@ -543,21 +592,23 @@ class MarthaScene {
   renderEnhancedGameEndTimer(ctx) {
     const secondsRemaining = Math.ceil(this.gameEndTimer / 60);
 
-    // Enhanced timer panel - responsive sizing
-    const panelWidth = Math.max(250, this.getCanvasWidth() * 0.25); // 25% of canvas width, min 250px
-    const panelHeight = Math.max(50, this.getCanvasHeight() * 0.06); // 6% of canvas height, min 50px
-    const panelX = this.getCanvasWidth() / 2;
-    const panelY = this.getCanvasHeight() - this.getCanvasHeight() * 0.12; // 12% from bottom
+    // Enhanced timer panel - proportional sizing
+    const basePanel = { width: 300, height: 60 };
+    const panelSize = this.getRelativeSize(basePanel);
+    const panel = {
+      x: this.getCanvasWidth() / 2,
+      y: this.getCanvasHeight() - this.getScaledValue(80),
+    };
 
     ctx.save();
-    ctx.translate(panelX, panelY);
+    ctx.translate(panel.x, panel.y);
 
     // Panel background with gradient
     const gradient = ctx.createLinearGradient(
-      -panelWidth / 2,
-      -panelHeight / 2,
-      panelWidth / 2,
-      panelHeight / 2
+      -panelSize.width / 2,
+      -panelSize.height / 2,
+      panelSize.width / 2,
+      panelSize.height / 2
     );
     gradient.addColorStop(0, "rgba(255, 215, 0, 0.9)");
     gradient.addColorStop(1, "rgba(255, 140, 0, 0.8)");
@@ -576,15 +627,25 @@ class MarthaScene {
     }
 
     ctx.fillStyle = gradient;
-    ctx.fillRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
+    ctx.fillRect(
+      -panelSize.width / 2,
+      -panelSize.height / 2,
+      panelSize.width,
+      panelSize.height
+    );
 
     // Panel border
     ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
+    ctx.lineWidth = this.getScaledValue(3);
+    ctx.strokeRect(
+      -panelSize.width / 2,
+      -panelSize.height / 2,
+      panelSize.width,
+      panelSize.height
+    );
 
-    // Timer text with scale effect - responsive font size
-    const fontSize = Math.max(18, this.getCanvasWidth() * 0.018); // 1.8% of canvas width, min 18px
+    // Timer text with scale effect - proportional font size
+    const fontSize = this.getScaledValue(22);
     const textScale =
       secondsRemaining <= 3
         ? 1 + Math.sin(this.messageFlashTimer * 0.4) * 0.1
@@ -601,35 +662,47 @@ class MarthaScene {
   }
 
   renderEnhancedMarthaAwayMessage(ctx) {
-    // Enhanced Martha away message - responsive sizing
-    const panelWidth = Math.max(300, this.getCanvasWidth() * 0.33); // 33% of canvas width, min 300px
-    const panelHeight = Math.max(60, this.getCanvasHeight() * 0.08); // 8% of canvas height, min 60px
-    const panelX = this.getCanvasWidth() / 2;
-    const panelY = this.getCanvasHeight() / 2 + this.getCanvasHeight() * 0.1; // 10% below center
+    // Enhanced Martha away message - proportional sizing
+    const basePanel = { width: 400, height: 80 };
+    const panelSize = this.getRelativeSize(basePanel);
+    const panel = {
+      x: this.getCanvasWidth() / 2,
+      y: this.getCanvasHeight() / 2 + this.getScaledValue(100),
+    };
 
     ctx.save();
-    ctx.translate(panelX, panelY);
+    ctx.translate(panel.x, panel.y);
 
     // Panel background with gradient
     const gradient = ctx.createLinearGradient(
-      -panelWidth / 2,
-      -panelHeight / 2,
-      panelWidth / 2,
-      panelHeight / 2
+      -panelSize.width / 2,
+      -panelSize.height / 2,
+      panelSize.width / 2,
+      panelSize.height / 2
     );
     gradient.addColorStop(0, "rgba(255, 140, 0, 0.9)");
     gradient.addColorStop(1, "rgba(255, 165, 0, 0.8)");
 
     ctx.fillStyle = gradient;
-    ctx.fillRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
+    ctx.fillRect(
+      -panelSize.width / 2,
+      -panelSize.height / 2,
+      panelSize.width,
+      panelSize.height
+    );
 
     // Panel border
     ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.lineWidth = 3;
-    ctx.strokeRect(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight);
+    ctx.lineWidth = this.getScaledValue(3);
+    ctx.strokeRect(
+      -panelSize.width / 2,
+      -panelSize.height / 2,
+      panelSize.width,
+      panelSize.height
+    );
 
-    // Message text with pulse effect - responsive font size
-    const fontSize = Math.max(16, this.getCanvasWidth() * 0.016); // 1.6% of canvas width, min 16px
+    // Message text with pulse effect - proportional font size
+    const fontSize = this.getScaledValue(18);
     const textScale = 1 + Math.sin(this.messageFlashTimer * 0.1) * 0.05;
     ctx.scale(textScale, textScale);
 
@@ -637,10 +710,10 @@ class MarthaScene {
     ctx.font = `bold ${fontSize}px Courier New`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("Martha is away!", 0, -panelHeight * 0.15);
+    ctx.fillText("Martha is away!", 0, -panelSize.height * 0.15);
 
     ctx.font = `${fontSize * 0.85}px Courier New`;
-    ctx.fillText("Wait for her to return...", 0, panelHeight * 0.2);
+    ctx.fillText("Wait for her to return...", 0, panelSize.height * 0.2);
 
     ctx.restore();
   }

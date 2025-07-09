@@ -33,6 +33,11 @@ class MarthaManager {
     return this.game.canvas.height;
   }
 
+  // Get scaled value for responsive elements
+  getScaledValue(baseValue) {
+    return this.game.getScaledValue(baseValue);
+  }
+
   // Initialize Martha for the current level
   setup(level) {
     this.targetSocks = GameConfig.LEVELS[level].sockTarget;
@@ -483,11 +488,12 @@ class MarthaManager {
   renderFullnessBar(ctx) {
     if (!this.martha || this.isAway) return;
 
-    // Responsive bar sizing
-    const barWidth = Math.max(60, this.getCanvasWidth() * 0.06); // 6% of canvas width, min 60px
-    const barHeight = Math.max(10, this.getCanvasHeight() * 0.015); // 1.5% of canvas height, min 10px
+    // Proportional bar sizing based on target canvas
+    const barWidth = this.getScaledValue(70);
+    const barHeight = this.getScaledValue(12);
     const barX = this.martha.x - barWidth / 2;
-    const barY = this.martha.y + this.martha.height / 2 + 15;
+    const barY =
+      this.martha.y + this.martha.height / 2 + this.getScaledValue(15);
 
     ctx.save();
 
@@ -506,9 +512,9 @@ class MarthaManager {
 
     // Draw bar border with glow
     ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = this.getScaledValue(2);
     ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
-    ctx.shadowBlur = 3;
+    ctx.shadowBlur = this.getScaledValue(3);
     ctx.strokeRect(barX, barY, barWidth, barHeight);
 
     // Draw fill based on consumed socks
@@ -544,29 +550,29 @@ class MarthaManager {
 
       ctx.fillStyle = fillGradient;
       ctx.shadowColor = glowColor;
-      ctx.shadowBlur = 5;
+      ctx.shadowBlur = this.getScaledValue(5);
       ctx.fillRect(barX, barY, fillWidth, barHeight);
 
       // Add inner highlight
       ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-      ctx.fillRect(barX, barY, fillWidth, 2);
+      ctx.fillRect(barX, barY, fillWidth, this.getScaledValue(2));
     }
 
     ctx.restore();
 
-    // Draw text showing progress with responsive sizing
+    // Draw text showing progress with better styling
     ctx.save();
     ctx.fillStyle = "white";
-    const fontSize = Math.max(12, this.getCanvasWidth() * 0.012); // 1.2% of canvas width, min 12px
+    const fontSize = this.getScaledValue(14);
     ctx.font = `bold ${fontSize}px Courier New`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-    ctx.shadowBlur = 3;
+    ctx.shadowBlur = this.getScaledValue(3);
     ctx.fillText(
       `${progress.consumed}/${progress.target}`,
       this.martha.x,
-      barY + barHeight + 8
+      barY + barHeight + this.getScaledValue(8)
     );
     ctx.restore();
   }

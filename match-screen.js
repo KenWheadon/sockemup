@@ -43,14 +43,13 @@ class MatchScreen {
     const canvasHeight = this.game.canvas.height;
 
     // Calculate positions for 3 pairs across the screen
-    const pairWidth = canvasWidth / 4; // Leave space on edges
+    const pairWidth = canvasWidth / GameConfig.DROP_TARGET_PAIRS; // Leave space on edges
     const startX = pairWidth / 2;
     const centerY = canvasHeight / 3;
 
     this.dropZones = [];
 
-    // Create 3 pairs of drop zones
-    for (let pairId = 0; pairId < 3; pairId++) {
+    for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
       const pairCenterX = startX + pairId * pairWidth;
 
       // First zone of the pair (top)
@@ -212,7 +211,7 @@ class MatchScreen {
 
   checkForMatches() {
     // Check each pair for matches
-    for (let pairId = 0; pairId < 3; pairId++) {
+    for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
       const pairZones = this.dropZones.filter((zone) => zone.pairId === pairId);
 
       if (pairZones.length === 2 && pairZones[0].sock && pairZones[1].sock) {
@@ -301,7 +300,7 @@ class MatchScreen {
 
   renderDropZonePairBoxes(ctx) {
     // Draw boxes around each pair of drop zones
-    for (let pairId = 0; pairId < 3; pairId++) {
+    for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
       const pairZones = this.dropZones.filter((zone) => zone.pairId === pairId);
 
       if (pairZones.length === 2) {

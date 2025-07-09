@@ -263,15 +263,6 @@ class SockManager {
     const targetX = this.game.canvas.width - 50;
     const targetY = 20;
 
-    // console.log("Creating sockball:", {
-    //   image: sockballImage,
-    //   startX: animation.centerX,
-    //   startY: animation.centerY,
-    //   targetX: targetX,
-    //   targetY: targetY,
-    //   sockType: animation.sockType,
-    // });
-
     const sockballAnim = {
       image: sockballImage,
       x: animation.centerX,
@@ -602,12 +593,6 @@ class SockManager {
       y <= this.sockPile.y + this.sockPile.height / 2;
 
     const hasStock = this.sockList.length > 0;
-
-    // console.log("Sock pile click check:", {
-    //   inBounds,
-    //   hasStock,
-    //   sockCount: this.sockList.length,
-    // });
 
     return inBounds && hasStock;
   }
