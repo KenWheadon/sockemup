@@ -63,11 +63,17 @@ class MarthaManager {
     };
 
     // AI improvement properties
-    this.edgeBuffer = 30; // Distance from edge to start avoiding
-    this.centerAttraction = 0.1; // How much Martha is attracted to center
-    this.edgeRepulsion = 0.3; // How much Martha avoids edges
+    this.edgeBuffer = 50; // Distance from edge to start avoiding
+    this.centerAttraction = 0.002; // How much Martha is attracted to center (much weaker)
+    this.edgeRepulsion = 0.05; // How much Martha avoids edges (much weaker)
     this.lastEdgeHit = 0; // Timer to prevent rapid edge bouncing
     this.edgeHitCooldown = 500; // milliseconds
+
+    // Edge escape system
+    this.isEscapingEdge = false;
+    this.edgeEscapeTimer = 0;
+    this.edgeEscapeDuration = 1000; // 1 second
+    this.edgeEscapeDirection = { x: 0, y: 0 };
   }
 
   setup(level) {
@@ -92,10 +98,12 @@ class MarthaManager {
     this.hitEffect.active = false;
     this.hitEffect.pointPopups = [];
 
-    // Reset animation
+    // Reset animation and edge escape state
     this.animationFrame = 0;
     this.animationTimer = 0;
     this.currentFrameIndex = 0;
+    this.isEscapingEdge = false;
+    this.edgeEscapeTimer = 0;
 
     // Initialize first pattern
     this.switchPattern();
@@ -111,8 +119,19 @@ class MarthaManager {
     // Update hit effects
     this.updateHitEffects(deltaTime);
 
-    // Handle pattern switching
-    if (this.patternSwitchTimer >= this.patternSwitchInterval) {
+    // Update edge escape timer
+    if (this.isEscapingEdge) {
+      this.edgeEscapeTimer -= deltaTime;
+      if (this.edgeEscapeTimer <= 0) {
+        this.isEscapingEdge = false;
+      }
+    }
+
+    // Handle pattern switching (only if not escaping edge)
+    if (
+      !this.isEscapingEdge &&
+      this.patternSwitchTimer >= this.patternSwitchInterval
+    ) {
       this.switchPattern();
       this.patternSwitchTimer = 0;
     }
@@ -123,7 +142,11 @@ class MarthaManager {
     } else if (this.isEntering) {
       this.updateEnterMovement(deltaTime);
     } else if (this.onScreen) {
-      this.updatePatternMovement(deltaTime);
+      if (this.isEscapingEdge) {
+        this.updateEdgeEscapeMovement(deltaTime);
+      } else {
+        this.updatePatternMovement(deltaTime);
+      }
     }
 
     // Apply velocity and intelligent bounds checking
@@ -234,12 +257,39 @@ class MarthaManager {
         break;
     }
 
-    // Apply AI improvements
-    this.applyAIImprovements(timeMultiplier);
+    // Apply AI improvements (only if not escaping edge)
+    if (!this.isEscapingEdge) {
+      this.applyAIImprovements(timeMultiplier);
+    }
+  }
+
+  updateEdgeEscapeMovement(deltaTime) {
+    const timeMultiplier = deltaTime / 16.67;
+    const baseSpeed = 2; // Fixed speed for edge escape
+
+    // Move in the escape direction
+    this.velocity.x =
+      this.edgeEscapeDirection.x *
+      baseSpeed *
+      this.patternSpeed *
+      timeMultiplier;
+    this.velocity.y =
+      this.edgeEscapeDirection.y *
+      baseSpeed *
+      this.patternSpeed *
+      timeMultiplier;
+
+    // Update facing direction
+    if (Math.abs(this.velocity.x) > 0.1) {
+      this.facingRight = this.velocity.x > 0;
+    }
   }
 
   applyAIImprovements(timeMultiplier) {
-    // Calculate center attraction
+    // Only apply AI improvements if Martha is close to edges or needs center guidance
+    const currentTime = Date.now();
+
+    // Calculate center attraction - only apply when far from center
     const centerX =
       this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
     const centerY =
@@ -247,43 +297,70 @@ class MarthaManager {
 
     const distanceFromCenterX = centerX - this.x;
     const distanceFromCenterY = centerY - this.y;
+    const distanceFromCenter = Math.sqrt(
+      distanceFromCenterX * distanceFromCenterX +
+        distanceFromCenterY * distanceFromCenterY
+    );
 
-    // Apply gentle attraction to center
-    this.velocity.x +=
-      distanceFromCenterX * this.centerAttraction * timeMultiplier;
-    this.velocity.y +=
-      distanceFromCenterY * this.centerAttraction * timeMultiplier;
+    // Only apply center attraction if Martha is far from center (more than 1/3 of screen)
+    const maxDistance =
+      Math.min(
+        this.bounds.right - this.bounds.left,
+        this.bounds.bottom - this.bounds.top
+      ) / 3;
+    if (distanceFromCenter > maxDistance) {
+      const attractionStrength = Math.min(
+        (distanceFromCenter - maxDistance) / maxDistance,
+        1
+      );
+      this.velocity.x +=
+        distanceFromCenterX *
+        this.centerAttraction *
+        attractionStrength *
+        timeMultiplier;
+      this.velocity.y +=
+        distanceFromCenterY *
+        this.centerAttraction *
+        attractionStrength *
+        timeMultiplier;
+    }
 
-    // Apply edge repulsion
-    const currentTime = Date.now();
-
+    // Apply edge repulsion - only when actually close to edges
     // Left edge repulsion
     if (this.x < this.bounds.left + this.edgeBuffer) {
-      const repulsionForce =
-        (this.bounds.left + this.edgeBuffer - this.x) / this.edgeBuffer;
+      const repulsionForce = Math.pow(
+        (this.bounds.left + this.edgeBuffer - this.x) / this.edgeBuffer,
+        2
+      );
       this.velocity.x += repulsionForce * this.edgeRepulsion * timeMultiplier;
     }
 
     // Right edge repulsion
     if (this.x > this.bounds.right - this.width - this.edgeBuffer) {
-      const repulsionForce =
+      const repulsionForce = Math.pow(
         (this.x - (this.bounds.right - this.width - this.edgeBuffer)) /
-        this.edgeBuffer;
+          this.edgeBuffer,
+        2
+      );
       this.velocity.x -= repulsionForce * this.edgeRepulsion * timeMultiplier;
     }
 
     // Top edge repulsion
     if (this.y < this.bounds.top + this.edgeBuffer) {
-      const repulsionForce =
-        (this.bounds.top + this.edgeBuffer - this.y) / this.edgeBuffer;
+      const repulsionForce = Math.pow(
+        (this.bounds.top + this.edgeBuffer - this.y) / this.edgeBuffer,
+        2
+      );
       this.velocity.y += repulsionForce * this.edgeRepulsion * timeMultiplier;
     }
 
     // Bottom edge repulsion
     if (this.y > this.bounds.bottom - this.height - this.edgeBuffer) {
-      const repulsionForce =
+      const repulsionForce = Math.pow(
         (this.y - (this.bounds.bottom - this.height - this.edgeBuffer)) /
-        this.edgeBuffer;
+          this.edgeBuffer,
+        2
+      );
       this.velocity.y -= repulsionForce * this.edgeRepulsion * timeMultiplier;
     }
   }
@@ -294,7 +371,7 @@ class MarthaManager {
       this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
     this.velocity.y = 0;
 
-    // Check for direction change at bounds
+    // Check for direction change at bounds with some randomness
     if (
       this.x <= this.bounds.left + this.edgeBuffer ||
       this.x >= this.bounds.right - this.width - this.edgeBuffer
@@ -419,52 +496,50 @@ class MarthaManager {
     this.x += this.velocity.x;
     this.y += this.velocity.y;
 
-    // Intelligent bounds checking with bouncing for normal movement
+    // Intelligent bounds checking with edge escape system
     if (!this.isExiting && !this.isEntering) {
-      let bounced = false;
+      let hitEdge = false;
+      let escapeDirection = { x: 0, y: 0 };
 
       // Left boundary
       if (this.x < this.bounds.left) {
-        this.x = this.bounds.left + Math.abs(this.bounds.left - this.x); // Bounce back
-        this.velocity.x = Math.abs(this.velocity.x) * 0.5; // Reduce speed and reverse direction
-        bounced = true;
+        this.x = this.bounds.left + 3; // Push 3 pixels away from edge
+        escapeDirection.x = 1; // Move right
+        hitEdge = true;
       }
 
       // Right boundary
       if (this.x > this.bounds.right - this.width) {
-        this.x =
-          this.bounds.right -
-          this.width -
-          Math.abs(this.x - (this.bounds.right - this.width));
-        this.velocity.x = -Math.abs(this.velocity.x) * 0.5;
-        bounced = true;
+        this.x = this.bounds.right - this.width - 3; // Push 3 pixels away from edge
+        escapeDirection.x = -1; // Move left
+        hitEdge = true;
       }
 
       // Top boundary
       if (this.y < this.bounds.top) {
-        this.y = this.bounds.top + Math.abs(this.bounds.top - this.y);
-        this.velocity.y = Math.abs(this.velocity.y) * 0.5;
-        bounced = true;
+        this.y = this.bounds.top + 3; // Push 3 pixels away from edge
+        escapeDirection.y = 1; // Move down
+        hitEdge = true;
       }
 
       // Bottom boundary
       if (this.y > this.bounds.bottom - this.height) {
-        this.y =
-          this.bounds.bottom -
-          this.height -
-          Math.abs(this.y - (this.bounds.bottom - this.height));
-        this.velocity.y = -Math.abs(this.velocity.y) * 0.5;
-        bounced = true;
+        this.y = this.bounds.bottom - this.height - 3; // Push 3 pixels away from edge
+        escapeDirection.y = -1; // Move up
+        hitEdge = true;
       }
 
-      // Update facing direction based on velocity
-      if (Math.abs(this.velocity.x) > 0.1) {
+      // If we hit an edge, start edge escape mode
+      if (hitEdge) {
+        this.isEscapingEdge = true;
+        this.edgeEscapeTimer = this.edgeEscapeDuration;
+        this.edgeEscapeDirection = escapeDirection;
+        this.facingRight = escapeDirection.x > 0;
+      }
+
+      // Update facing direction based on velocity (only if not escaping)
+      if (!this.isEscapingEdge && Math.abs(this.velocity.x) > 0.1) {
         this.facingRight = this.velocity.x > 0;
-      }
-
-      // Record bounce time to prevent rapid bouncing
-      if (bounced) {
-        this.lastEdgeHit = currentTime;
       }
     }
   }

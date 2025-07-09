@@ -158,6 +158,10 @@ class LevelEndScreen extends Screen {
           final,
           Math.floor(this.scoreAnimationTimer / 3)
         );
+        if (this.finalTotalDisplay >= final) {
+          this.scoreAnimationPhase++;
+          this.scoreAnimationTimer = 0;
+        }
         break;
     }
   }

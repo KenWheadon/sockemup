@@ -152,12 +152,12 @@ const GameConfig = {
   // Game levels
   LEVELS: [
     {
-      sockTarget: 2,
+      sockTarget: 1,
       marthaSpeed: 0.5,
-      sockPairs: 3,
+      sockPairs: 1,
       typesAvailable: [1],
-      matchingTime: 60,
-      marthaWantsSockballs: 2,
+      matchingTime: 20,
+      marthaWantsSockballs: 1,
       marthaPatterns: ["horizontal", "vertical"],
       marthaPatternSpeed: 1.0,
     },
