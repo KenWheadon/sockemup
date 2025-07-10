@@ -1,6 +1,5 @@
 /* Level Select Screen Styles */
 
-/* Level Selection Container */
 .level-select-screen {
   position: relative;
   width: 100%;
@@ -17,7 +16,6 @@
     );
 }
 
-/* Logo Styling */
 .level-select-logo {
   position: absolute;
   top: 100px;
@@ -47,7 +45,6 @@
   }
 }
 
-/* Instructions Styling */
 .level-instructions {
   position: absolute;
   top: 220px;
@@ -80,7 +77,6 @@
   }
 }
 
-/* Level Selection Area */
 .level-selection-area {
   position: absolute;
   top: 50%;
@@ -98,7 +94,6 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
-/* Level Button Styling */
 .level-button {
   position: relative;
   display: inline-block;
@@ -137,7 +132,6 @@
   filter: brightness(1.1);
 }
 
-/* Level Button Elements */
 .level-sock-image {
   width: 80px;
   height: 80px;
@@ -249,7 +243,6 @@
   }
 }
 
-/* Player Stats */
 .player-stats {
   position: absolute;
   bottom: 30px;
@@ -271,7 +264,6 @@
   margin: 0;
 }
 
-/* Easter Egg Socks */
 .menu-sock {
   position: absolute;
   pointer-events: none;
@@ -319,7 +311,6 @@
   }
 }
 
-/* Responsive Design */
 @media (max-width: 1200px) {
   .level-button {
     margin: 0 10px;
@@ -388,7 +379,6 @@
   }
 }
 
-/* Accessibility */
 .level-button:focus {
   outline: 2px solid #4caf50;
   outline-offset: 4px;
@@ -398,7 +388,6 @@
   filter: drop-shadow(0 0 0 3px rgba(76, 175, 80, 0.5));
 }
 
-/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   .level-button,
   .level-sock-image,
@@ -412,7 +401,6 @@
   }
 }
 
-/* High contrast mode */
 @media (prefers-contrast: high) {
   .level-instructions {
     color: white;
@@ -430,7 +418,6 @@
   }
 }
 
-/* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
   .level-select-screen {
     background: radial-gradient(

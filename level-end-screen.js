@@ -1,10 +1,23 @@
-// 📁 level-end-screen.js - Updated with simplified scoring and Martha images
 class LevelEndScreen extends Screen {
   constructor(game) {
     super(game);
-    // Removed animation state properties
     this.resetScores();
+    this.initializeButton();
+    this.marthaImage = null;
+    this.showRentDue = false;
+  }
 
+  resetScores() {
+    this.sockballsPaidDisplay = 0;
+    this.sockballsLeftoverDisplay = 0;
+    this.rentPenaltyDisplay = 0;
+    this.totalScoreDisplay = 0;
+    this.scoreAnimationTimer = 0;
+    this.currentStageIndex = 0;
+    this.scoreStages = [];
+  }
+
+  initializeButton() {
     this.continueButton = {
       x: 0,
       y: 0,
@@ -13,18 +26,12 @@ class LevelEndScreen extends Screen {
       hovered: false,
       pressed: false,
     };
-
-    // Martha image state
-    this.marthaImage = null;
-    this.showRentDue = false;
   }
 
   createLayoutCache() {
     const baseLayout = super.createLayoutCache();
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
-
-    // Add margin between Martha image and stats
     const marthaImageSize = this.game.getScaledValue(80);
     const marthaToStatsMargin = this.game.getScaledValue(30);
 
@@ -39,7 +46,6 @@ class LevelEndScreen extends Screen {
       titleY: canvasHeight / 2 - this.game.getScaledValue(200),
       marthaImageY: canvasHeight / 2 - this.game.getScaledValue(130),
       marthaImageSize: marthaImageSize,
-      // Add margin between Martha image and stats
       scoreStartY:
         canvasHeight / 2 -
         this.game.getScaledValue(130) +
@@ -49,26 +55,14 @@ class LevelEndScreen extends Screen {
       buttonWidth: this.game.getScaledValue(200),
       buttonHeight: this.game.getScaledValue(50),
       buttonY: canvasHeight / 2 + this.game.getScaledValue(240),
-      gapAboveButton: this.game.getScaledValue(20),
     };
-  }
-
-  resetScores() {
-    this.sockballsPaidDisplay = 0;
-    this.sockballsLeftoverDisplay = 0;
-    this.rentPenaltyDisplay = 0;
-    this.totalScoreDisplay = 0;
-    this.scoreAnimationTimer = 0;
-    this.currentStageIndex = 0;
-    this.scoreStages = [];
   }
 
   setup() {
     super.setup();
-    // Removed animation state setup
     this.resetScores();
     this.calculateScoresAndRent();
-    this.prepareScoreAnimation();
+    this.setupScoreAnimation();
     this.onResize();
   }
 
@@ -76,12 +70,9 @@ class LevelEndScreen extends Screen {
     const marthaWanted = this.game.throwingScreen.marthaManager.sockballsWanted;
     const marthaGot = this.game.throwingScreen.marthaManager.collectedSockballs;
     const totalSockballsCreated = this.game.sockBalls;
-
-    // Get sockballs thrown from throwing screen, default to 0 if not available
     const sockballsThrown = this.game.throwingScreen.sockballsThrown || 0;
 
     this.sockballsPaid = marthaGot;
-    // Only count sockballs that are physically leftover (not thrown)
     this.sockballsLeftover = Math.max(
       0,
       totalSockballsCreated - sockballsThrown
@@ -96,14 +87,13 @@ class LevelEndScreen extends Screen {
       this.sockballsLeftoverPoints +
       this.rentPenaltyPoints;
 
-    // Determine which Martha image to show
     this.showRentDue = this.rentPenalty > 0;
     this.marthaImage = this.showRentDue
       ? this.game.images["martha-rentdue.png"]
       : this.game.images["martha-win.png"];
   }
 
-  prepareScoreAnimation() {
+  setupScoreAnimation() {
     this.scoreStages = [
       {
         label: "sockballsPaidDisplay",
@@ -123,12 +113,7 @@ class LevelEndScreen extends Screen {
         end: this.rentPenalty,
         rate: 80,
       },
-      {
-        label: "totalScoreDisplay",
-        start: 0,
-        end: this.totalScore,
-        rate: 60,
-      },
+      { label: "totalScoreDisplay", start: 0, end: this.totalScore, rate: 60 },
     ];
 
     this.currentStageIndex = 0;
@@ -164,7 +149,6 @@ class LevelEndScreen extends Screen {
   }
 
   onUpdate(deltaTime) {
-    // Removed animation update logic - screen now shows immediately
     this.updateScoreAnimation(deltaTime);
   }
 
@@ -175,7 +159,9 @@ class LevelEndScreen extends Screen {
   }
 
   onMouseDown(x, y) {
-    if (this.continueButton.hovered) this.continueButton.pressed = true;
+    if (this.continueButton.hovered) {
+      this.continueButton.pressed = true;
+    }
   }
 
   onMouseUp() {
@@ -184,7 +170,6 @@ class LevelEndScreen extends Screen {
 
   onClick(x, y) {
     if (this.continueButton.hovered) {
-      // Add points to player total
       this.game.playerPoints += this.totalScore;
       this.game.saveGameData();
       this.game.gameState = "menu";
@@ -192,24 +177,19 @@ class LevelEndScreen extends Screen {
   }
 
   onRender(ctx) {
-    // Removed animation transforms - screen shows immediately without scaling/fading
     ctx.save();
-
     this.renderMainContainer(ctx);
     this.renderContent(ctx);
     this.renderContinueButton(ctx);
-
     ctx.restore();
   }
 
   renderMainContainer(ctx) {
     const layout = this.layoutCache;
 
-    // Dark overlay
     ctx.fillStyle = "rgba(0,0,0,0.8)";
     ctx.fillRect(0, 0, this.game.getCanvasWidth(), this.game.getCanvasHeight());
 
-    // Main container with shadow
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.fillRect(
       layout.containerX + 5,
@@ -231,7 +211,12 @@ class LevelEndScreen extends Screen {
   renderContent(ctx) {
     const layout = this.layoutCache;
 
-    // Title
+    this.renderTitle(ctx, layout);
+    this.renderMarthaImage(ctx, layout);
+    this.renderScoreLines(ctx, layout);
+  }
+
+  renderTitle(ctx, layout) {
     ctx.save();
     ctx.shadowColor = "#FFD700";
     ctx.shadowBlur = this.game.getScaledValue(10);
@@ -241,28 +226,20 @@ class LevelEndScreen extends Screen {
       align: "center",
     });
     ctx.restore();
-
-    // Martha image
-    this.renderMarthaImage(ctx, layout);
-
-    // Score lines (now with proper margin from Martha image)
-    this.renderScoreLines(ctx, layout);
   }
 
   renderMarthaImage(ctx, layout) {
-    if (this.marthaImage) {
-      const imageSize = layout.marthaImageSize;
-      const imageX = layout.centerX - imageSize / 2;
-      const imageY = layout.marthaImageY;
+    if (!this.marthaImage) return;
 
-      ctx.save();
-      ctx.drawImage(this.marthaImage, imageX, imageY, imageSize, imageSize);
-      ctx.restore();
-    }
+    const imageSize = layout.marthaImageSize;
+    const imageX = layout.centerX - imageSize / 2;
+    const imageY = layout.marthaImageY;
+
+    ctx.drawImage(this.marthaImage, imageX, imageY, imageSize, imageSize);
   }
 
   renderScoreLines(ctx, layout) {
-    const lines = [
+    const scoreLines = [
       {
         label: `${this.sockballsPaidDisplay}x SOCKBALLS PAID:`,
         value: this.sockballsPaidDisplay * 5,
@@ -285,8 +262,8 @@ class LevelEndScreen extends Screen {
       },
     ];
 
-    lines.forEach((line, i) => {
-      const y = layout.scoreStartY + i * layout.scoreLineHeight;
+    scoreLines.forEach((line, index) => {
+      const y = layout.scoreStartY + index * layout.scoreLineHeight;
       this.renderScoreLine(
         ctx,
         line.label,
@@ -305,12 +282,10 @@ class LevelEndScreen extends Screen {
     ctx.font = `${fontSize}px Courier New`;
     ctx.textBaseline = "middle";
 
-    // Label (left aligned)
     ctx.fillStyle = "#ffffff";
     ctx.textAlign = "right";
     ctx.fillText(label, centerX - 20, y);
 
-    // Value (right aligned)
     ctx.fillStyle = valueColor;
     ctx.textAlign = "left";
     ctx.fillText(`${value} points`, centerX + 20, y);
@@ -319,38 +294,36 @@ class LevelEndScreen extends Screen {
   }
 
   renderContinueButton(ctx) {
-    const b = this.continueButton;
-    const layout = this.layoutCache;
+    const button = this.continueButton;
 
     ctx.save();
 
-    // Button background
     let fillColor = "#3498DB";
-    if (b.hovered) fillColor = "#4ECDC4";
-    if (b.pressed) fillColor = "#2980B9";
+    if (button.hovered) fillColor = "#4ECDC4";
+    if (button.pressed) fillColor = "#2980B9";
 
     ctx.fillStyle = fillColor;
-    ctx.fillRect(b.x, b.y, b.width, b.height);
+    ctx.fillRect(button.x, button.y, button.width, button.height);
 
-    // Button border
     ctx.strokeStyle = "#2980B9";
     ctx.lineWidth = this.game.getScaledValue(2);
-    ctx.strokeRect(b.x, b.y, b.width, b.height);
+    ctx.strokeRect(button.x, button.y, button.width, button.height);
 
-    // Button glow when hovered
-    if (b.hovered) {
+    if (button.hovered) {
       ctx.shadowColor = "#4ECDC4";
       ctx.shadowBlur = this.game.getScaledValue(15);
-      ctx.strokeRect(b.x, b.y, b.width, b.height);
-      ctx.shadowBlur = 0;
+      ctx.strokeRect(button.x, button.y, button.width, button.height);
     }
 
-    // Button text
     ctx.fillStyle = "#ffffff";
     ctx.font = `bold ${this.game.getScaledValue(18)}px Courier New`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("CONTINUE", b.x + b.width / 2, b.y + b.height / 2);
+    ctx.fillText(
+      "CONTINUE",
+      button.x + button.width / 2,
+      button.y + button.height / 2
+    );
 
     ctx.restore();
   }

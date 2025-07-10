@@ -1,5 +1,5 @@
-/* Loading Screen Styles */
-.loading-screen {
+/* Level End Screen Styles */
+.level-end-screen {
   position: fixed;
   top: 0;
   left: 0;
@@ -9,128 +9,140 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 4000;
-  animation: fadeIn 0.5s ease-out;
+  z-index: 3000;
   margin: 0;
   padding: 0;
 }
 
-.loading-content {
+.level-end-content {
   text-align: center;
   color: white;
   max-width: 600px;
   padding: 40px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
 }
 
-.loading-logo {
-  max-width: 200px;
-  width: 100%;
-  height: auto;
+.level-complete-title {
+  font-size: 48px;
   margin-bottom: 30px;
-}
-
-.loading-text {
-  font-size: 28px;
-  margin-bottom: 30px;
-  color: #ffffff;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-  font-family: "Courier New", monospace;
-  font-weight: bold;
-  animation: loading-pulse 2s ease-in-out infinite;
-}
-
-.loading-bar-container {
-  width: 100%;
-  height: 24px;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 15px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-}
-
-.loading-bar {
-  height: 100%;
-  background: linear-gradient(90deg, #3498db, #2ecc71, #f39c12);
-  border-radius: 10px;
-  width: 0%;
-  transition: width 0.3s ease;
-  animation: loading-shimmer 2s linear infinite;
-  background-size: 200% 100%;
-}
-
-.loading-percentage {
-  font-size: 20px;
   color: #ffd700;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
   font-family: "Courier New", monospace;
   font-weight: bold;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+.martha-display {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 30px;
+  display: block;
 }
 
-@keyframes loading-pulse {
-  0%,
-  100% {
-    opacity: 0.8;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
+.score-display {
+  margin: 20px 0;
+  font-family: "Courier New", monospace;
 }
 
-@keyframes loading-shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
+.score-line {
+  display: flex;
+  justify-content: space-between;
+  margin: 10px 0;
+  font-size: 20px;
+  padding: 5px 0;
+}
+
+.score-label {
+  color: #ffffff;
+  text-align: left;
+}
+
+.score-value {
+  color: #4ecdc4;
+  text-align: right;
+  font-weight: bold;
+}
+
+.score-value.penalty {
+  color: #ff6b6b;
+}
+
+.score-value.total {
+  color: #ffd700;
+}
+
+.continue-button {
+  background: #3498db;
+  color: white;
+  border: 2px solid #2980b9;
+  padding: 15px 30px;
+  font-size: 18px;
+  font-family: "Courier New", monospace;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.continue-button:hover {
+  background: #4ecdc4;
+  box-shadow: 0 0 15px rgba(78, 205, 196, 0.5);
+  transform: translateY(-2px);
+}
+
+.continue-button:active {
+  background: #2980b9;
+  transform: translateY(0);
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .loading-content {
-    padding: 20px;
+  .level-end-content {
+    padding: 30px 20px;
+    max-width: 90%;
   }
 
-  .loading-text {
-    font-size: 24px;
+  .level-complete-title {
+    font-size: 36px;
   }
 
-  .loading-bar-container {
-    height: 20px;
+  .martha-display {
+    width: 60px;
+    height: 60px;
   }
 
-  .loading-percentage {
+  .score-line {
     font-size: 18px;
+  }
+
+  .continue-button {
+    padding: 12px 25px;
+    font-size: 16px;
   }
 }
 
 @media (max-width: 480px) {
-  .loading-content {
-    padding: 15px;
+  .level-end-content {
+    padding: 20px 15px;
   }
 
-  .loading-text {
-    font-size: 20px;
+  .level-complete-title {
+    font-size: 28px;
   }
 
-  .loading-bar-container {
-    height: 18px;
+  .martha-display {
+    width: 50px;
+    height: 50px;
   }
 
-  .loading-percentage {
+  .score-line {
     font-size: 16px;
+  }
+
+  .continue-button {
+    padding: 10px 20px;
+    font-size: 14px;
   }
 }
