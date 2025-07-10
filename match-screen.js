@@ -217,6 +217,7 @@ class MatchScreen extends Screen {
 
       if (pairZones.length === 2 && pairZones[0].sock && pairZones[1].sock) {
         if (pairZones[0].sock.type === pairZones[1].sock.type) {
+          // MATCH - existing behavior
           this.startMatchAnimation(pairZones[0].sock, pairZones[1].sock);
           pairZones[0].sock = null;
           pairZones[1].sock = null;
@@ -232,6 +233,15 @@ class MatchScreen extends Screen {
 
           // Screen shake effect
           this.createScreenShake();
+        } else {
+          // MISMATCH - new behavior
+          this.handleMismatch(pairZones[0].sock, pairZones[1].sock);
+          pairZones[0].sock = null;
+          pairZones[1].sock = null;
+
+          // Reset streak on mismatch
+          this.matchStreak = 0;
+          this.lastMatchTime = 0;
         }
       }
     }
@@ -239,6 +249,56 @@ class MatchScreen extends Screen {
     if (!matchFound && currentTime - this.lastMatchTime > 5000) {
       this.matchStreak = 0;
     }
+  }
+
+  handleMismatch(sock1, sock2) {
+    // Create mismatch particle effects
+    this.sockManager.createMismatchEffect(sock1, sock2);
+
+    // Throw both socks in random directions with more force
+    const throwForce = 12; // Stronger than normal throws
+
+    this.physics.applySockThrow(sock1, {
+      x: (Math.random() - 0.5) * throwForce,
+      y: (Math.random() - 0.5) * throwForce,
+    });
+
+    this.physics.applySockThrow(sock2, {
+      x: (Math.random() - 0.5) * throwForce,
+      y: (Math.random() - 0.5) * throwForce,
+    });
+
+    // Add some visual feedback
+    sock1.glowEffect = 30;
+    sock2.glowEffect = 30;
+
+    // Create a different screen shake for mismatch
+    this.createMismatchShake();
+  }
+
+  createMismatchShake() {
+    // More intense shake for mismatch
+    const canvas = this.game.canvas;
+    const originalTransform = canvas.style.transform;
+
+    let shakeIntensity = 4; // Stronger than match shake
+    let shakeCount = 0;
+    const maxShakes = 8; // More shakes
+
+    const shake = () => {
+      if (shakeCount < maxShakes) {
+        const offsetX = (Math.random() - 0.5) * shakeIntensity;
+        const offsetY = (Math.random() - 0.5) * shakeIntensity;
+        canvas.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        shakeCount++;
+        shakeIntensity *= 0.85;
+        setTimeout(shake, 40); // Slightly faster shake
+      } else {
+        canvas.style.transform = originalTransform;
+      }
+    };
+
+    shake();
   }
 
   startMatchAnimation(sock1, sock2) {

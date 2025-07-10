@@ -83,6 +83,49 @@ class SockManager {
     }
   }
 
+  createMismatchEffect(sock1, sock2) {
+    // Create red/orange particle effects for mismatch
+    const centerX = (sock1.x + sock2.x) / 2;
+    const centerY = (sock1.y + sock2.y) / 2;
+    const mismatchColors = [
+      "#FF4444",
+      "#FF6B6B",
+      "#FF8E53",
+      "#FFB347",
+      "#FF69B4",
+    ];
+
+    // Create more intense particle effect for mismatch
+    for (let i = 0; i < 20; i++) {
+      this.particleEffects.push({
+        x: centerX + (Math.random() - 0.5) * this.game.getScaledValue(100),
+        y: centerY + (Math.random() - 0.5) * this.game.getScaledValue(100),
+        vx: (Math.random() - 0.5) * 12,
+        vy: (Math.random() - 0.5) * 12,
+        life: 60,
+        maxLife: 60,
+        color:
+          mismatchColors[Math.floor(Math.random() * mismatchColors.length)],
+        size: this.game.getScaledValue(3 + Math.random() * 3),
+      });
+    }
+
+    // Create additional "X" or "error" style particles
+    for (let i = 0; i < 8; i++) {
+      this.particleEffects.push({
+        x: centerX + (Math.random() - 0.5) * this.game.getScaledValue(60),
+        y: centerY + (Math.random() - 0.5) * this.game.getScaledValue(60),
+        vx: (Math.random() - 0.5) * 8,
+        vy: (Math.random() - 0.5) * 8,
+        life: 45,
+        maxLife: 45,
+        color: "#FF0000",
+        size: this.game.getScaledValue(4 + Math.random() * 2),
+        shape: "cross", // Special marker for cross-shaped particles
+      });
+    }
+  }
+
   updateSockPileImage() {
     const remaining = this.sockList.length;
     const total = GameConfig.LEVELS[this.game.currentLevel].sockPairs * 2;
@@ -518,9 +561,27 @@ class SockManager {
       ctx.globalAlpha = alpha;
       ctx.fillStyle = particle.color;
 
-      ctx.beginPath();
-      ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-      ctx.fill();
+      if (particle.shape === "cross") {
+        // Render cross-shaped particles for mismatch
+        const halfSize = particle.size / 2;
+        ctx.fillRect(
+          particle.x - halfSize,
+          particle.y - halfSize / 3,
+          particle.size,
+          particle.size / 3
+        );
+        ctx.fillRect(
+          particle.x - halfSize / 3,
+          particle.y - halfSize,
+          particle.size / 3,
+          particle.size
+        );
+      } else {
+        // Render normal circular particles
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.restore();
     });
