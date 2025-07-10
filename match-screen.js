@@ -536,7 +536,7 @@ class MatchScreen extends Screen {
       const streakText = `${this.matchStreak}x STREAK!`;
       const streakMetrics = ctx.measureText(streakText);
       const streakPadding = this.game.getScaledValue(12);
-      const streakBoxWidth = streakMetrics.width + streakPadding * 2;
+      const streakBoxWidth = streakMetrics.width + streakPadding * 10;
       const streakBoxHeight = layout.headerFontSize + streakPadding;
 
       ctx.fillRect(
