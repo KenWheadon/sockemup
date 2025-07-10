@@ -304,7 +304,6 @@ class MatchScreen extends Screen {
   }
 
   onRender(ctx) {
-    this.physics.renderDebugBounds(ctx);
     this.sockManager.renderSockPile(ctx);
     this.renderDropZonePairBoxes(ctx);
     this.renderDropZones(ctx);
@@ -410,19 +409,6 @@ class MatchScreen extends Screen {
     ctx.save();
     ctx.shadowColor = "yellow";
     ctx.shadowBlur = shadowBlur;
-    ctx.strokeStyle = "yellow";
-    ctx.lineWidth = lineWidth;
-
-    const sock = this.draggedSock;
-    const drawX = sock.x - sock.width / 2;
-    const drawY = sock.y - sock.height / 2;
-
-    ctx.strokeRect(
-      drawX - borderOffset,
-      drawY - borderOffset,
-      sock.width + borderOffset * 2,
-      sock.height + borderOffset * 2
-    );
 
     ctx.restore();
   }
