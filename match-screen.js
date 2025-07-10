@@ -3,16 +3,10 @@ class MatchScreen extends Screen {
     super(game);
     this.sockManager = new SockManager(game);
     this.physics = new MatchPhysics(game);
-
-    // Drop zones - now supports 3 pairs
     this.dropZones = [];
-
-    // Drag state
     this.draggedSock = null;
     this.dragOffset = { x: 0, y: 0 };
     this.isDragging = false;
-
-    // UI state
     this.dropZoneHover = null;
     this.sockPileHover = false;
   }
@@ -24,23 +18,15 @@ class MatchScreen extends Screen {
 
     return {
       ...baseLayout,
-
-      // Title positioning
       titleY: this.game.getScaledValue(50),
       instructionY: this.game.getScaledValue(80),
-
-      // Drop zone configuration
       dropZoneSize: this.game.getScaledValue(80),
       dropZoneSpacing: this.game.getScaledValue(100),
       dropZoneAreaY: canvasHeight / 3,
       pairWidth: canvasWidth / GameConfig.DROP_TARGET_PAIRS,
-
-      // Sock pile configuration
       sockPileX: canvasWidth / 2,
       sockPileY: canvasHeight - this.game.getScaledValue(100),
       sockPileSize: this.game.getScaledValue(120),
-
-      // UI stats positioning
       timeX: this.game.getScaledValue(20),
       timeY: this.game.getScaledValue(30),
       sockBallsX: canvasWidth - this.game.getScaledValue(20),
@@ -53,16 +39,10 @@ class MatchScreen extends Screen {
   setup() {
     super.setup();
     this.game.canvas.className = "matching-phase";
-
-    // Initialize components
     this.sockManager.initialize();
     this.sockManager.setSockList(this.game.sockList);
-
-    // Setup drop zones and sock pile
     this.setupDropZones();
     this.setupSockPilePosition();
-
-    // Reset states
     this.draggedSock = null;
     this.isDragging = false;
     this.dropZoneHover = null;
@@ -81,7 +61,6 @@ class MatchScreen extends Screen {
     for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
       const pairCenterX = layout.pairWidth / 2 + pairId * layout.pairWidth;
 
-      // First zone of the pair (top)
       this.dropZones.push({
         x: pairCenterX,
         y: layout.dropZoneAreaY - layout.dropZoneSpacing / 2,
@@ -95,7 +74,6 @@ class MatchScreen extends Screen {
         id: pairId * 2,
       });
 
-      // Second zone of the pair (bottom)
       this.dropZones.push({
         x: pairCenterX,
         y: layout.dropZoneAreaY + layout.dropZoneSpacing / 2,
@@ -113,20 +91,19 @@ class MatchScreen extends Screen {
 
   setupSockPilePosition() {
     const layout = this.layoutCache;
-    this.sockManager.sockPile.x = layout.sockPileX;
-    this.sockManager.sockPile.y = layout.sockPileY;
-    this.sockManager.sockPile.width = layout.sockPileSize;
-    this.sockManager.sockPile.height = layout.sockPileSize;
+    const sockPile = this.sockManager.sockPile;
+    sockPile.x = layout.sockPileX;
+    sockPile.y = layout.sockPileY;
+    sockPile.width = layout.sockPileSize;
+    sockPile.height = layout.sockPileSize;
   }
 
   onMouseDown(x, y) {
-    // Check if clicking on sock pile
     if (this.sockManager.checkSockPileClick(x, y)) {
       this.shootSockFromPile();
       return true;
     }
 
-    // Check if clicking on existing sock
     return this.checkSockClick(x, y);
   }
 
@@ -137,7 +114,6 @@ class MatchScreen extends Screen {
       this.dragOffset = { x: x - sock.x, y: y - sock.y };
       this.isDragging = true;
 
-      // Remove from drop zone if it was there
       this.dropZones.forEach((zone) => {
         if (zone.sock === sock) {
           zone.sock = null;
@@ -150,7 +126,6 @@ class MatchScreen extends Screen {
   }
 
   onMouseMove(x, y) {
-    // Update drag position
     if (this.draggedSock) {
       this.draggedSock.x = x - this.dragOffset.x;
       this.draggedSock.y = y - this.dragOffset.y;
@@ -158,23 +133,22 @@ class MatchScreen extends Screen {
       this.draggedSock.vy = 0;
     }
 
-    // Update hover effects
     this.updateHoverEffects(x, y);
   }
 
   updateHoverEffects(x, y) {
-    // Check sock pile hover
     this.sockPileHover = this.sockManager.checkSockPileClick(x, y);
-
-    // Check drop zone hover
     this.dropZoneHover = null;
+
     if (this.draggedSock) {
+      const snapDistance = this.game.getScaledValue(80);
+
       this.dropZones.forEach((zone) => {
         const distance = this.physics.getDropZoneDistance(
           this.draggedSock,
           zone
         );
-        if (distance < this.game.getScaledValue(80)) {
+        if (distance < snapDistance) {
           this.dropZoneHover = zone.id;
         }
       });
@@ -185,12 +159,11 @@ class MatchScreen extends Screen {
     if (!this.draggedSock) return;
 
     const sock = this.draggedSock;
+    const snapDistance = this.game.getScaledValue(60);
     let snapped = false;
 
-    // Check for drop zone snapping
     this.dropZones.forEach((zone) => {
       const distance = this.physics.getDropZoneDistance(sock, zone);
-      const snapDistance = this.game.getScaledValue(60);
 
       if (distance < snapDistance) {
         if (zone.sock === null) {
@@ -199,7 +172,6 @@ class MatchScreen extends Screen {
           snapped = true;
           this.createSnapEffect(zone);
         } else {
-          // Zone occupied, throw sock away
           this.physics.applySockThrow(sock, {
             x: (Math.random() - 0.5) * 10,
             y: (Math.random() - 0.5) * 10,
@@ -208,7 +180,6 @@ class MatchScreen extends Screen {
       }
     });
 
-    // If not snapped, apply throw physics
     if (!snapped) {
       this.physics.applySockThrow(sock, {
         x: (Math.random() - 0.5) * 8,
@@ -219,16 +190,12 @@ class MatchScreen extends Screen {
     this.draggedSock = null;
     this.isDragging = false;
     this.dropZoneHover = null;
-
-    // Check for matches across all pairs
     this.checkForMatches();
   }
 
   shootSockFromPile() {
     const newSock = this.sockManager.shootSockFromPile();
     if (!newSock) return;
-
-    console.log("Shot sock from pile:", newSock.type);
   }
 
   createSnapEffect(zone) {
@@ -236,15 +203,12 @@ class MatchScreen extends Screen {
   }
 
   checkForMatches() {
-    // Check each pair for matches
     for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
       const pairZones = this.dropZones.filter((zone) => zone.pairId === pairId);
 
       if (pairZones.length === 2 && pairZones[0].sock && pairZones[1].sock) {
         if (pairZones[0].sock.type === pairZones[1].sock.type) {
           this.startMatchAnimation(pairZones[0].sock, pairZones[1].sock);
-
-          // Clear the pair
           pairZones[0].sock = null;
           pairZones[1].sock = null;
         }
@@ -257,8 +221,7 @@ class MatchScreen extends Screen {
   }
 
   onUpdate(deltaTime) {
-    // Update time with frame-rate independent timing
-    const timeDecrement = (0.25 / 60) * (deltaTime / 16.67); // Normalize to 60fps
+    const timeDecrement = (0.25 / 60) * (deltaTime / 16.67);
     this.game.timeRemaining -= timeDecrement;
 
     if (this.game.timeRemaining <= 0) {
@@ -266,7 +229,6 @@ class MatchScreen extends Screen {
       return;
     }
 
-    // Update physics for all socks
     this.sockManager.socks.forEach((sock) => {
       if (
         sock !== this.draggedSock &&
@@ -276,16 +238,13 @@ class MatchScreen extends Screen {
       }
     });
 
-    // Update sock manager with delta time
     this.sockManager.update(deltaTime);
 
-    // Update drop zone effects
     this.dropZones.forEach((zone) => {
       if (zone.glowEffect > 0) zone.glowEffect--;
       if (zone.hoverEffect > 0) zone.hoverEffect--;
     });
 
-    // Check if matching phase is complete
     if (
       this.sockManager.getSockListLength() === 0 &&
       this.game.sockBalls >= GameConfig.LEVELS[this.game.currentLevel].sockPairs
@@ -295,33 +254,18 @@ class MatchScreen extends Screen {
   }
 
   onRender(ctx) {
-    // Draw physics bounds if debug is enabled
     this.physics.renderDebugBounds(ctx);
-
-    // Draw sock pile
     this.sockManager.renderSockPile(ctx);
-
-    // Draw drop zone pair boxes
     this.renderDropZonePairBoxes(ctx);
-
-    // Draw drop zones
     this.renderDropZones(ctx);
-
-    // Draw socks
     this.sockManager.renderSocks(ctx);
 
-    // Highlight dragged sock
     if (this.draggedSock) {
       this.renderDraggedSock(ctx);
     }
 
-    // Draw sockball animations
     this.sockManager.renderSockballAnimations(ctx);
-
-    // Draw particle effects
     this.sockManager.renderParticleEffects(ctx);
-
-    // Render UI elements on canvas
     this.renderMatchScreenUI(ctx);
   }
 
@@ -331,7 +275,6 @@ class MatchScreen extends Screen {
     const dashLength = this.game.getScaledValue(5);
     const margin = this.game.getScaledValue(50);
 
-    // Draw boxes around each pair of drop zones
     for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
       const pairZones = this.dropZones.filter((zone) => zone.pairId === pairId);
 
@@ -347,7 +290,6 @@ class MatchScreen extends Screen {
         ctx.setLineDash([dashLength, dashLength]);
         ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
 
-        // Draw pair label
         this.renderText(
           ctx,
           `Pair ${pairId + 1}`,
@@ -372,7 +314,6 @@ class MatchScreen extends Screen {
     this.dropZones.forEach((zone, index) => {
       ctx.save();
 
-      // Base drop zone
       let glowIntensity = 0;
       if (zone.glowEffect > 0) {
         glowIntensity = zone.glowEffect / 20;
@@ -395,7 +336,6 @@ class MatchScreen extends Screen {
         zone.height
       );
 
-      // Draw hover background
       if (this.dropZoneHover === index) {
         ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
         ctx.fillRect(
@@ -418,8 +358,6 @@ class MatchScreen extends Screen {
     const borderOffset = this.game.getScaledValue(2);
 
     ctx.save();
-
-    // Simple highlight for dragged sock
     ctx.shadowColor = "yellow";
     ctx.shadowBlur = shadowBlur;
     ctx.strokeStyle = "yellow";
@@ -442,7 +380,6 @@ class MatchScreen extends Screen {
   renderMatchScreenUI(ctx) {
     const layout = this.layoutCache;
 
-    // Instructions at top
     this.renderText(ctx, "MATCH THOSE SOCKS", layout.centerX, layout.titleY, {
       fontSize: layout.titleFontSize,
       weight: "bold",
@@ -460,7 +397,6 @@ class MatchScreen extends Screen {
       }
     );
 
-    // Time remaining (top left)
     const timeValue = Math.max(0, Math.floor(this.game.timeRemaining));
     const timeColor =
       timeValue <= 10
@@ -475,7 +411,6 @@ class MatchScreen extends Screen {
       color: timeColor,
     });
 
-    // Sock balls (top right)
     this.renderText(
       ctx,
       `Sock Balls: ${this.game.sockBalls}`,
@@ -488,7 +423,6 @@ class MatchScreen extends Screen {
       }
     );
 
-    // Remaining socks (bottom right)
     const remainingSocks = this.sockManager.getSockListLength();
     this.renderText(
       ctx,
