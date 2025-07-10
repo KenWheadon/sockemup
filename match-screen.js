@@ -9,6 +9,8 @@ class MatchScreen extends Screen {
     this.isDragging = false;
     this.dropZoneHover = null;
     this.sockPileHover = false;
+    this.matchStreak = 0;
+    this.lastMatchTime = 0;
   }
 
   createLayoutCache() {
@@ -18,8 +20,12 @@ class MatchScreen extends Screen {
 
     return {
       ...baseLayout,
-      titleY: this.game.getScaledValue(50),
-      instructionY: this.game.getScaledValue(80),
+      titleX: this.game.getScaledValue(20),
+      titleY: canvasHeight - this.game.getScaledValue(80),
+      instructionX: this.game.getScaledValue(20),
+      instructionY: canvasHeight - this.game.getScaledValue(40),
+      timeX: canvasWidth / 2,
+      timeY: this.game.getScaledValue(30),
       dropZoneSize: this.game.getScaledValue(80),
       dropZoneSpacing: this.game.getScaledValue(100),
       dropZoneAreaY: canvasHeight / 3,
@@ -27,12 +33,10 @@ class MatchScreen extends Screen {
       sockPileX: canvasWidth / 2,
       sockPileY: canvasHeight - this.game.getScaledValue(100),
       sockPileSize: this.game.getScaledValue(120),
-      timeX: this.game.getScaledValue(20),
-      timeY: this.game.getScaledValue(30),
-      sockBallsX: canvasWidth - this.game.getScaledValue(20),
-      sockBallsY: this.game.getScaledValue(30),
-      remainingX: canvasWidth - this.game.getScaledValue(20),
-      remainingY: canvasHeight - this.game.getScaledValue(20),
+      sockBallsOffsetX: this.game.getScaledValue(80),
+      sockBallsOffsetY: this.game.getScaledValue(-50),
+      streakX: canvasWidth - this.game.getScaledValue(20),
+      streakY: this.game.getScaledValue(30),
     };
   }
 
@@ -47,6 +51,8 @@ class MatchScreen extends Screen {
     this.isDragging = false;
     this.dropZoneHover = null;
     this.sockPileHover = false;
+    this.matchStreak = 0;
+    this.lastMatchTime = 0;
   }
 
   onResize() {
@@ -203,6 +209,9 @@ class MatchScreen extends Screen {
   }
 
   checkForMatches() {
+    const currentTime = Date.now();
+    let matchFound = false;
+
     for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
       const pairZones = this.dropZones.filter((zone) => zone.pairId === pairId);
 
@@ -211,13 +220,54 @@ class MatchScreen extends Screen {
           this.startMatchAnimation(pairZones[0].sock, pairZones[1].sock);
           pairZones[0].sock = null;
           pairZones[1].sock = null;
+          matchFound = true;
+
+          // Update streak
+          if (currentTime - this.lastMatchTime < 3000) {
+            this.matchStreak++;
+          } else {
+            this.matchStreak = 1;
+          }
+          this.lastMatchTime = currentTime;
+
+          // Screen shake effect
+          this.createScreenShake();
         }
       }
+    }
+
+    if (!matchFound && currentTime - this.lastMatchTime > 5000) {
+      this.matchStreak = 0;
     }
   }
 
   startMatchAnimation(sock1, sock2) {
     this.sockManager.startMatchAnimation(sock1, sock2);
+  }
+
+  createScreenShake() {
+    // Simple screen shake effect by temporarily adjusting canvas transform
+    const canvas = this.game.canvas;
+    const originalTransform = canvas.style.transform;
+
+    let shakeIntensity = 2;
+    let shakeCount = 0;
+    const maxShakes = 6;
+
+    const shake = () => {
+      if (shakeCount < maxShakes) {
+        const offsetX = (Math.random() - 0.5) * shakeIntensity;
+        const offsetY = (Math.random() - 0.5) * shakeIntensity;
+        canvas.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        shakeCount++;
+        shakeIntensity *= 0.8;
+        setTimeout(shake, 50);
+      } else {
+        canvas.style.transform = originalTransform;
+      }
+    };
+
+    shake();
   }
 
   onUpdate(deltaTime) {
@@ -380,23 +430,28 @@ class MatchScreen extends Screen {
   renderMatchScreenUI(ctx) {
     const layout = this.layoutCache;
 
-    this.renderText(ctx, "MATCH THOSE SOCKS", layout.centerX, layout.titleY, {
+    // Title at bottom left
+    this.renderText(ctx, "MATCH THOSE SOCKS", layout.titleX, layout.titleY, {
       fontSize: layout.titleFontSize,
       weight: "bold",
       color: "rgba(255, 255, 255, 0.9)",
+      align: "left",
     });
 
+    // Instructions at bottom left
     this.renderText(
       ctx,
-      "Click sock pile to shoot socks • Drag socks to drop zones",
-      layout.centerX,
+      "Click sock pile - make sock pairs",
+      layout.instructionX,
       layout.instructionY,
       {
         fontSize: layout.bodyFontSize,
-        color: "rgba(255, 255, 255, 0.9)",
+        color: "rgba(255, 255, 255, 0.8)",
+        align: "left",
       }
     );
 
+    // Time at top center
     const timeValue = Math.max(0, Math.floor(this.game.timeRemaining));
     const timeColor =
       timeValue <= 10
@@ -405,35 +460,111 @@ class MatchScreen extends Screen {
           : "rgba(255, 255, 255, 0.9)"
         : "rgba(255, 255, 255, 0.9)";
 
-    this.renderText(ctx, `Time: ${timeValue}s`, layout.timeX, layout.timeY, {
+    // Enhanced time display with background
+    ctx.save();
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.lineWidth = 2;
+    const timeText = `Time: ${timeValue}s`;
+    const timeMetrics = ctx.measureText(timeText);
+    const timePadding = this.game.getScaledValue(16);
+    const timeBoxWidth = timeMetrics.width + timePadding * 10;
+    const timeBoxHeight = layout.headerFontSize + timePadding;
+
+    ctx.fillRect(
+      layout.timeX - timeBoxWidth / 2,
+      layout.timeY - timeBoxHeight / 2,
+      timeBoxWidth,
+      timeBoxHeight
+    );
+    ctx.strokeRect(
+      layout.timeX - timeBoxWidth / 2,
+      layout.timeY - timeBoxHeight / 2,
+      timeBoxWidth,
+      timeBoxHeight
+    );
+    ctx.restore();
+
+    this.renderText(ctx, timeText, layout.timeX, layout.timeY, {
       fontSize: layout.headerFontSize,
-      align: "left",
+      align: "center",
       color: timeColor,
+      weight: "bold",
     });
 
-    this.renderText(
-      ctx,
-      `Sock Balls: ${this.game.sockBalls}`,
-      layout.sockBallsX,
-      layout.sockBallsY,
-      {
-        fontSize: layout.headerFontSize,
-        align: "right",
-        color: "rgba(255, 255, 255, 0.9)",
-      }
-    );
+    // Sock balls counter near sock pile
+    const sockBallsX = layout.sockPileX + layout.sockBallsOffsetX;
+    const sockBallsY = layout.sockPileY + layout.sockBallsOffsetY;
 
-    const remainingSocks = this.sockManager.getSockListLength();
-    this.renderText(
-      ctx,
-      `Remaining: ${remainingSocks}`,
-      layout.remainingX,
-      layout.remainingY,
-      {
-        fontSize: layout.headerFontSize,
-        align: "right",
-        color: "rgba(255, 255, 255, 0.9)",
-      }
+    ctx.save();
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.6)";
+    ctx.lineWidth = 2;
+    const sockBallText = `${this.game.sockBalls}`;
+    const sockBallMetrics = ctx.measureText(sockBallText);
+    const sockBallPadding = this.game.getScaledValue(12);
+    const sockBallBoxWidth = sockBallMetrics.width + sockBallPadding * 2;
+    const sockBallBoxHeight = layout.headerFontSize + sockBallPadding;
+
+    ctx.fillRect(
+      sockBallsX - sockBallBoxWidth / 2,
+      sockBallsY - sockBallBoxHeight / 2,
+      sockBallBoxWidth,
+      sockBallBoxHeight
     );
+    ctx.strokeRect(
+      sockBallsX - sockBallBoxWidth / 2,
+      sockBallsY - sockBallBoxHeight / 2,
+      sockBallBoxWidth,
+      sockBallBoxHeight
+    );
+    ctx.restore();
+
+    this.renderText(ctx, sockBallText, sockBallsX, sockBallsY, {
+      fontSize: layout.headerFontSize,
+      align: "center",
+      color: "rgba(255, 215, 0, 0.9)",
+      weight: "bold",
+    });
+
+    // Streak counter (only show if streak > 1)
+    if (this.matchStreak > 1) {
+      ctx.save();
+      ctx.fillStyle = "rgba(138, 43, 226, 0.4)";
+      ctx.strokeStyle = "rgba(138, 43, 226, 0.8)";
+      ctx.lineWidth = 2;
+      const streakText = `${this.matchStreak}x STREAK!`;
+      const streakMetrics = ctx.measureText(streakText);
+      const streakPadding = this.game.getScaledValue(12);
+      const streakBoxWidth = streakMetrics.width + streakPadding * 2;
+      const streakBoxHeight = layout.headerFontSize + streakPadding;
+
+      ctx.fillRect(
+        layout.streakX - streakBoxWidth,
+        layout.streakY - streakBoxHeight / 2,
+        streakBoxWidth,
+        streakBoxHeight
+      );
+      ctx.strokeRect(
+        layout.streakX - streakBoxWidth,
+        layout.streakY - streakBoxHeight / 2,
+        streakBoxWidth,
+        streakBoxHeight
+      );
+      ctx.restore();
+
+      this.renderText(
+        ctx,
+        streakText,
+        layout.streakX - this.game.getScaledValue(10),
+        layout.streakY,
+        {
+          fontSize: layout.headerFontSize,
+          align: "right",
+          color: "rgba(255, 255, 255, 0.9)",
+          weight: "bold",
+        }
+      );
+    }
   }
 }

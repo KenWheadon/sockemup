@@ -271,8 +271,8 @@ class SockManager {
 
   createSockballAnimation(animation) {
     const sockballImage = GameConfig.IMAGES.SOCK_BALLS[animation.sockType - 1];
-    const targetX = this.game.getCanvasWidth() - this.game.getScaledValue(50);
-    const targetY = this.game.getScaledValue(20);
+    const targetX = this.game.getCanvasWidth() - this.game.getScaledValue(525);
+    const targetY = this.game.getCanvasHeight() - this.game.getScaledValue(125);
 
     const sockballAnim = {
       image: sockballImage,
@@ -470,17 +470,6 @@ class SockManager {
       this.sockPile.y - drawHeight / 2 + bounceOffset,
       drawWidth,
       drawHeight
-    );
-
-    // Draw border around sock pile area to show full width
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = this.game.getScaledValue(2);
-    ctx.setLineDash([this.game.getScaledValue(5), this.game.getScaledValue(5)]);
-    ctx.strokeRect(
-      this.game.getScaledValue(50), // Full width border
-      this.sockPile.y - drawHeight / 2 - this.game.getScaledValue(20),
-      this.game.getCanvasWidth() - this.game.getScaledValue(100),
-      drawHeight + this.game.getScaledValue(40)
     );
 
     ctx.restore();
