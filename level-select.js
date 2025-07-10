@@ -664,23 +664,10 @@ class LevelSelect extends Screen {
       ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
       ctx.lineWidth = this.game.getScaledValue(2);
 
-      const labelText = index === 0 ? "Drop Zone 1" : "Drop Zone 2";
-      const labelY = zone.y - zone.height / 2 - this.game.getScaledValue(25);
-
-      ctx.strokeText(labelText, zone.x, labelY);
-      ctx.fillText(labelText, zone.x, labelY);
-
       if (!zone.sock) {
         ctx.fillStyle = "rgba(255, 215, 0, 0.9)";
         ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
         ctx.lineWidth = this.game.getScaledValue(1);
-
-        const instructionText = "Drop socks here!";
-        const instructionY =
-          zone.y + zone.height / 2 + this.game.getScaledValue(20);
-
-        ctx.strokeText(instructionText, zone.x, instructionY);
-        ctx.fillText(instructionText, zone.x, instructionY);
       }
 
       ctx.restore();
