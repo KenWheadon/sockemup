@@ -6,7 +6,7 @@ class LoadingScreen {
     this.assetsLoaded = 0;
     this.progressInterval = null;
     this.imageCache = new Map();
-    this.minimumLoadingTime = 1000; // 1 second minimum
+    this.minimumLoadingTime = 1000;
   }
 
   init() {
@@ -17,7 +17,6 @@ class LoadingScreen {
   }
 
   showLoadingScreen() {
-    // Create loading screen HTML if it doesn't exist
     if (!document.querySelector(".loading-screen")) {
       const loadingHTML = `
         <div class="loading-screen">
@@ -34,7 +33,6 @@ class LoadingScreen {
         </div>
       `;
 
-      // Try to insert into gameContainer first, fallback to body
       const gameContainer = document.getElementById("gameContainer");
       if (gameContainer) {
         gameContainer.insertAdjacentHTML("beforeend", loadingHTML);
@@ -66,19 +64,14 @@ class LoadingScreen {
       const assetProgress =
         this.assetsToLoad > 0 ? this.assetsLoaded / this.assetsToLoad : 0;
       const timeProgress = Math.min(elapsed / this.minimumLoadingTime, 1);
-
       const overallProgress = Math.min(assetProgress, timeProgress);
       const percentage = Math.floor(overallProgress * 100);
 
       const loadingBar = document.getElementById("loadingBar");
       const loadingPercentage = document.getElementById("loadingPercentage");
 
-      if (loadingBar) {
-        loadingBar.style.width = percentage + "%";
-      }
-      if (loadingPercentage) {
-        loadingPercentage.textContent = percentage + "%";
-      }
+      if (loadingBar) loadingBar.style.width = percentage + "%";
+      if (loadingPercentage) loadingPercentage.textContent = percentage + "%";
 
       if (assetProgress >= 1 && elapsed >= this.minimumLoadingTime) {
         this.loadingComplete = true;
@@ -88,22 +81,18 @@ class LoadingScreen {
   }
 
   transitionToGame() {
-    // Initialize the main game immediately to show level selection behind loading screen
     if (window.gameInitCallback) {
       window.gameInitCallback();
     }
 
     setTimeout(() => {
       const loadingScreen = document.querySelector(".loading-screen");
-
       if (loadingScreen) {
-        // Disable pointer events immediately so clicks can pass through
         loadingScreen.style.pointerEvents = "none";
         loadingScreen.style.opacity = "0";
         loadingScreen.style.transition = "opacity 0.5s ease-out";
 
         setTimeout(() => {
-          // Remove from DOM completely after fade out
           if (loadingScreen.parentNode) {
             loadingScreen.parentNode.removeChild(loadingScreen);
           }
@@ -113,18 +102,16 @@ class LoadingScreen {
   }
 
   async loadAllAssets() {
-    // Get all image paths from GameConfig
     const imagesToLoad = [
       ...GameConfig.IMAGES.SOCKS,
       ...GameConfig.IMAGES.SOCK_BALLS,
       ...GameConfig.IMAGES.SOCK_PILES,
       ...GameConfig.IMAGES.CHARACTERS,
       ...GameConfig.IMAGES.UI,
-      "company-logo.png", // Add company logo
+      "company-logo.png",
     ];
 
     this.assetsToLoad = imagesToLoad.length;
-
     await this.loadImages(imagesToLoad);
   }
 
@@ -143,7 +130,6 @@ class LoadingScreen {
           };
 
           const onError = () => {
-            console.warn(`Failed to load image: ${imageName}`);
             this.assetsLoaded++;
             img.removeEventListener("load", onLoad);
             img.removeEventListener("error", onError);
@@ -172,7 +158,6 @@ class LoadingScreen {
   }
 }
 
-// Initialize loading screen when DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   window.loadingScreenManager = new LoadingScreen();
   window.loadingScreenManager.init();

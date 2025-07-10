@@ -113,20 +113,16 @@
   }
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
   .loading-content {
     padding: 20px;
   }
-
   .loading-text {
     font-size: 24px;
   }
-
   .loading-bar-container {
     height: 20px;
   }
-
   .loading-percentage {
     font-size: 18px;
   }
@@ -136,15 +132,12 @@
   .loading-content {
     padding: 15px;
   }
-
   .loading-text {
     font-size: 20px;
   }
-
   .loading-bar-container {
     height: 18px;
   }
-
   .loading-percentage {
     font-size: 16px;
   }
