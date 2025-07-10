@@ -2,6 +2,31 @@ class LevelSelect extends Screen {
   constructor(game) {
     super(game);
 
+    // Configuration constants
+    this.DRAG_BOUNDARIES = {
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+    };
+
+    this.DROP_ZONE_CONFIG = {
+      snapDistance: 40,
+      size: 60,
+      offsetX: 1200,
+      offsetY1: 300,
+      offsetY2: 400,
+      outerBorderWidth: 10,
+      glowDuration: 20,
+    };
+
+    this.MARTHA_CONFIG = {
+      offsetX: 150,
+      offsetY: 250,
+      maxSize: 120,
+      maintainAspectRatio: true,
+    };
+
     // Level selection state
     this.hoveredLevel = -1;
     this.selectedLevel = -1;
@@ -18,6 +43,7 @@ class LevelSelect extends Screen {
     // Martha display and animation
     this.marthaWiggleTimer = 0;
     this.marthaWiggling = false;
+    this.marthaImageSize = { width: 0, height: 0 };
 
     // Easter egg drop zones
     this.easterDropZones = [];
@@ -32,10 +58,14 @@ class LevelSelect extends Screen {
       bounceRestitution: 0.4,
       rotationFriction: 0.98,
       bounds: {
-        left: this.game.getScaledValue(50),
-        right: this.game.getCanvasWidth() - this.game.getScaledValue(50),
-        top: this.game.getScaledValue(50),
-        bottom: this.game.getCanvasHeight() - this.game.getScaledValue(50),
+        left: this.game.getScaledValue(this.DRAG_BOUNDARIES.left),
+        right:
+          this.game.getCanvasWidth() -
+          this.game.getScaledValue(this.DRAG_BOUNDARIES.right),
+        top: this.game.getScaledValue(this.DRAG_BOUNDARIES.top),
+        bottom:
+          this.game.getCanvasHeight() -
+          this.game.getScaledValue(this.DRAG_BOUNDARIES.bottom),
       },
     };
 
@@ -50,10 +80,40 @@ class LevelSelect extends Screen {
     };
   }
 
+  calculateMarthaImageSize() {
+    const marthaImage = this.game.images["martha-demand.png"];
+    if (!marthaImage) {
+      this.marthaImageSize = { width: 0, height: 0 };
+      return;
+    }
+
+    const maxSize = this.game.getScaledValue(this.MARTHA_CONFIG.maxSize);
+
+    if (this.MARTHA_CONFIG.maintainAspectRatio) {
+      const aspectRatio = marthaImage.width / marthaImage.height;
+
+      if (aspectRatio > 1) {
+        // Image is wider than it is tall
+        this.marthaImageSize.width = maxSize;
+        this.marthaImageSize.height = maxSize / aspectRatio;
+      } else {
+        // Image is taller than it is wide
+        this.marthaImageSize.width = maxSize * aspectRatio;
+        this.marthaImageSize.height = maxSize;
+      }
+    } else {
+      this.marthaImageSize.width = maxSize;
+      this.marthaImageSize.height = maxSize;
+    }
+  }
+
   createLayoutCache() {
     const baseLayout = super.createLayoutCache();
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
+
+    // Calculate Martha image size
+    this.calculateMarthaImageSize();
 
     return {
       ...baseLayout,
@@ -72,14 +132,15 @@ class LevelSelect extends Screen {
         ((GameConfig.LEVELS.length - 1) *
           this.game.getScaledValue(this.levelConfig.baseSpacing)) /
           2,
-      marthaX: this.game.getScaledValue(150),
-      marthaY: this.game.getScaledValue(350),
-      marthaSize: this.game.getScaledValue(120),
-      dropZoneSize: this.game.getScaledValue(60),
-      dropZone1X: this.game.getScaledValue(250),
-      dropZone1Y: this.game.getScaledValue(300),
-      dropZone2X: this.game.getScaledValue(250),
-      dropZone2Y: this.game.getScaledValue(400),
+      marthaX: this.game.getScaledValue(this.MARTHA_CONFIG.offsetX),
+      marthaY: this.game.getScaledValue(this.MARTHA_CONFIG.offsetY),
+      marthaWidth: this.marthaImageSize.width,
+      marthaHeight: this.marthaImageSize.height,
+      dropZoneSize: this.game.getScaledValue(this.DROP_ZONE_CONFIG.size),
+      dropZone1X: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetX),
+      dropZone1Y: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetY1),
+      dropZone2X: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetX),
+      dropZone2Y: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetY2),
       statsY: canvasHeight - this.game.getScaledValue(80),
       statsPanelWidth: this.game.getScaledValue(200),
       statsPanelHeight: this.game.getScaledValue(40),
@@ -87,24 +148,7 @@ class LevelSelect extends Screen {
   }
 
   onResize() {
-    this.menuPhysics.bounds = {
-      left: this.game.getScaledValue(50),
-      right: this.game.getCanvasWidth() - this.game.getScaledValue(50),
-      top: this.game.getScaledValue(50),
-      bottom: this.game.getCanvasHeight() - this.game.getScaledValue(50),
-    };
-
-    this.menuSocks.forEach((sock) => {
-      sock.x = Math.max(
-        this.menuPhysics.bounds.left,
-        Math.min(this.menuPhysics.bounds.right, sock.x)
-      );
-      sock.y = Math.max(
-        this.menuPhysics.bounds.top,
-        Math.min(this.menuPhysics.bounds.bottom, sock.y)
-      );
-    });
-
+    // No bounds needed - socks can go anywhere
     this.setupEasterDropZones();
   }
 
@@ -168,8 +212,6 @@ class LevelSelect extends Screen {
     const timeMultiplier = deltaTime / 16.67;
 
     this.menuSocks.forEach((sock, index) => {
-      if (sock === this.dragSock) return;
-
       const age = Date.now() - sock.spawnTime;
       if (age > 20000) {
         this.menuSocks.splice(index, 1);
@@ -185,6 +227,9 @@ class LevelSelect extends Screen {
         sock.alpha = 1 - fadeProgress;
       }
 
+      // Skip physics for dragged sock
+      if (sock === this.dragSock) return;
+
       sock.vx *= Math.pow(this.menuPhysics.friction, timeMultiplier);
       sock.vy *= Math.pow(this.menuPhysics.friction, timeMultiplier);
 
@@ -199,7 +244,7 @@ class LevelSelect extends Screen {
       sock.y += sock.vy * timeMultiplier;
       sock.rotation += sock.rotationSpeed * timeMultiplier;
 
-      this.checkSockBounds(sock);
+      // No bounds checking - socks can go anywhere
 
       if (
         Math.abs(sock.vx) < this.menuPhysics.minVelocity &&
@@ -216,31 +261,13 @@ class LevelSelect extends Screen {
     this.menuSocks = this.menuSocks.filter((sock) => sock !== undefined);
   }
 
-  checkSockBounds(sock) {
-    const halfWidth = sock.size / 2;
-    const halfHeight = sock.size / 2;
-
-    if (sock.x - halfWidth <= this.menuPhysics.bounds.left) {
-      sock.x = this.menuPhysics.bounds.left + halfWidth;
-      sock.vx = Math.abs(sock.vx) * this.menuPhysics.bounceRestitution;
-    } else if (sock.x + halfWidth >= this.menuPhysics.bounds.right) {
-      sock.x = this.menuPhysics.bounds.right - halfWidth;
-      sock.vx = -Math.abs(sock.vx) * this.menuPhysics.bounceRestitution;
-    }
-
-    if (sock.y - halfHeight <= this.menuPhysics.bounds.top) {
-      sock.y = this.menuPhysics.bounds.top + halfHeight;
-      sock.vy = Math.abs(sock.vy) * this.menuPhysics.bounceRestitution;
-    } else if (sock.y + halfHeight >= this.menuPhysics.bounds.bottom) {
-      sock.y = this.menuPhysics.bounds.bottom - halfHeight;
-      sock.vy = -Math.abs(sock.vy) * this.menuPhysics.bounceRestitution;
-    }
-  }
+  // checkSockBounds method removed - no bounds checking needed
 
   onMouseMove(x, y) {
     this.hoveredLevel = this.getLevelAtPosition(x, y);
 
     if (this.isDragging && this.dragSock) {
+      // Direct position assignment - no bounds checking at all
       this.dragSock.x = x - this.dragOffset.x;
       this.dragSock.y = y - this.dragOffset.y;
     }
@@ -269,7 +296,9 @@ class LevelSelect extends Screen {
 
       this.easterDropZones.forEach((zone) => {
         const distance = this.getDropZoneDistance(sock, zone);
-        const snapDistance = this.game.getScaledValue(40);
+        const snapDistance = this.game.getScaledValue(
+          this.DROP_ZONE_CONFIG.snapDistance
+        );
 
         if (distance < snapDistance && zone.sock === null) {
           zone.sock = sock;
@@ -329,7 +358,7 @@ class LevelSelect extends Screen {
   }
 
   createSnapEffect(zone) {
-    zone.glowEffect = 20;
+    zone.glowEffect = this.DROP_ZONE_CONFIG.glowDuration;
   }
 
   checkForEasterEggMatches() {
@@ -551,10 +580,10 @@ class LevelSelect extends Screen {
 
       ctx.drawImage(
         this.game.images["martha-demand.png"],
-        -layout.marthaSize / 2,
-        -layout.marthaSize / 2,
-        layout.marthaSize,
-        layout.marthaSize
+        -layout.marthaWidth / 2,
+        -layout.marthaHeight / 2,
+        layout.marthaWidth,
+        layout.marthaHeight
       );
 
       ctx.restore();
@@ -569,24 +598,28 @@ class LevelSelect extends Screen {
 
       let glowIntensity = 0;
       if (zone.glowEffect > 0) {
-        glowIntensity = zone.glowEffect / 20;
+        glowIntensity = zone.glowEffect / this.DROP_ZONE_CONFIG.glowDuration;
       }
+
+      const outerBorderWidth = this.game.getScaledValue(
+        this.DROP_ZONE_CONFIG.outerBorderWidth
+      );
 
       ctx.strokeStyle = "rgba(0, 150, 255, 0.9)";
       ctx.lineWidth = this.game.getScaledValue(5);
       ctx.strokeRect(
-        zone.x - zone.width / 2 - this.game.getScaledValue(10),
-        zone.y - zone.height / 2 - this.game.getScaledValue(10),
-        zone.width + this.game.getScaledValue(20),
-        zone.height + this.game.getScaledValue(20)
+        zone.x - zone.width / 2 - outerBorderWidth,
+        zone.y - zone.height / 2 - outerBorderWidth,
+        zone.width + outerBorderWidth * 2,
+        zone.height + outerBorderWidth * 2
       );
 
       ctx.fillStyle = "rgba(0, 150, 255, 0.1)";
       ctx.fillRect(
-        zone.x - zone.width / 2 - this.game.getScaledValue(10),
-        zone.y - zone.height / 2 - this.game.getScaledValue(10),
-        zone.width + this.game.getScaledValue(20),
-        zone.height + this.game.getScaledValue(20)
+        zone.x - zone.width / 2 - outerBorderWidth,
+        zone.y - zone.height / 2 - outerBorderWidth,
+        zone.width + outerBorderWidth * 2,
+        zone.height + outerBorderWidth * 2
       );
 
       if (glowIntensity > 0) {
