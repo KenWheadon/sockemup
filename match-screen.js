@@ -439,7 +439,9 @@ class MatchScreen extends Screen {
   }
 
   onUpdate(deltaTime) {
-    const timeDecrement = (0.25 / 60) * (deltaTime / 16.67);
+    // Fixed timer: Convert deltaTime from milliseconds to seconds and subtract directly
+    // This makes the timer independent of framerate
+    const timeDecrement = deltaTime / 1000; // Convert milliseconds to seconds
     this.game.timeRemaining -= timeDecrement;
 
     // Handle countdown audio
