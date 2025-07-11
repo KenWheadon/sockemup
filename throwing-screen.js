@@ -42,6 +42,11 @@ class ThrowingScreen extends Screen {
 
     // Next sockball preview
     this.nextSockballType = null;
+
+    // Audio state tracking
+    this.musicStarted = false;
+    this.levelCompleteAudioPlayed = false;
+    this.gameOverAudioPlayed = false;
   }
 
   setup() {
@@ -56,6 +61,11 @@ class ThrowingScreen extends Screen {
     this.lastThrowTime = 0;
     this.sockballsThrown = 0;
     this.showingMessage = false;
+
+    // Reset audio state
+    this.musicStarted = false;
+    this.levelCompleteAudioPlayed = false;
+    this.gameOverAudioPlayed = false;
 
     // Setup Martha for current level
     const level = GameConfig.LEVELS[this.game.currentLevel];
@@ -75,6 +85,9 @@ class ThrowingScreen extends Screen {
     // Set up next sockball type
     this.updateNextSockballType();
 
+    // Start throwing music
+    this.startThrowingMusic();
+
     this.showMessage("Click to throw sockballs at Martha!", "info", 3000);
   }
 
@@ -82,6 +95,16 @@ class ThrowingScreen extends Screen {
     super.cleanup();
     this.sockballProjectiles = [];
     this.showingMessage = false;
+
+    // Stop throwing music when leaving screen
+    this.game.audioManager.stopMusic();
+  }
+
+  startThrowingMusic() {
+    if (!this.musicStarted) {
+      this.game.audioManager.playMusic("throwing-music", true, 0.3);
+      this.musicStarted = true;
+    }
   }
 
   updateNextSockballType() {
@@ -269,6 +292,12 @@ class ThrowingScreen extends Screen {
       // Check collision with Martha
       if (this.marthaManager.checkCollision(sockball)) {
         if (this.marthaManager.hitBySockball(sockball)) {
+          // Play particle burst sound when sockball hits Martha
+          this.game.audioManager.playSound("particle-burst", false, 0.4);
+
+          // Play points gained sound
+          this.game.audioManager.playSound("points-gained", false, 0.3);
+
           sockball.active = false;
           return false;
         }
@@ -292,6 +321,17 @@ class ThrowingScreen extends Screen {
       if (!this.marthaManager.onScreen) {
         this.levelComplete = true;
         this.gamePhase = "complete";
+
+        // Play victory music and level complete sound
+        if (!this.levelCompleteAudioPlayed) {
+          this.game.audioManager.fadeOutMusic(1000);
+          setTimeout(() => {
+            this.game.audioManager.playMusic("victory-music", false, 0.4);
+            this.game.audioManager.playSound("level-complete", false, 0.6);
+          }, 1000);
+          this.levelCompleteAudioPlayed = true;
+        }
+
         setTimeout(() => this.game.completeLevel(), 1000);
       }
     } else if (!hasActiveSockballs && !hasAvailableSockballs) {
@@ -308,6 +348,17 @@ class ThrowingScreen extends Screen {
       if (!this.marthaManager.onScreen) {
         this.levelComplete = true;
         this.gamePhase = "complete";
+
+        // Play defeat music and game over sound
+        if (!this.gameOverAudioPlayed) {
+          this.game.audioManager.fadeOutMusic(1000);
+          setTimeout(() => {
+            this.game.audioManager.playMusic("defeat-music", false, 0.4);
+            this.game.audioManager.playSound("game-over", false, 0.6);
+          }, 1000);
+          this.gameOverAudioPlayed = true;
+        }
+
         setTimeout(() => this.game.completeLevel(), 1000);
       }
     } else if (
