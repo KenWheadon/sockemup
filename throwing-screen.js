@@ -82,14 +82,12 @@ class ThrowingScreen extends Screen {
     const cache = super.createLayoutCache();
 
     // Position UI elements near launch position (bottom area)
-    const bottomMargin = this.game.getScaledValue(20);
-    const rightMargin = this.game.getScaledValue(20);
     const panelSpacing = this.game.getScaledValue(10);
 
     // Sockball counter positioned near launch area
     cache.sockballCounterPos = {
       x: this.launchPosition.x + this.game.getScaledValue(80),
-      y: this.game.getCanvasHeight() - this.game.getScaledValue(80),
+      y: this.game.getCanvasHeight() - this.game.getScaledValue(100),
     };
 
     // Martha status positioned next to sockball counter
@@ -101,10 +99,10 @@ class ThrowingScreen extends Screen {
       y: cache.sockballCounterPos.y,
     };
 
-    // Cooldown bar positioned below counters
+    // Cooldown bar positioned below counters - moved up 20px
     cache.cooldownBarPos = {
       x: cache.sockballCounterPos.x,
-      y: cache.sockballCounterPos.y + this.game.getScaledValue(70),
+      y: cache.sockballCounterPos.y + this.game.getScaledValue(70), // Changed from 70 to 50 (20px up)
     };
 
     return cache;
@@ -588,7 +586,7 @@ class ThrowingScreen extends Screen {
     else if (this.messageType === "warning") panelStyle = "warning";
 
     const textWidth = ctx.measureText(this.messageText).width;
-    const panelWidth = textWidth + this.game.getScaledValue(60);
+    const panelWidth = (textWidth + this.game.getScaledValue(60)) * 2.5; // Increased by 2.5x
     const panelHeight = this.game.getScaledValue(60);
 
     this.renderPanel(
