@@ -324,18 +324,18 @@ class SockManager {
 
       if (animation.phase === "entrance") {
         animation.entranceTimer += timeMultiplier;
-        const entranceProgress = animation.entranceTimer / 60;
+        const entranceProgress = animation.entranceTimer / 40;
 
         const pulse = Math.sin(animation.entranceTimer * 0.15) * 0.1;
         animation.scale =
           2 + pulse * this.easeInOutSine(Math.min(entranceProgress, 1));
 
-        if (animation.entranceTimer >= 60) {
+        if (animation.entranceTimer >= 40) {
           animation.phase = "traveling";
           animation.progress = 0;
         }
       } else if (animation.phase === "traveling") {
-        animation.progress += 0.012 * timeMultiplier;
+        animation.progress += 0.025 * timeMultiplier;
 
         const scaleProgress = this.easeOutCubic(animation.progress);
         animation.scale = 1.2 - scaleProgress * 0.4;

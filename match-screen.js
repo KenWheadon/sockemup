@@ -611,7 +611,7 @@ class MatchScreen extends Screen {
     // Instructions at bottom left
     this.renderText(
       ctx,
-      "Click sock pile - make sock pairs - throw socks",
+      "Click sock pile - make sock pairs",
       layout.instructionX,
       layout.instructionY,
       {
