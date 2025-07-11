@@ -179,7 +179,7 @@ const GameConfig = {
     },
     {
       marthaSpeed: 1.2,
-      sockPairs: 8,
+      sockPairs: 10,
       typesAvailable: [1, 2, 3, 4],
       matchingTime: 30,
       marthaWantsSockballs: 6,
@@ -193,13 +193,13 @@ const GameConfig = {
       marthaPatternSpeed: 1,
     },
     {
-      marthaSpeed: 1.4,
+      marthaSpeed: 1.3,
       sockPairs: 15,
       typesAvailable: [1, 2, 3, 4, 5],
       matchingTime: 45,
       marthaWantsSockballs: 10,
       marthaPatterns: ["diagonal", "circular", "random"],
-      marthaPatternSpeed: 1.25,
+      marthaPatternSpeed: 1.15,
     },
     {
       marthaSpeed: 1.5,
@@ -208,7 +208,7 @@ const GameConfig = {
       matchingTime: 35,
       marthaWantsSockballs: 16,
       marthaPatterns: ["circular", "random"],
-      marthaPatternSpeed: 1.3,
+      marthaPatternSpeed: 1.25,
     },
   ],
 
