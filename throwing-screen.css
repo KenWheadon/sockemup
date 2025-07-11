@@ -109,15 +109,6 @@
   animation: trajectory-dash 1s linear infinite;
 }
 
-@keyframes trajectory-dash {
-  0% {
-    stroke-dashoffset: 0;
-  }
-  100% {
-    stroke-dashoffset: 10;
-  }
-}
-
 /* Sockball Projectiles */
 .sockball-projectile {
   position: absolute;
@@ -131,27 +122,6 @@
 .sockball-projectile.hit {
   filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.8));
   animation: sockball-hit 0.3s ease-out;
-}
-
-@keyframes sockball-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes sockball-hit {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.3);
-  }
-  100% {
-    transform: scale(1);
-  }
 }
 
 /* Martha Character Enhancements */
@@ -174,47 +144,6 @@
   animation: martha-enter 1s ease-out;
 }
 
-@keyframes martha-hit-flash {
-  0% {
-    transform: scale(1);
-    filter: brightness(200%) saturate(150%);
-  }
-  25% {
-    transform: scale(1.1);
-    filter: brightness(300%) saturate(200%);
-  }
-  50% {
-    transform: scale(1.05);
-    filter: brightness(250%) saturate(175%);
-  }
-  100% {
-    transform: scale(1);
-    filter: brightness(100%) saturate(100%);
-  }
-}
-
-@keyframes martha-exit {
-  0% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  100% {
-    opacity: 0.5;
-    transform: scale(0.8);
-  }
-}
-
-@keyframes martha-enter {
-  0% {
-    opacity: 0.5;
-    transform: scale(0.8);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
 /* Point Popup Effects */
 .point-popup {
   position: absolute;
@@ -226,21 +155,6 @@
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 215, 0, 0.6);
   pointer-events: none;
   animation: point-popup-float 1s ease-out;
-}
-
-@keyframes point-popup-float {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: translateY(-20px) scale(1.2);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-40px) scale(1);
-    opacity: 0;
-  }
 }
 
 /* Game State Messages for Throwing Screen */
@@ -277,16 +191,6 @@
   box-shadow: var(--shadow-heavy), var(--glow-warning);
 }
 
-@keyframes throwing-message-pulse {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.05);
-  }
-}
-
 /* Launch Position Indicator */
 .launch-indicator {
   position: absolute;
@@ -304,6 +208,103 @@
   animation: launch-indicator-pulse 1.5s ease-in-out infinite;
 }
 
+/* Throwing Area Bounds Indicator */
+.throwing-bounds {
+  position: absolute;
+  pointer-events: none;
+  border: 2px dashed rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  z-index: 100;
+  animation: bounds-fade 3s ease-in-out infinite;
+}
+
+/* Animations */
+@keyframes trajectory-dash {
+  to {
+    stroke-dashoffset: 10;
+  }
+}
+
+@keyframes sockball-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes sockball-hit {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes martha-hit-flash {
+  0% {
+    transform: scale(1);
+    filter: brightness(200%) saturate(150%);
+  }
+  25% {
+    transform: scale(1.1);
+    filter: brightness(300%) saturate(200%);
+  }
+  50% {
+    transform: scale(1.05);
+    filter: brightness(250%) saturate(175%);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(100%) saturate(100%);
+  }
+}
+
+@keyframes martha-exit {
+  to {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+@keyframes martha-enter {
+  from {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes point-popup-float {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-20px) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-40px) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes throwing-message-pulse {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+
 @keyframes launch-indicator-pulse {
   0%,
   100% {
@@ -314,16 +315,6 @@
     transform: translate(-50%, -50%) scale(1.3);
     opacity: 1;
   }
-}
-
-/* Throwing Area Bounds Indicator */
-.throwing-bounds {
-  position: absolute;
-  pointer-events: none;
-  border: 2px dashed rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius-md);
-  z-index: 100;
-  animation: bounds-fade 3s ease-in-out infinite;
 }
 
 @keyframes bounds-fade {
@@ -410,7 +401,6 @@
   }
 }
 
-/* Height-based responsive adjustments */
 @media (max-height: 600px) {
   .sockball-counter,
   .martha-status {
@@ -443,10 +433,7 @@
   .sockball-projectile,
   .martha-character,
   .launch-indicator,
-  .throwing-bounds {
-    animation: none !important;
-  }
-
+  .throwing-bounds,
   .trajectory-preview {
     animation: none !important;
   }

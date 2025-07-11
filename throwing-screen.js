@@ -12,6 +12,7 @@ class ThrowingScreen extends Screen {
     this.sockballProjectiles = [];
     this.lastThrowTime = 0;
     this.throwCooldownDuration = GameConfig.SOCKBALL_THROW_COOLDOWN;
+    this.sockballsThrown = 0;
 
     // UI state
     this.showingMessage = false;
@@ -20,7 +21,7 @@ class ThrowingScreen extends Screen {
     this.messageTimer = 0;
 
     // Game state
-    this.gamePhase = "throwing"; // 'throwing', 'waiting', 'complete'
+    this.gamePhase = "throwing";
     this.levelComplete = false;
     this.waitingForMartha = false;
 
@@ -40,23 +41,19 @@ class ThrowingScreen extends Screen {
   setup() {
     super.setup();
 
-    // Get sockballs from previous screen
+    // Initialize game state
     this.availableSockballs = this.game.sockBalls;
-
-    // Setup Martha for current level
-    const level = GameConfig.LEVELS[this.game.currentLevel];
-    this.marthaManager.setup(level);
-
-    // Reset game state
     this.gamePhase = "throwing";
     this.levelComplete = false;
     this.waitingForMartha = false;
     this.sockballProjectiles = [];
     this.lastThrowTime = 0;
     this.sockballsThrown = 0;
-
-    // Clear messages
     this.showingMessage = false;
+
+    // Setup Martha for current level
+    const level = GameConfig.LEVELS[this.game.currentLevel];
+    this.marthaManager.setup(level);
 
     // Scale launch position
     this.launchPosition.x = this.game.getScaledValue(
@@ -78,7 +75,6 @@ class ThrowingScreen extends Screen {
   createLayoutCache() {
     const cache = super.createLayoutCache();
 
-    // Add throwing-specific layout values
     cache.sockballCounterPos = {
       x: this.game.getScaledValue(20),
       y: this.game.getScaledValue(20),
@@ -99,7 +95,6 @@ class ThrowingScreen extends Screen {
     this.mouseX = x;
     this.mouseY = y;
 
-    // Update trajectory preview
     if (this.canThrow()) {
       this.updateTrajectoryPreview(x, y);
       this.showTrajectory = true;
@@ -151,7 +146,7 @@ class ThrowingScreen extends Screen {
       vx: deltaX * normalizedVelocity,
       vy: deltaY * normalizedVelocity,
       size: GameConfig.SOCKBALL_SIZE,
-      type: Math.floor(Math.random() * 6) + 1, // Random sockball type
+      type: Math.floor(Math.random() * 6) + 1,
       rotation: 0,
       rotationSpeed: 0.2,
       gravity: GameConfig.GRAVITY,
@@ -186,7 +181,6 @@ class ThrowingScreen extends Screen {
       y += vy;
       vy += GameConfig.GRAVITY;
 
-      // Stop if it goes off screen
       if (
         y > this.game.getCanvasHeight() ||
         x < 0 ||
@@ -200,19 +194,16 @@ class ThrowingScreen extends Screen {
   updateSockballs(deltaTime) {
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
+    const deltaScale = deltaTime / 16.67;
 
     this.sockballProjectiles = this.sockballProjectiles.filter((sockball) => {
       if (!sockball.active) return false;
 
       // Update position
-      sockball.x += sockball.vx * (deltaTime / 16.67);
-      sockball.y += sockball.vy * (deltaTime / 16.67);
-
-      // Apply gravity
-      sockball.vy += sockball.gravity * (deltaTime / 16.67);
-
-      // Update rotation
-      sockball.rotation += sockball.rotationSpeed * (deltaTime / 16.67);
+      sockball.x += sockball.vx * deltaScale;
+      sockball.y += sockball.vy * deltaScale;
+      sockball.vy += sockball.gravity * deltaScale;
+      sockball.rotation += sockball.rotationSpeed * deltaScale;
 
       // Bounce off walls and top
       if (
@@ -240,7 +231,6 @@ class ThrowingScreen extends Screen {
       // Check collision with Martha
       if (this.marthaManager.checkCollision(sockball)) {
         if (this.marthaManager.hitBySockball(sockball)) {
-          // Sockball was collected
           sockball.active = false;
           return false;
         }
@@ -255,25 +245,18 @@ class ThrowingScreen extends Screen {
     const hasAvailableSockballs = this.availableSockballs > 0;
 
     if (this.marthaManager.hasCollectedEnoughSockballs()) {
-      // Martha has enough sockballs
       if (!this.waitingForMartha) {
         this.waitingForMartha = true;
         this.marthaManager.startExit();
         this.showMessage("Martha got her rent money!", "success", 2000);
       }
 
-      // Check if Martha is off screen
       if (!this.marthaManager.onScreen) {
         this.levelComplete = true;
         this.gamePhase = "complete";
-
-        // Delay before showing level end screen
-        setTimeout(() => {
-          this.game.completeLevel();
-        }, 1000);
+        setTimeout(() => this.game.completeLevel(), 1000);
       }
     } else if (!hasActiveSockballs && !hasAvailableSockballs) {
-      // No more sockballs and none in flight
       if (!this.waitingForMartha) {
         this.waitingForMartha = true;
         this.marthaManager.startExit();
@@ -284,22 +267,16 @@ class ThrowingScreen extends Screen {
         );
       }
 
-      // Check if Martha is off screen
       if (!this.marthaManager.onScreen) {
         this.levelComplete = true;
         this.gamePhase = "complete";
-
-        // Delay before showing level end screen
-        setTimeout(() => {
-          this.game.completeLevel();
-        }, 1000);
+        setTimeout(() => this.game.completeLevel(), 1000);
       }
     } else if (
       !this.marthaManager.onScreen &&
       this.marthaManager.needsMoreSockballs() &&
       (hasActiveSockballs || hasAvailableSockballs)
     ) {
-      // Martha needs more sockballs and there are still sockballs available
       this.waitingForMartha = false;
       this.marthaManager.startEnter();
       this.showMessage("Martha is back for more sockballs!", "info", 2000);
@@ -314,16 +291,10 @@ class ThrowingScreen extends Screen {
   }
 
   onUpdate(deltaTime) {
-    // Update Martha
     this.marthaManager.update(deltaTime);
-
-    // Update sockball projectiles
     this.updateSockballs(deltaTime);
-
-    // Check for game end conditions
     this.checkGameEnd();
 
-    // Update message timer
     if (this.showingMessage) {
       this.messageTimer -= deltaTime;
       if (this.messageTimer <= 0) {
@@ -333,26 +304,19 @@ class ThrowingScreen extends Screen {
   }
 
   onRender(ctx) {
-    // Draw Martha
     this.marthaManager.render(ctx);
 
-    // Draw sockball projectiles
     this.sockballProjectiles.forEach((sockball) => {
       this.renderSockball(ctx, sockball);
     });
 
-    // Draw trajectory preview
     if (this.showTrajectory && this.trajectoryPoints.length > 0) {
       this.renderTrajectory(ctx);
     }
 
-    // Draw launch position indicator
     this.renderLaunchIndicator(ctx);
-
-    // Draw UI
     this.renderUI(ctx);
 
-    // Draw game message
     if (this.showingMessage) {
       this.renderMessage(ctx);
     }
@@ -360,11 +324,9 @@ class ThrowingScreen extends Screen {
 
   renderSockball(ctx, sockball) {
     ctx.save();
-
     ctx.translate(sockball.x, sockball.y);
     ctx.rotate(sockball.rotation);
 
-    // Draw sockball image or fallback
     const sockballImage = this.game.images[`sockball${sockball.type}.png`];
     if (sockballImage) {
       ctx.drawImage(
@@ -375,7 +337,6 @@ class ThrowingScreen extends Screen {
         sockball.size
       );
     } else {
-      // Fallback circle
       ctx.fillStyle = `hsl(${sockball.type * 60}, 70%, 50%)`;
       ctx.beginPath();
       ctx.arc(0, 0, sockball.size / 2, 0, Math.PI * 2);
@@ -429,7 +390,6 @@ class ThrowingScreen extends Screen {
   }
 
   renderUI(ctx) {
-    // Sockball counter
     const counterX = this.layoutCache.sockballCounterPos.x;
     const counterY = this.layoutCache.sockballCounterPos.y;
 
@@ -447,10 +407,7 @@ class ThrowingScreen extends Screen {
       "Sockballs:",
       counterX + this.game.getScaledValue(75),
       counterY + this.game.getScaledValue(20),
-      {
-        fontSize: this.layoutCache.bodyFontSize,
-        align: "center",
-      }
+      { fontSize: this.layoutCache.bodyFontSize, align: "center" }
     );
 
     this.renderText(
@@ -483,10 +440,7 @@ class ThrowingScreen extends Screen {
       "Martha wants:",
       statusX + this.game.getScaledValue(90),
       statusY + this.game.getScaledValue(20),
-      {
-        fontSize: this.layoutCache.smallFontSize,
-        align: "center",
-      }
+      { fontSize: this.layoutCache.smallFontSize, align: "center" }
     );
 
     this.renderText(
