@@ -776,6 +776,7 @@ class LevelSelect extends Screen {
   }
 
   onRender(ctx) {
+    this.renderBackground(ctx);
     this.renderLogo(ctx);
     this.renderInstructions(ctx);
     this.renderMarthaImage(ctx);
@@ -792,6 +793,21 @@ class LevelSelect extends Screen {
 
     if (this.easterEggActive) {
       this.renderMenuSocks(ctx);
+    }
+  }
+
+  renderBackground(ctx) {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
+    if (this.game.images["level-select-bg.png"]) {
+      ctx.drawImage(
+        this.game.images["level-select-bg.png"],
+        0,
+        0,
+        canvasWidth,
+        canvasHeight
+      );
     }
   }
 

@@ -250,7 +250,13 @@ const GameConfig = {
       "martha-win.png",
       "martha-demand.png",
     ],
-    UI: ["background.png", "logo.png", "star.png", "throw-bg.png"],
+    UI: [
+      "background.png",
+      "logo.png",
+      "star.png",
+      "throw-bg.png",
+      "level-select-bg.png",
+    ],
   },
 
   // Sockball queue management utilities
