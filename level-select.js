@@ -39,6 +39,7 @@ class LevelSelect extends Screen {
     this.dragOffset = { x: 0, y: 0 };
     this.logoClickCount = 0;
     this.currentSockType = 1;
+    this.dropZoneHover = null;
 
     // Martha display and animation
     this.marthaWiggleTimer = 0;
@@ -51,6 +52,9 @@ class LevelSelect extends Screen {
     // Sock ball animations
     this.sockBallAnimations = [];
 
+    // Point gain animations
+    this.pointGainAnimations = [];
+
     // Physics for menu socks
     this.menuPhysics = {
       friction: 0.992,
@@ -58,14 +62,10 @@ class LevelSelect extends Screen {
       bounceRestitution: 0.4,
       rotationFriction: 0.98,
       bounds: {
-        left: this.game.getScaledValue(this.DRAG_BOUNDARIES.left),
-        right:
-          this.game.getCanvasWidth() -
-          this.game.getScaledValue(this.DRAG_BOUNDARIES.right),
-        top: this.game.getScaledValue(this.DRAG_BOUNDARIES.top),
-        bottom:
-          this.game.getCanvasHeight() -
-          this.game.getScaledValue(this.DRAG_BOUNDARIES.bottom),
+        left: -750, // Very generous buffer to prevent premature cleanup
+        right: 2000, // Will be updated on resize
+        top: -750,
+        bottom: 2000,
       },
     };
 
@@ -148,7 +148,21 @@ class LevelSelect extends Screen {
   }
 
   onResize() {
-    // No bounds needed - socks can go anywhere
+    // Update physics bounds for garbage collection with generous buffer
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
+    this.menuPhysics.bounds = {
+      left: -500, // Much more generous buffer
+      right: canvasWidth + 500,
+      top: -500,
+      bottom: canvasHeight + 500,
+    };
+
+    // Debug logging to see actual bounds
+    console.log("Canvas dimensions:", canvasWidth, "x", canvasHeight);
+    console.log("Garbage collection bounds:", this.menuPhysics.bounds);
+
     this.setupEasterDropZones();
   }
 
@@ -166,6 +180,8 @@ class LevelSelect extends Screen {
         height: layout.dropZoneSize,
         sock: null,
         glowEffect: 0,
+        hoverEffect: 0,
+        snapEffect: 0,
         id: 0,
       },
       {
@@ -175,6 +191,8 @@ class LevelSelect extends Screen {
         height: layout.dropZoneSize,
         sock: null,
         glowEffect: 0,
+        hoverEffect: 0,
+        snapEffect: 0,
         id: 1,
       },
     ];
@@ -182,6 +200,26 @@ class LevelSelect extends Screen {
 
   setup() {
     super.setup();
+
+    // Update bounds when setting up to ensure they're correct
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
+    this.menuPhysics.bounds = {
+      left: -500,
+      right: canvasWidth + 500,
+      top: -500,
+      bottom: canvasHeight + 500,
+    };
+
+    console.log(
+      "Level select setup - Canvas dimensions:",
+      canvasWidth,
+      "x",
+      canvasHeight
+    );
+    console.log("Initial garbage collection bounds:", this.menuPhysics.bounds);
+
     this.setupEasterDropZones();
   }
 
@@ -198,12 +236,22 @@ class LevelSelect extends Screen {
       }
     }
 
+    // Update drop zone effects
     this.easterDropZones.forEach((zone) => {
       if (zone.glowEffect > 0) zone.glowEffect--;
+      if (zone.hoverEffect > 0) zone.hoverEffect--;
+      if (zone.snapEffect > 0) zone.snapEffect--;
     });
 
+    // Update sockball animations
     this.sockBallAnimations = this.sockBallAnimations.filter((animation) => {
       animation.progress += deltaTime / 1000;
+      return animation.progress < 1;
+    });
+
+    // Update point gain animations
+    this.pointGainAnimations = this.pointGainAnimations.filter((animation) => {
+      animation.progress += deltaTime / 2000; // 2 second duration
       return animation.progress < 1;
     });
   }
@@ -212,23 +260,8 @@ class LevelSelect extends Screen {
     const timeMultiplier = deltaTime / 16.67;
 
     this.menuSocks.forEach((sock, index) => {
-      const age = Date.now() - sock.spawnTime;
-      if (age > 20000) {
-        this.menuSocks.splice(index, 1);
-        if (sock === this.dragSock) {
-          this.isDragging = false;
-          this.dragSock = null;
-        }
-        return;
-      }
-
-      if (age > 17000) {
-        const fadeProgress = (age - 17000) / 3000;
-        sock.alpha = 1 - fadeProgress;
-      }
-
-      // Skip physics for dragged sock
-      if (sock === this.dragSock) return;
+      // Skip physics for dragged sock and socks in drop zones
+      if (sock === this.dragSock || this.isSockInDropZone(sock)) return;
 
       sock.vx *= Math.pow(this.menuPhysics.friction, timeMultiplier);
       sock.vy *= Math.pow(this.menuPhysics.friction, timeMultiplier);
@@ -244,7 +277,15 @@ class LevelSelect extends Screen {
       sock.y += sock.vy * timeMultiplier;
       sock.rotation += sock.rotationSpeed * timeMultiplier;
 
-      // No bounds checking - socks can go anywhere
+      // Only check bounds for garbage collection - no time-based removal
+      if (this.isSockOutsideBounds(sock)) {
+        this.menuSocks.splice(index, 1);
+        if (sock === this.dragSock) {
+          this.isDragging = false;
+          this.dragSock = null;
+        }
+        return;
+      }
 
       if (
         Math.abs(sock.vx) < this.menuPhysics.minVelocity &&
@@ -261,7 +302,31 @@ class LevelSelect extends Screen {
     this.menuSocks = this.menuSocks.filter((sock) => sock !== undefined);
   }
 
-  // checkSockBounds method removed - no bounds checking needed
+  isSockInDropZone(sock) {
+    return this.easterDropZones.some((zone) => zone.sock === sock);
+  }
+
+  isSockOutsideBounds(sock) {
+    const isOutside =
+      sock.x < this.menuPhysics.bounds.left ||
+      sock.x > this.menuPhysics.bounds.right ||
+      sock.y < this.menuPhysics.bounds.top ||
+      sock.y > this.menuPhysics.bounds.bottom;
+
+    // Debug logging when a sock is about to be garbage collected
+    if (isOutside) {
+      console.log("Sock being garbage collected:", {
+        sockPosition: { x: sock.x, y: sock.y },
+        bounds: this.menuPhysics.bounds,
+        canvasSize: {
+          width: this.game.getCanvasWidth(),
+          height: this.game.getCanvasHeight(),
+        },
+      });
+    }
+
+    return isOutside;
+  }
 
   onMouseMove(x, y) {
     this.hoveredLevel = this.getLevelAtPosition(x, y);
@@ -270,6 +335,27 @@ class LevelSelect extends Screen {
       // Direct position assignment - no bounds checking at all
       this.dragSock.x = x - this.dragOffset.x;
       this.dragSock.y = y - this.dragOffset.y;
+    }
+
+    // Update hover effects for drop zones
+    this.updateDropZoneHover(x, y);
+  }
+
+  updateDropZoneHover(x, y) {
+    this.dropZoneHover = null;
+
+    if (this.isDragging && this.dragSock) {
+      const snapDistance = this.game.getScaledValue(
+        this.DROP_ZONE_CONFIG.snapDistance
+      );
+
+      this.easterDropZones.forEach((zone) => {
+        const distance = this.getDropZoneDistance(this.dragSock, zone);
+        if (distance < snapDistance && zone.sock === null) {
+          this.dropZoneHover = zone.id;
+          zone.hoverEffect = Math.max(zone.hoverEffect, 10);
+        }
+      });
     }
   }
 
@@ -316,6 +402,7 @@ class LevelSelect extends Screen {
 
       this.isDragging = false;
       this.dragSock = null;
+      this.dropZoneHover = null;
       this.checkForEasterEggMatches();
     }
   }
@@ -359,6 +446,7 @@ class LevelSelect extends Screen {
 
   createSnapEffect(zone) {
     zone.glowEffect = this.DROP_ZONE_CONFIG.glowDuration;
+    zone.snapEffect = 15; // Duration for snap animation
   }
 
   checkForEasterEggMatches() {
@@ -370,6 +458,7 @@ class LevelSelect extends Screen {
 
       if (sock1.type === sock2.type) {
         this.createSockBallAnimation(sock1, sock2);
+        this.awardPointsForMatch(sock1, sock2);
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
         this.menuSocks = this.menuSocks.filter(
@@ -377,6 +466,23 @@ class LevelSelect extends Screen {
         );
       }
     }
+  }
+
+  awardPointsForMatch(sock1, sock2) {
+    // Award 1 point for the match
+    this.game.playerPoints += 1;
+    this.game.saveGameData();
+
+    // Create point gain animation
+    const centerX = (sock1.x + sock2.x) / 2;
+    const centerY = (sock1.y + sock2.y) / 2;
+
+    this.pointGainAnimations.push({
+      x: centerX,
+      y: centerY,
+      progress: 0,
+      text: "+1",
+    });
   }
 
   createSockBallAnimation(sock1, sock2) {
@@ -437,7 +543,6 @@ class LevelSelect extends Screen {
       rotationSpeed: (Math.random() - 0.5) * 0.2,
       glowEffect: 30,
       spawnTime: Date.now(),
-      alpha: 1,
     };
 
     this.menuSocks.push(sock);
@@ -496,6 +601,7 @@ class LevelSelect extends Screen {
     }
 
     this.renderSockBallAnimations(ctx);
+    this.renderPointGainAnimations(ctx);
 
     if (this.easterEggActive) {
       this.renderMenuSocks(ctx);
@@ -596,51 +702,47 @@ class LevelSelect extends Screen {
     this.easterDropZones.forEach((zone, index) => {
       ctx.save();
 
+      // Calculate various effects
       let glowIntensity = 0;
+      let isHovered = this.dropZoneHover === zone.id;
+      let isOccupied = zone.sock !== null;
+
+      // Glow effect from snapping
       if (zone.glowEffect > 0) {
         glowIntensity = zone.glowEffect / this.DROP_ZONE_CONFIG.glowDuration;
       }
 
-      const outerBorderWidth = this.game.getScaledValue(
-        this.DROP_ZONE_CONFIG.outerBorderWidth
-      );
-
-      ctx.strokeStyle = "rgba(0, 150, 255, 0.9)";
-      ctx.lineWidth = this.game.getScaledValue(5);
-      ctx.strokeRect(
-        zone.x - zone.width / 2 - outerBorderWidth,
-        zone.y - zone.height / 2 - outerBorderWidth,
-        zone.width + outerBorderWidth * 2,
-        zone.height + outerBorderWidth * 2
-      );
-
-      ctx.fillStyle = "rgba(0, 150, 255, 0.1)";
-      ctx.fillRect(
-        zone.x - zone.width / 2 - outerBorderWidth,
-        zone.y - zone.height / 2 - outerBorderWidth,
-        zone.width + outerBorderWidth * 2,
-        zone.height + outerBorderWidth * 2
-      );
-
-      if (glowIntensity > 0) {
-        ctx.shadowColor = "rgba(255, 255, 0, " + glowIntensity + ")";
-        ctx.shadowBlur = this.game.getScaledValue(15);
+      // Hover effect
+      if (isHovered) {
+        glowIntensity = Math.max(glowIntensity, 0.8);
       }
 
-      ctx.strokeStyle = zone.sock
-        ? "rgba(255, 255, 0, 1.0)"
-        : "rgba(255, 255, 0, 0.8)";
-      ctx.lineWidth = this.game.getScaledValue(4);
-      ctx.strokeRect(
-        zone.x - zone.width / 2,
-        zone.y - zone.height / 2,
-        zone.width,
-        zone.height
-      );
+      // Base zone styling - grey dashed border like match screen
+      let borderColor = "rgba(200, 200, 200, 0.5)";
+      let backgroundColor = "rgba(255, 255, 255, 0.1)";
+      let shadowColor = "rgba(255, 255, 255, 0.2)";
+      let shadowBlur = this.game.getScaledValue(5);
 
-      ctx.fillStyle = zone.sock
-        ? "rgba(255, 255, 0, 0.3)"
-        : "rgba(255, 255, 0, 0.15)";
+      if (isOccupied) {
+        borderColor = "rgba(46, 204, 113, 0.8)";
+        backgroundColor = "rgba(46, 204, 113, 0.3)";
+        shadowColor = "rgba(46, 204, 113, 0.5)";
+        shadowBlur = this.game.getScaledValue(10);
+      } else if (isHovered) {
+        borderColor = "#2ecc71";
+        backgroundColor = "rgba(46, 204, 113, 0.25)";
+        shadowColor = "rgba(46, 204, 113, 0.6)";
+        shadowBlur = this.game.getScaledValue(15);
+      }
+
+      // Apply glow effect
+      if (glowIntensity > 0) {
+        ctx.shadowColor = shadowColor;
+        ctx.shadowBlur = shadowBlur * (1 + glowIntensity);
+      }
+
+      // Draw zone background
+      ctx.fillStyle = backgroundColor;
       ctx.fillRect(
         zone.x - zone.width / 2,
         zone.y - zone.height / 2,
@@ -648,26 +750,31 @@ class LevelSelect extends Screen {
         zone.height
       );
 
-      if (!zone.sock) {
+      // Draw dashed border
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = this.game.getScaledValue(isHovered ? 3 : 2);
+      ctx.strokeRect(
+        zone.x - zone.width / 2,
+        zone.y - zone.height / 2,
+        zone.width,
+        zone.height
+      );
+
+      // Reset line dash
+      ctx.setLineDash([]);
+
+      // Pulsing effect for empty zones
+      if (!isOccupied && !isHovered) {
         const pulseIntensity = Math.sin(Date.now() * 0.003) * 0.3 + 0.7;
-        ctx.strokeStyle = `rgba(255, 255, 0, ${pulseIntensity})`;
-        ctx.lineWidth = this.game.getScaledValue(2);
+        ctx.strokeStyle = `rgba(200, 200, 200, ${pulseIntensity * 0.6})`;
+        ctx.lineWidth = this.game.getScaledValue(1);
         ctx.strokeRect(
           zone.x - zone.width / 2,
           zone.y - zone.height / 2,
           zone.width,
           zone.height
         );
-      }
-
-      ctx.fillStyle = "rgba(255, 255, 255, 1.0)";
-      ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
-      ctx.lineWidth = this.game.getScaledValue(2);
-
-      if (!zone.sock) {
-        ctx.fillStyle = "rgba(255, 215, 0, 0.9)";
-        ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
-        ctx.lineWidth = this.game.getScaledValue(1);
       }
 
       ctx.restore();
@@ -699,6 +806,35 @@ class LevelSelect extends Screen {
         ctx.restore();
       }
     });
+  }
+
+  renderPointGainAnimations(ctx) {
+    this.pointGainAnimations.forEach((animation) => {
+      const progress = animation.progress;
+      const easeProgress = this.easeOutCubic(progress);
+
+      ctx.save();
+      ctx.globalAlpha = 1 - progress;
+
+      const currentY = animation.y - easeProgress * 60;
+      const scale = 1 + easeProgress * 0.2;
+
+      ctx.translate(animation.x, currentY);
+      ctx.scale(scale, scale);
+
+      this.renderText(ctx, animation.text, 0, 0, {
+        fontSize: this.game.getScaledValue(24),
+        color: "#FFD700",
+        weight: "bold",
+        align: "center",
+      });
+
+      ctx.restore();
+    });
+  }
+
+  easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
   }
 
   renderLevelButtons(ctx) {
@@ -868,10 +1004,7 @@ class LevelSelect extends Screen {
     this.menuSocks.forEach((sock) => {
       ctx.save();
 
-      if (sock.alpha < 1) {
-        ctx.globalAlpha = sock.alpha;
-      }
-
+      // Always render with full alpha - no fading
       if (sock.glowEffect > 0) {
         ctx.shadowColor = "#FFD700";
         ctx.shadowBlur = sock.glowEffect;
