@@ -231,11 +231,15 @@ class LevelEndScreen extends Screen {
   renderMarthaImage(ctx, layout) {
     if (!this.marthaImage) return;
 
-    const imageSize = layout.marthaImageSize;
-    const imageX = layout.centerX - imageSize / 2;
+    const image = this.marthaImage;
+    const desiredHeight = layout.marthaImageSize;
+    const aspectRatio = image.width / image.height;
+    const desiredWidth = desiredHeight * aspectRatio;
+
+    const imageX = layout.centerX - desiredWidth / 2;
     const imageY = layout.marthaImageY;
 
-    ctx.drawImage(this.marthaImage, imageX, imageY, imageSize, imageSize);
+    ctx.drawImage(image, imageX, imageY, desiredWidth, desiredHeight);
   }
 
   renderScoreLines(ctx, layout) {
