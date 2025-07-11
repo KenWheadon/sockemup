@@ -36,6 +36,9 @@ class ThrowingScreen extends Screen {
     this.trajectoryPoints = [];
     this.mouseX = 0;
     this.mouseY = 0;
+
+    // Background image
+    this.backgroundImage = null;
   }
 
   setup() {
@@ -63,6 +66,9 @@ class ThrowingScreen extends Screen {
       GameConfig.SOCKBALL_LAUNCH_POSITION.y
     );
 
+    // Load background image
+    this.backgroundImage = this.game.images["throw-bg.png"];
+
     this.showMessage("Click to throw sockballs at Martha!", "info", 3000);
   }
 
@@ -75,17 +81,30 @@ class ThrowingScreen extends Screen {
   createLayoutCache() {
     const cache = super.createLayoutCache();
 
+    // Position UI elements near launch position (bottom area)
+    const bottomMargin = this.game.getScaledValue(20);
+    const rightMargin = this.game.getScaledValue(20);
+    const panelSpacing = this.game.getScaledValue(10);
+
+    // Sockball counter positioned near launch area
     cache.sockballCounterPos = {
-      x: this.game.getScaledValue(20),
-      y: this.game.getScaledValue(20),
+      x: this.launchPosition.x + this.game.getScaledValue(80),
+      y: this.game.getCanvasHeight() - this.game.getScaledValue(80),
     };
+
+    // Martha status positioned next to sockball counter
     cache.marthaStatusPos = {
-      x: this.game.getCanvasWidth() - this.game.getScaledValue(200),
-      y: this.game.getScaledValue(20),
+      x:
+        cache.sockballCounterPos.x +
+        this.game.getScaledValue(160) +
+        panelSpacing,
+      y: cache.sockballCounterPos.y,
     };
+
+    // Cooldown bar positioned below counters
     cache.cooldownBarPos = {
-      x: this.game.getScaledValue(20),
-      y: this.game.getCanvasHeight() - this.game.getScaledValue(120),
+      x: cache.sockballCounterPos.x,
+      y: cache.sockballCounterPos.y + this.game.getScaledValue(70),
     };
 
     return cache;
@@ -304,6 +323,9 @@ class ThrowingScreen extends Screen {
   }
 
   onRender(ctx) {
+    // Render background first
+    this.renderBackground(ctx);
+
     this.marthaManager.render(ctx);
 
     this.sockballProjectiles.forEach((sockball) => {
@@ -319,6 +341,51 @@ class ThrowingScreen extends Screen {
 
     if (this.showingMessage) {
       this.renderMessage(ctx);
+    }
+  }
+
+  renderBackground(ctx) {
+    if (this.backgroundImage) {
+      // Scale background to fill canvas while maintaining aspect ratio
+      const canvasAspect =
+        this.game.getCanvasWidth() / this.game.getCanvasHeight();
+      const imageAspect =
+        this.backgroundImage.width / this.backgroundImage.height;
+
+      let drawWidth, drawHeight, drawX, drawY;
+
+      if (canvasAspect > imageAspect) {
+        // Canvas is wider than image
+        drawWidth = this.game.getCanvasWidth();
+        drawHeight = drawWidth / imageAspect;
+        drawX = 0;
+        drawY = (this.game.getCanvasHeight() - drawHeight) / 2;
+      } else {
+        // Canvas is taller than image
+        drawHeight = this.game.getCanvasHeight();
+        drawWidth = drawHeight * imageAspect;
+        drawX = (this.game.getCanvasWidth() - drawWidth) / 2;
+        drawY = 0;
+      }
+
+      ctx.drawImage(this.backgroundImage, drawX, drawY, drawWidth, drawHeight);
+    } else {
+      // Fallback gradient background
+      const gradient = ctx.createLinearGradient(
+        0,
+        0,
+        0,
+        this.game.getCanvasHeight()
+      );
+      gradient.addColorStop(0, "#1a1a2e");
+      gradient.addColorStop(1, "#16213e");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(
+        0,
+        0,
+        this.game.getCanvasWidth(),
+        this.game.getCanvasHeight()
+      );
     }
   }
 
@@ -350,9 +417,9 @@ class ThrowingScreen extends Screen {
     if (this.trajectoryPoints.length < 2) return;
 
     ctx.save();
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.lineWidth = this.game.getScaledValue(2);
-    ctx.setLineDash([this.game.getScaledValue(5), this.game.getScaledValue(5)]);
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.setLineDash([this.game.getScaledValue(8), this.game.getScaledValue(4)]);
 
     ctx.beginPath();
     ctx.moveTo(this.trajectoryPoints[0].x, this.trajectoryPoints[0].y);
@@ -369,11 +436,24 @@ class ThrowingScreen extends Screen {
     ctx.save();
 
     const pulseScale = this.getPulseScale(0.2);
-    const radius = this.game.getScaledValue(15) * pulseScale;
+    const radius = this.game.getScaledValue(20) * pulseScale;
 
-    ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.lineWidth = this.game.getScaledValue(2);
+    // Outer glow
+    ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+    ctx.beginPath();
+    ctx.arc(
+      this.launchPosition.x,
+      this.launchPosition.y,
+      radius * 1.5,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+
+    // Inner circle
+    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.lineWidth = this.game.getScaledValue(3);
 
     ctx.beginPath();
     ctx.arc(
@@ -392,20 +472,23 @@ class ThrowingScreen extends Screen {
   renderUI(ctx) {
     const counterX = this.layoutCache.sockballCounterPos.x;
     const counterY = this.layoutCache.sockballCounterPos.y;
+    const panelWidth = this.game.getScaledValue(150);
+    const panelHeight = this.game.getScaledValue(60);
 
+    // Sockball counter panel
     this.renderPanel(
       ctx,
       counterX,
       counterY,
-      this.game.getScaledValue(150),
-      this.game.getScaledValue(60),
+      panelWidth,
+      panelHeight,
       "primary"
     );
 
     this.renderText(
       ctx,
       "Sockballs:",
-      counterX + this.game.getScaledValue(75),
+      counterX + panelWidth / 2,
       counterY + this.game.getScaledValue(20),
       { fontSize: this.layoutCache.bodyFontSize, align: "center" }
     );
@@ -413,7 +496,7 @@ class ThrowingScreen extends Screen {
     this.renderText(
       ctx,
       this.availableSockballs.toString(),
-      counterX + this.game.getScaledValue(75),
+      counterX + panelWidth / 2,
       counterY + this.game.getScaledValue(40),
       {
         fontSize: this.layoutCache.headerFontSize,
@@ -422,34 +505,36 @@ class ThrowingScreen extends Screen {
       }
     );
 
-    // Martha status
+    // Martha status panel
     const statusX = this.layoutCache.marthaStatusPos.x;
     const statusY = this.layoutCache.marthaStatusPos.y;
+    const statusWidth = this.game.getScaledValue(180);
+    const statusHeight = this.game.getScaledValue(60);
 
     this.renderPanel(
       ctx,
       statusX,
       statusY,
-      this.game.getScaledValue(180),
-      this.game.getScaledValue(80),
+      statusWidth,
+      statusHeight,
       "secondary"
     );
 
     this.renderText(
       ctx,
       "Martha wants:",
-      statusX + this.game.getScaledValue(90),
+      statusX + statusWidth / 2,
       statusY + this.game.getScaledValue(20),
-      { fontSize: this.layoutCache.smallFontSize, align: "center" }
+      { fontSize: this.layoutCache.bodyFontSize, align: "center" }
     );
 
     this.renderText(
       ctx,
       `${this.marthaManager.collectedSockballs}/${this.marthaManager.sockballsWanted}`,
-      statusX + this.game.getScaledValue(90),
+      statusX + statusWidth / 2,
       statusY + this.game.getScaledValue(40),
       {
-        fontSize: this.layoutCache.bodyFontSize,
+        fontSize: this.layoutCache.headerFontSize,
         color: "#4caf50",
         align: "center",
       }
@@ -458,7 +543,7 @@ class ThrowingScreen extends Screen {
     // Throw cooldown
     const cooldownX = this.layoutCache.cooldownBarPos.x;
     const cooldownY = this.layoutCache.cooldownBarPos.y;
-    const cooldownWidth = this.game.getScaledValue(200);
+    const cooldownWidth = this.game.getScaledValue(250);
     const cooldownHeight = this.game.getScaledValue(20);
 
     const currentTime = Date.now();
@@ -483,7 +568,7 @@ class ThrowingScreen extends Screen {
 
     this.renderText(
       ctx,
-      cooldownProgress >= 1 ? "READY" : "COOLDOWN",
+      cooldownProgress >= 1 ? "READY TO THROW" : "RECHARGING...",
       cooldownX + cooldownWidth / 2,
       cooldownY + cooldownHeight / 2,
       {

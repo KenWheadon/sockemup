@@ -32,7 +32,7 @@ class LevelEndScreen extends Screen {
     const baseLayout = super.createLayoutCache();
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
-    const marthaImageSize = this.game.getScaledValue(80);
+    const marthaImageSize = this.game.getScaledValue(100);
     const marthaToStatsMargin = this.game.getScaledValue(30);
 
     return {
