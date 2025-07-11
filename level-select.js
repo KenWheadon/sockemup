@@ -58,6 +58,10 @@ class LevelSelect extends Screen {
     // Mismatch particle effects
     this.mismatchParticles = [];
 
+    // Credits integration
+    this.creditsOpen = false;
+    this.creditsModal = null;
+
     // Physics for menu socks
     this.menuPhysics = {
       friction: 0.992,
@@ -147,6 +151,10 @@ class LevelSelect extends Screen {
       statsY: canvasHeight - this.game.getScaledValue(80),
       statsPanelWidth: this.game.getScaledValue(200),
       statsPanelHeight: this.game.getScaledValue(40),
+      creditsButtonX: canvasWidth - this.game.getScaledValue(80),
+      creditsButtonY: this.game.getScaledValue(50),
+      creditsButtonWidth: this.game.getScaledValue(100),
+      creditsButtonHeight: this.game.getScaledValue(40),
     };
   }
 
@@ -227,6 +235,137 @@ class LevelSelect extends Screen {
     console.log("Initial garbage collection bounds:", this.menuPhysics.bounds);
 
     this.setupEasterDropZones();
+    this.setupCreditsModal();
+  }
+
+  setupCreditsModal() {
+    // Create credits modal if it doesn't exist
+    if (!document.getElementById("creditsModal")) {
+      const modalHTML = `
+        <div class="credits-modal" id="creditsModal">
+          <div class="credits-content">
+            <div class="credits-header">
+              <img src="images/company-logo.png" alt="Weird Demon Games" class="company-logo" />
+              <h2>Weird Demon Games</h2>
+              <button class="close-credits" id="closeCredits">×</button>
+            </div>
+            <div class="credits-body">
+              <div class="company-info">
+                <h3>About the Studio</h3>
+                <p>Weird Demon Games was founded in the depths of creative madness, where nightmares meet nostalgia. We specialize in the weird and wacky that make you wonder - what did I play, and why did I have fun doing it!</p>
+                
+                <h3>Our Mission</h3>
+                <p>To create unforgettable experiences that bring a smile to your face and inspire you to make something wacky of your own!</p>
+                
+                <h3>Team</h3>
+                <div class="team-credits">
+                  <div class="credit-role">
+                    <span class="role">Founder / Game Lead</span>
+                    <span class="name">Ken Whaeadon</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Logo</span>
+                    <span class="name">Wrymskin</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Audio Effects - freesound.org</span>
+                    <span class="name">colorsCrimsonTears, David819, SilverIllusionist, mrickey13, plasterbrain, Sess8it, Bertrof, GameAudio, Yoshicakes77</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Audio Effects - pixabay.com</span>
+                    <span class="name">Karim-Nessim, Universfield, freesound_community</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Lead Artist</span>
+                    <span class="name">ChatGPT</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Music Composer</span>
+                    <span class="name">Suno</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Lead Programmer</span>
+                    <span class="name">Claude Sonnet 4</span>
+                  </div>
+                </div>
+                
+                <div class="company-tagline">
+                  <em>"Where every game is a portal to the impossible."</em>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.insertAdjacentHTML("beforeend", modalHTML);
+    }
+
+    this.creditsModal = document.getElementById("creditsModal");
+    this.setupCreditsEventListeners();
+  }
+
+  setupCreditsEventListeners() {
+    const closeCredits = document.getElementById("closeCredits");
+
+    // Close credits button
+    if (closeCredits) {
+      closeCredits.addEventListener("click", () => {
+        this.game.audioManager.playSound("button-click", false, 0.5);
+        this.hideCredits();
+      });
+
+      // Add hover sound effect
+      closeCredits.addEventListener("mouseenter", () => {
+        this.game.audioManager.playSound("button-hover", false, 0.3);
+      });
+    }
+
+    // Close credits when clicking outside modal
+    if (this.creditsModal) {
+      this.creditsModal.addEventListener("click", (e) => {
+        if (e.target === this.creditsModal) {
+          this.hideCredits();
+        }
+      });
+    }
+
+    // Keyboard event listener for accessibility
+    document.addEventListener("keydown", (e) => {
+      if (this.creditsOpen && e.code === "Escape") {
+        this.hideCredits();
+      }
+    });
+  }
+
+  showCredits() {
+    if (this.creditsOpen) return;
+
+    console.log("👥 Opening credits");
+    this.game.audioManager.playSound("button-click", false, 0.5);
+
+    if (this.creditsModal) {
+      this.creditsOpen = true;
+      this.creditsModal.classList.add("visible");
+
+      // Focus trap for accessibility
+      const closeButton = document.getElementById("closeCredits");
+      if (closeButton) {
+        closeButton.focus();
+      }
+    }
+  }
+
+  hideCredits() {
+    if (!this.creditsOpen) return;
+
+    console.log("❌ Closing credits");
+    this.game.audioManager.playSound("button-click", false, 0.5);
+
+    if (this.creditsModal) {
+      this.creditsModal.classList.remove("visible");
+      this.creditsOpen = false;
+    }
   }
 
   onUpdate(deltaTime) {
@@ -455,6 +594,12 @@ class LevelSelect extends Screen {
   }
 
   onClick(x, y) {
+    // Check if credits button was clicked
+    if (this.isCreditsButtonClicked(x, y)) {
+      this.showCredits();
+      return true;
+    }
+
     if (this.isLogoClicked(x, y)) {
       this.activateEasterEgg();
       return true;
@@ -482,6 +627,16 @@ class LevelSelect extends Screen {
     }
 
     return false;
+  }
+
+  isCreditsButtonClicked(x, y) {
+    const layout = this.layoutCache;
+    return (
+      x >= layout.creditsButtonX - layout.creditsButtonWidth / 2 &&
+      x <= layout.creditsButtonX + layout.creditsButtonWidth / 2 &&
+      y >= layout.creditsButtonY - layout.creditsButtonHeight / 2 &&
+      y <= layout.creditsButtonY + layout.creditsButtonHeight / 2
+    );
   }
 
   getDropZoneDistance(sock, dropZone) {
@@ -811,6 +966,7 @@ class LevelSelect extends Screen {
     this.renderMarthaImage(ctx);
     this.renderLevelButtons(ctx);
     this.renderPlayerStats(ctx);
+    this.renderCreditsButton(ctx);
 
     if (this.easterEggActive) {
       this.renderEasterDropZones(ctx);
@@ -926,6 +1082,46 @@ class LevelSelect extends Screen {
 
       ctx.restore();
     }
+  }
+
+  renderCreditsButton(ctx) {
+    const layout = this.layoutCache;
+
+    // Draw button background
+    ctx.save();
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.3)";
+    ctx.lineWidth = 2;
+    ctx.filter = "blur(5px)";
+
+    ctx.fillRect(
+      layout.creditsButtonX - layout.creditsButtonWidth / 2,
+      layout.creditsButtonY - layout.creditsButtonHeight / 2,
+      layout.creditsButtonWidth,
+      layout.creditsButtonHeight
+    );
+
+    ctx.strokeRect(
+      layout.creditsButtonX - layout.creditsButtonWidth / 2,
+      layout.creditsButtonY - layout.creditsButtonHeight / 2,
+      layout.creditsButtonWidth,
+      layout.creditsButtonHeight
+    );
+
+    ctx.restore();
+
+    // Draw button text
+    this.renderText(
+      ctx,
+      "Credits",
+      layout.creditsButtonX,
+      layout.creditsButtonY,
+      {
+        fontSize: layout.smallFontSize,
+        color: "white",
+        weight: "bold",
+      }
+    );
   }
 
   renderEasterDropZones(ctx) {
@@ -1298,5 +1494,21 @@ class LevelSelect extends Screen {
 
       ctx.restore();
     });
+  }
+
+  destroy() {
+    // Clean up credits modal if it exists
+    if (this.creditsOpen) {
+      this.hideCredits();
+    }
+
+    // Remove credits modal from DOM
+    const creditsModal = document.getElementById("creditsModal");
+    if (creditsModal) {
+      creditsModal.remove();
+    }
+
+    // Call parent destroy
+    super.destroy();
   }
 }
