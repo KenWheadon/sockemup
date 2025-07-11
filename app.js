@@ -426,12 +426,6 @@ class SockGame {
       this.throwingScreen.cleanup();
     }
 
-    // REMOVED: Automatic level unlocking - levels now only unlock via point spending
-    // Previously this code would unlock the next level:
-    // if (this.currentLevel + 1 < GameConfig.LEVELS.length) {
-    //   this.unlockedLevels[this.currentLevel + 1] = true;
-    // }
-
     // Points calculation and level completion tracking is handled in the level end screen
     this.levelEndScreen.setup();
     this.gameState = "gameOver";
