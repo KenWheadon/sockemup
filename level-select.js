@@ -55,6 +55,9 @@ class LevelSelect extends Screen {
     // Point gain animations
     this.pointGainAnimations = [];
 
+    // Mismatch particle effects
+    this.mismatchParticles = [];
+
     // Physics for menu socks
     this.menuPhysics = {
       friction: 0.992,
@@ -62,9 +65,9 @@ class LevelSelect extends Screen {
       bounceRestitution: 0.4,
       rotationFriction: 0.98,
       bounds: {
-        left: -750, // Very generous buffer to prevent premature cleanup
+        left: -500, // Very generous buffer to prevent premature cleanup
         right: 2000, // Will be updated on resize
-        top: -750,
+        top: -500,
         bottom: 2000,
       },
     };
@@ -253,6 +256,27 @@ class LevelSelect extends Screen {
     this.pointGainAnimations = this.pointGainAnimations.filter((animation) => {
       animation.progress += deltaTime / 2000; // 2 second duration
       return animation.progress < 1;
+    });
+
+    // Update mismatch particle effects
+    this.updateMismatchParticles(deltaTime);
+  }
+
+  updateMismatchParticles(deltaTime) {
+    if (!this.mismatchParticles) return;
+
+    const timeMultiplier = deltaTime / 16.67;
+
+    this.mismatchParticles.forEach((particle, index) => {
+      particle.x += particle.vx * timeMultiplier;
+      particle.y += particle.vy * timeMultiplier;
+      particle.vx *= Math.pow(0.98, timeMultiplier);
+      particle.vy *= Math.pow(0.98, timeMultiplier);
+      particle.life -= timeMultiplier;
+
+      if (particle.life <= 0) {
+        this.mismatchParticles.splice(index, 1);
+      }
     });
   }
 
@@ -457,6 +481,7 @@ class LevelSelect extends Screen {
       const sock2 = this.easterDropZones[1].sock;
 
       if (sock1.type === sock2.type) {
+        // MATCH - existing behavior
         this.createSockBallAnimation(sock1, sock2);
         this.awardPointsForMatch(sock1, sock2);
         this.easterDropZones[0].sock = null;
@@ -464,11 +489,107 @@ class LevelSelect extends Screen {
         this.menuSocks = this.menuSocks.filter(
           (s) => s !== sock1 && s !== sock2
         );
+      } else {
+        // MISMATCH - new behavior
+        this.handleEasterEggMismatch(sock1, sock2);
+        this.easterDropZones[0].sock = null;
+        this.easterDropZones[1].sock = null;
       }
     }
   }
 
-  awardPointsForMatch(sock1, sock2) {
+  handleEasterEggMismatch(sock1, sock2) {
+    // Create mismatch particle effects
+    this.createEasterEggMismatchEffect(sock1, sock2);
+
+    // Calculate repulsion direction between the two socks
+    const dx = sock2.x - sock1.x;
+    const dy = sock2.y - sock1.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Normalize direction vectors
+    const normalizedDx = distance > 0 ? dx / distance : 1;
+    const normalizedDy = distance > 0 ? dy / distance : 0;
+
+    // Apply strong repulsion force
+    const repulsionForce = 15;
+
+    // Push socks away from each other
+    sock1.vx = -normalizedDx * repulsionForce + (Math.random() - 0.5) * 5;
+    sock1.vy = -normalizedDy * repulsionForce + (Math.random() - 0.5) * 5;
+
+    sock2.vx = normalizedDx * repulsionForce + (Math.random() - 0.5) * 5;
+    sock2.vy = normalizedDy * repulsionForce + (Math.random() - 0.5) * 5;
+
+    // Add spinning effect
+    sock1.rotationSpeed = (Math.random() - 0.5) * 0.3;
+    sock2.rotationSpeed = (Math.random() - 0.5) * 0.3;
+
+    // Add visual feedback
+    sock1.glowEffect = 30;
+    sock2.glowEffect = 30;
+
+    // Make drop zones flash red briefly
+    this.easterDropZones[0].glowEffect = 30;
+    this.easterDropZones[1].glowEffect = 30;
+  }
+
+  createEasterEggMismatchEffect(sock1, sock2) {
+    // Create red/orange particle effects for mismatch
+    const centerX = (sock1.x + sock2.x) / 2;
+    const centerY = (sock1.y + sock2.y) / 2;
+    const mismatchColors = [
+      "#FF4444",
+      "#FF6B6B",
+      "#FF8E53",
+      "#FFB347",
+      "#FF69B4",
+    ];
+
+    // Create intense particle effect for mismatch
+    for (let i = 0; i < 20; i++) {
+      this.createMismatchParticle(
+        centerX + (Math.random() - 0.5) * this.game.getScaledValue(100),
+        centerY + (Math.random() - 0.5) * this.game.getScaledValue(100),
+        (Math.random() - 0.5) * 12,
+        (Math.random() - 0.5) * 12,
+        mismatchColors[Math.floor(Math.random() * mismatchColors.length)],
+        this.game.getScaledValue(3 + Math.random() * 3),
+        60
+      );
+    }
+
+    // Create additional "X" or "error" style particles
+    for (let i = 0; i < 8; i++) {
+      this.createMismatchParticle(
+        centerX + (Math.random() - 0.5) * this.game.getScaledValue(60),
+        centerY + (Math.random() - 0.5) * this.game.getScaledValue(60),
+        (Math.random() - 0.5) * 8,
+        (Math.random() - 0.5) * 8,
+        "#FF0000",
+        this.game.getScaledValue(4 + Math.random() * 2),
+        45,
+        "cross"
+      );
+    }
+  }
+
+  createMismatchParticle(x, y, vx, vy, color, size, life, shape = "circle") {
+    if (!this.mismatchParticles) {
+      this.mismatchParticles = [];
+    }
+
+    this.mismatchParticles.push({
+      x: x,
+      y: y,
+      vx: vx,
+      vy: vy,
+      life: life,
+      maxLife: life,
+      color: color,
+      size: size,
+      shape: shape,
+    });
     // Award 1 point for the match
     this.game.playerPoints += 1;
     this.game.saveGameData();
@@ -602,6 +723,7 @@ class LevelSelect extends Screen {
 
     this.renderSockBallAnimations(ctx);
     this.renderPointGainAnimations(ctx);
+    this.renderMismatchParticles(ctx);
 
     if (this.easterEggActive) {
       this.renderMenuSocks(ctx);
@@ -998,6 +1120,42 @@ class LevelSelect extends Screen {
       panelY + layout.statsPanelHeight / 2,
       { fontSize: layout.headerFontSize, color: "#FFD700", weight: "bold" }
     );
+  }
+
+  renderMismatchParticles(ctx) {
+    if (!this.mismatchParticles) return;
+
+    this.mismatchParticles.forEach((particle) => {
+      ctx.save();
+
+      const alpha = particle.life / particle.maxLife;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = particle.color;
+
+      if (particle.shape === "cross") {
+        // Render cross-shaped particles for mismatch
+        const halfSize = particle.size / 2;
+        ctx.fillRect(
+          particle.x - halfSize,
+          particle.y - halfSize / 3,
+          particle.size,
+          particle.size / 3
+        );
+        ctx.fillRect(
+          particle.x - halfSize / 3,
+          particle.y - halfSize,
+          particle.size / 3,
+          particle.size
+        );
+      } else {
+        // Render normal circular particles
+        ctx.beginPath();
+        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    });
   }
 
   renderMenuSocks(ctx) {
