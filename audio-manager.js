@@ -7,6 +7,7 @@ class AudioManager {
     this.currentMusicName = null;
     this.musicVolume = 0.4;
     this.sfxVolume = 0.7;
+    this.isFading = false;
 
     // Enable audio on first user interaction
     document.addEventListener(
@@ -52,6 +53,7 @@ class AudioManager {
       this.currentMusic &&
       !this.currentMusic.paused
     ) {
+      console.log(`🎵 Music ${musicName} already playing, skipping restart`);
       return;
     }
 
@@ -63,6 +65,7 @@ class AudioManager {
     this.currentMusic.loop = loop;
     this.currentMusic.volume = actualVolume;
     this.currentMusic.currentTime = 0;
+    this.isFading = false;
 
     this.currentMusic.play().catch((e) => {
       console.warn(`Music playback failed for ${musicName}:`, e);
@@ -76,11 +79,15 @@ class AudioManager {
       this.currentMusic.currentTime = 0;
       this.currentMusic = null;
       this.currentMusicName = null;
+      this.isFading = false;
     }
   }
 
   fadeOutMusic(duration = 1000) {
-    if (!this.currentMusic) return;
+    if (!this.currentMusic || this.isFading) return;
+
+    console.log(`🔇 Fading out music: ${this.currentMusicName}`);
+    this.isFading = true;
 
     const startVolume = this.currentMusic.volume;
     const fadeSteps = 20;
@@ -89,6 +96,11 @@ class AudioManager {
 
     let step = 0;
     const fadeInterval = setInterval(() => {
+      if (!this.currentMusic || !this.isFading) {
+        clearInterval(fadeInterval);
+        return;
+      }
+
       step++;
       this.currentMusic.volume = Math.max(0, startVolume - volumeStep * step);
 

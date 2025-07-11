@@ -64,6 +64,18 @@ class LevelEndScreen extends Screen {
     this.calculateScoresAndRent();
     this.setupScoreAnimation();
     this.onResize();
+
+    console.log(
+      "🎵 Level end screen setup - no music started here (handled by throwing screen)"
+    );
+  }
+
+  cleanup() {
+    super.cleanup();
+
+    // Level end screen doesn't start its own music, so no cleanup needed
+    // The throwing screen handles the victory/defeat music
+    console.log("🎵 Level end screen cleanup - no music cleanup needed");
   }
 
   calculateScoresAndRent() {
@@ -171,8 +183,21 @@ class LevelEndScreen extends Screen {
   onClick(x, y) {
     if (this.continueButton.hovered) {
       this.game.playerPoints += this.totalScore;
+
+      // Mark level as complete if no rent penalty
+      if (this.rentPenalty === 0) {
+        this.game.completedLevels[this.game.currentLevel] = true;
+        console.log(
+          `Level ${
+            this.game.currentLevel + 1
+          } marked as complete - no rent penalty!`
+        );
+      }
+
       this.game.saveGameData();
-      this.game.gameState = "menu";
+
+      // Use the new state management system to return to menu
+      this.game.changeGameState("menu");
     }
   }
 

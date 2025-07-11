@@ -62,6 +62,7 @@ const GameConfig = {
   },
 
   // Game settings
+  POINTS_PER_SOCKBALL_PAID: 5,
   POINTS_PER_SOCK: 10,
   GRAVITY: 0.2,
   FRICTION: 0.98,

@@ -11,6 +11,7 @@ class SockGame {
     }
 
     this.gameState = "menu";
+    this.previousGameState = "menu";
     this.currentLevel = 0;
     this.playerPoints = 0;
     this.sockBalls = 0;
@@ -181,6 +182,51 @@ class SockGame {
     return this.sockballQueue.length;
   }
 
+  // Game state management with proper audio handling
+  changeGameState(newState) {
+    if (this.gameState === newState) return;
+
+    console.log(`🎮 Game state changing from ${this.gameState} to ${newState}`);
+
+    // Clean up current screen
+    this.cleanupCurrentScreen();
+
+    // Update states
+    this.previousGameState = this.gameState;
+    this.gameState = newState;
+
+    // Setup new screen
+    this.setupCurrentScreen();
+  }
+
+  cleanupCurrentScreen() {
+    console.log(`🧹 Cleaning up screen: ${this.gameState}`);
+
+    if (this.gameState === "menu") {
+      this.levelSelect.cleanup();
+    } else if (this.gameState === "matching") {
+      this.matchScreen.cleanup();
+    } else if (this.gameState === "throwing") {
+      this.throwingScreen.cleanup();
+    } else if (this.gameState === "gameOver") {
+      this.levelEndScreen.cleanup();
+    }
+  }
+
+  setupCurrentScreen() {
+    console.log(`🎬 Setting up screen: ${this.gameState}`);
+
+    if (this.gameState === "menu") {
+      this.levelSelect.setup();
+    } else if (this.gameState === "matching") {
+      this.matchScreen.setup();
+    } else if (this.gameState === "throwing") {
+      this.throwingScreen.setup();
+    } else if (this.gameState === "gameOver") {
+      this.levelEndScreen.setup();
+    }
+  }
+
   init() {
     if (typeof GameConfig === "undefined") {
       setTimeout(() => this.init(), 100);
@@ -303,8 +349,9 @@ class SockGame {
 
     this.generateSockList(level);
     this.matchScreen.sockList = [...this.sockList];
-    this.matchScreen.setup();
-    this.gameState = "matching";
+
+    // Use the new state management system
+    this.changeGameState("matching");
   }
 
   generateSockList(level) {
@@ -402,25 +449,13 @@ class SockGame {
   }
 
   startThrowingPhase() {
-    this.throwingScreen.setup();
-    this.gameState = "throwing";
+    // Use the new state management system
+    this.changeGameState("throwing");
   }
 
   completeLevel() {
-    // Clean up throwing screen before transitioning
-    if (this.gameState === "throwing") {
-      this.throwingScreen.cleanup();
-    }
-
-    // REMOVED: Automatic level unlocking - levels now only unlock via point spending
-    // Previously this code would unlock the next level:
-    // if (this.currentLevel + 1 < GameConfig.LEVELS.length) {
-    //   this.unlockedLevels[this.currentLevel + 1] = true;
-    // }
-
-    // Points calculation and level completion tracking is handled in the level end screen
-    this.levelEndScreen.setup();
-    this.gameState = "gameOver";
+    // Use the new state management system
+    this.changeGameState("gameOver");
   }
 
   update(deltaTime) {

@@ -66,7 +66,16 @@ class MatchScreen extends Screen {
     this.dragHistory = [];
 
     // Start match music
+    console.log("🎵 Match screen setup - starting match music");
     this.game.audioManager.playMusic("match-music", true, 0.3);
+  }
+
+  cleanup() {
+    super.cleanup();
+
+    // Stop match music when leaving match screen
+    console.log("🎵 Match screen cleanup - stopping match music");
+    this.game.audioManager.stopMusic();
   }
 
   onResize() {

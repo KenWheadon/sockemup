@@ -44,7 +44,6 @@ class ThrowingScreen extends Screen {
     this.nextSockballType = null;
 
     // Audio state tracking
-    this.musicStarted = false;
     this.levelCompleteAudioPlayed = false;
     this.gameOverAudioPlayed = false;
   }
@@ -63,7 +62,6 @@ class ThrowingScreen extends Screen {
     this.showingMessage = false;
 
     // Reset audio state
-    this.musicStarted = false;
     this.levelCompleteAudioPlayed = false;
     this.gameOverAudioPlayed = false;
 
@@ -86,7 +84,8 @@ class ThrowingScreen extends Screen {
     this.updateNextSockballType();
 
     // Start throwing music
-    this.startThrowingMusic();
+    console.log("🎵 Throwing screen setup - starting throwing music");
+    this.game.audioManager.playMusic("throwing-music", true, 0.3);
 
     this.showMessage("Click to throw sockballs at Martha!", "info", 3000);
   }
@@ -97,14 +96,8 @@ class ThrowingScreen extends Screen {
     this.showingMessage = false;
 
     // Stop throwing music when leaving screen
+    console.log("🎵 Throwing screen cleanup - stopping throwing music");
     this.game.audioManager.stopMusic();
-  }
-
-  startThrowingMusic() {
-    if (!this.musicStarted) {
-      this.game.audioManager.playMusic("throwing-music", true, 0.3);
-      this.musicStarted = true;
-    }
   }
 
   updateNextSockballType() {

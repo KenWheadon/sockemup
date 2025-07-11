@@ -720,7 +720,7 @@ class MarthaManager {
     this.hitEffect.pointPopups.push({
       x: this.x + this.width / 2,
       y: this.y,
-      text: "+" + GameConfig.POINTS_PER_SOCK,
+      text: "+" + GameConfig.POINTS_PER_SOCKBALL_PAID,
       timer: GameConfig.MARTHA_HIT_EFFECTS.POINT_POP_DURATION,
       velocity: 2,
     });

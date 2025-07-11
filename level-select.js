@@ -213,6 +213,7 @@ class LevelSelect extends Screen {
     super.setup();
 
     // Start menu music when entering level select
+    console.log("🎵 Level select setup - starting menu music");
     this.game.audioManager.playMusic("menu-music", true);
 
     // Update bounds when setting up to ensure they're correct
@@ -236,6 +237,25 @@ class LevelSelect extends Screen {
 
     this.setupEasterDropZones();
     this.setupCreditsModal();
+  }
+
+  cleanup() {
+    super.cleanup();
+
+    // Stop menu music when leaving level select
+    console.log("🎵 Level select cleanup - stopping menu music");
+    this.game.audioManager.stopMusic();
+
+    // Clean up credits modal if it exists
+    if (this.creditsOpen) {
+      this.hideCredits();
+    }
+
+    // Remove credits modal from DOM
+    const creditsModal = document.getElementById("creditsModal");
+    if (creditsModal) {
+      creditsModal.remove();
+    }
   }
 
   setupCreditsModal() {
@@ -1497,18 +1517,6 @@ class LevelSelect extends Screen {
   }
 
   destroy() {
-    // Clean up credits modal if it exists
-    if (this.creditsOpen) {
-      this.hideCredits();
-    }
-
-    // Remove credits modal from DOM
-    const creditsModal = document.getElementById("creditsModal");
-    if (creditsModal) {
-      creditsModal.remove();
-    }
-
-    // Call parent destroy
-    super.destroy();
+    this.cleanup();
   }
 }
