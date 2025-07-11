@@ -97,7 +97,7 @@ const GameConfig = {
   MARTHA_PATTERNS: {
     HORIZONTAL: {
       name: "horizontal",
-      baseSpeed: 2,
+      baseSpeed: 1.6,
       description: "Moves left and right",
     },
     VERTICAL: {
@@ -112,12 +112,12 @@ const GameConfig = {
     },
     CIRCULAR: {
       name: "circular",
-      baseSpeed: 1.2,
+      baseSpeed: 1.1,
       description: "Moves in circular patterns",
     },
     RANDOM: {
       name: "random",
-      baseSpeed: 2.5,
+      baseSpeed: 1.2,
       description: "Moves randomly",
     },
   },
@@ -178,7 +178,7 @@ const GameConfig = {
       marthaPatternSpeed: 1,
     },
     {
-      marthaSpeed: 1.25,
+      marthaSpeed: 1.2,
       sockPairs: 8,
       typesAvailable: [1, 2, 3, 4],
       matchingTime: 30,
@@ -199,16 +199,16 @@ const GameConfig = {
       matchingTime: 45,
       marthaWantsSockballs: 10,
       marthaPatterns: ["diagonal", "circular", "random"],
-      marthaPatternSpeed: 1.5,
+      marthaPatternSpeed: 1.25,
     },
     {
-      marthaSpeed: 1.75,
+      marthaSpeed: 1.5,
       sockPairs: 24,
       typesAvailable: [1, 2, 3, 4, 5, 6],
       matchingTime: 35,
       marthaWantsSockballs: 16,
       marthaPatterns: ["circular", "random"],
-      marthaPatternSpeed: 2.0,
+      marthaPatternSpeed: 1.3,
     },
   ],
 
