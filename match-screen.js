@@ -13,6 +13,12 @@ class MatchScreen extends Screen {
     this.lastMatchTime = 0;
     this.timeWarningPlayed = false;
     this.countdownTickPlayed = false;
+
+    // Velocity tracking for throwing
+    this.dragHistory = [];
+    this.maxDragHistoryLength = 5;
+    this.velocityScale = 12; // Scale factor for throw velocity - increased significantly
+    this.maxThrowVelocity = 45; // Maximum throw velocity - increased for more dramatic throws
   }
 
   createLayoutCache() {
@@ -57,6 +63,7 @@ class MatchScreen extends Screen {
     this.lastMatchTime = 0;
     this.timeWarningPlayed = false;
     this.countdownTickPlayed = false;
+    this.dragHistory = [];
 
     // Start match music
     this.game.audioManager.playMusic("match-music", true, 0.3);
@@ -127,6 +134,15 @@ class MatchScreen extends Screen {
       this.dragOffset = { x: x - sock.x, y: y - sock.y };
       this.isDragging = true;
 
+      // Initialize drag history for velocity tracking
+      this.dragHistory = [
+        {
+          x: x,
+          y: y,
+          timestamp: Date.now(),
+        },
+      ];
+
       this.dropZones.forEach((zone) => {
         if (zone.sock === sock) {
           zone.sock = null;
@@ -144,9 +160,64 @@ class MatchScreen extends Screen {
       this.draggedSock.y = y - this.dragOffset.y;
       this.draggedSock.vx = 0;
       this.draggedSock.vy = 0;
+
+      // Track drag history for velocity calculation
+      const currentTime = Date.now();
+      this.dragHistory.push({
+        x: x,
+        y: y,
+        timestamp: currentTime,
+      });
+
+      // Keep only recent history
+      if (this.dragHistory.length > this.maxDragHistoryLength) {
+        this.dragHistory.shift();
+      }
+
+      // Remove old entries (older than 150ms for more responsive throwing)
+      this.dragHistory = this.dragHistory.filter(
+        (entry) => currentTime - entry.timestamp < 150
+      );
     }
 
     this.updateHoverEffects(x, y);
+  }
+
+  calculateThrowVelocity() {
+    if (this.dragHistory.length < 2) {
+      return { x: 0, y: 0 };
+    }
+
+    // Use the most recent entries to calculate velocity
+    const recent = this.dragHistory.slice(-2); // Use last 2 entries for more responsive throwing
+    if (recent.length < 2) {
+      return { x: 0, y: 0 };
+    }
+
+    const startEntry = recent[0];
+    const endEntry = recent[recent.length - 1];
+
+    const deltaTime = endEntry.timestamp - startEntry.timestamp;
+    if (deltaTime === 0) {
+      return { x: 0, y: 0 };
+    }
+
+    const deltaX = endEntry.x - startEntry.x;
+    const deltaY = endEntry.y - startEntry.y;
+
+    // Calculate velocity (pixels per millisecond, then scale)
+    let vx = (deltaX / deltaTime) * this.velocityScale;
+    let vy = (deltaY / deltaTime) * this.velocityScale;
+
+    // Apply velocity limits
+    const magnitude = Math.sqrt(vx * vx + vy * vy);
+    if (magnitude > this.maxThrowVelocity) {
+      const scale = this.maxThrowVelocity / magnitude;
+      vx *= scale;
+      vy *= scale;
+    }
+
+    return { x: vx, y: vy };
   }
 
   updateHoverEffects(x, y) {
@@ -185,24 +256,23 @@ class MatchScreen extends Screen {
           snapped = true;
           this.createSnapEffect(zone);
         } else {
-          this.physics.applySockThrow(sock, {
-            x: (Math.random() - 0.5) * 10,
-            y: (Math.random() - 0.5) * 10,
-          });
+          // Zone occupied, throw the sock with calculated velocity
+          const throwVelocity = this.calculateThrowVelocity();
+          this.physics.applySockThrow(sock, throwVelocity);
         }
       }
     });
 
     if (!snapped) {
-      this.physics.applySockThrow(sock, {
-        x: (Math.random() - 0.5) * 8,
-        y: (Math.random() - 0.5) * 8,
-      });
+      // Not near a drop zone, throw the sock with calculated velocity
+      const throwVelocity = this.calculateThrowVelocity();
+      this.physics.applySockThrow(sock, throwVelocity);
     }
 
     this.draggedSock = null;
     this.isDragging = false;
     this.dropZoneHover = null;
+    this.dragHistory = [];
     this.checkForMatches();
   }
 
@@ -532,7 +602,7 @@ class MatchScreen extends Screen {
     // Instructions at bottom left
     this.renderText(
       ctx,
-      "Click sock pile - make sock pairs",
+      "Click sock pile - make sock pairs - throw socks",
       layout.instructionX,
       layout.instructionY,
       {
