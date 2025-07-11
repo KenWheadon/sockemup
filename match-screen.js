@@ -217,7 +217,12 @@ class MatchScreen extends Screen {
 
       if (pairZones.length === 2 && pairZones[0].sock && pairZones[1].sock) {
         if (pairZones[0].sock.type === pairZones[1].sock.type) {
-          // MATCH - existing behavior
+          // MATCH - track the sock type for sockball creation
+          const matchedSockType = pairZones[0].sock.type;
+
+          // Add this sockball type to the game's sockball queue
+          this.game.addSockballToQueue(matchedSockType);
+
           this.startMatchAnimation(pairZones[0].sock, pairZones[1].sock);
           pairZones[0].sock = null;
           pairZones[1].sock = null;

@@ -212,7 +212,7 @@ const GameConfig = {
   ],
 
   // Level costs and unlock data
-  LEVEL_COSTS: [0, 10, 30, 75, 100, 125],
+  LEVEL_COSTS: [0, 25, 45, 70, 100, 200],
   MARTHA_FRAMES: [0, 1, 0, 2, 0, 3],
   INITIAL_UNLOCKED_LEVELS: [true, false, false, false, false, false],
   INITIAL_COMPLETED_LEVELS: [false, false, false, false, false, false],
@@ -251,5 +251,46 @@ const GameConfig = {
       "martha-demand.png",
     ],
     UI: ["background.png", "logo.png", "star.png", "throw-bg.png"],
+  },
+
+  // Sockball queue management utilities
+  // These methods will be added to the main game object
+  SOCKBALL_QUEUE_METHODS: {
+    // Initialize the sockball queue
+    initializeSockballQueue: function () {
+      this.sockballQueue = [];
+    },
+
+    // Add a sockball type to the queue (called when socks are matched)
+    addSockballToQueue: function (sockType) {
+      this.sockballQueue.push(sockType);
+      this.sockBalls++; // Increment total sockballs
+    },
+
+    // Get the next sockball type from the queue (for throwing)
+    getNextSockballFromQueue: function () {
+      if (this.sockballQueue.length > 0) {
+        return this.sockballQueue.shift(); // Remove and return first item (FIFO)
+      }
+      return null;
+    },
+
+    // Preview the next sockball type without removing it
+    getNextSockballType: function () {
+      if (this.sockballQueue.length > 0) {
+        return this.sockballQueue[0]; // Return first item without removing
+      }
+      return null;
+    },
+
+    // Clear the sockball queue (called when starting a new level)
+    clearSockballQueue: function () {
+      this.sockballQueue = [];
+    },
+
+    // Get the remaining sockballs in queue
+    getSockballQueueLength: function () {
+      return this.sockballQueue.length;
+    },
   },
 };

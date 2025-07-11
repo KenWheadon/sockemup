@@ -39,6 +39,9 @@ class ThrowingScreen extends Screen {
 
     // Background image
     this.backgroundImage = null;
+
+    // Next sockball preview
+    this.nextSockballType = null;
   }
 
   setup() {
@@ -69,6 +72,9 @@ class ThrowingScreen extends Screen {
     // Load background image
     this.backgroundImage = this.game.images["throw-bg.png"];
 
+    // Set up next sockball type
+    this.updateNextSockballType();
+
     this.showMessage("Click to throw sockballs at Martha!", "info", 3000);
   }
 
@@ -76,6 +82,11 @@ class ThrowingScreen extends Screen {
     super.cleanup();
     this.sockballProjectiles = [];
     this.showingMessage = false;
+  }
+
+  updateNextSockballType() {
+    // Get the next sockball type from the queue
+    this.nextSockballType = this.game.getNextSockballType();
   }
 
   createLayoutCache() {
@@ -146,6 +157,13 @@ class ThrowingScreen extends Screen {
   throwSockball(targetX, targetY) {
     if (!this.canThrow()) return;
 
+    // Get the sockball type from the queue
+    const sockballType = this.game.getNextSockballFromQueue();
+    if (!sockballType) {
+      console.warn("No sockball type available from queue, using random");
+      sockballType = Math.floor(Math.random() * 6) + 1;
+    }
+
     this.sockballsThrown++;
     this.availableSockballs--;
     this.lastThrowTime = Date.now();
@@ -156,14 +174,14 @@ class ThrowingScreen extends Screen {
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     const normalizedVelocity = GameConfig.SOCKBALL_THROW_SPEED / distance;
 
-    // Create sockball projectile
+    // Create sockball projectile with the tracked type
     const sockball = {
       x: this.launchPosition.x,
       y: this.launchPosition.y,
       vx: deltaX * normalizedVelocity,
       vy: deltaY * normalizedVelocity,
       size: GameConfig.SOCKBALL_SIZE,
-      type: Math.floor(Math.random() * 6) + 1,
+      type: sockballType, // Use the tracked type instead of random
       rotation: 0,
       rotationSpeed: 0.2,
       gravity: GameConfig.GRAVITY,
@@ -173,6 +191,9 @@ class ThrowingScreen extends Screen {
 
     this.sockballProjectiles.push(sockball);
     this.showTrajectory = false;
+
+    // Update next sockball type for preview
+    this.updateNextSockballType();
   }
 
   updateTrajectoryPreview(targetX, targetY) {
@@ -463,6 +484,34 @@ class ThrowingScreen extends Screen {
     );
     ctx.fill();
     ctx.stroke();
+
+    // Render the next sockball type in the launch indicator
+    if (this.nextSockballType) {
+      const sockballImage =
+        this.game.images[`sockball${this.nextSockballType}.png`];
+      if (sockballImage) {
+        const sockballSize = this.game.getScaledValue(16) * pulseScale;
+        ctx.drawImage(
+          sockballImage,
+          this.launchPosition.x - sockballSize / 2,
+          this.launchPosition.y - sockballSize / 2,
+          sockballSize,
+          sockballSize
+        );
+      } else {
+        // Fallback colored circle
+        ctx.fillStyle = `hsl(${this.nextSockballType * 60}, 70%, 50%)`;
+        ctx.beginPath();
+        ctx.arc(
+          this.launchPosition.x,
+          this.launchPosition.y,
+          radius * 0.4,
+          0,
+          Math.PI * 2
+        );
+        ctx.fill();
+      }
+    }
 
     ctx.restore();
   }

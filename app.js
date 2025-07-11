@@ -24,6 +24,9 @@ class SockGame {
     this.unlockedLevels = [...GameConfig.INITIAL_UNLOCKED_LEVELS];
     this.completedLevels = [...GameConfig.INITIAL_COMPLETED_LEVELS];
 
+    // Initialize sockball queue
+    this.sockballQueue = [];
+
     // Simplified viewport system
     this.viewport = {
       width: 800,
@@ -134,6 +137,45 @@ class SockGame {
       x: screenX - rect.left,
       y: screenY - rect.top,
     };
+  }
+
+  // Sockball queue management methods
+  initializeSockballQueue() {
+    this.sockballQueue = [];
+  }
+
+  addSockballToQueue(sockType) {
+    this.sockballQueue.push(sockType);
+    // Remove the sockBalls increment - it's handled elsewhere in the game
+    console.log(
+      `Added sockball type ${sockType} to queue. Queue length: ${this.sockballQueue.length}`
+    );
+  }
+
+  getNextSockballFromQueue() {
+    if (this.sockballQueue.length > 0) {
+      const sockType = this.sockballQueue.shift(); // Remove and return first item (FIFO)
+      console.log(
+        `Retrieved sockball type ${sockType} from queue. Remaining: ${this.sockballQueue.length}`
+      );
+      return sockType;
+    }
+    return null;
+  }
+
+  getNextSockballType() {
+    if (this.sockballQueue.length > 0) {
+      return this.sockballQueue[0]; // Return first item without removing
+    }
+    return null;
+  }
+
+  clearSockballQueue() {
+    this.sockballQueue = [];
+  }
+
+  getSockballQueueLength() {
+    return this.sockballQueue.length;
   }
 
   init() {
@@ -252,6 +294,9 @@ class SockGame {
     this.matchingTime = level.matchingTime;
     this.timeRemaining = level.matchingTime;
     this.sockBalls = 0;
+
+    // Initialize sockball queue for new level
+    this.initializeSockballQueue();
 
     this.generateSockList(level);
     this.matchScreen.sockList = [...this.sockList];
