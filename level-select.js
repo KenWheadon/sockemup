@@ -303,6 +303,9 @@ class LevelSelect extends Screen {
 
       // Only check bounds for garbage collection - no time-based removal
       if (this.isSockOutsideBounds(sock)) {
+        // Clear any drop zone references to this sock before removing it
+        this.clearSockFromDropZones(sock);
+
         this.menuSocks.splice(index, 1);
         if (sock === this.dragSock) {
           this.isDragging = false;
@@ -324,6 +327,14 @@ class LevelSelect extends Screen {
     });
 
     this.menuSocks = this.menuSocks.filter((sock) => sock !== undefined);
+  }
+
+  clearSockFromDropZones(sock) {
+    this.easterDropZones.forEach((zone) => {
+      if (zone.sock === sock) {
+        zone.sock = null;
+      }
+    });
   }
 
   isSockInDropZone(sock) {
@@ -473,6 +484,25 @@ class LevelSelect extends Screen {
     zone.snapEffect = 15; // Duration for snap animation
   }
 
+  removeMatchedSocks(sock1, sock2) {
+    // Remove socks from menuSocks array
+    this.menuSocks = this.menuSocks.filter((s) => s !== sock1 && s !== sock2);
+
+    // Clear any drag references
+    if (this.dragSock === sock1 || this.dragSock === sock2) {
+      this.isDragging = false;
+      this.dragSock = null;
+    }
+
+    // Clear any additional references that might exist
+    this.clearSockFromDropZones(sock1);
+    this.clearSockFromDropZones(sock2);
+
+    // Debug logging to confirm removal
+    console.log("Removed matched socks:", sock1.type, sock2.type);
+    console.log("Remaining socks count:", this.menuSocks.length);
+  }
+
   checkForEasterEggMatches() {
     if (!this.easterDropZones || this.easterDropZones.length < 2) return;
 
@@ -480,25 +510,51 @@ class LevelSelect extends Screen {
       const sock1 = this.easterDropZones[0].sock;
       const sock2 = this.easterDropZones[1].sock;
 
+      // Add null checks to prevent errors with garbage collected socks
+      if (
+        !sock1 ||
+        !sock2 ||
+        sock1.type === undefined ||
+        sock2.type === undefined
+      ) {
+        console.log("One or both socks are invalid, clearing drop zones");
+        this.easterDropZones[0].sock = null;
+        this.easterDropZones[1].sock = null;
+        return;
+      }
+
       if (sock1.type === sock2.type) {
-        // MATCH - existing behavior
+        // MATCH - clear drop zones immediately and remove socks completely
+        this.easterDropZones[0].sock = null;
+        this.easterDropZones[1].sock = null;
+
+        // Create animations before removing socks
         this.createSockBallAnimation(sock1, sock2);
         this.awardPointsForMatch(sock1, sock2);
-        this.easterDropZones[0].sock = null;
-        this.easterDropZones[1].sock = null;
-        this.menuSocks = this.menuSocks.filter(
-          (s) => s !== sock1 && s !== sock2
-        );
+
+        // Completely remove matched socks from all systems
+        this.removeMatchedSocks(sock1, sock2);
       } else {
-        // MISMATCH - new behavior
-        this.handleEasterEggMismatch(sock1, sock2);
+        // MISMATCH - clear drop zones immediately and reject socks
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
+        this.handleEasterEggMismatch(sock1, sock2);
       }
     }
   }
 
   handleEasterEggMismatch(sock1, sock2) {
+    // Additional safety checks
+    if (
+      !sock1 ||
+      !sock2 ||
+      sock1.type === undefined ||
+      sock2.type === undefined
+    ) {
+      console.log("Invalid socks in mismatch handler, aborting");
+      return;
+    }
+
     // Create mismatch particle effects
     this.createEasterEggMismatchEffect(sock1, sock2);
 
@@ -511,15 +567,15 @@ class LevelSelect extends Screen {
     const normalizedDx = distance > 0 ? dx / distance : 1;
     const normalizedDy = distance > 0 ? dy / distance : 0;
 
-    // Apply strong repulsion force
-    const repulsionForce = 15;
+    // Apply strong repulsion force - stronger than before to ensure rejection
+    const repulsionForce = 20; // Increased from 15
 
-    // Push socks away from each other
-    sock1.vx = -normalizedDx * repulsionForce + (Math.random() - 0.5) * 5;
-    sock1.vy = -normalizedDy * repulsionForce + (Math.random() - 0.5) * 5;
+    // Push socks away from each other with more force
+    sock1.vx = -normalizedDx * repulsionForce + (Math.random() - 0.5) * 8;
+    sock1.vy = -normalizedDy * repulsionForce + (Math.random() - 0.5) * 8;
 
-    sock2.vx = normalizedDx * repulsionForce + (Math.random() - 0.5) * 5;
-    sock2.vy = normalizedDy * repulsionForce + (Math.random() - 0.5) * 5;
+    sock2.vx = normalizedDx * repulsionForce + (Math.random() - 0.5) * 8;
+    sock2.vy = normalizedDy * repulsionForce + (Math.random() - 0.5) * 8;
 
     // Add spinning effect
     sock1.rotationSpeed = (Math.random() - 0.5) * 0.3;
@@ -535,6 +591,12 @@ class LevelSelect extends Screen {
   }
 
   createEasterEggMismatchEffect(sock1, sock2) {
+    // Additional safety checks
+    if (!sock1 || !sock2 || sock1.x === undefined || sock2.x === undefined) {
+      console.log("Invalid socks in mismatch effect, aborting");
+      return;
+    }
+
     // Create red/orange particle effects for mismatch
     const centerX = (sock1.x + sock2.x) / 2;
     const centerY = (sock1.y + sock2.y) / 2;
@@ -590,6 +652,9 @@ class LevelSelect extends Screen {
       size: size,
       shape: shape,
     });
+  }
+
+  awardPointsForMatch(sock1, sock2) {
     // Award 1 point for the match
     this.game.playerPoints += 1;
     this.game.saveGameData();
