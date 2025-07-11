@@ -11,6 +11,8 @@ class MatchScreen extends Screen {
     this.sockPileHover = false;
     this.matchStreak = 0;
     this.lastMatchTime = 0;
+    this.timeWarningPlayed = false;
+    this.countdownTickPlayed = false;
   }
 
   createLayoutCache() {
@@ -53,6 +55,11 @@ class MatchScreen extends Screen {
     this.sockPileHover = false;
     this.matchStreak = 0;
     this.lastMatchTime = 0;
+    this.timeWarningPlayed = false;
+    this.countdownTickPlayed = false;
+
+    // Start match music
+    this.game.audioManager.playMusic("match-music", true, 0.3);
   }
 
   onResize() {
@@ -202,10 +209,16 @@ class MatchScreen extends Screen {
   shootSockFromPile() {
     const newSock = this.sockManager.shootSockFromPile();
     if (!newSock) return;
+
+    // Play pile click sound
+    this.game.audioManager.playSound("pile-click", false, 0.4);
   }
 
   createSnapEffect(zone) {
     zone.glowEffect = 20;
+
+    // Play snap-to-zone sound
+    this.game.audioManager.playSound("snap-to-zone", false, 0.3);
   }
 
   checkForMatches() {
@@ -222,6 +235,14 @@ class MatchScreen extends Screen {
 
           // Add this sockball type to the game's sockball queue
           this.game.addSockballToQueue(matchedSockType);
+
+          // Play match sound
+          this.game.audioManager.playSound("easter-egg-match", false, 0.5);
+
+          // Play points gained sound with slight delay
+          setTimeout(() => {
+            this.game.audioManager.playSound("points-gained", false, 0.4);
+          }, 500);
 
           this.startMatchAnimation(pairZones[0].sock, pairZones[1].sock);
           pairZones[0].sock = null;
@@ -257,6 +278,9 @@ class MatchScreen extends Screen {
   }
 
   handleMismatch(sock1, sock2) {
+    // Play mismatch sound
+    this.game.audioManager.playSound("easter-egg-mismatch", false, 0.6);
+
     // Create mismatch particle effects
     this.sockManager.createMismatchEffect(sock1, sock2);
 
@@ -338,6 +362,22 @@ class MatchScreen extends Screen {
   onUpdate(deltaTime) {
     const timeDecrement = (0.25 / 60) * (deltaTime / 16.67);
     this.game.timeRemaining -= timeDecrement;
+
+    // Handle countdown audio
+    const timeValue = Math.max(0, Math.floor(this.game.timeRemaining));
+    if (timeValue <= 10 && timeValue > 0) {
+      if (!this.timeWarningPlayed) {
+        this.timeWarningPlayed = true;
+        // Play countdown tick sound for last 10 seconds
+        this.game.audioManager.playSound("countdown-tick", false, 0.3);
+      }
+
+      // Play tick sound every second during countdown
+      if (timeValue !== this.lastCountdownTick) {
+        this.lastCountdownTick = timeValue;
+        this.game.audioManager.playSound("countdown-tick", false, 0.3);
+      }
+    }
 
     if (this.game.timeRemaining <= 0) {
       this.game.startThrowingPhase();

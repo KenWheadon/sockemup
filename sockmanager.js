@@ -69,6 +69,9 @@ class SockManager {
   }
 
   createShootEffect(sock) {
+    // Play particle burst sound for shooting effect
+    this.game.audioManager.playSound("particle-burst", false, 0.2);
+
     for (let i = 0; i < 6; i++) {
       this.particleEffects.push({
         x: sock.x + (Math.random() - 0.5) * this.game.getScaledValue(20),
@@ -84,6 +87,9 @@ class SockManager {
   }
 
   createMismatchEffect(sock1, sock2) {
+    // Play particle burst sound for mismatch effect
+    this.game.audioManager.playSound("particle-burst", false, 0.3);
+
     // Create red/orange particle effects for mismatch
     const centerX = (sock1.x + sock2.x) / 2;
     const centerY = (sock1.y + sock2.y) / 2;
@@ -192,6 +198,9 @@ class SockManager {
   }
 
   createMatchStartEffect(animation) {
+    // Play particle burst sound for match start effect
+    this.game.audioManager.playSound("particle-burst", false, 0.4);
+
     const colors = ["#FFD700", "#FF69B4", "#00CED1", "#98FB98", "#DDA0DD"];
     const particleSpread = this.game.getScaledValue(80);
     const particleSize = this.game.getScaledValue(3);
@@ -361,6 +370,9 @@ class SockManager {
   }
 
   createArrivalEffect(x, y) {
+    // Play particle burst sound for sockball arrival
+    this.game.audioManager.playSound("particle-burst", false, 0.3);
+
     const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"];
     const particleSpread = this.game.getScaledValue(60);
     const particleSize = this.game.getScaledValue(2);

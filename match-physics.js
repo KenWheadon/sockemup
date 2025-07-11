@@ -7,6 +7,12 @@ class MatchPhysics {
     this.minVelocity = 0.05;
     this.bounceRestitution = 0.4;
     this.rotationFriction = 0.98;
+
+    // Audio cooldown to prevent sound spam
+    this.lastBounceSound = 0;
+    this.bounceAudioCooldown = 200; // milliseconds
+    this.lastCollisionSound = 0;
+    this.collisionAudioCooldown = 300; // milliseconds
   }
 
   updateBounds() {
@@ -53,26 +59,45 @@ class MatchPhysics {
   checkBounds(sock) {
     const halfWidth = sock.width / 2;
     const halfHeight = sock.height / 2;
+    let bounced = false;
 
     if (sock.x - halfWidth <= this.bounds.left) {
       sock.x = this.bounds.left + halfWidth;
       sock.vx = Math.abs(sock.vx) * this.bounceRestitution;
+      bounced = true;
       this.createBounceEffect(sock);
     } else if (sock.x + halfWidth >= this.bounds.right) {
       sock.x = this.bounds.right - halfWidth;
       sock.vx = -Math.abs(sock.vx) * this.bounceRestitution;
+      bounced = true;
       this.createBounceEffect(sock);
     }
 
     if (sock.y - halfHeight <= this.bounds.top) {
       sock.y = this.bounds.top + halfHeight;
       sock.vy = Math.abs(sock.vy) * this.bounceRestitution;
+      bounced = true;
       this.createBounceEffect(sock);
     } else if (sock.y + halfHeight >= this.bounds.bottom) {
       sock.y = this.bounds.bottom - halfHeight;
       sock.vy = -Math.abs(sock.vy) * this.bounceRestitution;
+      bounced = true;
       this.createBounceEffect(sock);
     }
+
+    // Play bounce sound with cooldown to prevent spam
+    if (bounced && this.shouldPlayBounceSound()) {
+      this.game.audioManager.playSound("sock-bounce", false, 0.2);
+      this.lastBounceSound = Date.now();
+    }
+  }
+
+  shouldPlayBounceSound() {
+    return Date.now() - this.lastBounceSound > this.bounceAudioCooldown;
+  }
+
+  shouldPlayCollisionSound() {
+    return Date.now() - this.lastCollisionSound > this.collisionAudioCooldown;
   }
 
   createBounceEffect(sock) {
@@ -139,6 +164,12 @@ class MatchPhysics {
 
       sock1.glowEffect = 15;
       sock2.glowEffect = 15;
+
+      // Play collision sound with cooldown to prevent spam
+      if (this.shouldPlayCollisionSound()) {
+        this.game.audioManager.playSound("particle-burst", false, 0.1);
+        this.lastCollisionSound = Date.now();
+      }
 
       return true;
     }
