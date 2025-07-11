@@ -204,6 +204,9 @@ class LevelSelect extends Screen {
   setup() {
     super.setup();
 
+    // Start menu music when entering level select
+    this.game.audioManager.playMusic("menu-music", true);
+
     // Update bounds when setting up to ensure they're correct
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
@@ -364,7 +367,16 @@ class LevelSelect extends Screen {
   }
 
   onMouseMove(x, y) {
+    const previousHoveredLevel = this.hoveredLevel;
     this.hoveredLevel = this.getLevelAtPosition(x, y);
+
+    // Play hover sound when hovering over a new level button
+    if (
+      this.hoveredLevel !== previousHoveredLevel &&
+      this.hoveredLevel !== -1
+    ) {
+      this.game.audioManager.playSound("button-hover", false, 0.3);
+    }
 
     if (this.isDragging && this.dragSock) {
       // Direct position assignment - no bounds checking at all
@@ -451,14 +463,21 @@ class LevelSelect extends Screen {
     const levelIndex = this.getLevelAtPosition(x, y);
     if (levelIndex !== -1) {
       if (this.game.unlockedLevels[levelIndex]) {
+        // Play button click sound for starting a level
+        this.game.audioManager.playSound("button-click", false, 0.5);
         this.game.startLevel(levelIndex);
         return true;
       } else if (this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex]) {
+        // Play level unlock sound
+        this.game.audioManager.playSound("level-unlock", false, 0.6);
         this.game.playerPoints -= GameConfig.LEVEL_COSTS[levelIndex];
         this.game.unlockedLevels[levelIndex] = true;
         this.game.saveGameData();
         this.game.startLevel(levelIndex);
         return true;
+      } else {
+        // Play a subtle error sound for insufficient points (using button-click at lower volume)
+        this.game.audioManager.playSound("button-click", false, 0.2);
       }
     }
 
@@ -524,7 +543,8 @@ class LevelSelect extends Screen {
       }
 
       if (sock1.type === sock2.type) {
-        // MATCH - clear drop zones immediately and remove socks completely
+        // MATCH - play match sound, clear drop zones and remove socks
+        this.game.audioManager.playSound("easter-egg-match", false, 0.8);
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
 
@@ -535,7 +555,8 @@ class LevelSelect extends Screen {
         // Completely remove matched socks from all systems
         this.removeMatchedSocks(sock1, sock2);
       } else {
-        // MISMATCH - clear drop zones immediately and reject socks
+        // MISMATCH - play mismatch sound, clear drop zones and reject socks
+        this.game.audioManager.playSound("easter-egg-mismatch", false, 0.6);
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
         this.handleEasterEggMismatch(sock1, sock2);
@@ -554,6 +575,9 @@ class LevelSelect extends Screen {
       console.log("Invalid socks in mismatch handler, aborting");
       return;
     }
+
+    // Play particle burst sound for the dramatic mismatch effect
+    this.game.audioManager.playSound("particle-burst", false, 0.4);
 
     // Create mismatch particle effects
     this.createEasterEggMismatchEffect(sock1, sock2);
@@ -659,6 +683,9 @@ class LevelSelect extends Screen {
     this.game.playerPoints += 1;
     this.game.saveGameData();
 
+    // Play points gained sound
+    this.game.audioManager.playSound("points-gained", false, 0.7);
+
     // Create point gain animation
     const centerX = (sock1.x + sock2.x) / 2;
     const centerY = (sock1.y + sock2.y) / 2;
@@ -687,7 +714,9 @@ class LevelSelect extends Screen {
 
     this.sockBallAnimations.push(animation);
 
+    // Play rent collected sound after a delay to match the animation
     setTimeout(() => {
+      this.game.audioManager.playSound("rent-collected", false, 0.5);
       this.marthaWiggling = true;
       this.marthaWiggleTimer = 0;
     }, 1000);

@@ -24,6 +24,9 @@ class SockGame {
     this.unlockedLevels = [...GameConfig.INITIAL_UNLOCKED_LEVELS];
     this.completedLevels = [...GameConfig.INITIAL_COMPLETED_LEVELS];
 
+    // Initialize audio manager
+    this.audioManager = new AudioManager();
+
     // Initialize sockball queue
     this.sockballQueue = [];
 
