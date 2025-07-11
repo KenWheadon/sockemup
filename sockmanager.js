@@ -69,6 +69,16 @@ class SockManager {
   }
 
   createShootEffect(sock) {
+    // Play pile click sound
+    if (this.game.audioManager) {
+      this.game.audioManager.playSound("pile-click");
+    }
+
+    // Play particle burst sound
+    if (this.game.audioManager) {
+      this.game.audioManager.playSound("particle-burst", 0.3);
+    }
+
     for (let i = 0; i < 6; i++) {
       this.particleEffects.push({
         x: sock.x + (Math.random() - 0.5) * this.game.getScaledValue(20),
@@ -361,6 +371,11 @@ class SockManager {
   }
 
   createArrivalEffect(x, y) {
+    // Play points gained sound
+    if (this.game.audioManager) {
+      this.game.audioManager.playSound("points-gained");
+    }
+
     const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"];
     const particleSpread = this.game.getScaledValue(60);
     const particleSize = this.game.getScaledValue(2);

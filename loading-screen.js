@@ -7,6 +7,11 @@ class LoadingScreen {
     this.progressInterval = null;
     this.imageCache = new Map();
     this.minimumLoadingTime = 1000;
+
+    // Audio loading state
+    this.audioManager = new AudioManager();
+    this.audioLoaded = false;
+    this.imagesLoaded = false;
   }
 
   init() {
@@ -29,6 +34,7 @@ class LoadingScreen {
               <div class="loading-bar" id="loadingBar"></div>
             </div>
             <div class="loading-percentage" id="loadingPercentage">0%</div>
+            <div class="loading-status" id="loadingStatus">Loading images...</div>
           </div>
         </div>
       `;
@@ -61,19 +67,40 @@ class LoadingScreen {
   updateLoadingProgress() {
     if (!this.loadingComplete) {
       const elapsed = Date.now() - this.loadingStartTime;
-      const assetProgress =
+
+      // Calculate progress from both images and audio
+      const imageProgress =
         this.assetsToLoad > 0 ? this.assetsLoaded / this.assetsToLoad : 0;
+      const audioProgress = this.audioManager.getLoadingProgress();
+      const overallProgress = (imageProgress + audioProgress) / 2;
+
       const timeProgress = Math.min(elapsed / this.minimumLoadingTime, 1);
-      const overallProgress = Math.min(assetProgress, timeProgress);
-      const percentage = Math.floor(overallProgress * 100);
+      const finalProgress = Math.min(overallProgress, timeProgress);
+      const percentage = Math.floor(finalProgress * 100);
 
       const loadingBar = document.getElementById("loadingBar");
       const loadingPercentage = document.getElementById("loadingPercentage");
+      const loadingStatus = document.getElementById("loadingStatus");
 
       if (loadingBar) loadingBar.style.width = percentage + "%";
       if (loadingPercentage) loadingPercentage.textContent = percentage + "%";
 
-      if (assetProgress >= 1 && elapsed >= this.minimumLoadingTime) {
+      // Update status text
+      if (loadingStatus) {
+        if (!this.imagesLoaded) {
+          loadingStatus.textContent = "Loading images...";
+        } else if (!this.audioLoaded) {
+          loadingStatus.textContent = "Loading audio...";
+        } else {
+          loadingStatus.textContent = "Ready!";
+        }
+      }
+
+      if (
+        this.imagesLoaded &&
+        this.audioLoaded &&
+        elapsed >= this.minimumLoadingTime
+      ) {
         this.loadingComplete = true;
         this.transitionToGame();
       }
@@ -102,6 +129,14 @@ class LoadingScreen {
   }
 
   async loadAllAssets() {
+    // Load images and audio in parallel
+    const imagePromise = this.loadImages();
+    const audioPromise = this.loadAudio();
+
+    await Promise.all([imagePromise, audioPromise]);
+  }
+
+  async loadImages() {
     const imagesToLoad = [
       ...GameConfig.IMAGES.SOCKS,
       ...GameConfig.IMAGES.SOCK_BALLS,
@@ -112,10 +147,21 @@ class LoadingScreen {
     ];
 
     this.assetsToLoad = imagesToLoad.length;
-    await this.loadImages(imagesToLoad);
+    await this.loadImageFiles(imagesToLoad);
+    this.imagesLoaded = true;
   }
 
-  async loadImages(imagesToLoad) {
+  async loadAudio() {
+    try {
+      await this.audioManager.loadAllAudio();
+      this.audioLoaded = true;
+    } catch (error) {
+      console.warn("Audio loading failed:", error);
+      this.audioLoaded = true; // Continue anyway
+    }
+  }
+
+  async loadImageFiles(imagesToLoad) {
     const imagePromises = imagesToLoad.map((imageName) => {
       return new Promise((resolve) => {
         if (!this.imageCache.has(imageName)) {
@@ -155,6 +201,10 @@ class LoadingScreen {
 
   getImageCache() {
     return this.imageCache;
+  }
+
+  getAudioManager() {
+    return this.audioManager;
   }
 }
 

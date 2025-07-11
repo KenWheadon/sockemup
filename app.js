@@ -21,6 +21,9 @@ class SockGame {
     this.loadedImages = 0;
     this.totalImages = 0;
 
+    // Audio manager will be initialized from loading screen
+    this.audioManager = null;
+
     this.unlockedLevels = [...GameConfig.INITIAL_UNLOCKED_LEVELS];
     this.completedLevels = [...GameConfig.INITIAL_COMPLETED_LEVELS];
 
@@ -186,6 +189,7 @@ class SockGame {
 
     this.initializeCanvas();
     this.loadImagesFromCache();
+    this.loadAudioFromCache();
     this.setupEventListeners();
     this.loadGameData();
     this.startGameLoop();
@@ -213,6 +217,19 @@ class SockGame {
         "Loading screen manager not available, falling back to direct loading"
       );
       this.loadImages();
+    }
+  }
+
+  loadAudioFromCache() {
+    // Get audio manager from the loading screen
+    if (
+      window.loadingScreenManager &&
+      window.loadingScreenManager.getAudioManager()
+    ) {
+      this.audioManager = window.loadingScreenManager.getAudioManager();
+      console.log("Audio manager loaded from cache");
+    } else {
+      console.warn("Audio manager not available");
     }
   }
 

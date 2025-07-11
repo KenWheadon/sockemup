@@ -11,6 +11,7 @@ class MatchScreen extends Screen {
     this.sockPileHover = false;
     this.matchStreak = 0;
     this.lastMatchTime = 0;
+    this.lastTimeWarning = 0;
   }
 
   createLayoutCache() {
@@ -53,6 +54,12 @@ class MatchScreen extends Screen {
     this.sockPileHover = false;
     this.matchStreak = 0;
     this.lastMatchTime = 0;
+    this.lastTimeWarning = 0;
+
+    // Start match music
+    if (this.game.audioManager) {
+      this.game.audioManager.playMusic("match-music");
+    }
   }
 
   onResize() {
@@ -143,7 +150,14 @@ class MatchScreen extends Screen {
   }
 
   updateHoverEffects(x, y) {
+    const oldSockPileHover = this.sockPileHover;
     this.sockPileHover = this.sockManager.checkSockPileClick(x, y);
+
+    // Play hover sound when starting to hover over sock pile
+    if (this.sockPileHover && !oldSockPileHover && this.game.audioManager) {
+      this.game.audioManager.playSound("button-hover", 0.2);
+    }
+
     this.dropZoneHover = null;
 
     if (this.draggedSock) {
@@ -177,6 +191,11 @@ class MatchScreen extends Screen {
           this.physics.snapToDropZone(sock, zone);
           snapped = true;
           this.createSnapEffect(zone);
+
+          // Play snap sound
+          if (this.game.audioManager) {
+            this.game.audioManager.playSound("snap-to-zone");
+          }
         } else {
           this.physics.applySockThrow(sock, {
             x: (Math.random() - 0.5) * 10,
@@ -202,6 +221,11 @@ class MatchScreen extends Screen {
   shootSockFromPile() {
     const newSock = this.sockManager.shootSockFromPile();
     if (!newSock) return;
+
+    // Play sock shoot sound
+    if (this.game.audioManager) {
+      this.game.audioManager.playSound("sock-shoot");
+    }
   }
 
   createSnapEffect(zone) {
@@ -222,6 +246,11 @@ class MatchScreen extends Screen {
 
           // Add this sockball type to the game's sockball queue
           this.game.addSockballToQueue(matchedSockType);
+
+          // Play match sound
+          if (this.game.audioManager) {
+            this.game.audioManager.playSound("sock-match");
+          }
 
           this.startMatchAnimation(pairZones[0].sock, pairZones[1].sock);
           pairZones[0].sock = null;
@@ -257,6 +286,11 @@ class MatchScreen extends Screen {
   }
 
   handleMismatch(sock1, sock2) {
+    // Play mismatch sound
+    if (this.game.audioManager) {
+      this.game.audioManager.playSound("sock-mismatch");
+    }
+
     // Create mismatch particle effects
     this.sockManager.createMismatchEffect(sock1, sock2);
 
@@ -282,6 +316,11 @@ class MatchScreen extends Screen {
   }
 
   createMismatchShake() {
+    // Play screen shake sound
+    if (this.game.audioManager) {
+      this.game.audioManager.playSound("screen-shake", 0.4);
+    }
+
     // More intense shake for mismatch
     const canvas = this.game.canvas;
     const originalTransform = canvas.style.transform;
@@ -311,6 +350,11 @@ class MatchScreen extends Screen {
   }
 
   createScreenShake() {
+    // Play screen shake sound
+    if (this.game.audioManager) {
+      this.game.audioManager.playSound("screen-shake", 0.3);
+    }
+
     // Simple screen shake effect by temporarily adjusting canvas transform
     const canvas = this.game.canvas;
     const originalTransform = canvas.style.transform;
@@ -338,6 +382,21 @@ class MatchScreen extends Screen {
   onUpdate(deltaTime) {
     const timeDecrement = (0.25 / 60) * (deltaTime / 16.67);
     this.game.timeRemaining -= timeDecrement;
+
+    // Play time warning sounds
+    const timeValue = Math.floor(this.game.timeRemaining);
+    if (timeValue <= 10 && timeValue > 0) {
+      if (timeValue !== this.lastTimeWarning) {
+        this.lastTimeWarning = timeValue;
+        if (this.game.audioManager) {
+          if (timeValue <= 5) {
+            this.game.audioManager.playSound("time-warning");
+          } else {
+            this.game.audioManager.playSound("countdown-tick");
+          }
+        }
+      }
+    }
 
     if (this.game.timeRemaining <= 0) {
       this.game.startThrowingPhase();

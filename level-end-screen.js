@@ -64,6 +64,15 @@ class LevelEndScreen extends Screen {
     this.calculateScoresAndRent();
     this.setupScoreAnimation();
     this.onResize();
+
+    // Play appropriate end music based on success
+    if (this.game.audioManager) {
+      if (this.totalScore >= 0) {
+        this.game.audioManager.playMusic("victory-music");
+      } else {
+        this.game.audioManager.playMusic("defeat-music");
+      }
+    }
   }
 
   calculateScoresAndRent() {

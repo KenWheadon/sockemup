@@ -676,6 +676,11 @@ class MarthaManager {
     // Update rent due meter
     this.rentDueMeter.current = this.collectedSockballs;
 
+    // Play Martha hit sound
+    if (this.game.audioManager) {
+      this.game.audioManager.playSound("martha-hit");
+    }
+
     // Activate hit effect
     this.hitEffect.active = true;
     this.hitEffect.timer = GameConfig.MARTHA_HIT_EFFECTS.FLASH_DURATION;
@@ -731,6 +736,11 @@ class MarthaManager {
     this.isExiting = true;
     this.exitDirection = Math.random() < 0.5 ? 1 : -1;
     this.facingRight = this.exitDirection > 0;
+
+    // Play Martha angry sound when she doesn't get enough rent
+    if (this.game.audioManager && this.needsMoreSockballs()) {
+      this.game.audioManager.playSound("martha-angry");
+    }
   }
 
   startEnter() {

@@ -81,6 +81,9 @@ class LevelSelect extends Screen {
       hoverScale: 1.1,
       clickScale: 0.95,
     };
+
+    // Audio flag to track if menu music is playing
+    this.menuMusicStarted = false;
   }
 
   calculateMarthaImageSize() {
@@ -203,6 +206,12 @@ class LevelSelect extends Screen {
 
   setup() {
     super.setup();
+
+    // Start menu music if not already playing
+    if (!this.menuMusicStarted && this.game.audioManager) {
+      this.game.audioManager.playMusic("menu-music");
+      this.menuMusicStarted = true;
+    }
 
     // Update bounds when setting up to ensure they're correct
     const canvasWidth = this.game.getCanvasWidth();
@@ -364,7 +373,15 @@ class LevelSelect extends Screen {
   }
 
   onMouseMove(x, y) {
+    const oldHoveredLevel = this.hoveredLevel;
     this.hoveredLevel = this.getLevelAtPosition(x, y);
+
+    // Play hover sound when hovering over a new level
+    if (this.hoveredLevel !== oldHoveredLevel && this.hoveredLevel !== -1) {
+      if (this.game.audioManager) {
+        this.game.audioManager.playSound("button-hover", 0.3);
+      }
+    }
 
     if (this.isDragging && this.dragSock) {
       // Direct position assignment - no bounds checking at all
@@ -426,6 +443,11 @@ class LevelSelect extends Screen {
           this.snapSockToDropZone(sock, zone);
           snapped = true;
           this.createSnapEffect(zone);
+
+          // Play snap sound
+          if (this.game.audioManager) {
+            this.game.audioManager.playSound("snap-to-zone");
+          }
         }
       });
 
@@ -450,10 +472,20 @@ class LevelSelect extends Screen {
 
     const levelIndex = this.getLevelAtPosition(x, y);
     if (levelIndex !== -1) {
+      // Play button click sound
+      if (this.game.audioManager) {
+        this.game.audioManager.playSound("button-click");
+      }
+
       if (this.game.unlockedLevels[levelIndex]) {
         this.game.startLevel(levelIndex);
         return true;
       } else if (this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex]) {
+        // Play level unlock sound
+        if (this.game.audioManager) {
+          this.game.audioManager.playSound("level-unlock");
+        }
+
         this.game.playerPoints -= GameConfig.LEVEL_COSTS[levelIndex];
         this.game.unlockedLevels[levelIndex] = true;
         this.game.saveGameData();
@@ -528,6 +560,11 @@ class LevelSelect extends Screen {
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
 
+        // Play Easter egg match sound
+        if (this.game.audioManager) {
+          this.game.audioManager.playSound("easter-egg-match");
+        }
+
         // Create animations before removing socks
         this.createSockBallAnimation(sock1, sock2);
         this.awardPointsForMatch(sock1, sock2);
@@ -538,6 +575,12 @@ class LevelSelect extends Screen {
         // MISMATCH - clear drop zones immediately and reject socks
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
+
+        // Play Easter egg mismatch sound
+        if (this.game.audioManager) {
+          this.game.audioManager.playSound("easter-egg-mismatch");
+        }
+
         this.handleEasterEggMismatch(sock1, sock2);
       }
     }
@@ -659,6 +702,11 @@ class LevelSelect extends Screen {
     this.game.playerPoints += 1;
     this.game.saveGameData();
 
+    // Play points gained sound
+    if (this.game.audioManager) {
+      this.game.audioManager.playSound("points-gained");
+    }
+
     // Create point gain animation
     const centerX = (sock1.x + sock2.x) / 2;
     const centerY = (sock1.y + sock2.y) / 2;
@@ -690,6 +738,11 @@ class LevelSelect extends Screen {
     setTimeout(() => {
       this.marthaWiggling = true;
       this.marthaWiggleTimer = 0;
+
+      // Play Martha laugh sound
+      if (this.game.audioManager) {
+        this.game.audioManager.playSound("martha-laugh");
+      }
     }, 1000);
   }
 

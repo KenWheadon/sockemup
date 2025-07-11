@@ -75,6 +75,11 @@ class ThrowingScreen extends Screen {
     // Set up next sockball type
     this.updateNextSockballType();
 
+    // Start throwing music
+    if (this.game.audioManager) {
+      this.game.audioManager.playMusic("throwing-music");
+    }
+
     this.showMessage("Click to throw sockballs at Martha!", "info", 3000);
   }
 
