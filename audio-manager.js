@@ -1,203 +1,151 @@
+// Audio Manager Class
 class AudioManager {
   constructor() {
-    this.sounds = new Map();
+    this.enabled = false;
+    this.sounds = {};
     this.currentMusic = null;
-    this.musicVolume = 0.7;
-    this.sfxVolume = 0.8;
-    this.isMuted = false;
-    this.isLoading = false;
-    this.loadedCount = 0;
-    this.totalCount = 0;
+    this.currentMusicName = null;
+    this.musicVolume = 0.4;
+    this.sfxVolume = 0.7;
+    this.isFading = false;
 
-    // Audio file definitions
-    this.audioFiles = {
-      // Background Music
-      music: [
-        "menu-music.mp3",
-        "match-music.mp3",
-        "throwing-music.mp3",
-        "victory-music.mp3",
-        "defeat-music.mp3",
-      ],
+    // Enable audio on first user interaction
+    document.addEventListener(
+      "click",
+      () => {
+        this.enable();
+      },
+      { once: true }
+    );
 
-      // Sound Effects
-      sfx: [
-        "sock-shoot.mp3",
-        "sock-bounce.mp3",
-        "sock-match.mp3",
-        "sock-mismatch.mp3",
-        "sockball-throw.mp3",
-        "sockball-hit.mp3",
-        "martha-hit.mp3",
-        "martha-laugh.mp3",
-        "martha-angry.mp3",
-        "level-complete.mp3",
-        "level-unlock.mp3",
-        "button-click.mp3",
-        "button-hover.mp3",
-        "pile-click.mp3",
-        "snap-to-zone.mp3",
-        "screen-shake.mp3",
-        "particle-burst.mp3",
-        "easter-egg-match.mp3",
-        "easter-egg-mismatch.mp3",
-        "countdown-tick.mp3",
-        "time-warning.mp3",
-        "points-gained.mp3",
-        "rent-collected.mp3",
-        "game-over.mp3",
-      ],
-    };
+    console.log("🎵 AudioManager initialized");
   }
 
-  async loadAllAudio() {
-    this.isLoading = true;
-    this.loadedCount = 0;
+  enable() {
+    this.enabled = true;
+    console.log("🔊 AudioManager enabled");
+  }
 
-    // Calculate total files
-    this.totalCount = this.audioFiles.music.length + this.audioFiles.sfx.length;
-
-    const loadPromises = [];
-
-    // Load music files
-    for (const filename of this.audioFiles.music) {
-      loadPromises.push(this.loadAudioFile(filename, "music"));
+  preloadAudio(name, src) {
+    if (!this.sounds[name]) {
+      this.sounds[name] = new Audio(src);
+      this.sounds[name].preload = "auto";
+      console.log(`🎵 Preloaded audio: ${name}`);
     }
-
-    // Load SFX files
-    for (const filename of this.audioFiles.sfx) {
-      loadPromises.push(this.loadAudioFile(filename, "sfx"));
-    }
-
-    await Promise.all(loadPromises);
-    this.isLoading = false;
-
-    return this.sounds;
   }
 
-  async loadAudioFile(filename, type) {
-    return new Promise((resolve) => {
-      const audio = new Audio();
-      const key = filename.replace(".mp3", "");
+  playMusic(musicName, loop = true, volume = null) {
+    if (!this.enabled) return;
 
-      const onLoad = () => {
-        audio.removeEventListener("canplaythrough", onLoad);
-        audio.removeEventListener("error", onError);
+    const actualVolume = volume !== null ? volume : this.musicVolume;
+    const audioPath = `audio/${musicName}.mp3`;
 
-        // Set default properties
-        if (type === "music") {
-          audio.loop = true;
-          audio.volume = this.musicVolume;
-        } else {
-          audio.loop = false;
-          audio.volume = this.sfxVolume;
-        }
+    console.log(`🎵 Playing music: ${musicName}`);
 
-        this.sounds.set(key, { audio, type, filename });
-        this.loadedCount++;
-        resolve();
-      };
-
-      const onError = () => {
-        audio.removeEventListener("canplaythrough", onLoad);
-        audio.removeEventListener("error", onError);
-
-        console.warn(`Failed to load audio: ${filename}`);
-        this.loadedCount++;
-        resolve();
-      };
-
-      audio.addEventListener("canplaythrough", onLoad);
-      audio.addEventListener("error", onError);
-      audio.src = `audio/${filename}`;
-    });
-  }
-
-  playMusic(key, fadeIn = true) {
-    if (this.isMuted) return;
-
-    // Stop current music
-    if (this.currentMusic) {
+    // Stop current music if different
+    if (this.currentMusic && this.currentMusicName !== musicName) {
       this.stopMusic();
     }
 
-    const soundData = this.sounds.get(key);
-    if (!soundData || soundData.type !== "music") {
-      console.warn(`Music not found: ${key}`);
+    // Don't restart if same music is already playing
+    if (
+      this.currentMusicName === musicName &&
+      this.currentMusic &&
+      !this.currentMusic.paused
+    ) {
+      console.log(`🎵 Music ${musicName} already playing, skipping restart`);
       return;
     }
 
-    const audio = soundData.audio;
-    audio.currentTime = 0;
+    // Preload if not already loaded
+    this.preloadAudio(musicName, audioPath);
 
-    if (fadeIn) {
-      audio.volume = 0;
-      audio.play().catch((e) => console.warn("Audio play failed:", e));
-      this.fadeIn(audio, this.musicVolume);
-    } else {
-      audio.volume = this.musicVolume;
-      audio.play().catch((e) => console.warn("Audio play failed:", e));
-    }
+    this.currentMusic = this.sounds[musicName];
+    this.currentMusicName = musicName;
+    this.currentMusic.loop = loop;
+    this.currentMusic.volume = actualVolume;
+    this.currentMusic.currentTime = 0;
+    this.isFading = false;
 
-    this.currentMusic = audio;
+    this.currentMusic.play().catch((e) => {
+      console.warn(`Music playback failed for ${musicName}:`, e);
+    });
   }
 
-  stopMusic(fadeOut = true) {
-    if (!this.currentMusic) return;
-
-    if (fadeOut) {
-      this.fadeOut(this.currentMusic, () => {
-        this.currentMusic.pause();
-        this.currentMusic = null;
-      });
-    } else {
+  stopMusic() {
+    if (this.currentMusic) {
+      console.log(`🔇 Stopping music: ${this.currentMusicName}`);
       this.currentMusic.pause();
+      this.currentMusic.currentTime = 0;
       this.currentMusic = null;
+      this.currentMusicName = null;
+      this.isFading = false;
     }
   }
 
-  playSound(key, volume = null) {
-    if (this.isMuted) return;
+  fadeOutMusic(duration = 1000) {
+    if (!this.currentMusic || this.isFading) return;
 
-    const soundData = this.sounds.get(key);
-    if (!soundData || soundData.type !== "sfx") {
-      console.warn(`Sound effect not found: ${key}`);
-      return;
-    }
+    console.log(`🔇 Fading out music: ${this.currentMusicName}`);
+    this.isFading = true;
 
-    // Clone the audio to allow overlapping plays
-    const audio = soundData.audio.cloneNode();
-    audio.volume = volume !== null ? volume : this.sfxVolume;
-    audio.play().catch((e) => console.warn("Audio play failed:", e));
+    const startVolume = this.currentMusic.volume;
+    const fadeSteps = 20;
+    const stepDuration = duration / fadeSteps;
+    const volumeStep = startVolume / fadeSteps;
 
-    return audio;
+    let step = 0;
+    const fadeInterval = setInterval(() => {
+      if (!this.currentMusic || !this.isFading) {
+        clearInterval(fadeInterval);
+        return;
+      }
+
+      step++;
+      this.currentMusic.volume = Math.max(0, startVolume - volumeStep * step);
+
+      if (step >= fadeSteps) {
+        clearInterval(fadeInterval);
+        this.stopMusic();
+      }
+    }, stepDuration);
   }
 
-  fadeIn(audio, targetVolume, duration = 1000) {
-    const startVolume = 0;
-    const volumeStep = targetVolume / (duration / 50);
+  playSound(soundName, loop = false, volume = null) {
+    if (!this.enabled) return;
 
-    const fadeInterval = setInterval(() => {
-      if (audio.volume < targetVolume) {
-        audio.volume = Math.min(audio.volume + volumeStep, targetVolume);
-      } else {
-        clearInterval(fadeInterval);
-      }
-    }, 50);
+    const actualVolume = volume !== null ? volume : this.sfxVolume;
+    const audioPath = `audio/${soundName}.mp3`;
+
+    console.log(`🎵 Playing sound: ${soundName}`);
+
+    // Preload if not already loaded
+    this.preloadAudio(soundName, audioPath);
+
+    const sound = this.sounds[soundName];
+    sound.loop = loop;
+    sound.volume = actualVolume;
+    sound.currentTime = 0;
+
+    sound.play().catch((e) => {
+      console.warn(`Sound playback failed for ${soundName}:`, e);
+    });
   }
 
-  fadeOut(audio, callback, duration = 1000) {
-    const startVolume = audio.volume;
-    const volumeStep = startVolume / (duration / 50);
+  stopSound(soundName) {
+    if (!this.enabled || !this.sounds[soundName]) return;
 
-    const fadeInterval = setInterval(() => {
-      if (audio.volume > 0) {
-        audio.volume = Math.max(audio.volume - volumeStep, 0);
-      } else {
-        clearInterval(fadeInterval);
-        if (callback) callback();
+    console.log(`🔇 Stopped sound: ${soundName}`);
+    this.sounds[soundName].pause();
+    this.sounds[soundName].currentTime = 0;
+  }
+
+  stopAllSounds() {
+    Object.keys(this.sounds).forEach((soundName) => {
+      if (soundName !== this.currentMusicName) {
+        this.stopSound(soundName);
       }
-    }, 50);
+    });
   }
 
   setMusicVolume(volume) {
@@ -207,36 +155,7 @@ class AudioManager {
     }
   }
 
-  setSFXVolume(volume) {
+  setSfxVolume(volume) {
     this.sfxVolume = Math.max(0, Math.min(1, volume));
-  }
-
-  toggleMute() {
-    this.isMuted = !this.isMuted;
-
-    if (this.isMuted) {
-      if (this.currentMusic) {
-        this.currentMusic.volume = 0;
-      }
-    } else {
-      if (this.currentMusic) {
-        this.currentMusic.volume = this.musicVolume;
-      }
-    }
-
-    return this.isMuted;
-  }
-
-  getLoadingProgress() {
-    if (this.totalCount === 0) return 1;
-    return this.loadedCount / this.totalCount;
-  }
-
-  getAudioFileList() {
-    return {
-      music: [...this.audioFiles.music],
-      sfx: [...this.audioFiles.sfx],
-      total: this.audioFiles.music.length + this.audioFiles.sfx.length,
-    };
   }
 }

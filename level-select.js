@@ -27,6 +27,16 @@ class LevelSelect extends Screen {
       maintainAspectRatio: true,
     };
 
+    // You Win graphic configuration
+    this.YOU_WIN_CONFIG = {
+      maxWidth: 300 * 1.25,
+      maxHeight: 120 * 1.25,
+      offsetY: 225,
+      glowIntensity: 15,
+      pulseSpeed: 0.005,
+      maintainAspectRatio: true,
+    };
+
     // Level selection state
     this.hoveredLevel = -1;
     this.selectedLevel = -1;
@@ -58,6 +68,10 @@ class LevelSelect extends Screen {
     // Mismatch particle effects
     this.mismatchParticles = [];
 
+    // Credits integration
+    this.creditsOpen = false;
+    this.creditsModal = null;
+
     // Physics for menu socks
     this.menuPhysics = {
       friction: 0.992,
@@ -81,9 +95,6 @@ class LevelSelect extends Screen {
       hoverScale: 1.1,
       clickScale: 0.95,
     };
-
-    // Audio flag to track if menu music is playing
-    this.menuMusicStarted = false;
   }
 
   calculateMarthaImageSize() {
@@ -113,6 +124,11 @@ class LevelSelect extends Screen {
     }
   }
 
+  // Check if all levels are completed
+  areAllLevelsCompleted() {
+    return this.game.completedLevels.every((completed) => completed);
+  }
+
   createLayoutCache() {
     const baseLayout = super.createLayoutCache();
     const canvasWidth = this.game.getCanvasWidth();
@@ -120,6 +136,8 @@ class LevelSelect extends Screen {
 
     // Calculate Martha image size
     this.calculateMarthaImageSize();
+
+    const youWinImageSize = this.calculateYouWinImageSize();
 
     return {
       ...baseLayout,
@@ -150,6 +168,18 @@ class LevelSelect extends Screen {
       statsY: canvasHeight - this.game.getScaledValue(80),
       statsPanelWidth: this.game.getScaledValue(200),
       statsPanelHeight: this.game.getScaledValue(40),
+      creditsButtonX: canvasWidth - this.game.getScaledValue(80),
+      creditsButtonY: this.game.getScaledValue(50),
+      creditsButtonWidth: this.game.getScaledValue(100),
+      creditsButtonHeight: this.game.getScaledValue(40),
+      // You Win graphic positioning
+      // You Win graphic positioning
+      youWinX: canvasWidth / 2,
+      youWinY:
+        canvasHeight / 2 +
+        this.game.getScaledValue(this.YOU_WIN_CONFIG.offsetY),
+      youWinWidth: youWinImageSize.width,
+      youWinHeight: youWinImageSize.height,
     };
   }
 
@@ -207,11 +237,9 @@ class LevelSelect extends Screen {
   setup() {
     super.setup();
 
-    // Start menu music if not already playing
-    if (!this.menuMusicStarted && this.game.audioManager) {
-      this.game.audioManager.playMusic("menu-music");
-      this.menuMusicStarted = true;
-    }
+    // Start menu music when entering level select
+    console.log("🎵 Level select setup - starting menu music");
+    this.game.audioManager.playMusic("menu-music", true);
 
     // Update bounds when setting up to ensure they're correct
     const canvasWidth = this.game.getCanvasWidth();
@@ -233,6 +261,156 @@ class LevelSelect extends Screen {
     console.log("Initial garbage collection bounds:", this.menuPhysics.bounds);
 
     this.setupEasterDropZones();
+    this.setupCreditsModal();
+  }
+
+  cleanup() {
+    super.cleanup();
+
+    // Stop menu music when leaving level select
+    console.log("🎵 Level select cleanup - stopping menu music");
+    this.game.audioManager.stopMusic();
+
+    // Clean up credits modal if it exists
+    if (this.creditsOpen) {
+      this.hideCredits();
+    }
+
+    // Remove credits modal from DOM
+    const creditsModal = document.getElementById("creditsModal");
+    if (creditsModal) {
+      creditsModal.remove();
+    }
+  }
+
+  setupCreditsModal() {
+    // Create credits modal if it doesn't exist
+    if (!document.getElementById("creditsModal")) {
+      const modalHTML = `
+        <div class="credits-modal" id="creditsModal">
+          <div class="credits-content">
+            <div class="credits-header">
+              <img src="images/company-logo.png" alt="Weird Demon Games" class="company-logo" />
+              <h2>Weird Demon Games</h2>
+              <button class="close-credits" id="closeCredits">×</button>
+            </div>
+            <div class="credits-body">
+              <div class="company-info">
+                <h3>About the Studio</h3>
+                <p>Weird Demon Games was founded in the depths of creative madness, where nightmares meet nostalgia. We specialize in the weird and wacky that make you wonder - what did I play, and why did I have fun doing it!</p>
+                
+                <h3>Our Mission</h3>
+                <p>To create unforgettable experiences that bring a smile to your face and inspire you to make something wacky of your own!</p>
+                
+                <h3>Team</h3>
+                <div class="team-credits">
+                  <div class="credit-role">
+                    <span class="role">Founder / Game Lead</span>
+                    <span class="name">Ken Whaeadon</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Logo</span>
+                    <span class="name">Wrymskin</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Audio Effects - freesound.org</span>
+                    <span class="name">colorsCrimsonTears, David819, SilverIllusionist, mrickey13, plasterbrain, Sess8it, Bertrof, GameAudio, Yoshicakes77</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Audio Effects - pixabay.com</span>
+                    <span class="name">Karim-Nessim, Universfield, freesound_community</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Lead Artist</span>
+                    <span class="name">ChatGPT</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Music Composer</span>
+                    <span class="name">Suno</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Lead Programmer</span>
+                    <span class="name">Claude Sonnet 4</span>
+                  </div>
+                </div>
+                
+                <div class="company-tagline">
+                  <em>"Where every game is a portal to the impossible."</em>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.body.insertAdjacentHTML("beforeend", modalHTML);
+    }
+
+    this.creditsModal = document.getElementById("creditsModal");
+    this.setupCreditsEventListeners();
+  }
+
+  setupCreditsEventListeners() {
+    const closeCredits = document.getElementById("closeCredits");
+
+    // Close credits button
+    if (closeCredits) {
+      closeCredits.addEventListener("click", () => {
+        this.game.audioManager.playSound("button-click", false, 0.5);
+        this.hideCredits();
+      });
+
+      // Add hover sound effect
+      closeCredits.addEventListener("mouseenter", () => {
+        this.game.audioManager.playSound("button-hover", false, 0.3);
+      });
+    }
+
+    // Close credits when clicking outside modal
+    if (this.creditsModal) {
+      this.creditsModal.addEventListener("click", (e) => {
+        if (e.target === this.creditsModal) {
+          this.hideCredits();
+        }
+      });
+    }
+
+    // Keyboard event listener for accessibility
+    document.addEventListener("keydown", (e) => {
+      if (this.creditsOpen && e.code === "Escape") {
+        this.hideCredits();
+      }
+    });
+  }
+
+  showCredits() {
+    if (this.creditsOpen) return;
+
+    console.log("👥 Opening credits");
+    this.game.audioManager.playSound("button-click", false, 0.5);
+
+    if (this.creditsModal) {
+      this.creditsOpen = true;
+      this.creditsModal.classList.add("visible");
+
+      // Focus trap for accessibility
+      const closeButton = document.getElementById("closeCredits");
+      if (closeButton) {
+        closeButton.focus();
+      }
+    }
+  }
+
+  hideCredits() {
+    if (!this.creditsOpen) return;
+
+    console.log("❌ Closing credits");
+    this.game.audioManager.playSound("button-click", false, 0.5);
+
+    if (this.creditsModal) {
+      this.creditsModal.classList.remove("visible");
+      this.creditsOpen = false;
+    }
   }
 
   onUpdate(deltaTime) {
@@ -373,14 +551,15 @@ class LevelSelect extends Screen {
   }
 
   onMouseMove(x, y) {
-    const oldHoveredLevel = this.hoveredLevel;
+    const previousHoveredLevel = this.hoveredLevel;
     this.hoveredLevel = this.getLevelAtPosition(x, y);
 
-    // Play hover sound when hovering over a new level
-    if (this.hoveredLevel !== oldHoveredLevel && this.hoveredLevel !== -1) {
-      if (this.game.audioManager) {
-        this.game.audioManager.playSound("button-hover", 0.3);
-      }
+    // Play hover sound when hovering over a new level button
+    if (
+      this.hoveredLevel !== previousHoveredLevel &&
+      this.hoveredLevel !== -1
+    ) {
+      this.game.audioManager.playSound("button-hover", false, 0.3);
     }
 
     if (this.isDragging && this.dragSock) {
@@ -443,11 +622,6 @@ class LevelSelect extends Screen {
           this.snapSockToDropZone(sock, zone);
           snapped = true;
           this.createSnapEffect(zone);
-
-          // Play snap sound
-          if (this.game.audioManager) {
-            this.game.audioManager.playSound("snap-to-zone");
-          }
         }
       });
 
@@ -465,6 +639,12 @@ class LevelSelect extends Screen {
   }
 
   onClick(x, y) {
+    // Check if credits button was clicked
+    if (this.isCreditsButtonClicked(x, y)) {
+      this.showCredits();
+      return true;
+    }
+
     if (this.isLogoClicked(x, y)) {
       this.activateEasterEgg();
       return true;
@@ -472,29 +652,36 @@ class LevelSelect extends Screen {
 
     const levelIndex = this.getLevelAtPosition(x, y);
     if (levelIndex !== -1) {
-      // Play button click sound
-      if (this.game.audioManager) {
-        this.game.audioManager.playSound("button-click");
-      }
-
       if (this.game.unlockedLevels[levelIndex]) {
+        // Play button click sound for starting a level
+        this.game.audioManager.playSound("button-click", false, 0.5);
         this.game.startLevel(levelIndex);
         return true;
       } else if (this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex]) {
         // Play level unlock sound
-        if (this.game.audioManager) {
-          this.game.audioManager.playSound("level-unlock");
-        }
-
+        this.game.audioManager.playSound("level-unlock", false, 0.6);
         this.game.playerPoints -= GameConfig.LEVEL_COSTS[levelIndex];
         this.game.unlockedLevels[levelIndex] = true;
         this.game.saveGameData();
         this.game.startLevel(levelIndex);
         return true;
+      } else {
+        // Play a subtle error sound for insufficient points (using button-click at lower volume)
+        this.game.audioManager.playSound("button-click", false, 0.2);
       }
     }
 
     return false;
+  }
+
+  isCreditsButtonClicked(x, y) {
+    const layout = this.layoutCache;
+    return (
+      x >= layout.creditsButtonX - layout.creditsButtonWidth / 2 &&
+      x <= layout.creditsButtonX + layout.creditsButtonWidth / 2 &&
+      y >= layout.creditsButtonY - layout.creditsButtonHeight / 2 &&
+      y <= layout.creditsButtonY + layout.creditsButtonHeight / 2
+    );
   }
 
   getDropZoneDistance(sock, dropZone) {
@@ -556,14 +743,10 @@ class LevelSelect extends Screen {
       }
 
       if (sock1.type === sock2.type) {
-        // MATCH - clear drop zones immediately and remove socks completely
+        // MATCH - play match sound, clear drop zones and remove socks
+        this.game.audioManager.playSound("easter-egg-match", false, 0.8);
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
-
-        // Play Easter egg match sound
-        if (this.game.audioManager) {
-          this.game.audioManager.playSound("easter-egg-match");
-        }
 
         // Create animations before removing socks
         this.createSockBallAnimation(sock1, sock2);
@@ -572,15 +755,10 @@ class LevelSelect extends Screen {
         // Completely remove matched socks from all systems
         this.removeMatchedSocks(sock1, sock2);
       } else {
-        // MISMATCH - clear drop zones immediately and reject socks
+        // MISMATCH - play mismatch sound, clear drop zones and reject socks
+        this.game.audioManager.playSound("easter-egg-mismatch", false, 0.6);
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
-
-        // Play Easter egg mismatch sound
-        if (this.game.audioManager) {
-          this.game.audioManager.playSound("easter-egg-mismatch");
-        }
-
         this.handleEasterEggMismatch(sock1, sock2);
       }
     }
@@ -597,6 +775,9 @@ class LevelSelect extends Screen {
       console.log("Invalid socks in mismatch handler, aborting");
       return;
     }
+
+    // Play particle burst sound for the dramatic mismatch effect
+    this.game.audioManager.playSound("particle-burst", false, 0.4);
 
     // Create mismatch particle effects
     this.createEasterEggMismatchEffect(sock1, sock2);
@@ -703,9 +884,7 @@ class LevelSelect extends Screen {
     this.game.saveGameData();
 
     // Play points gained sound
-    if (this.game.audioManager) {
-      this.game.audioManager.playSound("points-gained");
-    }
+    this.game.audioManager.playSound("points-gained", false, 0.7);
 
     // Create point gain animation
     const centerX = (sock1.x + sock2.x) / 2;
@@ -735,14 +914,11 @@ class LevelSelect extends Screen {
 
     this.sockBallAnimations.push(animation);
 
+    // Play rent collected sound after a delay to match the animation
     setTimeout(() => {
+      this.game.audioManager.playSound("rent-collected", false, 0.5);
       this.marthaWiggling = true;
       this.marthaWiggleTimer = 0;
-
-      // Play Martha laugh sound
-      if (this.game.audioManager) {
-        this.game.audioManager.playSound("martha-laugh");
-      }
     }, 1000);
   }
 
@@ -828,13 +1004,88 @@ class LevelSelect extends Screen {
     return null;
   }
 
+  calculateYouWinImageSize() {
+    const youWinImage = this.game.images["you-win.png"];
+    if (!youWinImage) {
+      return { width: 0, height: 0 };
+    }
+
+    const maxWidth = this.game.getScaledValue(this.YOU_WIN_CONFIG.maxWidth);
+    const maxHeight = this.game.getScaledValue(this.YOU_WIN_CONFIG.maxHeight);
+
+    if (this.YOU_WIN_CONFIG.maintainAspectRatio) {
+      const aspectRatio = youWinImage.width / youWinImage.height;
+
+      if (aspectRatio > maxWidth / maxHeight) {
+        // Image is wider relative to the max dimensions - fit to width
+        return {
+          width: maxWidth,
+          height: maxWidth / aspectRatio,
+        };
+      } else {
+        // Image is taller relative to the max dimensions - fit to height
+        return {
+          width: maxHeight * aspectRatio,
+          height: maxHeight,
+        };
+      }
+    } else {
+      return {
+        width: maxWidth,
+        height: maxHeight,
+      };
+    }
+  }
+
+  renderYouWinGraphic(ctx) {
+    const layout = this.layoutCache;
+
+    if (this.game.images["you-win.png"]) {
+      ctx.save();
+
+      // Create pulsing glow effect
+      const time = Date.now();
+      const pulseIntensity =
+        Math.sin(time * this.YOU_WIN_CONFIG.pulseSpeed) * 0.3 + 0.7;
+
+      // Add golden glow
+      ctx.shadowColor = "#FFD700";
+      ctx.shadowBlur = this.game.getScaledValue(
+        this.YOU_WIN_CONFIG.glowIntensity * pulseIntensity
+      );
+
+      // Slight scale pulsing
+      const scale = 1 + (pulseIntensity - 0.7) * 0.05; // Very subtle scale change
+      ctx.translate(layout.youWinX, layout.youWinY);
+      ctx.scale(scale, scale);
+
+      // Draw the you win graphic
+      ctx.drawImage(
+        this.game.images["you-win.png"],
+        -layout.youWinWidth / 2,
+        -layout.youWinHeight / 2,
+        layout.youWinWidth,
+        layout.youWinHeight
+      );
+
+      ctx.restore();
+    }
+  }
+
   onRender(ctx) {
     this.renderBackground(ctx);
     this.renderLogo(ctx);
     this.renderInstructions(ctx);
     this.renderMarthaImage(ctx);
     this.renderLevelButtons(ctx);
+
+    // Render "You Win" graphic if all levels are completed
+    if (this.areAllLevelsCompleted()) {
+      this.renderYouWinGraphic(ctx);
+    }
+
     this.renderPlayerStats(ctx);
+    this.renderCreditsButton(ctx);
 
     if (this.easterEggActive) {
       this.renderEasterDropZones(ctx);
@@ -950,6 +1201,46 @@ class LevelSelect extends Screen {
 
       ctx.restore();
     }
+  }
+
+  renderCreditsButton(ctx) {
+    const layout = this.layoutCache;
+
+    // Draw button background
+    ctx.save();
+    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.3)";
+    ctx.lineWidth = 2;
+    ctx.filter = "blur(5px)";
+
+    ctx.fillRect(
+      layout.creditsButtonX - layout.creditsButtonWidth / 2,
+      layout.creditsButtonY - layout.creditsButtonHeight / 2,
+      layout.creditsButtonWidth,
+      layout.creditsButtonHeight
+    );
+
+    ctx.strokeRect(
+      layout.creditsButtonX - layout.creditsButtonWidth / 2,
+      layout.creditsButtonY - layout.creditsButtonHeight / 2,
+      layout.creditsButtonWidth,
+      layout.creditsButtonHeight
+    );
+
+    ctx.restore();
+
+    // Draw button text
+    this.renderText(
+      ctx,
+      "Credits",
+      layout.creditsButtonX,
+      layout.creditsButtonY,
+      {
+        fontSize: layout.smallFontSize,
+        color: "white",
+        weight: "bold",
+      }
+    );
   }
 
   renderEasterDropZones(ctx) {
@@ -1322,5 +1613,9 @@ class LevelSelect extends Screen {
 
       ctx.restore();
     });
+  }
+
+  destroy() {
+    this.cleanup();
   }
 }

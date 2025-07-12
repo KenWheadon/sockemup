@@ -96,6 +96,11 @@ class MarthaManager {
     // Momentum dampening for smoother movement
     this.momentum = { x: 0, y: 0 };
     this.momentumDamping = 0.95;
+
+    // Audio tracking
+    this.hasPlayedAngrySound = false;
+    this.hasPlayedLaughSound = false;
+    this.hasPlayedRentCollectedSound = false;
   }
 
   setup(level) {
@@ -131,6 +136,11 @@ class MarthaManager {
     this.isEscapingEdge = false;
     this.edgeEscapeTimer = 0;
     this.momentum = { x: 0, y: 0 };
+
+    // Reset audio flags
+    this.hasPlayedAngrySound = false;
+    this.hasPlayedLaughSound = false;
+    this.hasPlayedRentCollectedSound = false;
 
     // Initialize first pattern
     this.switchPattern();
@@ -178,6 +188,20 @@ class MarthaManager {
 
     // Apply enhanced movement with prediction
     this.applyEnhancedMovement(deltaTime);
+
+    // Check for audio triggers
+    this.checkAudioTriggers();
+  }
+
+  checkAudioTriggers() {
+    // Play rent collected sound when Martha gets enough sockballs
+    if (
+      this.hasCollectedEnoughSockballs() &&
+      !this.hasPlayedRentCollectedSound
+    ) {
+      this.game.audioManager.playSound("rent-collected", false, 0.6);
+      this.hasPlayedRentCollectedSound = true;
+    }
   }
 
   updateAnimation(deltaTime) {
@@ -677,9 +701,7 @@ class MarthaManager {
     this.rentDueMeter.current = this.collectedSockballs;
 
     // Play Martha hit sound
-    if (this.game.audioManager) {
-      this.game.audioManager.playSound("martha-hit");
-    }
+    this.game.audioManager.playSound("martha-hit", false, 0.5);
 
     // Activate hit effect
     this.hitEffect.active = true;
@@ -698,7 +720,7 @@ class MarthaManager {
     this.hitEffect.pointPopups.push({
       x: this.x + this.width / 2,
       y: this.y,
-      text: "+" + GameConfig.POINTS_PER_SOCK,
+      text: "+" + GameConfig.POINTS_PER_SOCKBALL_PAID,
       timer: GameConfig.MARTHA_HIT_EFFECTS.POINT_POP_DURATION,
       velocity: 2,
     });
@@ -737,9 +759,17 @@ class MarthaManager {
     this.exitDirection = Math.random() < 0.5 ? 1 : -1;
     this.facingRight = this.exitDirection > 0;
 
-    // Play Martha angry sound when she doesn't get enough rent
-    if (this.game.audioManager && this.needsMoreSockballs()) {
-      this.game.audioManager.playSound("martha-angry");
+    // Play appropriate exit sound based on whether Martha got enough rent
+    if (this.hasCollectedEnoughSockballs()) {
+      if (!this.hasPlayedLaughSound) {
+        this.game.audioManager.playSound("martha-laugh", false, 0.7);
+        this.hasPlayedLaughSound = true;
+      }
+    } else {
+      if (!this.hasPlayedAngrySound) {
+        this.game.audioManager.playSound("martha-angry", false, 0.7);
+        this.hasPlayedAngrySound = true;
+      }
     }
   }
 

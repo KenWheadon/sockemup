@@ -264,6 +264,36 @@
   margin: 0;
 }
 
+/* Credits Button */
+.credits-button {
+  position: absolute;
+  top: 30px;
+  right: 30px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  color: white;
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+  z-index: 10;
+}
+
+.credits-button:hover {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: rgba(255, 215, 0, 0.5);
+  transform: scale(1.05);
+  filter: brightness(1.2);
+}
+
+.credits-button:active {
+  transform: scale(0.95);
+}
+
 .menu-sock {
   position: absolute;
   pointer-events: none;
@@ -431,6 +461,172 @@
   }
 }
 
+/* Credits Modal Styles */
+.credits-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+}
+
+.credits-modal.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.credits-content {
+  background: linear-gradient(145deg, #2a2a3e, #1a1a2e);
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  border-radius: 20px;
+  max-width: 830px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  transform: scale(0.8);
+  transition: all 0.3s ease;
+}
+
+.credits-modal.visible .credits-content {
+  transform: scale(1);
+}
+
+.credits-header {
+  text-align: center;
+  padding: 20px 30px 10px 30px;
+  border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+  position: relative;
+}
+
+.company-logo {
+  max-width: 120px;
+  height: auto;
+  margin-bottom: 15px;
+  filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.4));
+}
+
+.credits-header h2 {
+  color: #d4af37;
+  font-size: 2em;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+  font-family: "Courier New", monospace;
+}
+
+.close-credits {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  color: #e0e0e0;
+  font-size: 1.5em;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.close-credits:hover {
+  background: rgba(212, 175, 55, 0.2);
+  border-color: rgba(212, 175, 55, 0.5);
+  transform: scale(1.1);
+}
+
+.credits-body {
+  padding: 20px 30px 30px 30px;
+}
+
+.company-info h3 {
+  color: #d4af37;
+  font-size: 1.3em;
+  margin-bottom: 10px;
+  margin-top: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  padding-bottom: 5px;
+  font-family: "Courier New", monospace;
+}
+
+.company-info h3:first-child {
+  margin-top: 0;
+}
+
+.company-info p {
+  color: #e0e0e0;
+  line-height: 1.6;
+  margin-bottom: 15px;
+  font-size: 0.95em;
+  font-family: "Courier New", monospace;
+}
+
+.team-credits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 15px;
+}
+
+.credit-role {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 45%;
+}
+
+.credit-role .role {
+  color: #d4af37;
+  font-weight: bold;
+  font-size: 0.9em;
+  width: 100%;
+  font-family: "Courier New", monospace;
+}
+
+.credit-role .name {
+  color: #e0e0e0;
+  font-size: 0.9em;
+  font-style: italic;
+  font-family: "Courier New", monospace;
+}
+
+.company-tagline {
+  text-align: center;
+  margin-top: 25px;
+  padding: 15px;
+  background: rgba(212, 175, 55, 0.1);
+  border-radius: 10px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.company-tagline em {
+  color: #d4af37;
+  font-size: 1.1em;
+  font-weight: bold;
+  font-family: "Courier New", monospace;
+}
+
 @media (max-width: 1200px) {
   .level-button {
     margin: 0 10px;
@@ -444,6 +640,13 @@
   .level-instructions {
     font-size: 16px;
     padding: 0 40px;
+  }
+
+  .credits-button {
+    top: 20px;
+    right: 20px;
+    font-size: 12px;
+    padding: 8px 16px;
   }
 }
 
@@ -473,6 +676,34 @@
   .player-points {
     font-size: 18px;
   }
+
+  .credits-button {
+    top: 15px;
+    right: 15px;
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+
+  .credits-content {
+    width: 95%;
+    max-height: 85vh;
+  }
+
+  .credits-header {
+    padding: 20px 20px 15px 20px;
+  }
+
+  .credits-body {
+    padding: 15px 20px 20px 20px;
+  }
+
+  .company-logo {
+    max-width: 100px;
+  }
+
+  .credits-header h2 {
+    font-size: 1.6em;
+  }
 }
 
 @media (max-width: 480px) {
@@ -497,6 +728,41 @@
   .level-label {
     font-size: 14px;
   }
+
+  .credits-button {
+    top: 10px;
+    right: 10px;
+    font-size: 10px;
+    padding: 5px 10px;
+  }
+
+  .credits-content {
+    width: 98%;
+    max-height: 90vh;
+  }
+
+  .credits-header {
+    padding: 15px 15px 10px 15px;
+  }
+
+  .credits-body {
+    padding: 10px 15px 15px 15px;
+  }
+
+  .company-logo {
+    max-width: 80px;
+  }
+
+  .credits-header h2 {
+    font-size: 1.4em;
+  }
+
+  .credit-role {
+    flex-direction: column;
+    gap: 5px;
+    text-align: center;
+    width: 100%;
+  }
 }
 
 .level-button:focus {
@@ -508,10 +774,21 @@
   filter: drop-shadow(0 0 0 3px rgba(76, 175, 80, 0.5));
 }
 
+.credits-button:focus {
+  outline: 2px solid #4caf50;
+  outline-offset: 4px;
+}
+
+.close-credits:focus {
+  outline: 3px solid #d4af37;
+  outline-offset: 3px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .level-button,
   .level-sock-image,
-  .level-select-logo {
+  .level-select-logo,
+  .credits-button {
     animation: none !important;
     transition: none !important;
   }
@@ -527,6 +804,18 @@
 
   .easter-drop-zone:hover {
     transform: none !important;
+  }
+
+  .credits-content {
+    transition: none !important;
+  }
+
+  .credits-modal {
+    transition: none !important;
+  }
+
+  .close-credits {
+    transition: none !important;
   }
 }
 
@@ -549,6 +838,15 @@
   .easter-drop-zone {
     border-color: white;
   }
+
+  .credits-content {
+    border: 3px solid #fff;
+  }
+
+  .credits-button {
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid white;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -563,5 +861,11 @@
         rgba(138, 43, 226, 0.08) 0%,
         transparent 50%
       );
+  }
+}
+
+@media print {
+  .credits-modal {
+    display: none !important;
   }
 }

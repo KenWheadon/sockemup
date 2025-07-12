@@ -11,7 +11,14 @@ class MatchScreen extends Screen {
     this.sockPileHover = false;
     this.matchStreak = 0;
     this.lastMatchTime = 0;
-    this.lastTimeWarning = 0;
+    this.timeWarningPlayed = false;
+    this.countdownTickPlayed = false;
+
+    // Velocity tracking for throwing
+    this.dragHistory = [];
+    this.maxDragHistoryLength = 5;
+    this.velocityScale = 12; // Scale factor for throw velocity - increased significantly
+    this.maxThrowVelocity = 45; // Maximum throw velocity - increased for more dramatic throws
   }
 
   createLayoutCache() {
@@ -54,12 +61,21 @@ class MatchScreen extends Screen {
     this.sockPileHover = false;
     this.matchStreak = 0;
     this.lastMatchTime = 0;
-    this.lastTimeWarning = 0;
+    this.timeWarningPlayed = false;
+    this.countdownTickPlayed = false;
+    this.dragHistory = [];
 
     // Start match music
-    if (this.game.audioManager) {
-      this.game.audioManager.playMusic("match-music");
-    }
+    console.log("🎵 Match screen setup - starting match music");
+    this.game.audioManager.playMusic("match-music", true, 0.3);
+  }
+
+  cleanup() {
+    super.cleanup();
+
+    // Stop match music when leaving match screen
+    console.log("🎵 Match screen cleanup - stopping match music");
+    this.game.audioManager.stopMusic();
   }
 
   onResize() {
@@ -127,6 +143,15 @@ class MatchScreen extends Screen {
       this.dragOffset = { x: x - sock.x, y: y - sock.y };
       this.isDragging = true;
 
+      // Initialize drag history for velocity tracking
+      this.dragHistory = [
+        {
+          x: x,
+          y: y,
+          timestamp: Date.now(),
+        },
+      ];
+
       this.dropZones.forEach((zone) => {
         if (zone.sock === sock) {
           zone.sock = null;
@@ -144,20 +169,68 @@ class MatchScreen extends Screen {
       this.draggedSock.y = y - this.dragOffset.y;
       this.draggedSock.vx = 0;
       this.draggedSock.vy = 0;
+
+      // Track drag history for velocity calculation
+      const currentTime = Date.now();
+      this.dragHistory.push({
+        x: x,
+        y: y,
+        timestamp: currentTime,
+      });
+
+      // Keep only recent history
+      if (this.dragHistory.length > this.maxDragHistoryLength) {
+        this.dragHistory.shift();
+      }
+
+      // Remove old entries (older than 150ms for more responsive throwing)
+      this.dragHistory = this.dragHistory.filter(
+        (entry) => currentTime - entry.timestamp < 150
+      );
     }
 
     this.updateHoverEffects(x, y);
   }
 
-  updateHoverEffects(x, y) {
-    const oldSockPileHover = this.sockPileHover;
-    this.sockPileHover = this.sockManager.checkSockPileClick(x, y);
-
-    // Play hover sound when starting to hover over sock pile
-    if (this.sockPileHover && !oldSockPileHover && this.game.audioManager) {
-      this.game.audioManager.playSound("button-hover", 0.2);
+  calculateThrowVelocity() {
+    if (this.dragHistory.length < 2) {
+      return { x: 0, y: 0 };
     }
 
+    // Use the most recent entries to calculate velocity
+    const recent = this.dragHistory.slice(-2); // Use last 2 entries for more responsive throwing
+    if (recent.length < 2) {
+      return { x: 0, y: 0 };
+    }
+
+    const startEntry = recent[0];
+    const endEntry = recent[recent.length - 1];
+
+    const deltaTime = endEntry.timestamp - startEntry.timestamp;
+    if (deltaTime === 0) {
+      return { x: 0, y: 0 };
+    }
+
+    const deltaX = endEntry.x - startEntry.x;
+    const deltaY = endEntry.y - startEntry.y;
+
+    // Calculate velocity (pixels per millisecond, then scale)
+    let vx = (deltaX / deltaTime) * this.velocityScale;
+    let vy = (deltaY / deltaTime) * this.velocityScale;
+
+    // Apply velocity limits
+    const magnitude = Math.sqrt(vx * vx + vy * vy);
+    if (magnitude > this.maxThrowVelocity) {
+      const scale = this.maxThrowVelocity / magnitude;
+      vx *= scale;
+      vy *= scale;
+    }
+
+    return { x: vx, y: vy };
+  }
+
+  updateHoverEffects(x, y) {
+    this.sockPileHover = this.sockManager.checkSockPileClick(x, y);
     this.dropZoneHover = null;
 
     if (this.draggedSock) {
@@ -191,30 +264,24 @@ class MatchScreen extends Screen {
           this.physics.snapToDropZone(sock, zone);
           snapped = true;
           this.createSnapEffect(zone);
-
-          // Play snap sound
-          if (this.game.audioManager) {
-            this.game.audioManager.playSound("snap-to-zone");
-          }
         } else {
-          this.physics.applySockThrow(sock, {
-            x: (Math.random() - 0.5) * 10,
-            y: (Math.random() - 0.5) * 10,
-          });
+          // Zone occupied, throw the sock with calculated velocity
+          const throwVelocity = this.calculateThrowVelocity();
+          this.physics.applySockThrow(sock, throwVelocity);
         }
       }
     });
 
     if (!snapped) {
-      this.physics.applySockThrow(sock, {
-        x: (Math.random() - 0.5) * 8,
-        y: (Math.random() - 0.5) * 8,
-      });
+      // Not near a drop zone, throw the sock with calculated velocity
+      const throwVelocity = this.calculateThrowVelocity();
+      this.physics.applySockThrow(sock, throwVelocity);
     }
 
     this.draggedSock = null;
     this.isDragging = false;
     this.dropZoneHover = null;
+    this.dragHistory = [];
     this.checkForMatches();
   }
 
@@ -222,14 +289,15 @@ class MatchScreen extends Screen {
     const newSock = this.sockManager.shootSockFromPile();
     if (!newSock) return;
 
-    // Play sock shoot sound
-    if (this.game.audioManager) {
-      this.game.audioManager.playSound("sock-shoot");
-    }
+    // Play pile click sound
+    this.game.audioManager.playSound("pile-click", false, 0.4);
   }
 
   createSnapEffect(zone) {
     zone.glowEffect = 20;
+
+    // Play snap-to-zone sound
+    this.game.audioManager.playSound("snap-to-zone", false, 0.3);
   }
 
   checkForMatches() {
@@ -248,9 +316,12 @@ class MatchScreen extends Screen {
           this.game.addSockballToQueue(matchedSockType);
 
           // Play match sound
-          if (this.game.audioManager) {
-            this.game.audioManager.playSound("sock-match");
-          }
+          this.game.audioManager.playSound("easter-egg-match", false, 0.5);
+
+          // Play points gained sound with slight delay
+          setTimeout(() => {
+            this.game.audioManager.playSound("points-gained", false, 0.4);
+          }, 500);
 
           this.startMatchAnimation(pairZones[0].sock, pairZones[1].sock);
           pairZones[0].sock = null;
@@ -287,9 +358,7 @@ class MatchScreen extends Screen {
 
   handleMismatch(sock1, sock2) {
     // Play mismatch sound
-    if (this.game.audioManager) {
-      this.game.audioManager.playSound("sock-mismatch");
-    }
+    this.game.audioManager.playSound("easter-egg-mismatch", false, 0.6);
 
     // Create mismatch particle effects
     this.sockManager.createMismatchEffect(sock1, sock2);
@@ -316,11 +385,6 @@ class MatchScreen extends Screen {
   }
 
   createMismatchShake() {
-    // Play screen shake sound
-    if (this.game.audioManager) {
-      this.game.audioManager.playSound("screen-shake", 0.4);
-    }
-
     // More intense shake for mismatch
     const canvas = this.game.canvas;
     const originalTransform = canvas.style.transform;
@@ -350,11 +414,6 @@ class MatchScreen extends Screen {
   }
 
   createScreenShake() {
-    // Play screen shake sound
-    if (this.game.audioManager) {
-      this.game.audioManager.playSound("screen-shake", 0.3);
-    }
-
     // Simple screen shake effect by temporarily adjusting canvas transform
     const canvas = this.game.canvas;
     const originalTransform = canvas.style.transform;
@@ -380,21 +439,24 @@ class MatchScreen extends Screen {
   }
 
   onUpdate(deltaTime) {
-    const timeDecrement = (0.25 / 60) * (deltaTime / 16.67);
+    // Fixed timer: Convert deltaTime from milliseconds to seconds and subtract directly
+    // This makes the timer independent of framerate
+    const timeDecrement = deltaTime / 1000; // Convert milliseconds to seconds
     this.game.timeRemaining -= timeDecrement;
 
-    // Play time warning sounds
-    const timeValue = Math.floor(this.game.timeRemaining);
+    // Handle countdown audio
+    const timeValue = Math.max(0, Math.floor(this.game.timeRemaining));
     if (timeValue <= 10 && timeValue > 0) {
-      if (timeValue !== this.lastTimeWarning) {
-        this.lastTimeWarning = timeValue;
-        if (this.game.audioManager) {
-          if (timeValue <= 5) {
-            this.game.audioManager.playSound("time-warning");
-          } else {
-            this.game.audioManager.playSound("countdown-tick");
-          }
-        }
+      if (!this.timeWarningPlayed) {
+        this.timeWarningPlayed = true;
+        // Play countdown tick sound for last 10 seconds
+        this.game.audioManager.playSound("countdown-tick", false, 0.3);
+      }
+
+      // Play tick sound every second during countdown
+      if (timeValue !== this.lastCountdownTick) {
+        this.lastCountdownTick = timeValue;
+        this.game.audioManager.playSound("countdown-tick", false, 0.3);
       }
     }
 

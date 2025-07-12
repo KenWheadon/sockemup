@@ -69,15 +69,8 @@ class SockManager {
   }
 
   createShootEffect(sock) {
-    // Play pile click sound
-    if (this.game.audioManager) {
-      this.game.audioManager.playSound("pile-click");
-    }
-
-    // Play particle burst sound
-    if (this.game.audioManager) {
-      this.game.audioManager.playSound("particle-burst", 0.3);
-    }
+    // Play particle burst sound for shooting effect
+    this.game.audioManager.playSound("particle-burst", false, 0.2);
 
     for (let i = 0; i < 6; i++) {
       this.particleEffects.push({
@@ -94,6 +87,9 @@ class SockManager {
   }
 
   createMismatchEffect(sock1, sock2) {
+    // Play particle burst sound for mismatch effect
+    this.game.audioManager.playSound("particle-burst", false, 0.3);
+
     // Create red/orange particle effects for mismatch
     const centerX = (sock1.x + sock2.x) / 2;
     const centerY = (sock1.y + sock2.y) / 2;
@@ -202,6 +198,9 @@ class SockManager {
   }
 
   createMatchStartEffect(animation) {
+    // Play particle burst sound for match start effect
+    this.game.audioManager.playSound("particle-burst", false, 0.4);
+
     const colors = ["#FFD700", "#FF69B4", "#00CED1", "#98FB98", "#DDA0DD"];
     const particleSpread = this.game.getScaledValue(80);
     const particleSize = this.game.getScaledValue(3);
@@ -325,18 +324,18 @@ class SockManager {
 
       if (animation.phase === "entrance") {
         animation.entranceTimer += timeMultiplier;
-        const entranceProgress = animation.entranceTimer / 60;
+        const entranceProgress = animation.entranceTimer / 40;
 
         const pulse = Math.sin(animation.entranceTimer * 0.15) * 0.1;
         animation.scale =
           2 + pulse * this.easeInOutSine(Math.min(entranceProgress, 1));
 
-        if (animation.entranceTimer >= 60) {
+        if (animation.entranceTimer >= 40) {
           animation.phase = "traveling";
           animation.progress = 0;
         }
       } else if (animation.phase === "traveling") {
-        animation.progress += 0.012 * timeMultiplier;
+        animation.progress += 0.025 * timeMultiplier;
 
         const scaleProgress = this.easeOutCubic(animation.progress);
         animation.scale = 1.2 - scaleProgress * 0.4;
@@ -371,10 +370,8 @@ class SockManager {
   }
 
   createArrivalEffect(x, y) {
-    // Play points gained sound
-    if (this.game.audioManager) {
-      this.game.audioManager.playSound("points-gained");
-    }
+    // Play particle burst sound for sockball arrival
+    this.game.audioManager.playSound("particle-burst", false, 0.3);
 
     const colors = ["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#FFEAA7"];
     const particleSpread = this.game.getScaledValue(60);

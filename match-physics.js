@@ -7,6 +7,12 @@ class MatchPhysics {
     this.minVelocity = 0.05;
     this.bounceRestitution = 0.4;
     this.rotationFriction = 0.98;
+
+    // Audio cooldown to prevent sound spam
+    this.lastBounceSound = 0;
+    this.bounceAudioCooldown = 200; // milliseconds
+    this.lastCollisionSound = 0;
+    this.collisionAudioCooldown = 300; // milliseconds
   }
 
   updateBounds() {
@@ -53,26 +59,45 @@ class MatchPhysics {
   checkBounds(sock) {
     const halfWidth = sock.width / 2;
     const halfHeight = sock.height / 2;
+    let bounced = false;
 
     if (sock.x - halfWidth <= this.bounds.left) {
       sock.x = this.bounds.left + halfWidth;
       sock.vx = Math.abs(sock.vx) * this.bounceRestitution;
+      bounced = true;
       this.createBounceEffect(sock);
     } else if (sock.x + halfWidth >= this.bounds.right) {
       sock.x = this.bounds.right - halfWidth;
       sock.vx = -Math.abs(sock.vx) * this.bounceRestitution;
+      bounced = true;
       this.createBounceEffect(sock);
     }
 
     if (sock.y - halfHeight <= this.bounds.top) {
       sock.y = this.bounds.top + halfHeight;
       sock.vy = Math.abs(sock.vy) * this.bounceRestitution;
+      bounced = true;
       this.createBounceEffect(sock);
     } else if (sock.y + halfHeight >= this.bounds.bottom) {
       sock.y = this.bounds.bottom - halfHeight;
       sock.vy = -Math.abs(sock.vy) * this.bounceRestitution;
+      bounced = true;
       this.createBounceEffect(sock);
     }
+
+    // Play bounce sound with cooldown to prevent spam
+    if (bounced && this.shouldPlayBounceSound()) {
+      this.game.audioManager.playSound("sock-bounce", false, 0.2);
+      this.lastBounceSound = Date.now();
+    }
+  }
+
+  shouldPlayBounceSound() {
+    return Date.now() - this.lastBounceSound > this.bounceAudioCooldown;
+  }
+
+  shouldPlayCollisionSound() {
+    return Date.now() - this.lastCollisionSound > this.collisionAudioCooldown;
   }
 
   createBounceEffect(sock) {
@@ -84,10 +109,18 @@ class MatchPhysics {
   }
 
   applySockThrow(sock, throwVelocity) {
-    sock.vx = throwVelocity.x + (Math.random() - 0.5) * 1;
-    sock.vy = throwVelocity.y + (Math.random() - 0.5) * 1;
-    sock.rotationSpeed = (Math.random() - 0.5) * 0.1;
-    sock.glowEffect = 10;
+    // Apply the calculated throw velocity directly
+    sock.vx = throwVelocity.x;
+    sock.vy = throwVelocity.y;
+
+    // Add rotation based on throw velocity for more realistic physics
+    const velocityMagnitude = Math.sqrt(
+      throwVelocity.x * throwVelocity.x + throwVelocity.y * throwVelocity.y
+    );
+    sock.rotationSpeed = (velocityMagnitude / 10) * (Math.random() - 0.5) * 0.3;
+
+    // Add glow effect based on throw strength
+    sock.glowEffect = Math.min(20, Math.max(5, velocityMagnitude * 1.5));
   }
 
   getDropZoneDistance(sock, dropZone) {
@@ -131,14 +164,29 @@ class MatchPhysics {
       sock2.x += separationX;
       sock2.y += separationY;
 
-      const force = 3;
+      // Enhanced collision physics for thrown socks
+      const combinedVelocity = Math.sqrt(
+        sock1.vx * sock1.vx +
+          sock1.vy * sock1.vy +
+          (sock2.vx * sock2.vx + sock2.vy * sock2.vy)
+      );
+      const force = Math.max(3, combinedVelocity * 0.5);
+
       sock1.vx -= cos * force;
       sock1.vy -= sin * force;
       sock2.vx += cos * force;
       sock2.vy += sin * force;
 
-      sock1.glowEffect = 15;
-      sock2.glowEffect = 15;
+      // Enhanced glow effect based on collision strength
+      const glowIntensity = Math.min(25, Math.max(10, combinedVelocity * 2));
+      sock1.glowEffect = glowIntensity;
+      sock2.glowEffect = glowIntensity;
+
+      // Play collision sound with cooldown to prevent spam
+      if (this.shouldPlayCollisionSound()) {
+        this.game.audioManager.playSound("particle-burst", false, 0.1);
+        this.lastCollisionSound = Date.now();
+      }
 
       return true;
     }
