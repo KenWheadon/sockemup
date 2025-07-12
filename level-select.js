@@ -27,6 +27,16 @@ class LevelSelect extends Screen {
       maintainAspectRatio: true,
     };
 
+    // You Win graphic configuration
+    this.YOU_WIN_CONFIG = {
+      maxWidth: 300 * 1.25,
+      maxHeight: 120 * 1.25,
+      offsetY: 225,
+      glowIntensity: 15,
+      pulseSpeed: 0.005,
+      maintainAspectRatio: true,
+    };
+
     // Level selection state
     this.hoveredLevel = -1;
     this.selectedLevel = -1;
@@ -114,6 +124,11 @@ class LevelSelect extends Screen {
     }
   }
 
+  // Check if all levels are completed
+  areAllLevelsCompleted() {
+    return this.game.completedLevels.every((completed) => completed);
+  }
+
   createLayoutCache() {
     const baseLayout = super.createLayoutCache();
     const canvasWidth = this.game.getCanvasWidth();
@@ -121,6 +136,8 @@ class LevelSelect extends Screen {
 
     // Calculate Martha image size
     this.calculateMarthaImageSize();
+
+    const youWinImageSize = this.calculateYouWinImageSize();
 
     return {
       ...baseLayout,
@@ -155,6 +172,14 @@ class LevelSelect extends Screen {
       creditsButtonY: this.game.getScaledValue(50),
       creditsButtonWidth: this.game.getScaledValue(100),
       creditsButtonHeight: this.game.getScaledValue(40),
+      // You Win graphic positioning
+      // You Win graphic positioning
+      youWinX: canvasWidth / 2,
+      youWinY:
+        canvasHeight / 2 +
+        this.game.getScaledValue(this.YOU_WIN_CONFIG.offsetY),
+      youWinWidth: youWinImageSize.width,
+      youWinHeight: youWinImageSize.height,
     };
   }
 
@@ -979,12 +1004,86 @@ class LevelSelect extends Screen {
     return null;
   }
 
+  calculateYouWinImageSize() {
+    const youWinImage = this.game.images["you-win.png"];
+    if (!youWinImage) {
+      return { width: 0, height: 0 };
+    }
+
+    const maxWidth = this.game.getScaledValue(this.YOU_WIN_CONFIG.maxWidth);
+    const maxHeight = this.game.getScaledValue(this.YOU_WIN_CONFIG.maxHeight);
+
+    if (this.YOU_WIN_CONFIG.maintainAspectRatio) {
+      const aspectRatio = youWinImage.width / youWinImage.height;
+
+      if (aspectRatio > maxWidth / maxHeight) {
+        // Image is wider relative to the max dimensions - fit to width
+        return {
+          width: maxWidth,
+          height: maxWidth / aspectRatio,
+        };
+      } else {
+        // Image is taller relative to the max dimensions - fit to height
+        return {
+          width: maxHeight * aspectRatio,
+          height: maxHeight,
+        };
+      }
+    } else {
+      return {
+        width: maxWidth,
+        height: maxHeight,
+      };
+    }
+  }
+
+  renderYouWinGraphic(ctx) {
+    const layout = this.layoutCache;
+
+    if (this.game.images["you-win.png"]) {
+      ctx.save();
+
+      // Create pulsing glow effect
+      const time = Date.now();
+      const pulseIntensity =
+        Math.sin(time * this.YOU_WIN_CONFIG.pulseSpeed) * 0.3 + 0.7;
+
+      // Add golden glow
+      ctx.shadowColor = "#FFD700";
+      ctx.shadowBlur = this.game.getScaledValue(
+        this.YOU_WIN_CONFIG.glowIntensity * pulseIntensity
+      );
+
+      // Slight scale pulsing
+      const scale = 1 + (pulseIntensity - 0.7) * 0.05; // Very subtle scale change
+      ctx.translate(layout.youWinX, layout.youWinY);
+      ctx.scale(scale, scale);
+
+      // Draw the you win graphic
+      ctx.drawImage(
+        this.game.images["you-win.png"],
+        -layout.youWinWidth / 2,
+        -layout.youWinHeight / 2,
+        layout.youWinWidth,
+        layout.youWinHeight
+      );
+
+      ctx.restore();
+    }
+  }
+
   onRender(ctx) {
     this.renderBackground(ctx);
     this.renderLogo(ctx);
     this.renderInstructions(ctx);
     this.renderMarthaImage(ctx);
     this.renderLevelButtons(ctx);
+
+    // Render "You Win" graphic if all levels are completed
+    if (this.areAllLevelsCompleted()) {
+      this.renderYouWinGraphic(ctx);
+    }
+
     this.renderPlayerStats(ctx);
     this.renderCreditsButton(ctx);
 
