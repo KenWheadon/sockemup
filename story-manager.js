@@ -42,11 +42,17 @@ class StoryManager {
   hide() {
     this.showingStory = false;
     this.currentSlideIndex = 0;
+
+    // Mark story as viewed
+    if (!this.game.storyViewed) {
+      this.game.storyViewed = true;
+      this.game.saveGameData();
+    }
   }
 
   // Check if we should show story (first time playing)
   shouldShowStory() {
-    return !this.game.tutorialCompleted;
+    return !this.game.storyViewed;
   }
 
   calculateLayout() {

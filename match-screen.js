@@ -14,6 +14,10 @@ class MatchScreen extends Screen {
     this.timeWarningPlayed = false;
     this.countdownTickPlayed = false;
 
+    // Track if sock pile has been clicked this level
+    this.sockPileClicked = false;
+    this.pulseTimer = 0;
+
     // Velocity tracking for throwing
     this.dragHistory = [];
     this.maxDragHistoryLength = 5;
@@ -41,8 +45,12 @@ class MatchScreen extends Screen {
       sockPileX: canvasWidth / 2,
       sockPileY: canvasHeight - this.game.getScaledValue(100),
       sockPileSize: this.game.getScaledValue(120),
-      sockBallsOffsetX: this.game.getScaledValue(80),
-      sockBallsOffsetY: this.game.getScaledValue(-50),
+      // Sockballs counter in far bottom-left
+      sockBallsX: this.game.getScaledValue(80),
+      sockBallsY: canvasHeight - this.game.getScaledValue(60),
+      // Instructions beside sock pile
+      instructionArrowX: canvasWidth / 2 + this.game.getScaledValue(90),
+      instructionArrowY: canvasHeight - this.game.getScaledValue(100),
       streakX: canvasWidth - this.game.getScaledValue(20),
       streakY: this.game.getScaledValue(30),
     };
@@ -63,6 +71,8 @@ class MatchScreen extends Screen {
     this.lastMatchTime = 0;
     this.timeWarningPlayed = false;
     this.countdownTickPlayed = false;
+    this.sockPileClicked = false;
+    this.pulseTimer = 0;
     this.dragHistory = [];
 
     // Start match music
@@ -289,6 +299,11 @@ class MatchScreen extends Screen {
     const newSock = this.sockManager.shootSockFromPile();
     if (!newSock) return;
 
+    // Mark sock pile as clicked
+    if (!this.sockPileClicked) {
+      this.sockPileClicked = true;
+    }
+
     // Play pile click sound
     this.game.audioManager.playSound("pile-click", false, 0.4);
   }
@@ -439,10 +454,17 @@ class MatchScreen extends Screen {
   }
 
   onUpdate(deltaTime) {
+    // Update pulse timer for sock pile animation
+    if (!this.sockPileClicked) {
+      this.pulseTimer += deltaTime * 0.005; // Slow pulse
+    }
+
     // Fixed timer: Convert deltaTime from milliseconds to seconds and subtract directly
-    // This makes the timer independent of framerate
-    const timeDecrement = deltaTime / 1000; // Convert milliseconds to seconds
-    this.game.timeRemaining -= timeDecrement;
+    // This makes the timer independent of framerate - but only if pile has been clicked
+    if (this.sockPileClicked) {
+      const timeDecrement = deltaTime / 1000; // Convert milliseconds to seconds
+      this.game.timeRemaining -= timeDecrement;
+    }
 
     // Handle countdown audio
     const timeValue = Math.max(0, Math.floor(this.game.timeRemaining));
@@ -490,6 +512,13 @@ class MatchScreen extends Screen {
   }
 
   onRender(ctx) {
+    // Apply pulse effect to sock pile if not clicked yet
+    if (!this.sockPileClicked) {
+      this.sockManager.sockPile.pulseEffect = this.pulseTimer;
+    } else {
+      this.sockManager.sockPile.pulseEffect = 0;
+    }
+
     this.sockManager.renderSockPile(ctx);
     this.renderDropZonePairBoxes(ctx);
     this.renderDropZones(ctx);
@@ -610,18 +639,40 @@ class MatchScreen extends Screen {
       align: "left",
     });
 
-    // Instructions at bottom left
+    // Instructions beside sock pile with arrow
+    const instructionText = "Click sock pile";
     this.renderText(
       ctx,
-      "Click sock pile - make sock pairs",
-      layout.instructionX,
-      layout.instructionY,
+      instructionText,
+      layout.instructionArrowX + this.game.getScaledValue(60),
+      layout.instructionArrowY,
       {
         fontSize: layout.bodyFontSize,
-        color: "rgba(255, 255, 255, 0.8)",
+        color: "rgba(255, 255, 255, 0.9)",
         align: "left",
       }
     );
+
+    // Draw arrow pointing at sock pile
+    ctx.save();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.lineWidth = this.game.getScaledValue(3);
+
+    // Arrow line
+    ctx.beginPath();
+    ctx.moveTo(layout.instructionArrowX + this.game.getScaledValue(50), layout.instructionArrowY);
+    ctx.lineTo(layout.instructionArrowX, layout.instructionArrowY);
+    ctx.stroke();
+
+    // Arrowhead
+    ctx.beginPath();
+    ctx.moveTo(layout.instructionArrowX, layout.instructionArrowY);
+    ctx.lineTo(layout.instructionArrowX + this.game.getScaledValue(15), layout.instructionArrowY - this.game.getScaledValue(8));
+    ctx.lineTo(layout.instructionArrowX + this.game.getScaledValue(15), layout.instructionArrowY + this.game.getScaledValue(8));
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
 
     // Time at top center
     const timeValue = Math.max(0, Math.floor(this.game.timeRemaining));
@@ -664,9 +715,9 @@ class MatchScreen extends Screen {
       weight: "bold",
     });
 
-    // Sock balls counter near sock pile
-    const sockBallsX = layout.sockPileX + layout.sockBallsOffsetX;
-    const sockBallsY = layout.sockPileY + layout.sockBallsOffsetY;
+    // Sock balls counter in far bottom-left
+    const sockBallsX = layout.sockBallsX;
+    const sockBallsY = layout.sockBallsY;
 
     ctx.save();
     ctx.fillStyle = "rgba(0, 0, 0, 0.6)";

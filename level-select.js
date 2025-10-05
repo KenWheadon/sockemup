@@ -94,6 +94,20 @@ class LevelSelect extends Screen {
       wiggleAmount: 3,
       hoverScale: 1.1,
       clickScale: 0.95,
+      // Grid layout for 9 levels
+      columns: 3,
+      rows: 3,
+      horizontalSpacing: 150,
+      verticalSpacing: 120,
+    };
+
+    // Story replay button
+    this.storyReplayButton = {
+      x: 0,
+      y: 0,
+      width: 120,
+      height: 40,
+      hovered: false,
     };
   }
 
@@ -142,20 +156,26 @@ class LevelSelect extends Screen {
     return {
       ...baseLayout,
       logoX: canvasWidth / 2,
-      logoY: this.game.getScaledValue(150),
+      logoY: this.game.getScaledValue(80),
       logoWidth: this.game.getScaledValue(200),
       logoHeight: this.game.getScaledValue(100),
-      instructionsY: this.game.getScaledValue(220),
-      levelSpacing: this.game.getScaledValue(this.levelConfig.baseSpacing),
+      instructionsY: this.game.getScaledValue(150),
       levelButtonSize: this.game.getScaledValue(
         this.levelConfig.baseButtonSize
       ),
-      levelAreaY: canvasHeight / 2 + this.game.getScaledValue(50),
-      levelStartX:
+      levelHorizontalSpacing: this.game.getScaledValue(
+        this.levelConfig.horizontalSpacing
+      ),
+      levelVerticalSpacing: this.game.getScaledValue(
+        this.levelConfig.verticalSpacing
+      ),
+      // Grid layout calculation
+      levelGridStartX:
         canvasWidth / 2 -
-        ((GameConfig.LEVELS.length - 1) *
-          this.game.getScaledValue(this.levelConfig.baseSpacing)) /
+        ((this.levelConfig.columns - 1) *
+          this.game.getScaledValue(this.levelConfig.horizontalSpacing)) /
           2,
+      levelGridStartY: canvasHeight / 2 - this.game.getScaledValue(80),
       marthaX: this.game.getScaledValue(this.MARTHA_CONFIG.offsetX),
       marthaY: this.game.getScaledValue(this.MARTHA_CONFIG.offsetY),
       marthaWidth: this.marthaImageSize.width,
@@ -172,6 +192,11 @@ class LevelSelect extends Screen {
       creditsButtonY: this.game.getScaledValue(50),
       creditsButtonWidth: this.game.getScaledValue(100),
       creditsButtonHeight: this.game.getScaledValue(40),
+      // Story replay button (bottom left)
+      storyReplayButtonX: this.game.getScaledValue(70),
+      storyReplayButtonY: canvasHeight - this.game.getScaledValue(50),
+      storyReplayButtonWidth: this.game.getScaledValue(120),
+      storyReplayButtonHeight: this.game.getScaledValue(40),
       // You Win graphic positioning
       // You Win graphic positioning
       youWinX: canvasWidth / 2,
@@ -579,6 +604,19 @@ class LevelSelect extends Screen {
       this.game.audioManager.playSound("button-hover", false, 0.3);
     }
 
+    // Update story replay button hover
+    const layout = this.layoutCache;
+    // Button position is centered, so calculate top-left corner
+    const buttonX = layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2;
+    const buttonY = layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2;
+
+    this.storyReplayButton.hovered = this.isPointInRect(x, y, {
+      x: buttonX,
+      y: buttonY,
+      width: layout.storyReplayButtonWidth,
+      height: layout.storyReplayButtonHeight,
+    });
+
     if (this.isDragging && this.dragSock) {
       // Direct position assignment - no bounds checking at all
       this.dragSock.x = x - this.dragOffset.x;
@@ -660,6 +698,13 @@ class LevelSelect extends Screen {
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.handleClick(x, y);
       return;
+    }
+
+    // Check if story replay button was clicked
+    if (this.storyReplayButton.hovered) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.game.storyManager.show();
+      return true;
     }
 
     // Check if credits button was clicked
@@ -995,8 +1040,12 @@ class LevelSelect extends Screen {
     const layout = this.layoutCache;
 
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
-      const levelX = layout.levelStartX + i * layout.levelSpacing;
-      const levelY = layout.levelAreaY;
+      // Calculate grid position
+      const col = i % this.levelConfig.columns;
+      const row = Math.floor(i / this.levelConfig.columns);
+
+      const levelX = layout.levelGridStartX + col * layout.levelHorizontalSpacing;
+      const levelY = layout.levelGridStartY + row * layout.levelVerticalSpacing;
       const halfSize = layout.levelButtonSize / 2;
 
       if (
@@ -1109,6 +1158,7 @@ class LevelSelect extends Screen {
 
     this.renderPlayerStats(ctx);
     this.renderCreditsButton(ctx);
+    this.renderStoryReplayButton(ctx);
 
     if (this.easterEggActive) {
       this.renderEasterDropZones(ctx);
@@ -1271,6 +1321,75 @@ class LevelSelect extends Screen {
     );
   }
 
+  renderStoryReplayButton(ctx) {
+    const layout = this.layoutCache;
+    const button = this.storyReplayButton;
+
+    // Draw button background
+    ctx.save();
+    ctx.fillStyle = button.hovered
+      ? "rgba(65, 105, 225, 0.8)"
+      : "rgba(65, 105, 225, 0.6)";
+    ctx.strokeStyle = button.hovered
+      ? "rgba(100, 149, 237, 1)"
+      : "rgba(100, 149, 237, 0.5)";
+    ctx.lineWidth = 2;
+
+    const x = layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2;
+    const y = layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2;
+    const radius = this.game.getScaledValue(5);
+
+    // Rounded rectangle
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + layout.storyReplayButtonWidth - radius, y);
+    ctx.quadraticCurveTo(
+      x + layout.storyReplayButtonWidth,
+      y,
+      x + layout.storyReplayButtonWidth,
+      y + radius
+    );
+    ctx.lineTo(
+      x + layout.storyReplayButtonWidth,
+      y + layout.storyReplayButtonHeight - radius
+    );
+    ctx.quadraticCurveTo(
+      x + layout.storyReplayButtonWidth,
+      y + layout.storyReplayButtonHeight,
+      x + layout.storyReplayButtonWidth - radius,
+      y + layout.storyReplayButtonHeight
+    );
+    ctx.lineTo(x + radius, y + layout.storyReplayButtonHeight);
+    ctx.quadraticCurveTo(
+      x,
+      y + layout.storyReplayButtonHeight,
+      x,
+      y + layout.storyReplayButtonHeight - radius
+    );
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+
+    ctx.fill();
+    ctx.stroke();
+
+    // Add glow effect when hovered
+    if (button.hovered) {
+      ctx.shadowColor = "rgba(100, 149, 237, 0.8)";
+      ctx.shadowBlur = this.game.getScaledValue(10);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    // Draw button text
+    this.renderText(ctx, "📖 Story", layout.storyReplayButtonX, layout.storyReplayButtonY, {
+      fontSize: layout.smallFontSize,
+      color: "white",
+      weight: "bold",
+    });
+  }
+
   renderEasterDropZones(ctx) {
     const layout = this.layoutCache;
 
@@ -1419,24 +1538,42 @@ class LevelSelect extends Screen {
       ctx,
       "Select Level",
       layout.centerX,
-      layout.levelAreaY - this.game.getScaledValue(50) - 60,
+      layout.levelGridStartY - this.game.getScaledValue(50),
       { fontSize: layout.titleFontSize, weight: "bold" }
     );
 
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
-      this.renderLevelButton(
-        ctx,
-        i,
-        layout.levelStartX + i * layout.levelSpacing
-      );
+      // Calculate grid position (3x3 grid)
+      const col = i % this.levelConfig.columns;
+      const row = Math.floor(i / this.levelConfig.columns);
+
+      const x = layout.levelGridStartX + col * layout.levelHorizontalSpacing;
+      const y = layout.levelGridStartY + row * layout.levelVerticalSpacing;
+
+      this.renderLevelButton(ctx, i, x, y);
     }
   }
 
-  renderLevelButton(ctx, levelIndex, x) {
+  renderLevelButton(ctx, levelIndex, x, y) {
     const layout = this.layoutCache;
-    const y = layout.levelAreaY;
     const buttonSize = layout.levelButtonSize;
-    const sockImageName = `sock${levelIndex + 1}.png`;
+
+    // Use sock 1-3 for levels 7-9, with color filters
+    let sockImageIndex = levelIndex + 1;
+    let colorFilter = null;
+
+    if (levelIndex === 6) { // Level 7 - use sock 1 with purple tint
+      sockImageIndex = 1;
+      colorFilter = "hue-rotate(270deg) saturate(1.5)";
+    } else if (levelIndex === 7) { // Level 8 - use sock 2 with orange tint
+      sockImageIndex = 2;
+      colorFilter = "hue-rotate(30deg) saturate(1.3)";
+    } else if (levelIndex === 8) { // Level 9 - use sock 3 with cyan tint
+      sockImageIndex = 3;
+      colorFilter = "hue-rotate(180deg) saturate(1.4)";
+    }
+
+    const sockImageName = `sock${sockImageIndex}.png`;
     const sockImage = this.game.images[sockImageName];
 
     const isUnlocked = this.game.unlockedLevels[levelIndex];
@@ -1459,6 +1596,12 @@ class LevelSelect extends Screen {
     if (isUnlocked) {
       if (isCompleted) {
         if (sockImage) {
+          // Apply color filter for levels 7-9
+          if (colorFilter) {
+            ctx.save();
+            ctx.filter = colorFilter;
+          }
+
           ctx.drawImage(
             sockImage,
             x - halfSize,
@@ -1466,6 +1609,10 @@ class LevelSelect extends Screen {
             buttonSize,
             buttonSize
           );
+
+          if (colorFilter) {
+            ctx.restore();
+          }
         }
 
         if (this.game.images["star.png"]) {
@@ -1488,6 +1635,12 @@ class LevelSelect extends Screen {
             this.animationFrame * this.levelConfig.wiggleSpeed + levelIndex
           ) * this.game.getScaledValue(this.levelConfig.wiggleAmount);
         if (sockImage) {
+          // Apply color filter for levels 7-9
+          if (colorFilter) {
+            ctx.save();
+            ctx.filter = colorFilter;
+          }
+
           ctx.drawImage(
             sockImage,
             x - halfSize + wiggle,
@@ -1495,6 +1648,10 @@ class LevelSelect extends Screen {
             buttonSize,
             buttonSize
           );
+
+          if (colorFilter) {
+            ctx.restore();
+          }
         }
       }
 
@@ -1509,7 +1666,16 @@ class LevelSelect extends Screen {
       if (sockImage) {
         ctx.save();
         ctx.globalAlpha = isAffordable ? 0.7 : 0.3;
-        ctx.filter = isAffordable ? "brightness(0.6)" : "brightness(0.3)";
+
+        // Combine color filter with brightness for levels 7-9
+        if (colorFilter) {
+          ctx.filter = isAffordable
+            ? `${colorFilter} brightness(0.6)`
+            : `${colorFilter} brightness(0.3)`;
+        } else {
+          ctx.filter = isAffordable ? "brightness(0.6)" : "brightness(0.3)";
+        }
+
         ctx.drawImage(
           sockImage,
           x - halfSize,

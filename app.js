@@ -29,6 +29,7 @@ class SockGame {
     this.currentDifficulty = 0; // Base difficulty (0 = normal, 1 = +1, etc.)
     this.achievements = this.initializeAchievements();
     this.tutorialCompleted = false;
+    this.storyViewed = false; // Track if intro story has been shown
     this.bestScores = {}; // Format: {levelIndex: {difficulty: score}}
     this.perfectCatchStats = {
       total: 0,
@@ -444,6 +445,7 @@ class SockGame {
       // Phase 1.2 - Load enhanced save data
       this.currentDifficulty = data.currentDifficulty || 0;
       this.tutorialCompleted = data.tutorialCompleted || false;
+      this.storyViewed = data.storyViewed || false;
       this.bestScores = data.bestScores || {};
       this.perfectCatchStats = data.perfectCatchStats || {
         total: 0,
@@ -477,6 +479,7 @@ class SockGame {
       // Phase 1.2 - Save enhanced data
       currentDifficulty: this.currentDifficulty,
       tutorialCompleted: this.tutorialCompleted,
+      storyViewed: this.storyViewed,
       bestScores: this.bestScores,
       perfectCatchStats: this.perfectCatchStats,
       achievements: this.achievements,
