@@ -2007,6 +2007,7 @@ class LevelSelect extends Screen {
           y + this.game.getScaledValue(85),
           { fontSize: layout.smallFontSize, color: "#90EE90", weight: "bold" }
         );
+        ctx.restore();
       }
     }
 
