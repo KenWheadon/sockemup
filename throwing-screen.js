@@ -46,6 +46,15 @@ class ThrowingScreen extends Screen {
     // Audio state tracking
     this.levelCompleteAudioPlayed = false;
     this.gameOverAudioPlayed = false;
+
+    // Exit button
+    this.exitButton = {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      hovered: false,
+    };
   }
 
   setup() {
@@ -150,6 +159,18 @@ class ThrowingScreen extends Screen {
     this.mouseX = x;
     this.mouseY = y;
 
+    // Check exit button hover
+    if (
+      x >= this.exitButton.x &&
+      x <= this.exitButton.x + this.exitButton.width &&
+      y >= this.exitButton.y &&
+      y <= this.exitButton.y + this.exitButton.height
+    ) {
+      this.exitButton.hovered = true;
+    } else {
+      this.exitButton.hovered = false;
+    }
+
     if (this.canThrow()) {
       this.updateTrajectoryPreview(x, y);
       this.showTrajectory = true;
@@ -161,6 +182,17 @@ class ThrowingScreen extends Screen {
   }
 
   onClick(x, y) {
+    // Check exit button click
+    if (
+      x >= this.exitButton.x &&
+      x <= this.exitButton.x + this.exitButton.width &&
+      y >= this.exitButton.y &&
+      y <= this.exitButton.y + this.exitButton.height
+    ) {
+      this.exitToLevelSelect();
+      return true;
+    }
+
     if (this.canThrow()) {
       this.throwSockball(x, y);
       return true;
@@ -394,6 +426,12 @@ class ThrowingScreen extends Screen {
     this.messageText = text;
     this.messageType = type;
     this.messageTimer = duration;
+  }
+
+  exitToLevelSelect() {
+    console.log("🚪 Exiting throwing screen to level select");
+    this.game.audioManager.playSound("click", false, 0.5);
+    this.game.changeGameState("menu");
   }
 
   onUpdate(deltaTime) {
@@ -703,6 +741,78 @@ class ThrowingScreen extends Screen {
         baseline: "middle",
       }
     );
+
+    // Exit button in top-right
+    const exitButtonX = this.game.getCanvasWidth() - this.game.getScaledValue(80);
+    const exitButtonY = this.game.getScaledValue(30);
+    const exitButtonWidth = this.game.getScaledValue(120);
+    const exitButtonHeight = this.game.getScaledValue(40);
+
+    const exitButtonLeft = exitButtonX - exitButtonWidth / 2;
+    const exitButtonTop = exitButtonY - exitButtonHeight / 2;
+
+    // Update exit button bounds for click detection
+    this.exitButton.x = exitButtonLeft;
+    this.exitButton.y = exitButtonTop;
+    this.exitButton.width = exitButtonWidth;
+    this.exitButton.height = exitButtonHeight;
+
+    ctx.save();
+    // Button background
+    ctx.fillStyle = this.exitButton.hovered
+      ? "rgba(220, 60, 60, 0.9)"
+      : "rgba(180, 40, 40, 0.8)";
+    ctx.strokeStyle = this.exitButton.hovered
+      ? "rgba(255, 100, 100, 0.8)"
+      : "rgba(255, 80, 80, 0.5)";
+    ctx.lineWidth = 2;
+
+    // Rounded rectangle
+    const radius = this.game.getScaledValue(8);
+    ctx.beginPath();
+    ctx.moveTo(exitButtonLeft + radius, exitButtonTop);
+    ctx.lineTo(exitButtonLeft + exitButtonWidth - radius, exitButtonTop);
+    ctx.arcTo(
+      exitButtonLeft + exitButtonWidth,
+      exitButtonTop,
+      exitButtonLeft + exitButtonWidth,
+      exitButtonTop + radius,
+      radius
+    );
+    ctx.lineTo(
+      exitButtonLeft + exitButtonWidth,
+      exitButtonTop + exitButtonHeight - radius
+    );
+    ctx.arcTo(
+      exitButtonLeft + exitButtonWidth,
+      exitButtonTop + exitButtonHeight,
+      exitButtonLeft + exitButtonWidth - radius,
+      exitButtonTop + exitButtonHeight,
+      radius
+    );
+    ctx.lineTo(exitButtonLeft + radius, exitButtonTop + exitButtonHeight);
+    ctx.arcTo(
+      exitButtonLeft,
+      exitButtonTop + exitButtonHeight,
+      exitButtonLeft,
+      exitButtonTop + exitButtonHeight - radius,
+      radius
+    );
+    ctx.lineTo(exitButtonLeft, exitButtonTop + radius);
+    ctx.arcTo(exitButtonLeft, exitButtonTop, exitButtonLeft + radius, exitButtonTop, radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Exit text
+    this.renderText(ctx, "Exit", exitButtonX, exitButtonY, {
+      fontSize: this.layoutCache.bodyFontSize,
+      align: "center",
+      color: "rgba(255, 255, 255, 0.9)",
+      weight: "bold",
+    });
+
+    ctx.restore();
   }
 
   renderMessage(ctx) {

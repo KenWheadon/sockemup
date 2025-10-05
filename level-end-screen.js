@@ -26,6 +26,13 @@ class LevelEndScreen extends Screen {
       hovered: false,
       pressed: false,
     };
+    this.exitButton = {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      hovered: false,
+    };
   }
 
   createLayoutCache() {
@@ -168,6 +175,10 @@ class LevelEndScreen extends Screen {
     const b = this.continueButton;
     b.hovered =
       x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height;
+
+    const e = this.exitButton;
+    e.hovered =
+      x >= e.x && x <= e.x + e.width && y >= e.y && y <= e.y + e.height;
   }
 
   onMouseDown(x, y) {
@@ -181,6 +192,12 @@ class LevelEndScreen extends Screen {
   }
 
   onClick(x, y) {
+    if (this.exitButton.hovered) {
+      this.game.audioManager.playSound("click", false, 0.5);
+      this.game.changeGameState("menu");
+      return;
+    }
+
     if (this.continueButton.hovered) {
       this.game.playerPoints += this.totalScore;
 
@@ -212,6 +229,7 @@ class LevelEndScreen extends Screen {
     this.renderMainContainer(ctx);
     this.renderContent(ctx);
     this.renderContinueButton(ctx);
+    this.renderExitButton(ctx);
     ctx.restore();
   }
 
@@ -360,6 +378,47 @@ class LevelEndScreen extends Screen {
       button.y + button.height / 2
     );
 
+    ctx.restore();
+  }
+
+  renderExitButton(ctx) {
+    const exitButtonX = this.game.getCanvasWidth() - this.game.getScaledValue(80);
+    const exitButtonY = this.game.getScaledValue(30);
+    const exitButtonWidth = this.game.getScaledValue(120);
+    const exitButtonHeight = this.game.getScaledValue(40);
+    const exitButtonLeft = exitButtonX - exitButtonWidth / 2;
+    const exitButtonTop = exitButtonY - exitButtonHeight / 2;
+
+    this.exitButton.x = exitButtonLeft;
+    this.exitButton.y = exitButtonTop;
+    this.exitButton.width = exitButtonWidth;
+    this.exitButton.height = exitButtonHeight;
+
+    ctx.save();
+    ctx.fillStyle = this.exitButton.hovered ? "rgba(220, 60, 60, 0.9)" : "rgba(180, 40, 40, 0.8)";
+    ctx.strokeStyle = this.exitButton.hovered ? "rgba(255, 100, 100, 0.8)" : "rgba(255, 80, 80, 0.5)";
+    ctx.lineWidth = 2;
+
+    const radius = this.game.getScaledValue(8);
+    ctx.beginPath();
+    ctx.moveTo(exitButtonLeft + radius, exitButtonTop);
+    ctx.lineTo(exitButtonLeft + exitButtonWidth - radius, exitButtonTop);
+    ctx.arcTo(exitButtonLeft + exitButtonWidth, exitButtonTop, exitButtonLeft + exitButtonWidth, exitButtonTop + radius, radius);
+    ctx.lineTo(exitButtonLeft + exitButtonWidth, exitButtonTop + exitButtonHeight - radius);
+    ctx.arcTo(exitButtonLeft + exitButtonWidth, exitButtonTop + exitButtonHeight, exitButtonLeft + exitButtonWidth - radius, exitButtonTop + exitButtonHeight, radius);
+    ctx.lineTo(exitButtonLeft + radius, exitButtonTop + exitButtonHeight);
+    ctx.arcTo(exitButtonLeft, exitButtonTop + exitButtonHeight, exitButtonLeft, exitButtonTop + exitButtonHeight - radius, radius);
+    ctx.lineTo(exitButtonLeft, exitButtonTop + radius);
+    ctx.arcTo(exitButtonLeft, exitButtonTop, exitButtonLeft + radius, exitButtonTop, radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.font = `bold ${this.game.getScaledValue(16)}px Courier New`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Exit", exitButtonX, exitButtonY);
     ctx.restore();
   }
 }

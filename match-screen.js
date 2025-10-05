@@ -27,6 +27,15 @@ class MatchScreen extends Screen {
       hovered: false,
     };
 
+    // Exit button
+    this.exitButton = {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      hovered: false,
+    };
+
     // Velocity tracking for throwing
     this.dragHistory = [];
     this.maxDragHistoryLength = 5;
@@ -67,6 +76,11 @@ class MatchScreen extends Screen {
       pauseButtonY: this.game.getScaledValue(30),
       pauseButtonWidth: this.game.getScaledValue(120),
       pauseButtonHeight: this.game.getScaledValue(40),
+      // Exit button next to pause button
+      exitButtonX: canvasWidth - this.game.getScaledValue(220),
+      exitButtonY: this.game.getScaledValue(30),
+      exitButtonWidth: this.game.getScaledValue(120),
+      exitButtonHeight: this.game.getScaledValue(40),
     };
   }
 
@@ -157,6 +171,19 @@ class MatchScreen extends Screen {
   onMouseDown(x, y) {
     const layout = this.layoutCache;
 
+    // Check exit button click
+    const exitButtonLeft = layout.exitButtonX - layout.exitButtonWidth / 2;
+    const exitButtonTop = layout.exitButtonY - layout.exitButtonHeight / 2;
+    if (
+      x >= exitButtonLeft &&
+      x <= exitButtonLeft + layout.exitButtonWidth &&
+      y >= exitButtonTop &&
+      y <= exitButtonTop + layout.exitButtonHeight
+    ) {
+      this.exitToLevelSelect();
+      return true;
+    }
+
     // Check pause button click
     const pauseButtonLeft = layout.pauseButtonX - layout.pauseButtonWidth / 2;
     const pauseButtonTop = layout.pauseButtonY - layout.pauseButtonHeight / 2;
@@ -212,6 +239,15 @@ class MatchScreen extends Screen {
 
   onMouseMove(x, y) {
     const layout = this.layoutCache;
+
+    // Update exit button hover
+    const exitButtonLeft = layout.exitButtonX - layout.exitButtonWidth / 2;
+    const exitButtonTop = layout.exitButtonY - layout.exitButtonHeight / 2;
+    this.exitButton.hovered =
+      x >= exitButtonLeft &&
+      x <= exitButtonLeft + layout.exitButtonWidth &&
+      y >= exitButtonTop &&
+      y <= exitButtonTop + layout.exitButtonHeight;
 
     // Update pause button hover
     const pauseButtonLeft = layout.pauseButtonX - layout.pauseButtonWidth / 2;
@@ -359,6 +395,12 @@ class MatchScreen extends Screen {
 
     // Play pile click sound
     this.game.audioManager.playSound("pile-click", false, 0.4);
+  }
+
+  exitToLevelSelect() {
+    console.log("🚪 Exiting match screen to level select");
+    this.game.audioManager.playSound("click", false, 0.5);
+    this.game.changeGameState("menu");
   }
 
   createSnapEffect(zone) {
@@ -834,6 +876,67 @@ class MatchScreen extends Screen {
       );
     }
 
+    // Exit button (left of pause button)
+    ctx.save();
+    const exitButtonLeft = layout.exitButtonX - layout.exitButtonWidth / 2;
+    const exitButtonTop = layout.exitButtonY - layout.exitButtonHeight / 2;
+
+    // Button background
+    ctx.fillStyle = this.exitButton.hovered
+      ? "rgba(220, 60, 60, 0.9)"
+      : "rgba(180, 40, 40, 0.8)";
+    ctx.strokeStyle = this.exitButton.hovered
+      ? "rgba(255, 100, 100, 0.8)"
+      : "rgba(255, 80, 80, 0.5)";
+    ctx.lineWidth = 2;
+
+    // Rounded rectangle
+    const radius = this.game.getScaledValue(8);
+    ctx.beginPath();
+    ctx.moveTo(exitButtonLeft + radius, exitButtonTop);
+    ctx.lineTo(exitButtonLeft + layout.exitButtonWidth - radius, exitButtonTop);
+    ctx.arcTo(
+      exitButtonLeft + layout.exitButtonWidth,
+      exitButtonTop,
+      exitButtonLeft + layout.exitButtonWidth,
+      exitButtonTop + radius,
+      radius
+    );
+    ctx.lineTo(
+      exitButtonLeft + layout.exitButtonWidth,
+      exitButtonTop + layout.exitButtonHeight - radius
+    );
+    ctx.arcTo(
+      exitButtonLeft + layout.exitButtonWidth,
+      exitButtonTop + layout.exitButtonHeight,
+      exitButtonLeft + layout.exitButtonWidth - radius,
+      exitButtonTop + layout.exitButtonHeight,
+      radius
+    );
+    ctx.lineTo(exitButtonLeft + radius, exitButtonTop + layout.exitButtonHeight);
+    ctx.arcTo(
+      exitButtonLeft,
+      exitButtonTop + layout.exitButtonHeight,
+      exitButtonLeft,
+      exitButtonTop + layout.exitButtonHeight - radius,
+      radius
+    );
+    ctx.lineTo(exitButtonLeft, exitButtonTop + radius);
+    ctx.arcTo(exitButtonLeft, exitButtonTop, exitButtonLeft + radius, exitButtonTop, radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Exit text
+    this.renderText(ctx, "Exit", layout.exitButtonX, layout.exitButtonY, {
+      fontSize: layout.bodyFontSize,
+      align: "center",
+      color: "rgba(255, 255, 255, 0.9)",
+      weight: "bold",
+    });
+
+    ctx.restore();
+
     // Pause button in top-right
     ctx.save();
     const pauseButtonLeft = layout.pauseButtonX - layout.pauseButtonWidth / 2;
@@ -847,7 +950,6 @@ class MatchScreen extends Screen {
     ctx.lineWidth = 2;
 
     // Rounded rectangle
-    const radius = this.game.getScaledValue(8);
     ctx.beginPath();
     ctx.moveTo(pauseButtonLeft + radius, pauseButtonTop);
     ctx.lineTo(pauseButtonLeft + layout.pauseButtonWidth - radius, pauseButtonTop);

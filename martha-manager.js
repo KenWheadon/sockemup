@@ -20,7 +20,7 @@ class MarthaManager {
     this.patternData = {};
     this.patternTimer = 0;
     this.patternSwitchTimer = 0;
-    this.patternSwitchInterval = 3000; // Switch patterns every 3 seconds
+    this.patternSwitchInterval = 6000; // Switch patterns every 6 seconds (doubled for consistency)
 
     // Animation state
     this.animationFrame = 0;
@@ -75,27 +75,28 @@ class MarthaManager {
       bottom: GameConfig.THROWING_BOUNDS.BOTTOM,
     };
 
-    // Enhanced AI improvement properties
-    this.edgeBuffer = 80; // Increased buffer distance from edge
-    this.centerAttraction = 0.003; // Slightly stronger center attraction
-    this.edgeRepulsion = 0.08; // Stronger edge repulsion
+    // Enhanced AI improvement properties - SMOOTHED
+    this.edgeBuffer = 100; // Larger buffer for gentler transitions
+    this.centerAttraction = 0.001; // Reduced for less aggressive pulling
+    this.edgeRepulsion = 0.04; // Reduced for smoother edge behavior
     this.lastEdgeHit = 0; // Timer to prevent rapid edge bouncing
-    this.edgeHitCooldown = 800; // Increased cooldown time
+    this.edgeHitCooldown = 1000; // Longer cooldown
 
     // Enhanced edge escape system
     this.isEscapingEdge = false;
     this.edgeEscapeTimer = 0;
-    this.edgeEscapeDuration = 1500; // Longer escape duration
+    this.edgeEscapeDuration = 2000; // Even longer for smoother escape
     this.edgeEscapeDirection = { x: 0, y: 0 };
-    this.edgeEscapeSpeed = 3; // Dedicated escape speed
+    this.edgeEscapeSpeed = 2; // Slower, smoother escape speed
 
-    // Movement prediction system
+    // Movement prediction system - SIMPLIFIED
     this.predictedPosition = { x: 0, y: 0 };
-    this.predictionSteps = 10;
+    this.predictionSteps = 5; // Reduced prediction complexity
 
-    // Momentum dampening for smoother movement
+    // Momentum dampening for smoother movement - IMPROVED
     this.momentum = { x: 0, y: 0 };
-    this.momentumDamping = 0.95;
+    this.momentumDamping = 0.92; // Slightly more dampening for smoothness
+    this.velocitySmoothing = 0.85; // New: Smooth velocity changes
 
     // Audio tracking
     this.hasPlayedAngrySound = false;
@@ -136,6 +137,7 @@ class MarthaManager {
     this.isEscapingEdge = false;
     this.edgeEscapeTimer = 0;
     this.momentum = { x: 0, y: 0 };
+    this.prevVelocity = null; // Reset velocity smoothing
 
     // Reset audio flags
     this.hasPlayedAngrySound = false;
@@ -397,61 +399,56 @@ class MarthaManager {
   }
 
   applyPredictiveEdgeRepulsion(timeMultiplier) {
-    // Use both current and predicted position for edge repulsion
-    const positions = [
-      { x: this.x, y: this.y, weight: 1.0 },
-      { x: this.predictedPosition.x, y: this.predictedPosition.y, weight: 0.5 },
-    ];
+    // Simplified: use only current position for smoother behavior
+    // Use linear repulsion instead of squared for gentler force
 
-    positions.forEach((pos) => {
-      // Left edge repulsion
-      if (pos.x < this.bounds.left + this.edgeBuffer) {
-        const distance = this.bounds.left + this.edgeBuffer - pos.x;
-        const repulsionForce =
-          Math.pow(distance / this.edgeBuffer, 2) * pos.weight;
-        this.velocity.x += repulsionForce * this.edgeRepulsion * timeMultiplier;
-      }
+    // Left edge repulsion
+    if (this.x < this.bounds.left + this.edgeBuffer) {
+      const distance = this.bounds.left + this.edgeBuffer - this.x;
+      const repulsionForce = distance / this.edgeBuffer; // Linear instead of squared
+      this.velocity.x += repulsionForce * this.edgeRepulsion * timeMultiplier;
+    }
 
-      // Right edge repulsion
-      if (pos.x > this.bounds.right - this.width - this.edgeBuffer) {
-        const distance =
-          pos.x - (this.bounds.right - this.width - this.edgeBuffer);
-        const repulsionForce =
-          Math.pow(distance / this.edgeBuffer, 2) * pos.weight;
-        this.velocity.x -= repulsionForce * this.edgeRepulsion * timeMultiplier;
-      }
+    // Right edge repulsion
+    if (this.x > this.bounds.right - this.width - this.edgeBuffer) {
+      const distance = this.x - (this.bounds.right - this.width - this.edgeBuffer);
+      const repulsionForce = distance / this.edgeBuffer; // Linear instead of squared
+      this.velocity.x -= repulsionForce * this.edgeRepulsion * timeMultiplier;
+    }
 
-      // Top edge repulsion
-      if (pos.y < this.bounds.top + this.edgeBuffer) {
-        const distance = this.bounds.top + this.edgeBuffer - pos.y;
-        const repulsionForce =
-          Math.pow(distance / this.edgeBuffer, 2) * pos.weight;
-        this.velocity.y += repulsionForce * this.edgeRepulsion * timeMultiplier;
-      }
+    // Top edge repulsion
+    if (this.y < this.bounds.top + this.edgeBuffer) {
+      const distance = this.bounds.top + this.edgeBuffer - this.y;
+      const repulsionForce = distance / this.edgeBuffer; // Linear instead of squared
+      this.velocity.y += repulsionForce * this.edgeRepulsion * timeMultiplier;
+    }
 
-      // Bottom edge repulsion
-      if (pos.y > this.bounds.bottom - this.height - this.edgeBuffer) {
-        const distance =
-          pos.y - (this.bounds.bottom - this.height - this.edgeBuffer);
-        const repulsionForce =
-          Math.pow(distance / this.edgeBuffer, 2) * pos.weight;
-        this.velocity.y -= repulsionForce * this.edgeRepulsion * timeMultiplier;
-      }
-    });
+    // Bottom edge repulsion
+    if (this.y > this.bounds.bottom - this.height - this.edgeBuffer) {
+      const distance = this.y - (this.bounds.bottom - this.height - this.edgeBuffer);
+      const repulsionForce = distance / this.edgeBuffer; // Linear instead of squared
+      this.velocity.y -= repulsionForce * this.edgeRepulsion * timeMultiplier;
+    }
   }
 
   applyMomentumDampening(timeMultiplier) {
-    // Add momentum to smooth out movement
-    this.momentum.x += this.velocity.x * 0.1;
-    this.momentum.y += this.velocity.y * 0.1;
+    // Simplified momentum system - just smooth the velocity changes
+    // Store previous velocity
+    if (!this.prevVelocity) {
+      this.prevVelocity = { x: this.velocity.x, y: this.velocity.y };
+    }
 
-    // Apply momentum dampening
-    this.momentum.x *= this.momentumDamping;
-    this.momentum.y *= this.momentumDamping;
+    // Interpolate between previous and current velocity for smoothness
+    const smoothX = this.prevVelocity.x * (1 - this.velocitySmoothing) + this.velocity.x * this.velocitySmoothing;
+    const smoothY = this.prevVelocity.y * (1 - this.velocitySmoothing) + this.velocity.y * this.velocitySmoothing;
 
-    // Blend velocity with momentum for smoother movement
-    this.velocity.x = this.velocity.x * 0.8 + this.momentum.x * 0.2;
-    this.velocity.y = this.velocity.y * 0.8 + this.momentum.y * 0.2;
+    // Update previous velocity
+    this.prevVelocity.x = smoothX;
+    this.prevVelocity.y = smoothY;
+
+    // Apply smoothed velocity
+    this.velocity.x = smoothX;
+    this.velocity.y = smoothY;
   }
 
   updateHorizontalPattern(timeMultiplier) {
