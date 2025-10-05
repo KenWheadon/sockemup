@@ -113,6 +113,15 @@ class LevelSelect extends Screen {
       height: 40,
       hovered: false,
     };
+
+    // Credits button
+    this.creditsButton = {
+      x: 0,
+      y: 0,
+      width: 120,
+      height: 40,
+      hovered: false,
+    };
   }
 
   calculateMarthaImageSize() {
@@ -179,7 +188,7 @@ class LevelSelect extends Screen {
         ((this.levelConfig.columns - 1) *
           this.game.getScaledValue(this.levelConfig.horizontalSpacing)) /
           2,
-      levelGridStartY: canvasHeight / 2 - this.game.getScaledValue(80),
+      levelGridStartY: canvasHeight / 2 - this.game.getScaledValue(30),
       marthaX: this.game.getScaledValue(this.MARTHA_CONFIG.offsetX),
       marthaY: this.game.getScaledValue(this.MARTHA_CONFIG.offsetY),
       marthaWidth: this.marthaImageSize.width,
@@ -189,16 +198,17 @@ class LevelSelect extends Screen {
       dropZone1Y: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetY1),
       dropZone2X: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetX),
       dropZone2Y: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetY2),
+      statsX: this.game.getScaledValue(110),
       statsY: canvasHeight - this.game.getScaledValue(80),
       statsPanelWidth: this.game.getScaledValue(200),
       statsPanelHeight: this.game.getScaledValue(40),
       creditsButtonX: canvasWidth - this.game.getScaledValue(80),
       creditsButtonY: this.game.getScaledValue(50),
-      creditsButtonWidth: this.game.getScaledValue(100),
+      creditsButtonWidth: this.game.getScaledValue(120),
       creditsButtonHeight: this.game.getScaledValue(40),
-      // Story replay button (bottom left)
-      storyReplayButtonX: this.game.getScaledValue(70),
-      storyReplayButtonY: canvasHeight - this.game.getScaledValue(50),
+      // Story replay button (below credits)
+      storyReplayButtonX: canvasWidth - this.game.getScaledValue(80),
+      storyReplayButtonY: this.game.getScaledValue(110),
       storyReplayButtonWidth: this.game.getScaledValue(120),
       storyReplayButtonHeight: this.game.getScaledValue(40),
       // You Win graphic positioning
@@ -479,6 +489,40 @@ class LevelSelect extends Screen {
       }
     }
 
+    // Update button hover animations (story and credits)
+    this.storyReplayButton.hoverProgress = this.storyReplayButton.hoverProgress || 0;
+    this.creditsButton.hoverProgress = this.creditsButton.hoverProgress || 0;
+
+    const buttonAnimSpeed = 0.008;
+
+    // Story button animation
+    const storyTarget = this.storyReplayButton.hovered ? 1 : 0;
+    if (this.storyReplayButton.hoverProgress < storyTarget) {
+      this.storyReplayButton.hoverProgress = Math.min(
+        this.storyReplayButton.hoverProgress + buttonAnimSpeed * deltaTime,
+        storyTarget
+      );
+    } else if (this.storyReplayButton.hoverProgress > storyTarget) {
+      this.storyReplayButton.hoverProgress = Math.max(
+        this.storyReplayButton.hoverProgress - buttonAnimSpeed * deltaTime,
+        storyTarget
+      );
+    }
+
+    // Credits button animation
+    const creditsTarget = this.creditsButton.hovered ? 1 : 0;
+    if (this.creditsButton.hoverProgress < creditsTarget) {
+      this.creditsButton.hoverProgress = Math.min(
+        this.creditsButton.hoverProgress + buttonAnimSpeed * deltaTime,
+        creditsTarget
+      );
+    } else if (this.creditsButton.hoverProgress > creditsTarget) {
+      this.creditsButton.hoverProgress = Math.max(
+        this.creditsButton.hoverProgress - buttonAnimSpeed * deltaTime,
+        creditsTarget
+      );
+    }
+
     if (this.easterEggActive) {
       this.updateMenuSocks(deltaTime);
     }
@@ -636,14 +680,25 @@ class LevelSelect extends Screen {
     // Update story replay button hover
     const layout = this.layoutCache;
     // Button position is centered, so calculate top-left corner
-    const buttonX = layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2;
-    const buttonY = layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2;
+    const storyButtonX = layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2;
+    const storyButtonY = layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2;
 
     this.storyReplayButton.hovered = this.isPointInRect(x, y, {
-      x: buttonX,
-      y: buttonY,
+      x: storyButtonX,
+      y: storyButtonY,
       width: layout.storyReplayButtonWidth,
       height: layout.storyReplayButtonHeight,
+    });
+
+    // Update credits button hover
+    const creditsButtonX = layout.creditsButtonX - layout.creditsButtonWidth / 2;
+    const creditsButtonY = layout.creditsButtonY - layout.creditsButtonHeight / 2;
+
+    this.creditsButton.hovered = this.isPointInRect(x, y, {
+      x: creditsButtonX,
+      y: creditsButtonY,
+      width: layout.creditsButtonWidth,
+      height: layout.creditsButtonHeight,
     });
 
     if (this.isDragging && this.dragSock) {
@@ -1312,27 +1367,94 @@ class LevelSelect extends Screen {
 
   renderCreditsButton(ctx) {
     const layout = this.layoutCache;
+    const button = this.creditsButton;
 
-    // Draw button background
+    // Use animated hover progress
+    const hoverProgress = button.hoverProgress || 0;
+
+    // Draw button background with enhanced styling (matching story button)
     ctx.save();
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
-    ctx.strokeStyle = "rgba(255, 215, 0, 0.3)";
-    ctx.lineWidth = 2;
-    ctx.filter = "blur(5px)";
 
-    ctx.fillRect(
-      layout.creditsButtonX - layout.creditsButtonWidth / 2,
-      layout.creditsButtonY - layout.creditsButtonHeight / 2,
-      layout.creditsButtonWidth,
-      layout.creditsButtonHeight
-    );
+    const x = layout.creditsButtonX - layout.creditsButtonWidth / 2;
+    const y = layout.creditsButtonY - layout.creditsButtonHeight / 2;
+    const radius = this.game.getScaledValue(8);
 
-    ctx.strokeRect(
-      layout.creditsButtonX - layout.creditsButtonWidth / 2,
-      layout.creditsButtonY - layout.creditsButtonHeight / 2,
-      layout.creditsButtonWidth,
-      layout.creditsButtonHeight
+    // Background gradient with smooth transition
+    const gradient = ctx.createLinearGradient(
+      x,
+      y,
+      x,
+      y + layout.creditsButtonHeight
     );
+    const baseColor1 = { r: 80, g: 120, b: 200, a: 0.85 };
+    const hoverColor1 = { r: 100, g: 150, b: 255, a: 0.95 };
+    const baseColor2 = { r: 50, g: 85, b: 180, a: 0.85 };
+    const hoverColor2 = { r: 65, g: 105, b: 225, a: 0.95 };
+
+    const r1 = baseColor1.r + (hoverColor1.r - baseColor1.r) * hoverProgress;
+    const g1 = baseColor1.g + (hoverColor1.g - baseColor1.g) * hoverProgress;
+    const b1 = baseColor1.b + (hoverColor1.b - baseColor1.b) * hoverProgress;
+    const a1 = baseColor1.a + (hoverColor1.a - baseColor1.a) * hoverProgress;
+
+    const r2 = baseColor2.r + (hoverColor2.r - baseColor2.r) * hoverProgress;
+    const g2 = baseColor2.g + (hoverColor2.g - baseColor2.g) * hoverProgress;
+    const b2 = baseColor2.b + (hoverColor2.b - baseColor2.b) * hoverProgress;
+    const a2 = baseColor2.a + (hoverColor2.a - baseColor2.a) * hoverProgress;
+
+    gradient.addColorStop(0, `rgba(${r1}, ${g1}, ${b1}, ${a1})`);
+    gradient.addColorStop(1, `rgba(${r2}, ${g2}, ${b2}, ${a2})`);
+    ctx.fillStyle = gradient;
+
+    // Add glow with smooth transition
+    if (hoverProgress > 0) {
+      ctx.shadowColor = "rgba(100, 150, 255, 0.6)";
+      ctx.shadowBlur = this.game.getScaledValue(12) * hoverProgress;
+    }
+
+    const strokeOpacity = 0.6 + 0.3 * hoverProgress;
+    ctx.strokeStyle = `rgba(${100 + 50 * hoverProgress}, ${149 + 51 * hoverProgress}, 237, ${strokeOpacity})`;
+    ctx.lineWidth = this.game.getScaledValue(3);
+
+    // Rounded rectangle
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + layout.creditsButtonWidth - radius, y);
+    ctx.quadraticCurveTo(
+      x + layout.creditsButtonWidth,
+      y,
+      x + layout.creditsButtonWidth,
+      y + radius
+    );
+    ctx.lineTo(
+      x + layout.creditsButtonWidth,
+      y + layout.creditsButtonHeight - radius
+    );
+    ctx.quadraticCurveTo(
+      x + layout.creditsButtonWidth,
+      y + layout.creditsButtonHeight,
+      x + layout.creditsButtonWidth - radius,
+      y + layout.creditsButtonHeight
+    );
+    ctx.lineTo(x + radius, y + layout.creditsButtonHeight);
+    ctx.quadraticCurveTo(
+      x,
+      y + layout.creditsButtonHeight,
+      x,
+      y + layout.creditsButtonHeight - radius
+    );
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+
+    ctx.fill();
+    ctx.stroke();
+
+    // Add glow effect with smooth transition
+    if (hoverProgress > 0) {
+      ctx.shadowColor = "rgba(100, 149, 237, 0.8)";
+      ctx.shadowBlur = this.game.getScaledValue(10) * hoverProgress;
+      ctx.stroke();
+    }
 
     ctx.restore();
 
@@ -1347,6 +1469,18 @@ class LevelSelect extends Screen {
         color: "white",
         weight: "bold",
       }
+    );
+  }
+
+  isCreditsButtonHovered() {
+    const layout = this.layoutCache;
+    const mouseX = this.game.mouseX || 0;
+    const mouseY = this.game.mouseY || 0;
+    return (
+      mouseX >= layout.creditsButtonX - layout.creditsButtonWidth / 2 &&
+      mouseX <= layout.creditsButtonX + layout.creditsButtonWidth / 2 &&
+      mouseY >= layout.creditsButtonY - layout.creditsButtonHeight / 2 &&
+      mouseY <= layout.creditsButtonY + layout.creditsButtonHeight / 2
     );
   }
 
@@ -1587,7 +1721,7 @@ class LevelSelect extends Screen {
       ctx,
       "Select Level",
       layout.centerX,
-      layout.levelGridStartY - this.game.getScaledValue(50),
+      layout.levelGridStartY - this.game.getScaledValue(120),
       { fontSize: layout.titleFontSize, weight: "bold" }
     );
 
@@ -1683,6 +1817,16 @@ class LevelSelect extends Screen {
         ctx.shadowBlur = this.game.getScaledValue(15) * hoverProgress;
       }
 
+      ctx.beginPath();
+      ctx.arc(x, y, bgRadius, 0, Math.PI * 2);
+      ctx.stroke();
+    } else if (isAffordable) {
+      // Affordable locked level - pulsing gold highlight
+      const affordablePulse = Math.sin(pulseTimer * 2) * 0.3 + 0.7;
+      ctx.strokeStyle = `rgba(255, 215, 0, ${affordablePulse})`;
+      ctx.lineWidth = this.game.getScaledValue(4);
+      ctx.shadowColor = "#FFD700";
+      ctx.shadowBlur = this.game.getScaledValue(20) * affordablePulse;
       ctx.beginPath();
       ctx.arc(x, y, bgRadius, 0, Math.PI * 2);
       ctx.stroke();
@@ -1871,7 +2015,7 @@ class LevelSelect extends Screen {
 
   renderPlayerStats(ctx) {
     const layout = this.layoutCache;
-    const panelX = layout.centerX - layout.statsPanelWidth / 2;
+    const panelX = layout.statsX - layout.statsPanelWidth / 2;
     const panelY = layout.statsY;
 
     this.renderPanel(
@@ -1885,7 +2029,7 @@ class LevelSelect extends Screen {
     this.renderText(
       ctx,
       `Points: ${this.game.playerPoints}`,
-      layout.centerX,
+      layout.statsX,
       panelY + layout.statsPanelHeight / 2,
       { fontSize: layout.headerFontSize, color: "#FFD700", weight: "bold" }
     );
