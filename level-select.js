@@ -262,6 +262,11 @@ class LevelSelect extends Screen {
 
     this.setupEasterDropZones();
     this.setupCreditsModal();
+
+    // Phase 4.1 - Show story intro on first launch
+    if (this.game.storyManager.shouldShowStory()) {
+      this.game.storyManager.show();
+    }
   }
 
   cleanup() {
@@ -414,6 +419,12 @@ class LevelSelect extends Screen {
   }
 
   onUpdate(deltaTime) {
+    // Phase 4.1 - Update story manager
+    if (this.game.storyManager.showingStory) {
+      this.game.storyManager.update(deltaTime);
+      return; // Don't update other elements when story is showing
+    }
+
     if (this.easterEggActive) {
       this.updateMenuSocks(deltaTime);
     }
@@ -551,6 +562,12 @@ class LevelSelect extends Screen {
   }
 
   onMouseMove(x, y) {
+    // Phase 4.1 - Handle story manager mouse move
+    if (this.game.storyManager.showingStory) {
+      this.game.storyManager.handleMouseMove(x, y);
+      return;
+    }
+
     const previousHoveredLevel = this.hoveredLevel;
     this.hoveredLevel = this.getLevelAtPosition(x, y);
 
@@ -639,6 +656,12 @@ class LevelSelect extends Screen {
   }
 
   onClick(x, y) {
+    // Phase 4.1 - Handle story manager clicks
+    if (this.game.storyManager.showingStory) {
+      this.game.storyManager.handleClick(x, y);
+      return;
+    }
+
     // Check if credits button was clicked
     if (this.isCreditsButtonClicked(x, y)) {
       this.showCredits();
@@ -1097,6 +1120,11 @@ class LevelSelect extends Screen {
 
     if (this.easterEggActive) {
       this.renderMenuSocks(ctx);
+    }
+
+    // Phase 4.1 - Render story manager (on top of everything)
+    if (this.game.storyManager.showingStory) {
+      this.game.storyManager.render(ctx);
     }
   }
 

@@ -25,8 +25,29 @@ class SockGame {
     this.unlockedLevels = [...GameConfig.INITIAL_UNLOCKED_LEVELS];
     this.completedLevels = [...GameConfig.INITIAL_COMPLETED_LEVELS];
 
+    // Phase 1.2 - Enhanced save system properties
+    this.currentDifficulty = 0; // Base difficulty (0 = normal, 1 = +1, etc.)
+    this.achievements = this.initializeAchievements();
+    this.tutorialCompleted = false;
+    this.bestScores = {}; // Format: {levelIndex: {difficulty: score}}
+    this.perfectCatchStats = {
+      total: 0,
+      byLevel: {},
+    };
+
+    // Phase 3.3 - Difficulty completion tracking
+    // Format: {levelIndex: [completedDifficulties]}
+    this.difficultyCompletions = {};
+    this.highestUnlockedDifficulty = 0; // 0-4 for base through +4
+
     // Initialize audio manager
     this.audioManager = new AudioManager();
+
+    // Phase 2.2 - Initialize feedback manager
+    this.feedbackManager = new FeedbackManager(this);
+
+    // Phase 4.1 - Initialize story manager
+    this.storyManager = new StoryManager(this);
 
     // Initialize sockball queue
     this.sockballQueue = [];
@@ -296,6 +317,87 @@ class SockGame {
     this.canvas.addEventListener("mouseup", (e) => this.handleMouseUp(e));
     this.canvas.addEventListener("click", (e) => this.handleClick(e));
     window.addEventListener("resize", () => this.handleResize());
+
+    // Phase 1.3 - Keyboard listener for pause (P or ESC)
+    window.addEventListener("keydown", (e) => this.handleKeyDown(e));
+
+    // Phase 2.3 - Touch event listeners for tablet support
+    this.canvas.addEventListener("touchstart", (e) => this.handleTouchStart(e), {
+      passive: false,
+    });
+    this.canvas.addEventListener("touchmove", (e) => this.handleTouchMove(e), {
+      passive: false,
+    });
+    this.canvas.addEventListener("touchend", (e) => this.handleTouchEnd(e), {
+      passive: false,
+    });
+  }
+
+  // Phase 2.3 - Touch event handlers
+  handleTouchStart(e) {
+    e.preventDefault(); // Prevent default touch behavior
+
+    if (e.touches.length > 0) {
+      const touch = e.touches[0];
+      const coords = this.screenToCanvas(touch.clientX, touch.clientY);
+      this.handleMouseDown({ clientX: touch.clientX, clientY: touch.clientY });
+    }
+  }
+
+  handleTouchMove(e) {
+    e.preventDefault(); // Prevent scrolling
+
+    if (e.touches.length > 0) {
+      const touch = e.touches[0];
+      const coords = this.screenToCanvas(touch.clientX, touch.clientY);
+      this.handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
+    }
+  }
+
+  handleTouchEnd(e) {
+    e.preventDefault();
+
+    // Get the last touch position from changedTouches
+    if (e.changedTouches.length > 0) {
+      const touch = e.changedTouches[0];
+      const coords = this.screenToCanvas(touch.clientX, touch.clientY);
+
+      // Call both mouseup and click to simulate full click behavior
+      this.handleMouseUp({ clientX: touch.clientX, clientY: touch.clientY });
+      this.handleClick({ clientX: touch.clientX, clientY: touch.clientY });
+    }
+  }
+
+  // Phase 1.3 - Handle keyboard input
+  handleKeyDown(e) {
+    // Pause/Resume with P or ESC key
+    if (e.key === "p" || e.key === "P" || e.key === "Escape") {
+      if (
+        this.gameState === "matching" ||
+        this.gameState === "throwing"
+      ) {
+        const currentScreen =
+          this.gameState === "matching" ? this.matchScreen : this.throwingScreen;
+        currentScreen.togglePause();
+        e.preventDefault();
+      }
+    }
+
+    // Quit to menu with Q key (only when paused)
+    if (e.key === "q" || e.key === "Q") {
+      const currentScreen =
+        this.gameState === "matching"
+          ? this.matchScreen
+          : this.gameState === "throwing"
+          ? this.throwingScreen
+          : null;
+
+      if (currentScreen && currentScreen.isPaused) {
+        currentScreen.resume(); // Resume before changing state
+        this.changeGameState("menu");
+        e.preventDefault();
+      }
+    }
   }
 
   handleResize() {
@@ -314,6 +416,19 @@ class SockGame {
     }
   }
 
+  // Phase 1.2 - Initialize achievements from config
+  initializeAchievements() {
+    const achievements = {};
+    for (const key in GameConfig.ACHIEVEMENTS) {
+      achievements[GameConfig.ACHIEVEMENTS[key].id] = {
+        ...GameConfig.ACHIEVEMENTS[key],
+        unlocked: false,
+        unlockedAt: null,
+      };
+    }
+    return achievements;
+  }
+
   loadGameData() {
     const savedData = localStorage.getItem("sockGameData");
     if (savedData) {
@@ -325,6 +440,32 @@ class SockGame {
       this.completedLevels = data.completedLevels || [
         ...GameConfig.INITIAL_COMPLETED_LEVELS,
       ];
+
+      // Phase 1.2 - Load enhanced save data
+      this.currentDifficulty = data.currentDifficulty || 0;
+      this.tutorialCompleted = data.tutorialCompleted || false;
+      this.bestScores = data.bestScores || {};
+      this.perfectCatchStats = data.perfectCatchStats || {
+        total: 0,
+        byLevel: {},
+      };
+
+      // Phase 3.3 - Load difficulty completions
+      this.difficultyCompletions = data.difficultyCompletions || {};
+      this.highestUnlockedDifficulty = data.highestUnlockedDifficulty || 0;
+
+      // Load achievements (merge with defaults for new achievements)
+      if (data.achievements) {
+        this.achievements = this.initializeAchievements();
+        for (const id in data.achievements) {
+          if (this.achievements[id]) {
+            this.achievements[id] = {
+              ...this.achievements[id],
+              ...data.achievements[id],
+            };
+          }
+        }
+      }
     }
   }
 
@@ -333,13 +474,70 @@ class SockGame {
       playerPoints: this.playerPoints,
       unlockedLevels: this.unlockedLevels,
       completedLevels: this.completedLevels,
+      // Phase 1.2 - Save enhanced data
+      currentDifficulty: this.currentDifficulty,
+      tutorialCompleted: this.tutorialCompleted,
+      bestScores: this.bestScores,
+      perfectCatchStats: this.perfectCatchStats,
+      achievements: this.achievements,
+      // Phase 3.3 - Save difficulty completions
+      difficultyCompletions: this.difficultyCompletions,
+      highestUnlockedDifficulty: this.highestUnlockedDifficulty,
     };
     localStorage.setItem("sockGameData", JSON.stringify(data));
   }
 
-  startLevel(levelIndex) {
+  // Phase 3.3 - Mark level as completed at current difficulty
+  markLevelCompleted(levelIndex, difficulty) {
+    if (!this.difficultyCompletions[levelIndex]) {
+      this.difficultyCompletions[levelIndex] = [];
+    }
+
+    if (!this.difficultyCompletions[levelIndex].includes(difficulty)) {
+      this.difficultyCompletions[levelIndex].push(difficulty);
+    }
+
+    // Check if all levels completed at this difficulty
+    const allLevelsCompleted = GameConfig.LEVELS.every((_, index) => {
+      return (
+        this.difficultyCompletions[index] &&
+        this.difficultyCompletions[index].includes(difficulty)
+      );
+    });
+
+    // Unlock next difficulty if all levels completed
+    if (allLevelsCompleted && difficulty === this.highestUnlockedDifficulty) {
+      this.highestUnlockedDifficulty = Math.min(
+        difficulty + 1,
+        4 // Max difficulty is +4
+      );
+    }
+
+    this.saveGameData();
+  }
+
+  startLevel(levelIndex, difficulty = null) {
     this.currentLevel = levelIndex;
-    const level = GameConfig.LEVELS[levelIndex];
+    const baseLevel = GameConfig.LEVELS[levelIndex];
+
+    // Phase 3.3 - Apply difficulty multipliers
+    if (difficulty !== null) {
+      this.currentDifficulty = difficulty;
+    }
+
+    const difficultyMode = GameConfig.getDifficultyMode(this.currentDifficulty);
+
+    // Create modified level with difficulty multipliers
+    const level = {
+      ...baseLevel,
+      marthaSpeed: baseLevel.marthaSpeed * difficultyMode.speedMultiplier,
+      marthaPatternSpeed:
+        baseLevel.marthaPatternSpeed * difficultyMode.speedMultiplier,
+      matchingTime: Math.floor(
+        baseLevel.matchingTime * difficultyMode.timeMultiplier
+      ),
+    };
+
     this.matchingTime = level.matchingTime;
     this.timeRemaining = level.matchingTime;
     this.sockBalls = 0;
@@ -349,6 +547,9 @@ class SockGame {
 
     this.generateSockList(level);
     this.matchScreen.sockList = [...this.sockList];
+
+    // Store the modified level for use in throwing screen
+    this.currentLevelData = level;
 
     // Use the new state management system
     this.changeGameState("matching");

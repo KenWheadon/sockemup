@@ -192,6 +192,12 @@ class LevelEndScreen extends Screen {
             this.game.currentLevel + 1
           } marked as complete - no rent penalty!`
         );
+
+        // Phase 3.3 - Track difficulty completion
+        this.game.markLevelCompleted(
+          this.game.currentLevel,
+          this.game.currentDifficulty
+        );
       }
 
       this.game.saveGameData();

@@ -692,6 +692,44 @@ class MarthaManager {
     }
   }
 
+  // Phase 2.1 - Calculate catch quality based on distance from center
+  calculateCatchQuality(sockball) {
+    // Calculate Martha's center
+    const marthaCenterX = this.x + this.width / 2;
+    const marthaCenterY = this.y + this.height / 2;
+
+    // Calculate distance from center
+    const dx = sockball.x - marthaCenterX;
+    const dy = sockball.y - marthaCenterY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    // Calculate max distance for catch (using Martha's width as reference)
+    const maxDistance = this.width / 2;
+
+    // Normalized distance (0 = center, 1 = edge)
+    const normalizedDistance = Math.min(distance / maxDistance, 1);
+
+    // Determine catch quality
+    if (normalizedDistance <= GameConfig.CATCH_MECHANICS.PERFECT_CATCH_THRESHOLD) {
+      return {
+        quality: "PERFECT",
+        data: GameConfig.CATCH_QUALITY.PERFECT,
+      };
+    } else if (
+      normalizedDistance <= GameConfig.CATCH_MECHANICS.GOOD_CATCH_THRESHOLD
+    ) {
+      return {
+        quality: "GOOD",
+        data: GameConfig.CATCH_QUALITY.GOOD,
+      };
+    } else {
+      return {
+        quality: "REGULAR",
+        data: GameConfig.CATCH_QUALITY.REGULAR,
+      };
+    }
+  }
+
   hitBySockball(sockball) {
     if (this.hitEffect.active) return false; // Already hit recently
 
@@ -699,6 +737,22 @@ class MarthaManager {
 
     // Update rent due meter
     this.rentDueMeter.current = this.collectedSockballs;
+
+    // Phase 2.1 - Calculate catch quality
+    const catchQuality = this.calculateCatchQuality(sockball);
+    const points = catchQuality.data.points;
+
+    // Track perfect catches in game stats
+    if (catchQuality.quality === "PERFECT") {
+      this.game.perfectCatchStats.total++;
+      if (!this.game.perfectCatchStats.byLevel[this.game.currentLevel]) {
+        this.game.perfectCatchStats.byLevel[this.game.currentLevel] = 0;
+      }
+      this.game.perfectCatchStats.byLevel[this.game.currentLevel]++;
+    }
+
+    // Add points based on catch quality
+    this.game.playerPoints += points;
 
     // Play Martha hit sound
     this.game.audioManager.playSound("martha-hit", false, 0.5);
@@ -716,42 +770,38 @@ class MarthaManager {
       y: Math.sin(angle) * knockbackForce,
     };
 
-    // Add point popup
+    // Phase 2.1 - Add point popup with catch quality
     this.hitEffect.pointPopups.push({
       x: this.x + this.width / 2,
       y: this.y,
-      text: "+" + GameConfig.POINTS_PER_SOCKBALL_PAID,
+      text: catchQuality.data.name + " +" + points,
       timer: GameConfig.MARTHA_HIT_EFFECTS.POINT_POP_DURATION,
       velocity: 2,
+      color: catchQuality.data.color,
+      quality: catchQuality.quality,
     });
 
-    return true;
+    // Phase 2.2 - Return catch quality for feedback system
+    return catchQuality.quality;
   }
 
   checkCollision(sockball) {
+    // Phase 2.1 - Enhanced collision with catch radius multiplier
     const sockballRadius = GameConfig.SOCKBALL_SIZE / 2;
-    const marthaRect = {
-      x: this.x,
-      y: this.y,
-      width: this.width,
-      height: this.height,
-    };
+    const catchRadius =
+      (this.width / 2) * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
 
-    // Simple rectangle-circle collision
-    const closestX = Math.max(
-      marthaRect.x,
-      Math.min(sockball.x, marthaRect.x + marthaRect.width)
-    );
-    const closestY = Math.max(
-      marthaRect.y,
-      Math.min(sockball.y, marthaRect.y + marthaRect.height)
-    );
+    // Calculate Martha's center
+    const marthaCenterX = this.x + this.width / 2;
+    const marthaCenterY = this.y + this.height / 2;
 
-    const distanceX = sockball.x - closestX;
-    const distanceY = sockball.y - closestY;
-    const distanceSquared = distanceX * distanceX + distanceY * distanceY;
+    // Calculate distance from center
+    const dx = sockball.x - marthaCenterX;
+    const dy = sockball.y - marthaCenterY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
 
-    return distanceSquared < sockballRadius * sockballRadius;
+    // Check if within catch radius
+    return distance <= catchRadius + sockballRadius;
   }
 
   startExit() {
@@ -901,13 +951,25 @@ class MarthaManager {
       }
     }
 
-    // Draw point popups
+    // Phase 2.1 - Draw point popups with quality colors
     this.hitEffect.pointPopups.forEach((popup) => {
-      ctx.fillStyle = "#ffd700";
+      ctx.fillStyle = popup.color || "#ffd700";
       ctx.font = `bold ${this.game.getScaledValue(20)}px Courier New`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
+
+      // Add shadow for better visibility
+      ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+      ctx.shadowBlur = 4;
+      ctx.shadowOffsetX = 2;
+      ctx.shadowOffsetY = 2;
+
       ctx.fillText(popup.text, popup.x, popup.y);
+
+      // Reset shadow
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
     });
 
     ctx.restore();

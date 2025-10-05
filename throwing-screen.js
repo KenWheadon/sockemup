@@ -77,11 +77,22 @@ class ThrowingScreen extends Screen {
       GameConfig.SOCKBALL_LAUNCH_POSITION.y
     );
 
-    // Load background image
-    this.backgroundImage = this.game.images["throw-bg.png"];
+    // Phase 3.2 - Load level-specific background
+    const backgroundFilename =
+      GameConfig.LEVEL_BACKGROUNDS[this.game.currentLevel] || "throw-bg.png";
+    this.backgroundImage = this.game.images[backgroundFilename];
+
+    // Fallback to default if level-specific background not found
+    if (!this.backgroundImage) {
+      this.backgroundImage = this.game.images["throw-bg.png"];
+    }
 
     // Set up next sockball type
     this.updateNextSockballType();
+
+    // Phase 2.2 - Reset feedback manager for new level
+    this.game.feedbackManager.reset();
+    this.game.feedbackManager.onLevelStart();
 
     // Start throwing music
     console.log("🎵 Throwing screen setup - starting throwing music");
@@ -284,12 +295,22 @@ class ThrowingScreen extends Screen {
 
       // Check collision with Martha
       if (this.marthaManager.checkCollision(sockball)) {
-        if (this.marthaManager.hitBySockball(sockball)) {
+        const catchQuality = this.marthaManager.hitBySockball(sockball);
+        if (catchQuality) {
           // Play particle burst sound when sockball hits Martha
           this.game.audioManager.playSound("particle-burst", false, 0.4);
 
           // Play points gained sound
           this.game.audioManager.playSound("points-gained", false, 0.3);
+
+          // Phase 2.2 - Notify feedback manager of catch quality
+          if (catchQuality === "PERFECT") {
+            this.game.feedbackManager.onPerfectCatch();
+          } else if (catchQuality === "GOOD") {
+            this.game.feedbackManager.onGoodCatch();
+          } else {
+            this.game.feedbackManager.onRegularCatch();
+          }
 
           sockball.active = false;
           return false;
@@ -309,6 +330,9 @@ class ThrowingScreen extends Screen {
         this.waitingForMartha = true;
         this.marthaManager.startExit();
         this.showMessage("Martha got her rent money!", "success", 2000);
+
+        // Phase 2.2 - Trigger level complete feedback
+        this.game.feedbackManager.onLevelComplete();
       }
 
       if (!this.marthaManager.onScreen) {
@@ -377,6 +401,14 @@ class ThrowingScreen extends Screen {
     this.updateSockballs(deltaTime);
     this.checkGameEnd();
 
+    // Phase 2.2 - Update feedback manager
+    this.game.feedbackManager.update(deltaTime);
+    this.game.feedbackManager.updateMarthaPosition(
+      this.marthaManager.x,
+      this.marthaManager.y,
+      this.marthaManager.width
+    );
+
     if (this.showingMessage) {
       this.messageTimer -= deltaTime;
       if (this.messageTimer <= 0) {
@@ -401,6 +433,9 @@ class ThrowingScreen extends Screen {
 
     this.renderLaunchIndicator(ctx);
     this.renderUI(ctx);
+
+    // Phase 2.2 - Render feedback manager (dialogue and celebrations)
+    this.game.feedbackManager.render(ctx);
 
     if (this.showingMessage) {
       this.renderMessage(ctx);

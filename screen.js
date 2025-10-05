@@ -22,6 +22,10 @@ class Screen {
     this.transitionProgress = 0;
     this.isTransitioning = false;
 
+    // Phase 1.3 - Pause system state
+    this.isPaused = false;
+    this.pauseStartTime = 0;
+
     // Common UI elements
     this.uiElements = [];
     this.buttons = [];
@@ -401,8 +405,69 @@ class Screen {
     return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
   }
 
+  // Phase 1.3 - Pause system methods
+  pause() {
+    if (this.isPaused) return;
+    this.isPaused = true;
+    this.pauseStartTime = Date.now();
+    this.onPause();
+  }
+
+  resume() {
+    if (!this.isPaused) return;
+    this.isPaused = false;
+    this.onResume();
+  }
+
+  togglePause() {
+    if (this.isPaused) {
+      this.resume();
+    } else {
+      this.pause();
+    }
+  }
+
+  onPause() {
+    // Override in subclasses for specific pause behavior
+  }
+
+  onResume() {
+    // Override in subclasses for specific resume behavior
+  }
+
+  renderPauseOverlay(ctx) {
+    // Semi-transparent dark overlay
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(0, 0, this.game.getCanvasWidth(), this.game.getCanvasHeight());
+
+    // "PAUSED" text
+    const centerX = this.game.getCanvasWidth() / 2;
+    const centerY = this.game.getCanvasHeight() / 2;
+
+    this.renderText(ctx, "PAUSED", centerX, centerY - 50, {
+      fontSize: this.game.getScaledValue(48),
+      color: "#FFD700",
+      weight: "bold",
+    });
+
+    this.renderText(ctx, "Press P or ESC to resume", centerX, centerY + 20, {
+      fontSize: this.game.getScaledValue(20),
+      color: "#FFFFFF",
+    });
+
+    this.renderText(ctx, "Press Q to quit to menu", centerX, centerY + 60, {
+      fontSize: this.game.getScaledValue(16),
+      color: "#CCCCCC",
+    });
+  }
+
   // Base update method
   update(deltaTime) {
+    // Don't update if paused
+    if (this.isPaused) {
+      return;
+    }
+
     this.updateAnimationTimers(deltaTime);
     this.calculateLayout();
     this.updateTransition(deltaTime);
@@ -416,6 +481,11 @@ class Screen {
   // Base render method
   render(ctx) {
     this.onRender(ctx);
+
+    // Render pause overlay if paused
+    if (this.isPaused) {
+      this.renderPauseOverlay(ctx);
+    }
   }
 
   onRender(ctx) {
