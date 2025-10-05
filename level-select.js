@@ -122,6 +122,21 @@ class LevelSelect extends Screen {
       height: 40,
       hovered: false,
     };
+
+    // Achievements drawer
+    this.achievementsDrawer = {
+      isOpen: false,
+      animationProgress: 0, // 0 = closed, 1 = open
+      width: 0, // Will be set in layout
+      hoveredAchievement: null, // Track which achievement is hovered
+      button: {
+        x: 0,
+        y: 0,
+        width: 50,
+        height: 50,
+        hovered: false,
+      },
+    };
   }
 
   calculateMarthaImageSize() {
@@ -211,6 +226,11 @@ class LevelSelect extends Screen {
       storyReplayButtonY: this.game.getScaledValue(110),
       storyReplayButtonWidth: this.game.getScaledValue(120),
       storyReplayButtonHeight: this.game.getScaledValue(40),
+      // Achievements drawer
+      achievementsDrawerWidth: this.game.getScaledValue(500),
+      achievementsDrawerButtonX: this.game.getScaledValue(35),
+      achievementsDrawerButtonY: this.game.getScaledValue(50),
+      achievementsDrawerButtonSize: this.game.getScaledValue(50),
       // You Win graphic positioning
       // You Win graphic positioning
       youWinX: canvasWidth / 2,
@@ -490,7 +510,8 @@ class LevelSelect extends Screen {
     }
 
     // Update button hover animations (story and credits)
-    this.storyReplayButton.hoverProgress = this.storyReplayButton.hoverProgress || 0;
+    this.storyReplayButton.hoverProgress =
+      this.storyReplayButton.hoverProgress || 0;
     this.creditsButton.hoverProgress = this.creditsButton.hoverProgress || 0;
 
     const buttonAnimSpeed = 0.008;
@@ -553,6 +574,21 @@ class LevelSelect extends Screen {
       animation.progress += deltaTime / 2000; // 2 second duration
       return animation.progress < 1;
     });
+
+    // Animate achievements drawer
+    const drawerAnimSpeed = 0.008;
+    const drawerTarget = this.achievementsDrawer.isOpen ? 1 : 0;
+    if (this.achievementsDrawer.animationProgress < drawerTarget) {
+      this.achievementsDrawer.animationProgress = Math.min(
+        this.achievementsDrawer.animationProgress + drawerAnimSpeed * deltaTime,
+        drawerTarget
+      );
+    } else if (this.achievementsDrawer.animationProgress > drawerTarget) {
+      this.achievementsDrawer.animationProgress = Math.max(
+        this.achievementsDrawer.animationProgress - drawerAnimSpeed * deltaTime,
+        drawerTarget
+      );
+    }
 
     // Update mismatch particle effects
     this.updateMismatchParticles(deltaTime);
@@ -680,8 +716,10 @@ class LevelSelect extends Screen {
     // Update story replay button hover
     const layout = this.layoutCache;
     // Button position is centered, so calculate top-left corner
-    const storyButtonX = layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2;
-    const storyButtonY = layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2;
+    const storyButtonX =
+      layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2;
+    const storyButtonY =
+      layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2;
 
     this.storyReplayButton.hovered = this.isPointInRect(x, y, {
       x: storyButtonX,
@@ -691,8 +729,10 @@ class LevelSelect extends Screen {
     });
 
     // Update credits button hover
-    const creditsButtonX = layout.creditsButtonX - layout.creditsButtonWidth / 2;
-    const creditsButtonY = layout.creditsButtonY - layout.creditsButtonHeight / 2;
+    const creditsButtonX =
+      layout.creditsButtonX - layout.creditsButtonWidth / 2;
+    const creditsButtonY =
+      layout.creditsButtonY - layout.creditsButtonHeight / 2;
 
     this.creditsButton.hovered = this.isPointInRect(x, y, {
       x: creditsButtonX,
@@ -700,6 +740,54 @@ class LevelSelect extends Screen {
       width: layout.creditsButtonWidth,
       height: layout.creditsButtonHeight,
     });
+
+    // Update achievements drawer button hover
+    const drawerButtonX =
+      layout.achievementsDrawerButtonX -
+      layout.achievementsDrawerButtonSize / 2;
+    const drawerButtonY =
+      layout.achievementsDrawerButtonY -
+      layout.achievementsDrawerButtonSize / 2;
+
+    this.achievementsDrawer.button.hovered = this.isPointInRect(x, y, {
+      x: drawerButtonX,
+      y: drawerButtonY,
+      width: layout.achievementsDrawerButtonSize,
+      height: layout.achievementsDrawerButtonSize,
+    });
+
+    // Update achievements hover if drawer is open
+    if (
+      this.achievementsDrawer.isOpen &&
+      this.achievementsDrawer.animationProgress > 0.5
+    ) {
+      const drawerWidth = layout.achievementsDrawerWidth;
+      const drawerX =
+        -drawerWidth + drawerWidth * this.achievementsDrawer.animationProgress;
+      const achievements = Object.values(GameConfig.ACHIEVEMENTS);
+      const startY = this.game.getScaledValue(115);
+      const spacing = this.game.getScaledValue(60);
+
+      this.achievementsDrawer.hoveredAchievement = null;
+      achievements.forEach((achievement, index) => {
+        const achY = startY + index * spacing;
+        const cardX = drawerX + this.game.getScaledValue(15);
+        const cardY = achY - this.game.getScaledValue(22);
+        const cardWidth = drawerWidth - this.game.getScaledValue(30);
+        const cardHeight = this.game.getScaledValue(50);
+
+        if (
+          x >= cardX &&
+          x <= cardX + cardWidth &&
+          y >= cardY &&
+          y <= cardY + cardHeight
+        ) {
+          this.achievementsDrawer.hoveredAchievement = achievement.id;
+        }
+      });
+    } else {
+      this.achievementsDrawer.hoveredAchievement = null;
+    }
 
     if (this.isDragging && this.dragSock) {
       // Direct position assignment - no bounds checking at all
@@ -782,6 +870,13 @@ class LevelSelect extends Screen {
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.handleClick(x, y);
       return;
+    }
+
+    // Check if achievements drawer button was clicked
+    if (this.achievementsDrawer.button.hovered) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.toggleAchievementsDrawer();
+      return true;
     }
 
     // Check if story replay button was clicked
@@ -1050,6 +1145,10 @@ class LevelSelect extends Screen {
     });
   }
 
+  toggleAchievementsDrawer() {
+    this.achievementsDrawer.isOpen = !this.achievementsDrawer.isOpen;
+  }
+
   createSockBallAnimation(sock1, sock2) {
     const layout = this.layoutCache;
     const startX = (sock1.x + sock2.x) / 2;
@@ -1128,7 +1227,8 @@ class LevelSelect extends Screen {
       const col = i % this.levelConfig.columns;
       const row = Math.floor(i / this.levelConfig.columns);
 
-      const levelX = layout.levelGridStartX + col * layout.levelHorizontalSpacing;
+      const levelX =
+        layout.levelGridStartX + col * layout.levelHorizontalSpacing;
       const levelY = layout.levelGridStartY + row * layout.levelVerticalSpacing;
       const halfSize = layout.levelButtonSize / 2;
 
@@ -1243,6 +1343,7 @@ class LevelSelect extends Screen {
     this.renderPlayerStats(ctx);
     this.renderCreditsButton(ctx);
     this.renderStoryReplayButton(ctx);
+    this.renderAchievementsDrawer(ctx);
 
     if (this.easterEggActive) {
       this.renderEasterDropZones(ctx);
@@ -1412,7 +1513,9 @@ class LevelSelect extends Screen {
     }
 
     const strokeOpacity = 0.6 + 0.3 * hoverProgress;
-    ctx.strokeStyle = `rgba(${100 + 50 * hoverProgress}, ${149 + 51 * hoverProgress}, 237, ${strokeOpacity})`;
+    ctx.strokeStyle = `rgba(${100 + 50 * hoverProgress}, ${
+      149 + 51 * hoverProgress
+    }, 237, ${strokeOpacity})`;
     ctx.lineWidth = this.game.getScaledValue(3);
 
     // Rounded rectangle
@@ -1566,13 +1669,323 @@ class LevelSelect extends Screen {
     ctx.restore();
 
     // Draw button text
-    this.renderText(ctx, "📖 Story", layout.storyReplayButtonX, layout.storyReplayButtonY, {
-      fontSize: layout.smallFontSize,
-      color: "white",
-      weight: "bold",
-    });
+    this.renderText(
+      ctx,
+      "📖 Story",
+      layout.storyReplayButtonX,
+      layout.storyReplayButtonY,
+      {
+        fontSize: layout.smallFontSize,
+        color: "white",
+        weight: "bold",
+      }
+    );
   }
 
+  renderAchievementsDrawer(ctx) {
+    const layout = this.layoutCache;
+    const progress = this.achievementsDrawer.animationProgress;
+
+    // Drawer button
+    const buttonX = layout.achievementsDrawerButtonX;
+    const buttonY = layout.achievementsDrawerButtonY;
+    const buttonSize = layout.achievementsDrawerButtonSize;
+
+    ctx.save();
+
+    // Button background
+    const gradient = ctx.createLinearGradient(
+      buttonX - buttonSize / 2,
+      buttonY - buttonSize / 2,
+      buttonX - buttonSize / 2,
+      buttonY + buttonSize / 2
+    );
+    if (this.achievementsDrawer.button.hovered) {
+      gradient.addColorStop(0, "rgba(255, 215, 0, 0.95)");
+      gradient.addColorStop(1, "rgba(255, 165, 0, 0.95)");
+    } else {
+      gradient.addColorStop(0, "rgba(220, 180, 0, 0.85)");
+      gradient.addColorStop(1, "rgba(200, 140, 0, 0.85)");
+    }
+    ctx.fillStyle = gradient;
+
+    if (this.achievementsDrawer.button.hovered) {
+      ctx.shadowColor = "rgba(255, 215, 0, 0.6)";
+      ctx.shadowBlur = this.game.getScaledValue(12);
+    }
+
+    ctx.strokeStyle = this.achievementsDrawer.button.hovered
+      ? "rgba(255, 230, 100, 0.9)"
+      : "rgba(220, 180, 0, 0.6)";
+    ctx.lineWidth = this.game.getScaledValue(3);
+
+    // Rounded square button
+    const radius = this.game.getScaledValue(8);
+    const x = buttonX - buttonSize / 2;
+    const y = buttonY - buttonSize / 2;
+
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + buttonSize - radius, y);
+    ctx.quadraticCurveTo(x + buttonSize, y, x + buttonSize, y + radius);
+    ctx.lineTo(x + buttonSize, y + buttonSize - radius);
+    ctx.quadraticCurveTo(
+      x + buttonSize,
+      y + buttonSize,
+      x + buttonSize - radius,
+      y + buttonSize
+    );
+    ctx.lineTo(x + radius, y + buttonSize);
+    ctx.quadraticCurveTo(x, y + buttonSize, x, y + buttonSize - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+
+    // Button icon
+    this.renderText(ctx, "🏆", buttonX, buttonY, {
+      fontSize: this.game.getScaledValue(28),
+      align: "center",
+      baseline: "middle",
+    });
+
+    // Drawer panel
+    if (progress > 0) {
+      const drawerWidth = layout.achievementsDrawerWidth;
+      const drawerX = -drawerWidth + drawerWidth * progress;
+      const canvasHeight = this.game.getCanvasHeight();
+
+      ctx.save();
+
+      // Drawer background with gradient
+      const bgGradient = ctx.createLinearGradient(
+        drawerX,
+        0,
+        drawerX + drawerWidth,
+        0
+      );
+      bgGradient.addColorStop(0, "rgba(20, 20, 40, 0.98)");
+      bgGradient.addColorStop(1, "rgba(30, 30, 50, 0.98)");
+      ctx.fillStyle = bgGradient;
+      ctx.fillRect(drawerX, 0, drawerWidth, canvasHeight);
+
+      // Drawer border with glow
+      ctx.shadowColor = "rgba(255, 215, 0, 0.4)";
+      ctx.shadowBlur = this.game.getScaledValue(15);
+      ctx.strokeStyle = "rgba(255, 215, 0, 0.6)";
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(drawerX + drawerWidth, 0);
+      ctx.lineTo(drawerX + drawerWidth, canvasHeight);
+      ctx.stroke();
+
+      // Reset shadow
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
+
+      // Title with enhanced styling
+      ctx.save();
+      ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+      ctx.shadowBlur = this.game.getScaledValue(20);
+      this.renderText(
+        ctx,
+        "🏆 Achievements",
+        drawerX + drawerWidth / 2,
+        this.game.getScaledValue(35),
+        {
+          fontSize: layout.headerFontSize,
+          align: "center",
+          color: "#FFD700",
+          weight: "bold",
+        }
+      );
+      ctx.restore();
+
+      // Divider line
+      ctx.strokeStyle = "rgba(255, 215, 0, 0.3)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(
+        drawerX + this.game.getScaledValue(20),
+        this.game.getScaledValue(60)
+      );
+      ctx.lineTo(
+        drawerX + drawerWidth - this.game.getScaledValue(20),
+        this.game.getScaledValue(60)
+      );
+      ctx.stroke();
+
+      // Achievements list
+      const achievements = Object.values(GameConfig.ACHIEVEMENTS);
+      const startY = this.game.getScaledValue(85);
+      const spacing = this.game.getScaledValue(75);
+      const cardMargin = this.game.getScaledValue(15);
+
+      achievements.forEach((achievement, index) => {
+        const achY = startY + index * spacing;
+        const unlocked =
+          this.game.achievements &&
+          this.game.achievements[achievement.id]?.unlocked;
+        const isHovered =
+          this.achievementsDrawer.hoveredAchievement === achievement.id;
+
+        ctx.save();
+
+        const cardX = drawerX + cardMargin;
+        const cardY = achY;
+        const cardWidth = drawerWidth - cardMargin * 2;
+        const cardHeight = this.game.getScaledValue(65);
+        const cardRadius = this.game.getScaledValue(8);
+
+        // Achievement card background with gradient
+        const cardGradient = ctx.createLinearGradient(
+          cardX,
+          cardY,
+          cardX,
+          cardY + cardHeight
+        );
+        if (unlocked) {
+          if (isHovered) {
+            cardGradient.addColorStop(0, "rgba(255, 215, 0, 0.35)");
+            cardGradient.addColorStop(1, "rgba(255, 165, 0, 0.25)");
+          } else {
+            cardGradient.addColorStop(0, "rgba(255, 215, 0, 0.25)");
+            cardGradient.addColorStop(1, "rgba(255, 165, 0, 0.15)");
+          }
+        } else {
+          if (isHovered) {
+            cardGradient.addColorStop(0, "rgba(60, 60, 80, 0.25)");
+            cardGradient.addColorStop(1, "rgba(40, 40, 60, 0.15)");
+          } else {
+            cardGradient.addColorStop(0, "rgba(60, 60, 80, 0.15)");
+            cardGradient.addColorStop(1, "rgba(40, 40, 60, 0.1)");
+          }
+        }
+        ctx.fillStyle = cardGradient;
+
+        // Rounded rectangle for card
+        ctx.beginPath();
+        ctx.moveTo(cardX + cardRadius, cardY);
+        ctx.lineTo(cardX + cardWidth - cardRadius, cardY);
+        ctx.quadraticCurveTo(
+          cardX + cardWidth,
+          cardY,
+          cardX + cardWidth,
+          cardY + cardRadius
+        );
+        ctx.lineTo(cardX + cardWidth, cardY + cardHeight - cardRadius);
+        ctx.quadraticCurveTo(
+          cardX + cardWidth,
+          cardY + cardHeight,
+          cardX + cardWidth - cardRadius,
+          cardY + cardHeight
+        );
+        ctx.lineTo(cardX + cardRadius, cardY + cardHeight);
+        ctx.quadraticCurveTo(
+          cardX,
+          cardY + cardHeight,
+          cardX,
+          cardY + cardHeight - cardRadius
+        );
+        ctx.lineTo(cardX, cardY + cardRadius);
+        ctx.quadraticCurveTo(cardX, cardY, cardX + cardRadius, cardY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Card border
+        if (unlocked) {
+          ctx.strokeStyle = isHovered
+            ? "rgba(255, 215, 0, 0.7)"
+            : "rgba(255, 215, 0, 0.5)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        } else {
+          ctx.strokeStyle = isHovered
+            ? "rgba(100, 100, 120, 0.5)"
+            : "rgba(100, 100, 120, 0.3)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+
+        // Icon (left side)
+        const iconX = cardX + this.game.getScaledValue(30);
+        const iconY = cardY + cardHeight / 2;
+
+        ctx.globalAlpha = unlocked ? 1 : 0.4;
+        this.renderText(ctx, achievement.icon, iconX, iconY, {
+          fontSize: this.game.getScaledValue(32),
+          align: "center",
+          baseline: "middle",
+        });
+        ctx.globalAlpha = 1;
+
+        // Achievement name (right of icon, top line)
+        const textX = cardX + this.game.getScaledValue(60);
+        const nameY = cardY + this.game.getScaledValue(20);
+
+        ctx.font = `bold ${layout.smallFontSize}px "Courier New", monospace`;
+        ctx.fillStyle = unlocked ? "#FFD700" : "rgba(255, 255, 255, 0.5)";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+
+        // Truncate name if too long
+        let displayName = achievement.name;
+        const maxTextWidth = cardWidth - this.game.getScaledValue(80);
+        let textWidth = ctx.measureText(displayName).width;
+
+        if (textWidth > maxTextWidth) {
+          while (textWidth > maxTextWidth && displayName.length > 0) {
+            displayName = displayName.slice(0, -1);
+            textWidth = ctx.measureText(displayName + "...").width;
+          }
+          displayName += "...";
+        }
+
+        ctx.fillText(displayName, textX, nameY);
+
+        // Achievement description (right of icon, bottom line)
+        const descY = cardY + this.game.getScaledValue(40);
+
+        ctx.font = `${layout.smallFontSize - 2}px "Courier New", monospace`;
+        ctx.fillStyle = unlocked
+          ? "rgba(255, 255, 255, 0.8)"
+          : "rgba(255, 255, 255, 0.4)";
+
+        // Truncate description if too long
+        let displayDesc = achievement.description;
+        textWidth = ctx.measureText(displayDesc).width;
+
+        if (textWidth > maxTextWidth) {
+          while (textWidth > maxTextWidth && displayDesc.length > 0) {
+            displayDesc = displayDesc.slice(0, -1);
+            textWidth = ctx.measureText(displayDesc + "...").width;
+          }
+          displayDesc += "...";
+        }
+
+        ctx.fillText(displayDesc, textX, descY);
+
+        // Status indicator (bottom right corner)
+        const statusX = cardX + cardWidth - this.game.getScaledValue(15);
+        const statusY = cardY + cardHeight - this.game.getScaledValue(15);
+
+        this.renderText(ctx, unlocked ? "✓" : "🔒", statusX, statusY, {
+          fontSize: this.game.getScaledValue(16),
+          align: "right",
+          baseline: "bottom",
+          color: unlocked ? "#90EE90" : "#888888",
+        });
+
+        ctx.restore();
+      });
+
+      ctx.restore();
+    }
+  }
   renderEasterDropZones(ctx) {
     const layout = this.layoutCache;
 
@@ -1745,13 +2158,16 @@ class LevelSelect extends Screen {
     let sockImageIndex = levelIndex + 1;
     let colorFilter = null;
 
-    if (levelIndex === 6) { // Level 7 - use sock 1 with purple tint
+    if (levelIndex === 6) {
+      // Level 7 - use sock 1 with purple tint
       sockImageIndex = 1;
       colorFilter = "hue-rotate(270deg) saturate(1.5)";
-    } else if (levelIndex === 7) { // Level 8 - use sock 2 with orange tint
+    } else if (levelIndex === 7) {
+      // Level 8 - use sock 2 with orange tint
       sockImageIndex = 2;
       colorFilter = "hue-rotate(30deg) saturate(1.3)";
-    } else if (levelIndex === 8) { // Level 9 - use sock 3 with cyan tint
+    } else if (levelIndex === 8) {
+      // Level 9 - use sock 3 with cyan tint
       sockImageIndex = 3;
       colorFilter = "hue-rotate(180deg) saturate(1.4)";
     }
@@ -1774,7 +2190,8 @@ class LevelSelect extends Screen {
     // Smooth scale animation based on hover progress
     const baseScale = 1;
     const hoverScale = this.levelConfig.hoverScale;
-    const currentScale = baseScale + (hoverScale - baseScale) * this.easeOutCubic(hoverProgress);
+    const currentScale =
+      baseScale + (hoverScale - baseScale) * this.easeOutCubic(hoverProgress);
 
     ctx.translate(x, y);
     ctx.scale(currentScale, currentScale);
@@ -1800,7 +2217,9 @@ class LevelSelect extends Screen {
       ctx.fillStyle = gradient;
     } else {
       // Locked - show gray background
-      ctx.fillStyle = isAffordable ? "rgba(100, 100, 100, 0.2)" : "rgba(50, 50, 50, 0.2)";
+      ctx.fillStyle = isAffordable
+        ? "rgba(100, 100, 100, 0.2)"
+        : "rgba(50, 50, 50, 0.2)";
     }
 
     ctx.beginPath();
@@ -1809,7 +2228,9 @@ class LevelSelect extends Screen {
 
     // Add border with glow on hover
     if (isUnlocked) {
-      ctx.strokeStyle = isCompleted ? "rgba(255, 215, 0, 0.6)" : "rgba(100, 150, 255, 0.6)";
+      ctx.strokeStyle = isCompleted
+        ? "rgba(255, 215, 0, 0.6)"
+        : "rgba(100, 150, 255, 0.6)";
       ctx.lineWidth = this.game.getScaledValue(3);
 
       if (hoverProgress > 0) {
@@ -1869,7 +2290,8 @@ class LevelSelect extends Screen {
           Math.sin(
             this.animationFrame * this.levelConfig.wiggleSpeed + levelIndex
           ) * this.game.getScaledValue(this.levelConfig.wiggleAmount);
-        const bounce = Math.abs(Math.sin(pulseTimer * 0.8)) * this.game.getScaledValue(3);
+        const bounce =
+          Math.abs(Math.sin(pulseTimer * 0.8)) * this.game.getScaledValue(3);
 
         if (sockImage) {
           // Apply color filter for levels 7-9
@@ -1920,7 +2342,7 @@ class LevelSelect extends Screen {
         {
           fontSize: layout.bodyFontSize,
           weight: "bold",
-          color: isCompleted ? "#FFD700" : "#FFFFFF"
+          color: isCompleted ? "#FFD700" : "#FFFFFF",
         }
       );
       ctx.restore();
@@ -1936,7 +2358,9 @@ class LevelSelect extends Screen {
             ? `${colorFilter} brightness(0.5) grayscale(0.3)`
             : `${colorFilter} brightness(0.3) grayscale(0.7)`;
         } else {
-          ctx.filter = isAffordable ? "brightness(0.5) grayscale(0.3)" : "brightness(0.3) grayscale(0.7)";
+          ctx.filter = isAffordable
+            ? "brightness(0.5) grayscale(0.3)"
+            : "brightness(0.3) grayscale(0.7)";
         }
 
         ctx.drawImage(
@@ -1951,7 +2375,9 @@ class LevelSelect extends Screen {
 
       // Lock icon
       ctx.save();
-      ctx.fillStyle = isAffordable ? "rgba(144, 238, 144, 0.8)" : "rgba(255, 182, 193, 0.8)";
+      ctx.fillStyle = isAffordable
+        ? "rgba(144, 238, 144, 0.8)"
+        : "rgba(255, 182, 193, 0.8)";
       ctx.font = `${this.game.getScaledValue(24)}px Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -1972,7 +2398,7 @@ class LevelSelect extends Screen {
         {
           fontSize: layout.smallFontSize + 2,
           color: isAffordable ? "#90EE90" : "#FFB6C1",
-          weight: "bold"
+          weight: "bold",
         }
       );
       ctx.restore();
@@ -1988,14 +2414,15 @@ class LevelSelect extends Screen {
         y + this.game.getScaledValue(65),
         {
           fontSize: layout.bodyFontSize,
-          color: "rgba(255, 255, 255, 0.6)"
+          color: "rgba(255, 255, 255, 0.6)",
         }
       );
       ctx.restore();
 
       // Unlock hint with pulse
       if (isAffordable) {
-        const pulse = Math.abs(Math.sin(this.animationFrame * 0.003)) * 0.3 + 0.7;
+        const pulse =
+          Math.abs(Math.sin(this.animationFrame * 0.003)) * 0.3 + 0.7;
         ctx.save();
         ctx.globalAlpha = pulse;
         ctx.shadowColor = "#90EE90";
