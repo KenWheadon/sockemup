@@ -79,8 +79,8 @@ class LevelSelect extends Screen {
       bounceRestitution: 0.4,
       rotationFriction: 0.98,
       bounds: {
-        left: -500, // Very generous buffer to prevent premature cleanup
-        right: 2000, // Will be updated on resize
+        left: -500,
+        right: 2000,
         top: -500,
         bottom: 2000,
       },
@@ -89,21 +89,20 @@ class LevelSelect extends Screen {
     // Level button configuration
     this.levelConfig = {
       baseSpacing: 150,
-      baseButtonSize: 90, // Larger buttons
+      baseButtonSize: 90,
       wiggleSpeed: 0.01,
       wiggleAmount: 3,
-      hoverScale: 1.15, // More pronounced hover
+      hoverScale: 1.15,
       clickScale: 0.95,
-      // Grid layout for 9 levels with better spacing
       columns: 3,
       rows: 3,
-      horizontalSpacing: 180, // More horizontal space
-      verticalSpacing: 150, // More vertical space
+      horizontalSpacing: 180,
+      verticalSpacing: 150,
     };
 
     // Level button hover animations
-    this.levelHoverAnimations = Array(9).fill(0); // Track hover progress for each level
-    this.levelPulseTimers = Array(9).fill(0); // Individual pulse timers
+    this.levelHoverAnimations = Array(9).fill(0);
+    this.levelPulseTimers = Array(9).fill(0);
 
     // Story replay button
     this.storyReplayButton = {
@@ -126,14 +125,24 @@ class LevelSelect extends Screen {
     // Achievements drawer
     this.achievementsDrawer = {
       isOpen: false,
-      animationProgress: 0, // 0 = closed, 1 = open
-      width: 0, // Will be set in layout
-      hoveredAchievement: null, // Track which achievement is hovered
+      animationProgress: 0,
+      width: 0,
+      hoveredAchievement: null,
+      scrollOffset: 0,
+      maxScroll: 0,
+      isDraggingScrollbar: false,
+      scrollbarHover: false,
       button: {
         x: 0,
         y: 0,
         width: 50,
         height: 50,
+        hovered: false,
+      },
+      closeButton: {
+        x: 0,
+        y: 0,
+        size: 30,
         hovered: false,
       },
     };
@@ -152,11 +161,9 @@ class LevelSelect extends Screen {
       const aspectRatio = marthaImage.width / marthaImage.height;
 
       if (aspectRatio > 1) {
-        // Image is wider than it is tall
         this.marthaImageSize.width = maxSize;
         this.marthaImageSize.height = maxSize / aspectRatio;
       } else {
-        // Image is taller than it is wide
         this.marthaImageSize.width = maxSize * aspectRatio;
         this.marthaImageSize.height = maxSize;
       }
@@ -166,7 +173,6 @@ class LevelSelect extends Screen {
     }
   }
 
-  // Check if all levels are completed
   areAllLevelsCompleted() {
     return this.game.completedLevels.every((completed) => completed);
   }
@@ -176,9 +182,7 @@ class LevelSelect extends Screen {
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
 
-    // Calculate Martha image size
     this.calculateMarthaImageSize();
-
     const youWinImageSize = this.calculateYouWinImageSize();
 
     return {
@@ -197,7 +201,6 @@ class LevelSelect extends Screen {
       levelVerticalSpacing: this.game.getScaledValue(
         this.levelConfig.verticalSpacing
       ),
-      // Grid layout calculation
       levelGridStartX:
         canvasWidth / 2 -
         ((this.levelConfig.columns - 1) *
@@ -221,18 +224,14 @@ class LevelSelect extends Screen {
       creditsButtonY: this.game.getScaledValue(50),
       creditsButtonWidth: this.game.getScaledValue(120),
       creditsButtonHeight: this.game.getScaledValue(40),
-      // Story replay button (below credits)
       storyReplayButtonX: canvasWidth - this.game.getScaledValue(80),
       storyReplayButtonY: this.game.getScaledValue(110),
       storyReplayButtonWidth: this.game.getScaledValue(120),
       storyReplayButtonHeight: this.game.getScaledValue(40),
-      // Achievements drawer
       achievementsDrawerWidth: this.game.getScaledValue(500),
       achievementsDrawerButtonX: this.game.getScaledValue(35),
       achievementsDrawerButtonY: this.game.getScaledValue(50),
       achievementsDrawerButtonSize: this.game.getScaledValue(50),
-      // You Win graphic positioning
-      // You Win graphic positioning
       youWinX: canvasWidth / 2,
       youWinY:
         canvasHeight / 2 +
@@ -243,18 +242,16 @@ class LevelSelect extends Screen {
   }
 
   onResize() {
-    // Update physics bounds for garbage collection with generous buffer
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
 
     this.menuPhysics.bounds = {
-      left: -500, // Much more generous buffer
+      left: -500,
       right: canvasWidth + 500,
       top: -500,
       bottom: canvasHeight + 500,
     };
 
-    // Debug logging to see actual bounds
     console.log("Canvas dimensions:", canvasWidth, "x", canvasHeight);
     console.log("Garbage collection bounds:", this.menuPhysics.bounds);
 
@@ -296,11 +293,9 @@ class LevelSelect extends Screen {
   setup() {
     super.setup();
 
-    // Start menu music when entering level select
     console.log("🎵 Level select setup - starting menu music");
     this.game.audioManager.playMusic("menu-music", true);
 
-    // Update bounds when setting up to ensure they're correct
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
 
@@ -322,7 +317,6 @@ class LevelSelect extends Screen {
     this.setupEasterDropZones();
     this.setupCreditsModal();
 
-    // Phase 4.1 - Show story intro on first launch
     if (this.game.storyManager.shouldShowStory()) {
       this.game.storyManager.show();
     }
@@ -331,16 +325,13 @@ class LevelSelect extends Screen {
   cleanup() {
     super.cleanup();
 
-    // Stop menu music when leaving level select
     console.log("🎵 Level select cleanup - stopping menu music");
     this.game.audioManager.stopMusic();
 
-    // Clean up credits modal if it exists
     if (this.creditsOpen) {
       this.hideCredits();
     }
 
-    // Remove credits modal from DOM
     const creditsModal = document.getElementById("creditsModal");
     if (creditsModal) {
       creditsModal.remove();
@@ -348,7 +339,6 @@ class LevelSelect extends Screen {
   }
 
   setupCreditsModal() {
-    // Create credits modal if it doesn't exist
     if (!document.getElementById("creditsModal")) {
       const modalHTML = `
         <div class="credits-modal" id="creditsModal">
@@ -417,20 +407,17 @@ class LevelSelect extends Screen {
   setupCreditsEventListeners() {
     const closeCredits = document.getElementById("closeCredits");
 
-    // Close credits button
     if (closeCredits) {
       closeCredits.addEventListener("click", () => {
         this.game.audioManager.playSound("button-click", false, 0.5);
         this.hideCredits();
       });
 
-      // Add hover sound effect
       closeCredits.addEventListener("mouseenter", () => {
         this.game.audioManager.playSound("button-hover", false, 0.3);
       });
     }
 
-    // Close credits when clicking outside modal
     if (this.creditsModal) {
       this.creditsModal.addEventListener("click", (e) => {
         if (e.target === this.creditsModal) {
@@ -439,7 +426,6 @@ class LevelSelect extends Screen {
       });
     }
 
-    // Keyboard event listener for accessibility
     document.addEventListener("keydown", (e) => {
       if (this.creditsOpen && e.code === "Escape") {
         this.hideCredits();
@@ -457,7 +443,6 @@ class LevelSelect extends Screen {
       this.creditsOpen = true;
       this.creditsModal.classList.add("visible");
 
-      // Focus trap for accessibility
       const closeButton = document.getElementById("closeCredits");
       if (closeButton) {
         closeButton.focus();
@@ -478,19 +463,16 @@ class LevelSelect extends Screen {
   }
 
   onUpdate(deltaTime) {
-    // Phase 4.1 - Update story manager
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.update(deltaTime);
-      return; // Don't update other elements when story is showing
+      return;
     }
 
-    // Update level button hover animations
     for (let i = 0; i < this.levelHoverAnimations.length; i++) {
       const isHovered = this.hoveredLevel === i;
       const targetValue = isHovered ? 1 : 0;
-      const animSpeed = 0.008; // Smooth transition speed
+      const animSpeed = 0.008;
 
-      // Smoothly animate hover state
       if (this.levelHoverAnimations[i] < targetValue) {
         this.levelHoverAnimations[i] = Math.min(
           this.levelHoverAnimations[i] + animSpeed * deltaTime,
@@ -503,20 +485,17 @@ class LevelSelect extends Screen {
         );
       }
 
-      // Update pulse timers for unlocked levels
       if (this.game.unlockedLevels[i] && !this.game.completedLevels[i]) {
         this.levelPulseTimers[i] += deltaTime * 0.002;
       }
     }
 
-    // Update button hover animations (story and credits)
     this.storyReplayButton.hoverProgress =
       this.storyReplayButton.hoverProgress || 0;
     this.creditsButton.hoverProgress = this.creditsButton.hoverProgress || 0;
 
     const buttonAnimSpeed = 0.008;
 
-    // Story button animation
     const storyTarget = this.storyReplayButton.hovered ? 1 : 0;
     if (this.storyReplayButton.hoverProgress < storyTarget) {
       this.storyReplayButton.hoverProgress = Math.min(
@@ -530,7 +509,6 @@ class LevelSelect extends Screen {
       );
     }
 
-    // Credits button animation
     const creditsTarget = this.creditsButton.hovered ? 1 : 0;
     if (this.creditsButton.hoverProgress < creditsTarget) {
       this.creditsButton.hoverProgress = Math.min(
@@ -556,26 +534,22 @@ class LevelSelect extends Screen {
       }
     }
 
-    // Update drop zone effects
     this.easterDropZones.forEach((zone) => {
       if (zone.glowEffect > 0) zone.glowEffect--;
       if (zone.hoverEffect > 0) zone.hoverEffect--;
       if (zone.snapEffect > 0) zone.snapEffect--;
     });
 
-    // Update sockball animations
     this.sockBallAnimations = this.sockBallAnimations.filter((animation) => {
       animation.progress += deltaTime / 1000;
       return animation.progress < 1;
     });
 
-    // Update point gain animations
     this.pointGainAnimations = this.pointGainAnimations.filter((animation) => {
-      animation.progress += deltaTime / 2000; // 2 second duration
+      animation.progress += deltaTime / 2000;
       return animation.progress < 1;
     });
 
-    // Animate achievements drawer
     const drawerAnimSpeed = 0.008;
     const drawerTarget = this.achievementsDrawer.isOpen ? 1 : 0;
     if (this.achievementsDrawer.animationProgress < drawerTarget) {
@@ -590,7 +564,6 @@ class LevelSelect extends Screen {
       );
     }
 
-    // Update mismatch particle effects
     this.updateMismatchParticles(deltaTime);
   }
 
@@ -616,7 +589,6 @@ class LevelSelect extends Screen {
     const timeMultiplier = deltaTime / 16.67;
 
     this.menuSocks.forEach((sock, index) => {
-      // Skip physics for dragged sock and socks in drop zones
       if (sock === this.dragSock || this.isSockInDropZone(sock)) return;
 
       sock.vx *= Math.pow(this.menuPhysics.friction, timeMultiplier);
@@ -633,9 +605,7 @@ class LevelSelect extends Screen {
       sock.y += sock.vy * timeMultiplier;
       sock.rotation += sock.rotationSpeed * timeMultiplier;
 
-      // Only check bounds for garbage collection - no time-based removal
       if (this.isSockOutsideBounds(sock)) {
-        // Clear any drop zone references to this sock before removing it
         this.clearSockFromDropZones(sock);
 
         this.menuSocks.splice(index, 1);
@@ -680,7 +650,6 @@ class LevelSelect extends Screen {
       sock.y < this.menuPhysics.bounds.top ||
       sock.y > this.menuPhysics.bounds.bottom;
 
-    // Debug logging when a sock is about to be garbage collected
     if (isOutside) {
       console.log("Sock being garbage collected:", {
         sockPosition: { x: sock.x, y: sock.y },
@@ -696,7 +665,6 @@ class LevelSelect extends Screen {
   }
 
   onMouseMove(x, y) {
-    // Phase 4.1 - Handle story manager mouse move
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.handleMouseMove(x, y);
       return;
@@ -705,7 +673,6 @@ class LevelSelect extends Screen {
     const previousHoveredLevel = this.hoveredLevel;
     this.hoveredLevel = this.getLevelAtPosition(x, y);
 
-    // Play hover sound when hovering over a new level button
     if (
       this.hoveredLevel !== previousHoveredLevel &&
       this.hoveredLevel !== -1
@@ -713,9 +680,7 @@ class LevelSelect extends Screen {
       this.game.audioManager.playSound("button-hover", false, 0.3);
     }
 
-    // Update story replay button hover
     const layout = this.layoutCache;
-    // Button position is centered, so calculate top-left corner
     const storyButtonX =
       layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2;
     const storyButtonY =
@@ -728,7 +693,6 @@ class LevelSelect extends Screen {
       height: layout.storyReplayButtonHeight,
     });
 
-    // Update credits button hover
     const creditsButtonX =
       layout.creditsButtonX - layout.creditsButtonWidth / 2;
     const creditsButtonY =
@@ -741,7 +705,6 @@ class LevelSelect extends Screen {
       height: layout.creditsButtonHeight,
     });
 
-    // Update achievements drawer button hover
     const drawerButtonX =
       layout.achievementsDrawerButtonX -
       layout.achievementsDrawerButtonSize / 2;
@@ -756,7 +719,6 @@ class LevelSelect extends Screen {
       height: layout.achievementsDrawerButtonSize,
     });
 
-    // Update achievements hover if drawer is open
     if (
       this.achievementsDrawer.isOpen &&
       this.achievementsDrawer.animationProgress > 0.5
@@ -766,36 +728,73 @@ class LevelSelect extends Screen {
         -drawerWidth + drawerWidth * this.achievementsDrawer.animationProgress;
       const achievements = Object.values(GameConfig.ACHIEVEMENTS);
       const startY = this.game.getScaledValue(115);
-      const spacing = this.game.getScaledValue(60);
+      const spacing = this.game.getScaledValue(75);
+
+      const scrollbarX = drawerX + drawerWidth - this.game.getScaledValue(20);
+      const scrollbarY = this.game.getScaledValue(80);
+      const scrollbarWidth = this.game.getScaledValue(10);
+      const canvasHeight = this.game.getCanvasHeight();
+      const scrollbarHeight = canvasHeight - this.game.getScaledValue(100);
+
+      this.achievementsDrawer.scrollbarHover =
+        x >= scrollbarX &&
+        x <= scrollbarX + scrollbarWidth &&
+        y >= scrollbarY &&
+        y <= scrollbarY + scrollbarHeight;
+
+      if (this.achievementsDrawer.isDraggingScrollbar) {
+        const relativeY = y - scrollbarY;
+        const scrollPercentage = Math.max(
+          0,
+          Math.min(1, relativeY / scrollbarHeight)
+        );
+        this.achievementsDrawer.scrollOffset =
+          scrollPercentage * this.achievementsDrawer.maxScroll;
+      }
+
+      // Close button hover detection
+      const closeButtonSize = this.game.getScaledValue(30);
+      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
+      const closeButtonY = this.game.getScaledValue(20);
+
+      const dx = x - closeButtonX;
+      const dy = y - closeButtonY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      this.achievementsDrawer.closeButton.hovered =
+        distance <= closeButtonSize / 2;
 
       this.achievementsDrawer.hoveredAchievement = null;
       achievements.forEach((achievement, index) => {
-        const achY = startY + index * spacing;
+        const achY =
+          startY + index * spacing - this.achievementsDrawer.scrollOffset;
         const cardX = drawerX + this.game.getScaledValue(15);
         const cardY = achY - this.game.getScaledValue(22);
-        const cardWidth = drawerWidth - this.game.getScaledValue(30);
-        const cardHeight = this.game.getScaledValue(50);
+        const cardWidth = drawerWidth - this.game.getScaledValue(50);
+        const cardHeight = this.game.getScaledValue(65);
 
         if (
           x >= cardX &&
           x <= cardX + cardWidth &&
           y >= cardY &&
-          y <= cardY + cardHeight
+          y <= cardY + cardHeight &&
+          achY > this.game.getScaledValue(80) &&
+          achY < canvasHeight - this.game.getScaledValue(20)
         ) {
           this.achievementsDrawer.hoveredAchievement = achievement.id;
         }
       });
     } else {
       this.achievementsDrawer.hoveredAchievement = null;
+      this.achievementsDrawer.scrollbarHover = false;
+      this.achievementsDrawer.closeButton.hovered = false;
     }
 
     if (this.isDragging && this.dragSock) {
-      // Direct position assignment - no bounds checking at all
       this.dragSock.x = x - this.dragOffset.x;
       this.dragSock.y = y - this.dragOffset.y;
     }
 
-    // Update hover effects for drop zones
     this.updateDropZoneHover(x, y);
   }
 
@@ -818,6 +817,39 @@ class LevelSelect extends Screen {
   }
 
   onMouseDown(x, y) {
+    // Check if close button was clicked (must be before scrollbar check)
+    if (
+      this.achievementsDrawer.closeButton.hovered &&
+      this.achievementsDrawer.isOpen
+    ) {
+      return false; // Let onClick handle it
+    }
+
+    if (
+      this.achievementsDrawer.isOpen &&
+      this.achievementsDrawer.animationProgress > 0.5
+    ) {
+      const layout = this.layoutCache;
+      const drawerWidth = layout.achievementsDrawerWidth;
+      const drawerX =
+        -drawerWidth + drawerWidth * this.achievementsDrawer.animationProgress;
+      const scrollbarX = drawerX + drawerWidth - this.game.getScaledValue(20);
+      const scrollbarY = this.game.getScaledValue(80);
+      const scrollbarWidth = this.game.getScaledValue(10);
+      const canvasHeight = this.game.getCanvasHeight();
+      const scrollbarHeight = canvasHeight - this.game.getScaledValue(100);
+
+      if (
+        x >= scrollbarX &&
+        x <= scrollbarX + scrollbarWidth &&
+        y >= scrollbarY &&
+        y <= scrollbarY + scrollbarHeight
+      ) {
+        this.achievementsDrawer.isDraggingScrollbar = true;
+        return true;
+      }
+    }
+
     if (this.easterEggActive) {
       const sock = this.getSockAtPosition(x, y);
       if (sock) {
@@ -834,6 +866,11 @@ class LevelSelect extends Screen {
   }
 
   onMouseUp(x, y) {
+    if (this.achievementsDrawer.isDraggingScrollbar) {
+      this.achievementsDrawer.isDraggingScrollbar = false;
+      return;
+    }
+
     if (this.isDragging && this.dragSock) {
       const sock = this.dragSock;
       let snapped = false;
@@ -866,27 +903,33 @@ class LevelSelect extends Screen {
   }
 
   onClick(x, y) {
-    // Phase 4.1 - Handle story manager clicks
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.handleClick(x, y);
       return;
     }
 
-    // Check if achievements drawer button was clicked
+    // Check close button FIRST and only if drawer is open
+    if (
+      this.achievementsDrawer.closeButton.hovered &&
+      this.achievementsDrawer.isOpen
+    ) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.toggleAchievementsDrawer();
+      return true;
+    }
+
     if (this.achievementsDrawer.button.hovered) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.toggleAchievementsDrawer();
       return true;
     }
 
-    // Check if story replay button was clicked
     if (this.storyReplayButton.hovered) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.game.storyManager.show();
       return true;
     }
 
-    // Check if credits button was clicked
     if (this.isCreditsButtonClicked(x, y)) {
       this.showCredits();
       return true;
@@ -900,12 +943,10 @@ class LevelSelect extends Screen {
     const levelIndex = this.getLevelAtPosition(x, y);
     if (levelIndex !== -1) {
       if (this.game.unlockedLevels[levelIndex]) {
-        // Play button click sound for starting a level
         this.game.audioManager.playSound("button-click", false, 0.5);
         this.game.startLevel(levelIndex);
         return true;
       } else if (this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex]) {
-        // Play level unlock sound
         this.game.audioManager.playSound("level-unlock", false, 0.6);
         this.game.playerPoints -= GameConfig.LEVEL_COSTS[levelIndex];
         this.game.unlockedLevels[levelIndex] = true;
@@ -913,7 +954,6 @@ class LevelSelect extends Screen {
         this.game.startLevel(levelIndex);
         return true;
       } else {
-        // Play a subtle error sound for insufficient points (using button-click at lower volume)
         this.game.audioManager.playSound("button-click", false, 0.2);
       }
     }
@@ -947,24 +987,20 @@ class LevelSelect extends Screen {
 
   createSnapEffect(zone) {
     zone.glowEffect = this.DROP_ZONE_CONFIG.glowDuration;
-    zone.snapEffect = 15; // Duration for snap animation
+    zone.snapEffect = 15;
   }
 
   removeMatchedSocks(sock1, sock2) {
-    // Remove socks from menuSocks array
     this.menuSocks = this.menuSocks.filter((s) => s !== sock1 && s !== sock2);
 
-    // Clear any drag references
     if (this.dragSock === sock1 || this.dragSock === sock2) {
       this.isDragging = false;
       this.dragSock = null;
     }
 
-    // Clear any additional references that might exist
     this.clearSockFromDropZones(sock1);
     this.clearSockFromDropZones(sock2);
 
-    // Debug logging to confirm removal
     console.log("Removed matched socks:", sock1.type, sock2.type);
     console.log("Remaining socks count:", this.menuSocks.length);
   }
@@ -976,7 +1012,6 @@ class LevelSelect extends Screen {
       const sock1 = this.easterDropZones[0].sock;
       const sock2 = this.easterDropZones[1].sock;
 
-      // Add null checks to prevent errors with garbage collected socks
       if (
         !sock1 ||
         !sock2 ||
@@ -990,19 +1025,15 @@ class LevelSelect extends Screen {
       }
 
       if (sock1.type === sock2.type) {
-        // MATCH - play match sound, clear drop zones and remove socks
         this.game.audioManager.playSound("easter-egg-match", false, 0.8);
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
 
-        // Create animations before removing socks
         this.createSockBallAnimation(sock1, sock2);
         this.awardPointsForMatch(sock1, sock2);
 
-        // Completely remove matched socks from all systems
         this.removeMatchedSocks(sock1, sock2);
       } else {
-        // MISMATCH - play mismatch sound, clear drop zones and reject socks
         this.game.audioManager.playSound("easter-egg-mismatch", false, 0.6);
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
@@ -1012,7 +1043,6 @@ class LevelSelect extends Screen {
   }
 
   handleEasterEggMismatch(sock1, sock2) {
-    // Additional safety checks
     if (
       !sock1 ||
       !sock2 ||
@@ -1023,52 +1053,41 @@ class LevelSelect extends Screen {
       return;
     }
 
-    // Play particle burst sound for the dramatic mismatch effect
     this.game.audioManager.playSound("particle-burst", false, 0.4);
 
-    // Create mismatch particle effects
     this.createEasterEggMismatchEffect(sock1, sock2);
 
-    // Calculate repulsion direction between the two socks
     const dx = sock2.x - sock1.x;
     const dy = sock2.y - sock1.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Normalize direction vectors
     const normalizedDx = distance > 0 ? dx / distance : 1;
     const normalizedDy = distance > 0 ? dy / distance : 0;
 
-    // Apply strong repulsion force - stronger than before to ensure rejection
-    const repulsionForce = 20; // Increased from 15
+    const repulsionForce = 20;
 
-    // Push socks away from each other with more force
     sock1.vx = -normalizedDx * repulsionForce + (Math.random() - 0.5) * 8;
     sock1.vy = -normalizedDy * repulsionForce + (Math.random() - 0.5) * 8;
 
     sock2.vx = normalizedDx * repulsionForce + (Math.random() - 0.5) * 8;
     sock2.vy = normalizedDy * repulsionForce + (Math.random() - 0.5) * 8;
 
-    // Add spinning effect
     sock1.rotationSpeed = (Math.random() - 0.5) * 0.3;
     sock2.rotationSpeed = (Math.random() - 0.5) * 0.3;
 
-    // Add visual feedback
     sock1.glowEffect = 30;
     sock2.glowEffect = 30;
 
-    // Make drop zones flash red briefly
     this.easterDropZones[0].glowEffect = 30;
     this.easterDropZones[1].glowEffect = 30;
   }
 
   createEasterEggMismatchEffect(sock1, sock2) {
-    // Additional safety checks
     if (!sock1 || !sock2 || sock1.x === undefined || sock2.x === undefined) {
       console.log("Invalid socks in mismatch effect, aborting");
       return;
     }
 
-    // Create red/orange particle effects for mismatch
     const centerX = (sock1.x + sock2.x) / 2;
     const centerY = (sock1.y + sock2.y) / 2;
     const mismatchColors = [
@@ -1079,7 +1098,6 @@ class LevelSelect extends Screen {
       "#FF69B4",
     ];
 
-    // Create intense particle effect for mismatch
     for (let i = 0; i < 20; i++) {
       this.createMismatchParticle(
         centerX + (Math.random() - 0.5) * this.game.getScaledValue(100),
@@ -1092,7 +1110,6 @@ class LevelSelect extends Screen {
       );
     }
 
-    // Create additional "X" or "error" style particles
     for (let i = 0; i < 8; i++) {
       this.createMismatchParticle(
         centerX + (Math.random() - 0.5) * this.game.getScaledValue(60),
@@ -1126,14 +1143,11 @@ class LevelSelect extends Screen {
   }
 
   awardPointsForMatch(sock1, sock2) {
-    // Award 1 point for the match
     this.game.playerPoints += 1;
     this.game.saveGameData();
 
-    // Play points gained sound
     this.game.audioManager.playSound("points-gained", false, 0.7);
 
-    // Create point gain animation
     const centerX = (sock1.x + sock2.x) / 2;
     const centerY = (sock1.y + sock2.y) / 2;
 
@@ -1147,6 +1161,28 @@ class LevelSelect extends Screen {
 
   toggleAchievementsDrawer() {
     this.achievementsDrawer.isOpen = !this.achievementsDrawer.isOpen;
+
+    if (this.achievementsDrawer.isOpen) {
+      this.achievementsDrawer.scrollOffset = 0;
+    }
+  }
+
+  onMouseWheel(deltaY) {
+    if (
+      this.achievementsDrawer.isOpen &&
+      this.achievementsDrawer.animationProgress > 0.5
+    ) {
+      const scrollSpeed = this.game.getScaledValue(30);
+      this.achievementsDrawer.scrollOffset = Math.max(
+        0,
+        Math.min(
+          this.achievementsDrawer.maxScroll,
+          this.achievementsDrawer.scrollOffset + deltaY * scrollSpeed
+        )
+      );
+      return true;
+    }
+    return false;
   }
 
   createSockBallAnimation(sock1, sock2) {
@@ -1165,7 +1201,6 @@ class LevelSelect extends Screen {
 
     this.sockBallAnimations.push(animation);
 
-    // Play rent collected sound after a delay to match the animation
     setTimeout(() => {
       this.game.audioManager.playSound("rent-collected", false, 0.5);
       this.marthaWiggling = true;
@@ -1223,7 +1258,6 @@ class LevelSelect extends Screen {
     const layout = this.layoutCache;
 
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
-      // Calculate grid position
       const col = i % this.levelConfig.columns;
       const row = Math.floor(i / this.levelConfig.columns);
 
@@ -1273,13 +1307,11 @@ class LevelSelect extends Screen {
       const aspectRatio = youWinImage.width / youWinImage.height;
 
       if (aspectRatio > maxWidth / maxHeight) {
-        // Image is wider relative to the max dimensions - fit to width
         return {
           width: maxWidth,
           height: maxWidth / aspectRatio,
         };
       } else {
-        // Image is taller relative to the max dimensions - fit to height
         return {
           width: maxHeight * aspectRatio,
           height: maxHeight,
@@ -1299,23 +1331,19 @@ class LevelSelect extends Screen {
     if (this.game.images["you-win.png"]) {
       ctx.save();
 
-      // Create pulsing glow effect
       const time = Date.now();
       const pulseIntensity =
         Math.sin(time * this.YOU_WIN_CONFIG.pulseSpeed) * 0.3 + 0.7;
 
-      // Add golden glow
       ctx.shadowColor = "#FFD700";
       ctx.shadowBlur = this.game.getScaledValue(
         this.YOU_WIN_CONFIG.glowIntensity * pulseIntensity
       );
 
-      // Slight scale pulsing
-      const scale = 1 + (pulseIntensity - 0.7) * 0.05; // Very subtle scale change
+      const scale = 1 + (pulseIntensity - 0.7) * 0.05;
       ctx.translate(layout.youWinX, layout.youWinY);
       ctx.scale(scale, scale);
 
-      // Draw the you win graphic
       ctx.drawImage(
         this.game.images["you-win.png"],
         -layout.youWinWidth / 2,
@@ -1335,7 +1363,6 @@ class LevelSelect extends Screen {
     this.renderMarthaImage(ctx);
     this.renderLevelButtons(ctx);
 
-    // Render "You Win" graphic if all levels are completed
     if (this.areAllLevelsCompleted()) {
       this.renderYouWinGraphic(ctx);
     }
@@ -1357,7 +1384,6 @@ class LevelSelect extends Screen {
       this.renderMenuSocks(ctx);
     }
 
-    // Phase 4.1 - Render story manager (on top of everything)
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.render(ctx);
     }
@@ -1419,7 +1445,10 @@ class LevelSelect extends Screen {
       "Click sock pile to shoot socks, drag socks to drop zones",
       layout.centerX,
       layout.instructionsY,
-      { fontSize: layout.bodyFontSize, color: "rgba(255, 255, 255, 0.9)" }
+      {
+        fontSize: layout.bodyFontSize,
+        color: "rgba(255, 255, 255, 0.9)",
+      }
     );
 
     this.renderText(
@@ -1427,7 +1456,10 @@ class LevelSelect extends Screen {
       "Match pairs to create sock balls, then give Martha your rent!",
       layout.centerX,
       layout.instructionsY + layout.mediumSpacing,
-      { fontSize: layout.bodyFontSize, color: "rgba(255, 255, 255, 0.9)" }
+      {
+        fontSize: layout.bodyFontSize,
+        color: "rgba(255, 255, 255, 0.9)",
+      }
     );
 
     if (this.easterEggActive && this.menuSocks.length > 0) {
@@ -1436,7 +1468,10 @@ class LevelSelect extends Screen {
         "Drag socks to the drop zones next to Martha!",
         layout.centerX,
         layout.instructionsY + layout.mediumSpacing * 2,
-        { fontSize: layout.smallFontSize, color: "rgba(255, 215, 0, 0.8)" }
+        {
+          fontSize: layout.smallFontSize,
+          color: "rgba(255, 215, 0, 0.8)",
+        }
       );
     }
   }
@@ -1470,17 +1505,14 @@ class LevelSelect extends Screen {
     const layout = this.layoutCache;
     const button = this.creditsButton;
 
-    // Use animated hover progress
     const hoverProgress = button.hoverProgress || 0;
 
-    // Draw button background with enhanced styling (matching story button)
     ctx.save();
 
     const x = layout.creditsButtonX - layout.creditsButtonWidth / 2;
     const y = layout.creditsButtonY - layout.creditsButtonHeight / 2;
     const radius = this.game.getScaledValue(8);
 
-    // Background gradient with smooth transition
     const gradient = ctx.createLinearGradient(
       x,
       y,
@@ -1506,7 +1538,6 @@ class LevelSelect extends Screen {
     gradient.addColorStop(1, `rgba(${r2}, ${g2}, ${b2}, ${a2})`);
     ctx.fillStyle = gradient;
 
-    // Add glow with smooth transition
     if (hoverProgress > 0) {
       ctx.shadowColor = "rgba(100, 150, 255, 0.6)";
       ctx.shadowBlur = this.game.getScaledValue(12) * hoverProgress;
@@ -1518,7 +1549,6 @@ class LevelSelect extends Screen {
     }, 237, ${strokeOpacity})`;
     ctx.lineWidth = this.game.getScaledValue(3);
 
-    // Rounded rectangle
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
     ctx.lineTo(x + layout.creditsButtonWidth - radius, y);
@@ -1552,7 +1582,6 @@ class LevelSelect extends Screen {
     ctx.fill();
     ctx.stroke();
 
-    // Add glow effect with smooth transition
     if (hoverProgress > 0) {
       ctx.shadowColor = "rgba(100, 149, 237, 0.8)";
       ctx.shadowBlur = this.game.getScaledValue(10) * hoverProgress;
@@ -1561,7 +1590,6 @@ class LevelSelect extends Screen {
 
     ctx.restore();
 
-    // Draw button text
     this.renderText(
       ctx,
       "Credits",
@@ -1575,30 +1603,16 @@ class LevelSelect extends Screen {
     );
   }
 
-  isCreditsButtonHovered() {
-    const layout = this.layoutCache;
-    const mouseX = this.game.mouseX || 0;
-    const mouseY = this.game.mouseY || 0;
-    return (
-      mouseX >= layout.creditsButtonX - layout.creditsButtonWidth / 2 &&
-      mouseX <= layout.creditsButtonX + layout.creditsButtonWidth / 2 &&
-      mouseY >= layout.creditsButtonY - layout.creditsButtonHeight / 2 &&
-      mouseY <= layout.creditsButtonY + layout.creditsButtonHeight / 2
-    );
-  }
-
   renderStoryReplayButton(ctx) {
     const layout = this.layoutCache;
     const button = this.storyReplayButton;
 
-    // Draw button background with enhanced styling
     ctx.save();
 
     const x = layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2;
     const y = layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2;
     const radius = this.game.getScaledValue(8);
 
-    // Background gradient
     const gradient = ctx.createLinearGradient(
       x,
       y,
@@ -1614,7 +1628,6 @@ class LevelSelect extends Screen {
     }
     ctx.fillStyle = gradient;
 
-    // Add glow on hover
     if (button.hovered) {
       ctx.shadowColor = "rgba(100, 150, 255, 0.6)";
       ctx.shadowBlur = this.game.getScaledValue(12);
@@ -1625,7 +1638,6 @@ class LevelSelect extends Screen {
       : "rgba(100, 149, 237, 0.6)";
     ctx.lineWidth = this.game.getScaledValue(3);
 
-    // Rounded rectangle
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
     ctx.lineTo(x + layout.storyReplayButtonWidth - radius, y);
@@ -1659,7 +1671,6 @@ class LevelSelect extends Screen {
     ctx.fill();
     ctx.stroke();
 
-    // Add glow effect when hovered
     if (button.hovered) {
       ctx.shadowColor = "rgba(100, 149, 237, 0.8)";
       ctx.shadowBlur = this.game.getScaledValue(10);
@@ -1668,7 +1679,6 @@ class LevelSelect extends Screen {
 
     ctx.restore();
 
-    // Draw button text
     this.renderText(
       ctx,
       "📖 Story",
@@ -1686,14 +1696,12 @@ class LevelSelect extends Screen {
     const layout = this.layoutCache;
     const progress = this.achievementsDrawer.animationProgress;
 
-    // Drawer button
     const buttonX = layout.achievementsDrawerButtonX;
     const buttonY = layout.achievementsDrawerButtonY;
     const buttonSize = layout.achievementsDrawerButtonSize;
 
     ctx.save();
 
-    // Button background
     const gradient = ctx.createLinearGradient(
       buttonX - buttonSize / 2,
       buttonY - buttonSize / 2,
@@ -1719,7 +1727,6 @@ class LevelSelect extends Screen {
       : "rgba(220, 180, 0, 0.6)";
     ctx.lineWidth = this.game.getScaledValue(3);
 
-    // Rounded square button
     const radius = this.game.getScaledValue(8);
     const x = buttonX - buttonSize / 2;
     const y = buttonY - buttonSize / 2;
@@ -1746,14 +1753,12 @@ class LevelSelect extends Screen {
 
     ctx.restore();
 
-    // Button icon
     this.renderText(ctx, "🏆", buttonX, buttonY, {
       fontSize: this.game.getScaledValue(28),
       align: "center",
       baseline: "middle",
     });
 
-    // Drawer panel
     if (progress > 0) {
       const drawerWidth = layout.achievementsDrawerWidth;
       const drawerX = -drawerWidth + drawerWidth * progress;
@@ -1761,7 +1766,6 @@ class LevelSelect extends Screen {
 
       ctx.save();
 
-      // Drawer background with gradient
       const bgGradient = ctx.createLinearGradient(
         drawerX,
         0,
@@ -1773,7 +1777,6 @@ class LevelSelect extends Screen {
       ctx.fillStyle = bgGradient;
       ctx.fillRect(drawerX, 0, drawerWidth, canvasHeight);
 
-      // Drawer border with glow
       ctx.shadowColor = "rgba(255, 215, 0, 0.4)";
       ctx.shadowBlur = this.game.getScaledValue(15);
       ctx.strokeStyle = "rgba(255, 215, 0, 0.6)";
@@ -1783,11 +1786,9 @@ class LevelSelect extends Screen {
       ctx.lineTo(drawerX + drawerWidth, canvasHeight);
       ctx.stroke();
 
-      // Reset shadow
       ctx.shadowColor = "transparent";
       ctx.shadowBlur = 0;
 
-      // Title with enhanced styling
       ctx.save();
       ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
       ctx.shadowBlur = this.game.getScaledValue(20);
@@ -1805,7 +1806,6 @@ class LevelSelect extends Screen {
       );
       ctx.restore();
 
-      // Divider line
       ctx.strokeStyle = "rgba(255, 215, 0, 0.3)";
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -1819,29 +1819,105 @@ class LevelSelect extends Screen {
       );
       ctx.stroke();
 
-      // Achievements list
+      // Render close button
+      const closeButtonSize = this.game.getScaledValue(30);
+      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
+      const closeButtonY = this.game.getScaledValue(20);
+
+      ctx.save();
+
+      // Close button background
+      const closeGradient = ctx.createRadialGradient(
+        closeButtonX,
+        closeButtonY,
+        0,
+        closeButtonX,
+        closeButtonY,
+        closeButtonSize / 2
+      );
+      if (this.achievementsDrawer.closeButton.hovered) {
+        closeGradient.addColorStop(0, "rgba(255, 100, 100, 0.8)");
+        closeGradient.addColorStop(1, "rgba(200, 50, 50, 0.8)");
+        ctx.shadowColor = "rgba(255, 100, 100, 0.6)";
+        ctx.shadowBlur = this.game.getScaledValue(10);
+      } else {
+        closeGradient.addColorStop(0, "rgba(180, 180, 180, 0.6)");
+        closeGradient.addColorStop(1, "rgba(120, 120, 120, 0.6)");
+      }
+      ctx.fillStyle = closeGradient;
+
+      ctx.beginPath();
+      ctx.arc(closeButtonX, closeButtonY, closeButtonSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Close button border
+      ctx.strokeStyle = this.achievementsDrawer.closeButton.hovered
+        ? "rgba(255, 150, 150, 0.9)"
+        : "rgba(200, 200, 200, 0.5)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(closeButtonX, closeButtonY, closeButtonSize / 2, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // X symbol
+      ctx.strokeStyle = this.achievementsDrawer.closeButton.hovered
+        ? "#FFFFFF"
+        : "rgba(255, 255, 255, 0.8)";
+      ctx.lineWidth = this.game.getScaledValue(3);
+      ctx.lineCap = "round";
+
+      const xSize = closeButtonSize * 0.35;
+      ctx.beginPath();
+      ctx.moveTo(closeButtonX - xSize, closeButtonY - xSize);
+      ctx.lineTo(closeButtonX + xSize, closeButtonY + xSize);
+      ctx.moveTo(closeButtonX + xSize, closeButtonY - xSize);
+      ctx.lineTo(closeButtonX - xSize, closeButtonY + xSize);
+      ctx.stroke();
+
+      ctx.restore();
+
+      const contentStartY = this.game.getScaledValue(80);
+      const contentEndY = canvasHeight - this.game.getScaledValue(20);
+      const contentHeight = contentEndY - contentStartY;
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(drawerX, contentStartY, drawerWidth, contentHeight);
+      ctx.clip();
+
       const achievements = Object.values(GameConfig.ACHIEVEMENTS);
-      const startY = this.game.getScaledValue(85);
+      const startY = this.game.getScaledValue(115);
       const spacing = this.game.getScaledValue(75);
       const cardMargin = this.game.getScaledValue(15);
 
+      const totalContentHeight = achievements.length * spacing;
+      this.achievementsDrawer.maxScroll = Math.max(
+        0,
+        totalContentHeight - contentHeight + this.game.getScaledValue(40)
+      );
+
       achievements.forEach((achievement, index) => {
-        const achY = startY + index * spacing;
+        const achY =
+          startY + index * spacing - this.achievementsDrawer.scrollOffset;
         const unlocked =
           this.game.achievements &&
           this.game.achievements[achievement.id]?.unlocked;
         const isHovered =
           this.achievementsDrawer.hoveredAchievement === achievement.id;
 
+        if (achY < contentStartY - spacing || achY > contentEndY + spacing) {
+          return;
+        }
+
         ctx.save();
 
         const cardX = drawerX + cardMargin;
         const cardY = achY;
-        const cardWidth = drawerWidth - cardMargin * 2;
+        const cardWidth =
+          drawerWidth - cardMargin * 2 - this.game.getScaledValue(25);
         const cardHeight = this.game.getScaledValue(65);
         const cardRadius = this.game.getScaledValue(8);
 
-        // Achievement card background with gradient
         const cardGradient = ctx.createLinearGradient(
           cardX,
           cardY,
@@ -1867,7 +1943,6 @@ class LevelSelect extends Screen {
         }
         ctx.fillStyle = cardGradient;
 
-        // Rounded rectangle for card
         ctx.beginPath();
         ctx.moveTo(cardX + cardRadius, cardY);
         ctx.lineTo(cardX + cardWidth - cardRadius, cardY);
@@ -1896,7 +1971,6 @@ class LevelSelect extends Screen {
         ctx.closePath();
         ctx.fill();
 
-        // Card border
         if (unlocked) {
           ctx.strokeStyle = isHovered
             ? "rgba(255, 215, 0, 0.7)"
@@ -1911,7 +1985,6 @@ class LevelSelect extends Screen {
           ctx.stroke();
         }
 
-        // Icon (left side)
         const iconX = cardX + this.game.getScaledValue(30);
         const iconY = cardY + cardHeight / 2;
 
@@ -1923,7 +1996,6 @@ class LevelSelect extends Screen {
         });
         ctx.globalAlpha = 1;
 
-        // Achievement name (right of icon, top line)
         const textX = cardX + this.game.getScaledValue(60);
         const nameY = cardY + this.game.getScaledValue(20);
 
@@ -1932,7 +2004,6 @@ class LevelSelect extends Screen {
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
 
-        // Truncate name if too long
         let displayName = achievement.name;
         const maxTextWidth = cardWidth - this.game.getScaledValue(80);
         let textWidth = ctx.measureText(displayName).width;
@@ -1947,7 +2018,6 @@ class LevelSelect extends Screen {
 
         ctx.fillText(displayName, textX, nameY);
 
-        // Achievement description (right of icon, bottom line)
         const descY = cardY + this.game.getScaledValue(40);
 
         ctx.font = `${layout.smallFontSize - 2}px "Courier New", monospace`;
@@ -1955,7 +2025,6 @@ class LevelSelect extends Screen {
           ? "rgba(255, 255, 255, 0.8)"
           : "rgba(255, 255, 255, 0.4)";
 
-        // Truncate description if too long
         let displayDesc = achievement.description;
         textWidth = ctx.measureText(displayDesc).width;
 
@@ -1969,7 +2038,6 @@ class LevelSelect extends Screen {
 
         ctx.fillText(displayDesc, textX, descY);
 
-        // Status indicator (bottom right corner)
         const statusX = cardX + cardWidth - this.game.getScaledValue(15);
         const statusY = cardY + cardHeight - this.game.getScaledValue(15);
 
@@ -1984,30 +2052,68 @@ class LevelSelect extends Screen {
       });
 
       ctx.restore();
+
+      if (this.achievementsDrawer.maxScroll > 0) {
+        const scrollbarX = drawerX + drawerWidth - this.game.getScaledValue(20);
+        const scrollbarY = contentStartY;
+        const scrollbarWidth = this.game.getScaledValue(10);
+        const scrollbarHeight = contentHeight;
+
+        ctx.fillStyle = "rgba(100, 100, 100, 0.3)";
+        ctx.fillRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight);
+
+        const thumbHeight = Math.max(
+          this.game.getScaledValue(30),
+          (contentHeight / totalContentHeight) * scrollbarHeight
+        );
+        const thumbY =
+          scrollbarY +
+          (this.achievementsDrawer.scrollOffset /
+            this.achievementsDrawer.maxScroll) *
+            (scrollbarHeight - thumbHeight);
+
+        const scrollbarGradient = ctx.createLinearGradient(
+          scrollbarX,
+          thumbY,
+          scrollbarX + scrollbarWidth,
+          thumbY
+        );
+        if (
+          this.achievementsDrawer.scrollbarHover ||
+          this.achievementsDrawer.isDraggingScrollbar
+        ) {
+          scrollbarGradient.addColorStop(0, "rgba(255, 215, 0, 0.9)");
+          scrollbarGradient.addColorStop(1, "rgba(255, 165, 0, 0.9)");
+        } else {
+          scrollbarGradient.addColorStop(0, "rgba(200, 200, 200, 0.7)");
+          scrollbarGradient.addColorStop(1, "rgba(150, 150, 150, 0.7)");
+        }
+        ctx.fillStyle = scrollbarGradient;
+        ctx.fillRect(scrollbarX, thumbY, scrollbarWidth, thumbHeight);
+      }
+
+      ctx.restore();
     }
   }
+
   renderEasterDropZones(ctx) {
     const layout = this.layoutCache;
 
-    this.easterDropZones.forEach((zone, index) => {
+    this.easterDropZones.forEach((zone) => {
       ctx.save();
 
-      // Calculate various effects
       let glowIntensity = 0;
       let isHovered = this.dropZoneHover === zone.id;
       let isOccupied = zone.sock !== null;
 
-      // Glow effect from snapping
       if (zone.glowEffect > 0) {
         glowIntensity = zone.glowEffect / this.DROP_ZONE_CONFIG.glowDuration;
       }
 
-      // Hover effect
       if (isHovered) {
         glowIntensity = Math.max(glowIntensity, 0.8);
       }
 
-      // Base zone styling - grey dashed border like match screen
       let borderColor = "rgba(200, 200, 200, 0.5)";
       let backgroundColor = "rgba(255, 255, 255, 0.1)";
       let shadowColor = "rgba(255, 255, 255, 0.2)";
@@ -2025,13 +2131,11 @@ class LevelSelect extends Screen {
         shadowBlur = this.game.getScaledValue(15);
       }
 
-      // Apply glow effect
       if (glowIntensity > 0) {
         ctx.shadowColor = shadowColor;
         ctx.shadowBlur = shadowBlur * (1 + glowIntensity);
       }
 
-      // Draw zone background
       ctx.fillStyle = backgroundColor;
       ctx.fillRect(
         zone.x - zone.width / 2,
@@ -2040,7 +2144,6 @@ class LevelSelect extends Screen {
         zone.height
       );
 
-      // Draw dashed border
       ctx.setLineDash([5, 5]);
       ctx.strokeStyle = borderColor;
       ctx.lineWidth = this.game.getScaledValue(isHovered ? 3 : 2);
@@ -2051,10 +2154,8 @@ class LevelSelect extends Screen {
         zone.height
       );
 
-      // Reset line dash
       ctx.setLineDash([]);
 
-      // Pulsing effect for empty zones
       if (!isOccupied && !isHovered) {
         const pulseIntensity = Math.sin(Date.now() * 0.003) * 0.3 + 0.7;
         ctx.strokeStyle = `rgba(200, 200, 200, ${pulseIntensity * 0.6})`;
@@ -2135,11 +2236,13 @@ class LevelSelect extends Screen {
       "Select Level",
       layout.centerX,
       layout.levelGridStartY - this.game.getScaledValue(120),
-      { fontSize: layout.titleFontSize, weight: "bold" }
+      {
+        fontSize: layout.titleFontSize,
+        weight: "bold",
+      }
     );
 
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
-      // Calculate grid position (3x3 grid)
       const col = i % this.levelConfig.columns;
       const row = Math.floor(i / this.levelConfig.columns);
 
@@ -2154,20 +2257,16 @@ class LevelSelect extends Screen {
     const layout = this.layoutCache;
     const buttonSize = layout.levelButtonSize;
 
-    // Use sock 1-3 for levels 7-9, with color filters
     let sockImageIndex = levelIndex + 1;
     let colorFilter = null;
 
     if (levelIndex === 6) {
-      // Level 7 - use sock 1 with purple tint
       sockImageIndex = 1;
       colorFilter = "hue-rotate(270deg) saturate(1.5)";
     } else if (levelIndex === 7) {
-      // Level 8 - use sock 2 with orange tint
       sockImageIndex = 2;
       colorFilter = "hue-rotate(30deg) saturate(1.3)";
     } else if (levelIndex === 8) {
-      // Level 9 - use sock 3 with cyan tint
       sockImageIndex = 3;
       colorFilter = "hue-rotate(180deg) saturate(1.4)";
     }
@@ -2181,13 +2280,11 @@ class LevelSelect extends Screen {
     const isAffordable =
       this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex];
 
-    // Get smooth hover animation value
     const hoverProgress = this.levelHoverAnimations[levelIndex] || 0;
     const pulseTimer = this.levelPulseTimers[levelIndex] || 0;
 
     ctx.save();
 
-    // Smooth scale animation based on hover progress
     const baseScale = 1;
     const hoverScale = this.levelConfig.hoverScale;
     const currentScale =
@@ -2199,12 +2296,10 @@ class LevelSelect extends Screen {
 
     const halfSize = buttonSize / 2;
 
-    // Draw background circle for better visibility
     ctx.save();
     const bgRadius = halfSize + this.game.getScaledValue(8);
 
     if (isUnlocked) {
-      // Unlocked - show colorful background
       const gradient = ctx.createRadialGradient(x, y, 0, x, y, bgRadius);
       if (isCompleted) {
         gradient.addColorStop(0, "rgba(255, 215, 0, 0.3)");
@@ -2216,7 +2311,6 @@ class LevelSelect extends Screen {
       }
       ctx.fillStyle = gradient;
     } else {
-      // Locked - show gray background
       ctx.fillStyle = isAffordable
         ? "rgba(100, 100, 100, 0.2)"
         : "rgba(50, 50, 50, 0.2)";
@@ -2226,7 +2320,6 @@ class LevelSelect extends Screen {
     ctx.arc(x, y, bgRadius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Add border with glow on hover
     if (isUnlocked) {
       ctx.strokeStyle = isCompleted
         ? "rgba(255, 215, 0, 0.6)"
@@ -2242,7 +2335,6 @@ class LevelSelect extends Screen {
       ctx.arc(x, y, bgRadius, 0, Math.PI * 2);
       ctx.stroke();
     } else if (isAffordable) {
-      // Affordable locked level - pulsing gold highlight
       const affordablePulse = Math.sin(pulseTimer * 2) * 0.3 + 0.7;
       ctx.strokeStyle = `rgba(255, 215, 0, ${affordablePulse})`;
       ctx.lineWidth = this.game.getScaledValue(4);
@@ -2260,18 +2352,15 @@ class LevelSelect extends Screen {
     }
     ctx.restore();
 
-    // Render sock image
     if (isUnlocked) {
       ctx.save();
 
-      // Add subtle shadow to sock
       ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
       ctx.shadowBlur = this.game.getScaledValue(8);
       ctx.shadowOffsetY = this.game.getScaledValue(3);
 
       if (isCompleted) {
         if (sockImage) {
-          // Apply color filter for levels 7-9
           if (colorFilter) {
             ctx.filter = colorFilter;
           }
@@ -2285,7 +2374,6 @@ class LevelSelect extends Screen {
           );
         }
       } else {
-        // Animate unlocked but not completed levels
         const wiggle =
           Math.sin(
             this.animationFrame * this.levelConfig.wiggleSpeed + levelIndex
@@ -2294,7 +2382,6 @@ class LevelSelect extends Screen {
           Math.abs(Math.sin(pulseTimer * 0.8)) * this.game.getScaledValue(3);
 
         if (sockImage) {
-          // Apply color filter for levels 7-9
           if (colorFilter) {
             ctx.filter = colorFilter;
           }
@@ -2310,7 +2397,6 @@ class LevelSelect extends Screen {
       }
       ctx.restore();
 
-      // Render star for completed levels
       if (isCompleted && this.game.images["star.png"]) {
         ctx.save();
         ctx.shadowColor = "#FFD700";
@@ -2330,7 +2416,6 @@ class LevelSelect extends Screen {
         ctx.restore();
       }
 
-      // Level label with better styling
       ctx.save();
       ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
       ctx.shadowBlur = this.game.getScaledValue(4);
@@ -2347,12 +2432,10 @@ class LevelSelect extends Screen {
       );
       ctx.restore();
     } else {
-      // Locked level - show dimmed sock
       if (sockImage) {
         ctx.save();
         ctx.globalAlpha = isAffordable ? 0.5 : 0.25;
 
-        // Combine color filter with brightness for levels 7-9
         if (colorFilter) {
           ctx.filter = isAffordable
             ? `${colorFilter} brightness(0.5) grayscale(0.3)`
@@ -2373,7 +2456,6 @@ class LevelSelect extends Screen {
         ctx.restore();
       }
 
-      // Lock icon
       ctx.save();
       ctx.fillStyle = isAffordable
         ? "rgba(144, 238, 144, 0.8)"
@@ -2386,7 +2468,6 @@ class LevelSelect extends Screen {
       ctx.fillText("🔒", x, y);
       ctx.restore();
 
-      // Cost display with icon
       ctx.save();
       ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
       ctx.shadowBlur = this.game.getScaledValue(4);
@@ -2403,7 +2484,6 @@ class LevelSelect extends Screen {
       );
       ctx.restore();
 
-      // Level label
       ctx.save();
       ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
       ctx.shadowBlur = this.game.getScaledValue(4);
@@ -2419,7 +2499,6 @@ class LevelSelect extends Screen {
       );
       ctx.restore();
 
-      // Unlock hint with pulse
       if (isAffordable) {
         const pulse =
           Math.abs(Math.sin(this.animationFrame * 0.003)) * 0.3 + 0.7;
@@ -2432,7 +2511,11 @@ class LevelSelect extends Screen {
           "Click to unlock!",
           x,
           y + this.game.getScaledValue(85),
-          { fontSize: layout.smallFontSize, color: "#90EE90", weight: "bold" }
+          {
+            fontSize: layout.smallFontSize,
+            color: "#90EE90",
+            weight: "bold",
+          }
         );
         ctx.restore();
       }
@@ -2459,7 +2542,11 @@ class LevelSelect extends Screen {
       `Points: ${this.game.playerPoints}`,
       layout.statsX,
       panelY + layout.statsPanelHeight / 2,
-      { fontSize: layout.headerFontSize, color: "#FFD700", weight: "bold" }
+      {
+        fontSize: layout.headerFontSize,
+        color: "#FFD700",
+        weight: "bold",
+      }
     );
   }
 
@@ -2474,7 +2561,6 @@ class LevelSelect extends Screen {
       ctx.fillStyle = particle.color;
 
       if (particle.shape === "cross") {
-        // Render cross-shaped particles for mismatch
         const halfSize = particle.size / 2;
         ctx.fillRect(
           particle.x - halfSize,
@@ -2489,7 +2575,6 @@ class LevelSelect extends Screen {
           particle.size
         );
       } else {
-        // Render normal circular particles
         ctx.beginPath();
         ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
         ctx.fill();
@@ -2503,7 +2588,6 @@ class LevelSelect extends Screen {
     this.menuSocks.forEach((sock) => {
       ctx.save();
 
-      // Always render with full alpha - no fading
       if (sock.glowEffect > 0) {
         ctx.shadowColor = "#FFD700";
         ctx.shadowBlur = sock.glowEffect;
