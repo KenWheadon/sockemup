@@ -18,6 +18,15 @@ class MatchScreen extends Screen {
     this.sockPileClicked = false;
     this.pulseTimer = 0;
 
+    // Pause button
+    this.pauseButton = {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      hovered: false,
+    };
+
     // Velocity tracking for throwing
     this.dragHistory = [];
     this.maxDragHistoryLength = 5;
@@ -53,6 +62,11 @@ class MatchScreen extends Screen {
       instructionArrowY: canvasHeight - this.game.getScaledValue(100),
       streakX: canvasWidth - this.game.getScaledValue(20),
       streakY: this.game.getScaledValue(30),
+      // Pause button in top-right
+      pauseButtonX: canvasWidth - this.game.getScaledValue(80),
+      pauseButtonY: this.game.getScaledValue(30),
+      pauseButtonWidth: this.game.getScaledValue(120),
+      pauseButtonHeight: this.game.getScaledValue(40),
     };
   }
 
@@ -74,6 +88,9 @@ class MatchScreen extends Screen {
     this.sockPileClicked = false;
     this.pulseTimer = 0;
     this.dragHistory = [];
+
+    // Reset timer to 0 at start of each round
+    this.game.timeRemaining = 0;
 
     // Start match music
     console.log("🎵 Match screen setup - starting match music");
@@ -138,6 +155,26 @@ class MatchScreen extends Screen {
   }
 
   onMouseDown(x, y) {
+    const layout = this.layoutCache;
+
+    // Check pause button click
+    const pauseButtonLeft = layout.pauseButtonX - layout.pauseButtonWidth / 2;
+    const pauseButtonTop = layout.pauseButtonY - layout.pauseButtonHeight / 2;
+    if (
+      x >= pauseButtonLeft &&
+      x <= pauseButtonLeft + layout.pauseButtonWidth &&
+      y >= pauseButtonTop &&
+      y <= pauseButtonTop + layout.pauseButtonHeight
+    ) {
+      this.togglePause();
+      return true;
+    }
+
+    // Prevent interaction when paused
+    if (this.isPaused) {
+      return false;
+    }
+
     if (this.sockManager.checkSockPileClick(x, y)) {
       this.shootSockFromPile();
       return true;
@@ -174,6 +211,22 @@ class MatchScreen extends Screen {
   }
 
   onMouseMove(x, y) {
+    const layout = this.layoutCache;
+
+    // Update pause button hover
+    const pauseButtonLeft = layout.pauseButtonX - layout.pauseButtonWidth / 2;
+    const pauseButtonTop = layout.pauseButtonY - layout.pauseButtonHeight / 2;
+    this.pauseButton.hovered =
+      x >= pauseButtonLeft &&
+      x <= pauseButtonLeft + layout.pauseButtonWidth &&
+      y >= pauseButtonTop &&
+      y <= pauseButtonTop + layout.pauseButtonHeight;
+
+    // Don't allow dragging when paused
+    if (this.isPaused) {
+      return;
+    }
+
     if (this.draggedSock) {
       this.draggedSock.x = x - this.dragOffset.x;
       this.draggedSock.y = y - this.dragOffset.y;
@@ -459,32 +512,10 @@ class MatchScreen extends Screen {
       this.pulseTimer += deltaTime * 0.005; // Slow pulse
     }
 
-    // Fixed timer: Convert deltaTime from milliseconds to seconds and subtract directly
-    // This makes the timer independent of framerate - but only if pile has been clicked
-    if (this.sockPileClicked) {
-      const timeDecrement = deltaTime / 1000; // Convert milliseconds to seconds
-      this.game.timeRemaining -= timeDecrement;
-    }
-
-    // Handle countdown audio
-    const timeValue = Math.max(0, Math.floor(this.game.timeRemaining));
-    if (timeValue <= 10 && timeValue > 0) {
-      if (!this.timeWarningPlayed) {
-        this.timeWarningPlayed = true;
-        // Play countdown tick sound for last 10 seconds
-        this.game.audioManager.playSound("countdown-tick", false, 0.3);
-      }
-
-      // Play tick sound every second during countdown
-      if (timeValue !== this.lastCountdownTick) {
-        this.lastCountdownTick = timeValue;
-        this.game.audioManager.playSound("countdown-tick", false, 0.3);
-      }
-    }
-
-    if (this.game.timeRemaining <= 0) {
-      this.game.startThrowingPhase();
-      return;
+    // Fixed timer: Count UP instead of down - only if pile has been clicked and not paused
+    if (this.sockPileClicked && !this.isPaused) {
+      const timeIncrement = deltaTime / 1000; // Convert milliseconds to seconds
+      this.game.timeRemaining += timeIncrement;
     }
 
     this.sockManager.socks.forEach((sock) => {
@@ -507,6 +538,17 @@ class MatchScreen extends Screen {
       this.sockManager.getSockListLength() === 0 &&
       this.game.sockBalls >= GameConfig.LEVELS[this.game.currentLevel].sockPairs
     ) {
+      // Check if player finished within the time limit for bonus points
+      const level = GameConfig.LEVELS[this.game.currentLevel];
+      const timeLimit = level.matchingTime;
+      const timeTaken = Math.floor(this.game.timeRemaining);
+
+      if (timeTaken <= timeLimit) {
+        // Award 25 bonus points for finishing within time
+        this.game.playerPoints += 25;
+        console.log(`⏱️ Time bonus! Finished in ${timeTaken}s (limit: ${timeLimit}s) - +25 points`);
+      }
+
       this.game.startThrowingPhase();
     }
   }
@@ -674,21 +716,23 @@ class MatchScreen extends Screen {
     ctx.fill();
     ctx.restore();
 
-    // Time at top center
+    // Time at top center - counting UP with time limit shown
     const timeValue = Math.max(0, Math.floor(this.game.timeRemaining));
-    const timeColor =
-      timeValue <= 10
-        ? Math.sin(this.pulseTimer * 0.5) > 0
-          ? "rgba(255, 68, 68, 0.9)"
-          : "rgba(255, 255, 255, 0.9)"
-        : "rgba(255, 255, 255, 0.9)";
+    const timeLimit = GameConfig.LEVELS[this.game.currentLevel].matchingTime;
+    const isOverTime = timeValue > timeLimit;
+
+    const timeColor = isOverTime
+      ? "rgba(255, 68, 68, 0.9)"
+      : timeValue > timeLimit * 0.8
+      ? "rgba(255, 200, 68, 0.9)"
+      : "rgba(255, 255, 255, 0.9)";
 
     // Enhanced time display with background
     ctx.save();
     ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.strokeStyle = isOverTime ? "rgba(255, 68, 68, 0.6)" : "rgba(255, 255, 255, 0.3)";
     ctx.lineWidth = 2;
-    const timeText = `Time: ${timeValue}s`;
+    const timeText = `Time: ${timeValue}s / ${timeLimit}s`;
     const timeMetrics = ctx.measureText(timeText);
     const timePadding = this.game.getScaledValue(16);
     const timeBoxWidth = timeMetrics.width + timePadding * 10;
@@ -789,5 +833,73 @@ class MatchScreen extends Screen {
         }
       );
     }
+
+    // Pause button in top-right
+    ctx.save();
+    const pauseButtonLeft = layout.pauseButtonX - layout.pauseButtonWidth / 2;
+    const pauseButtonTop = layout.pauseButtonY - layout.pauseButtonHeight / 2;
+
+    // Button background
+    ctx.fillStyle = this.pauseButton.hovered
+      ? "rgba(100, 100, 100, 0.8)"
+      : "rgba(60, 60, 60, 0.7)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+    ctx.lineWidth = 2;
+
+    // Rounded rectangle
+    const radius = this.game.getScaledValue(8);
+    ctx.beginPath();
+    ctx.moveTo(pauseButtonLeft + radius, pauseButtonTop);
+    ctx.lineTo(pauseButtonLeft + layout.pauseButtonWidth - radius, pauseButtonTop);
+    ctx.arcTo(
+      pauseButtonLeft + layout.pauseButtonWidth,
+      pauseButtonTop,
+      pauseButtonLeft + layout.pauseButtonWidth,
+      pauseButtonTop + radius,
+      radius
+    );
+    ctx.lineTo(
+      pauseButtonLeft + layout.pauseButtonWidth,
+      pauseButtonTop + layout.pauseButtonHeight - radius
+    );
+    ctx.arcTo(
+      pauseButtonLeft + layout.pauseButtonWidth,
+      pauseButtonTop + layout.pauseButtonHeight,
+      pauseButtonLeft + layout.pauseButtonWidth - radius,
+      pauseButtonTop + layout.pauseButtonHeight,
+      radius
+    );
+    ctx.lineTo(pauseButtonLeft + radius, pauseButtonTop + layout.pauseButtonHeight);
+    ctx.arcTo(
+      pauseButtonLeft,
+      pauseButtonTop + layout.pauseButtonHeight,
+      pauseButtonLeft,
+      pauseButtonTop + layout.pauseButtonHeight - radius,
+      radius
+    );
+    ctx.lineTo(pauseButtonLeft, pauseButtonTop + radius);
+    ctx.arcTo(pauseButtonLeft, pauseButtonTop, pauseButtonLeft + radius, pauseButtonTop, radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Pause icon or Resume text
+    if (this.isPaused) {
+      this.renderText(ctx, "▶", layout.pauseButtonX, layout.pauseButtonY, {
+        fontSize: layout.headerFontSize,
+        align: "center",
+        color: "rgba(255, 255, 255, 0.9)",
+        weight: "bold",
+      });
+    } else {
+      this.renderText(ctx, "❚❚", layout.pauseButtonX, layout.pauseButtonY, {
+        fontSize: layout.headerFontSize,
+        align: "center",
+        color: "rgba(255, 255, 255, 0.9)",
+        weight: "bold",
+      });
+    }
+
+    ctx.restore();
   }
 }
