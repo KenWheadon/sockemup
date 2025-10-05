@@ -213,18 +213,18 @@ const GameConfig = {
     // NEW LEVELS - Phase 3.1
     {
       marthaSpeed: 1.45,
-      sockPairs: 30,
+      sockPairs: 28,
       typesAvailable: [1, 2, 3, 4],
       matchingTime: 90,
       marthaWantsSockballs: 15,
       marthaPatterns: ["diagonal", "circular"],
-      marthaPatternSpeed: 1.35,
+      marthaPatternSpeed: 1.3,
     },
     {
       marthaSpeed: 1.55,
-      sockPairs: 36,
+      sockPairs: 30,
       typesAvailable: [1, 2, 3, 4, 5],
-      matchingTime: 100,
+      matchingTime: 90,
       marthaWantsSockballs: 18,
       marthaPatterns: [
         "horizontal",
@@ -233,20 +233,20 @@ const GameConfig = {
         "circular",
         "random",
       ],
-      marthaPatternSpeed: 1.45,
+      marthaPatternSpeed: 1.35,
     },
     {
       marthaSpeed: 1.7,
-      sockPairs: 45,
+      sockPairs: 36,
       typesAvailable: [1, 2, 3, 4, 5, 6],
-      matchingTime: 120,
+      matchingTime: 90,
       marthaWantsSockballs: 22,
       marthaPatterns: ["random", "circular"],
-      marthaPatternSpeed: 1.6,
+      marthaPatternSpeed: 1.4,
     },
   ],
 
-  // Level costs and unlock data (updated for 9 levels)
+  // Level costs and unlock data
   LEVEL_COSTS: [0, 25, 45, 70, 100, 150, 200, 250, 300],
   MARTHA_FRAMES: [0, 1, 0, 2, 0, 3, 1, 2, 3],
   INITIAL_UNLOCKED_LEVELS: [
@@ -368,9 +368,9 @@ const GameConfig = {
 
   // Martha catch mechanics settings
   CATCH_MECHANICS: {
-    CATCH_RADIUS_MULTIPLIER: 1.3, // 1.3x Martha's actual size
-    PERFECT_CATCH_THRESHOLD: 0.3, // Center 30% of Martha = perfect
-    GOOD_CATCH_THRESHOLD: 0.6, // Center 60% of Martha = good
+    CATCH_RADIUS_MULTIPLIER: 2.6, // 2.6x Martha's actual size (2x expansion from 1.3x)
+    PERFECT_CATCH_THRESHOLD: 0.6, // Center 60% of Martha = perfect (2x from 0.3)
+    GOOD_CATCH_THRESHOLD: 1.2, // Center 120% of Martha = good (2x from 0.6)
     PERFECT_CATCH_BONUS: 15,
     GOOD_CATCH_BONUS: 10,
     REGULAR_CATCH_BONUS: 5,

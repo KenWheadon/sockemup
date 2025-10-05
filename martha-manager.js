@@ -876,10 +876,65 @@ class MarthaManager {
     ctx.fillText("RENT DUE", meterX + meter.width / 2, meterY - 2);
   }
 
+  renderCatchZones(ctx) {
+    // Calculate Martha's center position
+    const centerX = this.x + this.width / 2;
+    const centerY = this.y + this.height / 2;
+    const baseRadius = this.width / 2;
+
+    // Get the catch radius with multiplier
+    const catchRadius = baseRadius * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+
+    // Calculate zone radii based on thresholds
+    const perfectRadius = baseRadius * GameConfig.CATCH_MECHANICS.PERFECT_CATCH_THRESHOLD;
+    const goodRadius = baseRadius * GameConfig.CATCH_MECHANICS.GOOD_CATCH_THRESHOLD;
+    const regularRadius = catchRadius;
+
+    ctx.save();
+
+    // Draw Regular catch zone (outermost) - Blue
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, regularRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(100, 150, 255, 0.4)";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 4]);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(100, 150, 255, 0.08)";
+    ctx.fill();
+
+    // Draw Good catch zone (middle) - Green
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, goodRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(144, 238, 144, 0.5)";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([6, 3]);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(144, 238, 144, 0.1)";
+    ctx.fill();
+
+    // Draw Perfect catch zone (innermost) - Gold
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, perfectRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.6)";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([4, 2]);
+    ctx.stroke();
+    ctx.fillStyle = "rgba(255, 215, 0, 0.12)";
+    ctx.fill();
+
+    // Reset line dash
+    ctx.setLineDash([]);
+
+    ctx.restore();
+  }
+
   render(ctx) {
     if (!this.onScreen && !this.isEntering) return;
 
     ctx.save();
+
+    // Render catch zones first (behind Martha)
+    this.renderCatchZones(ctx);
 
     // Apply hit flash effect
     if (this.hitEffect.active) {
