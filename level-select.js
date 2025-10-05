@@ -89,17 +89,21 @@ class LevelSelect extends Screen {
     // Level button configuration
     this.levelConfig = {
       baseSpacing: 150,
-      baseButtonSize: 80,
+      baseButtonSize: 90, // Larger buttons
       wiggleSpeed: 0.01,
       wiggleAmount: 3,
-      hoverScale: 1.1,
+      hoverScale: 1.15, // More pronounced hover
       clickScale: 0.95,
-      // Grid layout for 9 levels
+      // Grid layout for 9 levels with better spacing
       columns: 3,
       rows: 3,
-      horizontalSpacing: 150,
-      verticalSpacing: 120,
+      horizontalSpacing: 180, // More horizontal space
+      verticalSpacing: 150, // More vertical space
     };
+
+    // Level button hover animations
+    this.levelHoverAnimations = Array(9).fill(0); // Track hover progress for each level
+    this.levelPulseTimers = Array(9).fill(0); // Individual pulse timers
 
     // Story replay button
     this.storyReplayButton = {
@@ -448,6 +452,31 @@ class LevelSelect extends Screen {
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.update(deltaTime);
       return; // Don't update other elements when story is showing
+    }
+
+    // Update level button hover animations
+    for (let i = 0; i < this.levelHoverAnimations.length; i++) {
+      const isHovered = this.hoveredLevel === i;
+      const targetValue = isHovered ? 1 : 0;
+      const animSpeed = 0.008; // Smooth transition speed
+
+      // Smoothly animate hover state
+      if (this.levelHoverAnimations[i] < targetValue) {
+        this.levelHoverAnimations[i] = Math.min(
+          this.levelHoverAnimations[i] + animSpeed * deltaTime,
+          targetValue
+        );
+      } else if (this.levelHoverAnimations[i] > targetValue) {
+        this.levelHoverAnimations[i] = Math.max(
+          this.levelHoverAnimations[i] - animSpeed * deltaTime,
+          targetValue
+        );
+      }
+
+      // Update pulse timers for unlocked levels
+      if (this.game.unlockedLevels[i] && !this.game.completedLevels[i]) {
+        this.levelPulseTimers[i] += deltaTime * 0.002;
+      }
     }
 
     if (this.easterEggActive) {
@@ -1325,19 +1354,39 @@ class LevelSelect extends Screen {
     const layout = this.layoutCache;
     const button = this.storyReplayButton;
 
-    // Draw button background
+    // Draw button background with enhanced styling
     ctx.save();
-    ctx.fillStyle = button.hovered
-      ? "rgba(65, 105, 225, 0.8)"
-      : "rgba(65, 105, 225, 0.6)";
-    ctx.strokeStyle = button.hovered
-      ? "rgba(100, 149, 237, 1)"
-      : "rgba(100, 149, 237, 0.5)";
-    ctx.lineWidth = 2;
 
     const x = layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2;
     const y = layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2;
-    const radius = this.game.getScaledValue(5);
+    const radius = this.game.getScaledValue(8);
+
+    // Background gradient
+    const gradient = ctx.createLinearGradient(
+      x,
+      y,
+      x,
+      y + layout.storyReplayButtonHeight
+    );
+    if (button.hovered) {
+      gradient.addColorStop(0, "rgba(100, 150, 255, 0.95)");
+      gradient.addColorStop(1, "rgba(65, 105, 225, 0.95)");
+    } else {
+      gradient.addColorStop(0, "rgba(80, 120, 200, 0.85)");
+      gradient.addColorStop(1, "rgba(50, 85, 180, 0.85)");
+    }
+    ctx.fillStyle = gradient;
+
+    // Add glow on hover
+    if (button.hovered) {
+      ctx.shadowColor = "rgba(100, 150, 255, 0.6)";
+      ctx.shadowBlur = this.game.getScaledValue(12);
+    }
+
+    ctx.strokeStyle = button.hovered
+      ? "rgba(150, 200, 255, 0.9)"
+      : "rgba(100, 149, 237, 0.6)";
+    ctx.lineWidth = this.game.getScaledValue(3);
 
     // Rounded rectangle
     ctx.beginPath();
@@ -1582,23 +1631,83 @@ class LevelSelect extends Screen {
     const isAffordable =
       this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex];
 
+    // Get smooth hover animation value
+    const hoverProgress = this.levelHoverAnimations[levelIndex] || 0;
+    const pulseTimer = this.levelPulseTimers[levelIndex] || 0;
+
     ctx.save();
 
-    if (isHovered && isUnlocked) {
-      const scale = this.levelConfig.hoverScale;
-      ctx.translate(x, y);
-      ctx.scale(scale, scale);
-      ctx.translate(-x, -y);
-    }
+    // Smooth scale animation based on hover progress
+    const baseScale = 1;
+    const hoverScale = this.levelConfig.hoverScale;
+    const currentScale = baseScale + (hoverScale - baseScale) * this.easeOutCubic(hoverProgress);
+
+    ctx.translate(x, y);
+    ctx.scale(currentScale, currentScale);
+    ctx.translate(-x, -y);
 
     const halfSize = buttonSize / 2;
 
+    // Draw background circle for better visibility
+    ctx.save();
+    const bgRadius = halfSize + this.game.getScaledValue(8);
+
     if (isUnlocked) {
+      // Unlocked - show colorful background
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, bgRadius);
+      if (isCompleted) {
+        gradient.addColorStop(0, "rgba(255, 215, 0, 0.3)");
+        gradient.addColorStop(1, "rgba(255, 215, 0, 0.05)");
+      } else {
+        const pulse = Math.sin(pulseTimer) * 0.1 + 0.2;
+        gradient.addColorStop(0, `rgba(100, 150, 255, ${pulse})`);
+        gradient.addColorStop(1, "rgba(100, 150, 255, 0.05)");
+      }
+      ctx.fillStyle = gradient;
+    } else {
+      // Locked - show gray background
+      ctx.fillStyle = isAffordable ? "rgba(100, 100, 100, 0.2)" : "rgba(50, 50, 50, 0.2)";
+    }
+
+    ctx.beginPath();
+    ctx.arc(x, y, bgRadius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Add border with glow on hover
+    if (isUnlocked) {
+      ctx.strokeStyle = isCompleted ? "rgba(255, 215, 0, 0.6)" : "rgba(100, 150, 255, 0.6)";
+      ctx.lineWidth = this.game.getScaledValue(3);
+
+      if (hoverProgress > 0) {
+        ctx.shadowColor = isCompleted ? "#FFD700" : "#6496FF";
+        ctx.shadowBlur = this.game.getScaledValue(15) * hoverProgress;
+      }
+
+      ctx.beginPath();
+      ctx.arc(x, y, bgRadius, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = "rgba(100, 100, 100, 0.3)";
+      ctx.lineWidth = this.game.getScaledValue(2);
+      ctx.beginPath();
+      ctx.arc(x, y, bgRadius, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Render sock image
+    if (isUnlocked) {
+      ctx.save();
+
+      // Add subtle shadow to sock
+      ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+      ctx.shadowBlur = this.game.getScaledValue(8);
+      ctx.shadowOffsetY = this.game.getScaledValue(3);
+
       if (isCompleted) {
         if (sockImage) {
           // Apply color filter for levels 7-9
           if (colorFilter) {
-            ctx.save();
             ctx.filter = colorFilter;
           }
 
@@ -1609,71 +1718,81 @@ class LevelSelect extends Screen {
             buttonSize,
             buttonSize
           );
-
-          if (colorFilter) {
-            ctx.restore();
-          }
-        }
-
-        if (this.game.images["star.png"]) {
-          ctx.save();
-          ctx.shadowColor = "#FFD700";
-          ctx.shadowBlur = this.game.getScaledValue(10);
-          const starSize = this.game.getScaledValue(40);
-          ctx.drawImage(
-            this.game.images["star.png"],
-            x - starSize / 2 + 15,
-            y - this.game.getScaledValue(80) - 10,
-            starSize,
-            starSize
-          );
-          ctx.restore();
         }
       } else {
+        // Animate unlocked but not completed levels
         const wiggle =
           Math.sin(
             this.animationFrame * this.levelConfig.wiggleSpeed + levelIndex
           ) * this.game.getScaledValue(this.levelConfig.wiggleAmount);
+        const bounce = Math.abs(Math.sin(pulseTimer * 0.8)) * this.game.getScaledValue(3);
+
         if (sockImage) {
           // Apply color filter for levels 7-9
           if (colorFilter) {
-            ctx.save();
             ctx.filter = colorFilter;
           }
 
           ctx.drawImage(
             sockImage,
             x - halfSize + wiggle,
-            y - halfSize,
+            y - halfSize - bounce,
             buttonSize,
             buttonSize
           );
-
-          if (colorFilter) {
-            ctx.restore();
-          }
         }
       }
+      ctx.restore();
 
+      // Render star for completed levels
+      if (isCompleted && this.game.images["star.png"]) {
+        ctx.save();
+        ctx.shadowColor = "#FFD700";
+        ctx.shadowBlur = this.game.getScaledValue(15);
+        const starSize = this.game.getScaledValue(45);
+        const starRotation = Math.sin(this.animationFrame * 0.002) * 0.1;
+
+        ctx.translate(x, y - this.game.getScaledValue(55));
+        ctx.rotate(starRotation);
+        ctx.drawImage(
+          this.game.images["star.png"],
+          -starSize / 2,
+          -starSize / 2,
+          starSize,
+          starSize
+        );
+        ctx.restore();
+      }
+
+      // Level label with better styling
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+      ctx.shadowBlur = this.game.getScaledValue(4);
       this.renderText(
         ctx,
         `Level ${levelIndex + 1}`,
         x,
-        y + this.game.getScaledValue(60),
-        { fontSize: layout.bodyFontSize }
+        y + this.game.getScaledValue(65),
+        {
+          fontSize: layout.bodyFontSize,
+          weight: "bold",
+          color: isCompleted ? "#FFD700" : "#FFFFFF"
+        }
       );
+      ctx.restore();
     } else {
+      // Locked level - show dimmed sock
       if (sockImage) {
         ctx.save();
-        ctx.globalAlpha = isAffordable ? 0.7 : 0.3;
+        ctx.globalAlpha = isAffordable ? 0.5 : 0.25;
 
         // Combine color filter with brightness for levels 7-9
         if (colorFilter) {
           ctx.filter = isAffordable
-            ? `${colorFilter} brightness(0.6)`
-            : `${colorFilter} brightness(0.3)`;
+            ? `${colorFilter} brightness(0.5) grayscale(0.3)`
+            : `${colorFilter} brightness(0.3) grayscale(0.7)`;
         } else {
-          ctx.filter = isAffordable ? "brightness(0.6)" : "brightness(0.3)";
+          ctx.filter = isAffordable ? "brightness(0.5) grayscale(0.3)" : "brightness(0.3) grayscale(0.7)";
         }
 
         ctx.drawImage(
@@ -1686,32 +1805,63 @@ class LevelSelect extends Screen {
         ctx.restore();
       }
 
+      // Lock icon
+      ctx.save();
+      ctx.fillStyle = isAffordable ? "rgba(144, 238, 144, 0.8)" : "rgba(255, 182, 193, 0.8)";
+      ctx.font = `${this.game.getScaledValue(24)}px Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+      ctx.shadowBlur = this.game.getScaledValue(4);
+      ctx.fillText("🔒", x, y);
+      ctx.restore();
+
+      // Cost display with icon
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+      ctx.shadowBlur = this.game.getScaledValue(4);
       this.renderText(
         ctx,
-        `Cost: ${GameConfig.LEVEL_COSTS[levelIndex]}`,
+        `💎 ${GameConfig.LEVEL_COSTS[levelIndex]}`,
         x,
-        y - this.game.getScaledValue(50),
+        y - this.game.getScaledValue(55),
         {
-          fontSize: layout.smallFontSize,
+          fontSize: layout.smallFontSize + 2,
           color: isAffordable ? "#90EE90" : "#FFB6C1",
+          weight: "bold"
         }
       );
+      ctx.restore();
 
+      // Level label
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+      ctx.shadowBlur = this.game.getScaledValue(4);
       this.renderText(
         ctx,
         `Level ${levelIndex + 1}`,
         x,
-        y + this.game.getScaledValue(60),
-        { fontSize: layout.bodyFontSize }
+        y + this.game.getScaledValue(65),
+        {
+          fontSize: layout.bodyFontSize,
+          color: "rgba(255, 255, 255, 0.6)"
+        }
       );
+      ctx.restore();
 
+      // Unlock hint with pulse
       if (isAffordable) {
+        const pulse = Math.abs(Math.sin(this.animationFrame * 0.003)) * 0.3 + 0.7;
+        ctx.save();
+        ctx.globalAlpha = pulse;
+        ctx.shadowColor = "#90EE90";
+        ctx.shadowBlur = this.game.getScaledValue(8);
         this.renderText(
           ctx,
           "Click to unlock!",
           x,
-          y + this.game.getScaledValue(80),
-          { fontSize: layout.smallFontSize, color: "#90EE90" }
+          y + this.game.getScaledValue(85),
+          { fontSize: layout.smallFontSize, color: "#90EE90", weight: "bold" }
         );
       }
     }
