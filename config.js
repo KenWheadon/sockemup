@@ -584,13 +584,13 @@ const GameConfig = {
     {
       id: "meet_martha",
       title: "Meet Martha",
-      text: "This is Martha! She's a sock-loving champion who needs your help!",
+      text: "This is Martha! She's a sock-loving landlord!",
       image: "martha.png",
     },
     {
       id: "rent_problem",
       title: "The Rent Problem",
-      text: "Martha's rent is due! She needs sockballs to pay her landlord!",
+      text: "Your rent is due! Martha demands sockballs to pay off your rent!",
       image: "martha-rentdue.png",
     },
     {
@@ -608,7 +608,7 @@ const GameConfig = {
     {
       id: "good_luck",
       title: "Good Luck!",
-      text: "Help Martha pay her rent and become a sock master!",
+      text: "Pay off your rent AND become a sock master!",
       image: "martha-win.png",
     },
   ],
