@@ -64,10 +64,16 @@ class ThrowingScreen extends Screen {
       height: 0,
       hovered: false,
     };
+
+    // Track active timeouts for cleanup
+    this.activeTimeouts = [];
   }
 
   setup() {
     super.setup();
+
+    // Clear any lingering timeouts from previous instances
+    this.clearAllTimeouts();
 
     // Initialize game state
     this.availableSockballs = this.game.sockBalls;
@@ -125,12 +131,21 @@ class ThrowingScreen extends Screen {
 
   cleanup() {
     super.cleanup();
+
+    // Clear all active timeouts
+    this.clearAllTimeouts();
+
     this.sockballProjectiles = [];
     this.showingMessage = false;
 
     // Stop throwing music when leaving screen
     console.log("🎵 Throwing screen cleanup - stopping throwing music");
     this.game.audioManager.stopMusic();
+  }
+
+  clearAllTimeouts() {
+    this.activeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    this.activeTimeouts = [];
   }
 
   updateNextSockballType() {
@@ -462,14 +477,16 @@ class ThrowingScreen extends Screen {
         // Play victory music and level complete sound
         if (!this.levelCompleteAudioPlayed) {
           this.game.audioManager.fadeOutMusic(1000);
-          setTimeout(() => {
+          const audioTimeoutId = setTimeout(() => {
             this.game.audioManager.playMusic("victory-music", false, 0.4);
             this.game.audioManager.playSound("level-complete", false, 0.6);
           }, 1000);
+          this.activeTimeouts.push(audioTimeoutId);
           this.levelCompleteAudioPlayed = true;
         }
 
-        setTimeout(() => this.game.completeLevel(), 1000);
+        const completeLevelTimeoutId = setTimeout(() => this.game.completeLevel(), 1000);
+        this.activeTimeouts.push(completeLevelTimeoutId);
       }
     } else if (!hasActiveSockballs && !hasAvailableSockballs) {
       if (!this.waitingForMartha) {
@@ -489,14 +506,16 @@ class ThrowingScreen extends Screen {
         // Play defeat music and game over sound
         if (!this.gameOverAudioPlayed) {
           this.game.audioManager.fadeOutMusic(1000);
-          setTimeout(() => {
+          const audioTimeoutId = setTimeout(() => {
             this.game.audioManager.playMusic("defeat-music", false, 0.4);
             this.game.audioManager.playSound("game-over", false, 0.6);
           }, 1000);
+          this.activeTimeouts.push(audioTimeoutId);
           this.gameOverAudioPlayed = true;
         }
 
-        setTimeout(() => this.game.completeLevel(), 1000);
+        const completeLevelTimeoutId = setTimeout(() => this.game.completeLevel(), 1000);
+        this.activeTimeouts.push(completeLevelTimeoutId);
       }
     } else if (
       !this.marthaManager.onScreen &&

@@ -71,6 +71,7 @@ class LevelSelect extends Screen {
     // Credits integration
     this.creditsOpen = false;
     this.creditsModal = null;
+    this.creditsEventHandlers = null;
 
     // Physics for menu socks
     this.menuPhysics = {
@@ -328,6 +329,9 @@ class LevelSelect extends Screen {
     console.log("🎵 Level select cleanup - stopping menu music");
     this.game.audioManager.stopMusic();
 
+    // Remove event listeners before hiding credits
+    this.removeCreditsEventListeners();
+
     if (this.creditsOpen) {
       this.hideCredits();
     }
@@ -336,6 +340,7 @@ class LevelSelect extends Screen {
     if (creditsModal) {
       creditsModal.remove();
     }
+    this.creditsModal = null;
   }
 
   setupCreditsModal() {
@@ -407,30 +412,54 @@ class LevelSelect extends Screen {
   setupCreditsEventListeners() {
     const closeCredits = document.getElementById("closeCredits");
 
-    if (closeCredits) {
-      closeCredits.addEventListener("click", () => {
+    // Store bound handlers for cleanup
+    this.creditsEventHandlers = {
+      closeClick: () => {
         this.game.audioManager.playSound("button-click", false, 0.5);
         this.hideCredits();
-      });
-
-      closeCredits.addEventListener("mouseenter", () => {
+      },
+      closeHover: () => {
         this.game.audioManager.playSound("button-hover", false, 0.3);
-      });
-    }
-
-    if (this.creditsModal) {
-      this.creditsModal.addEventListener("click", (e) => {
+      },
+      modalClick: (e) => {
         if (e.target === this.creditsModal) {
           this.hideCredits();
         }
-      });
+      },
+      escapeKey: (e) => {
+        if (this.creditsOpen && e.code === "Escape") {
+          this.hideCredits();
+        }
+      }
+    };
+
+    if (closeCredits) {
+      closeCredits.addEventListener("click", this.creditsEventHandlers.closeClick);
+      closeCredits.addEventListener("mouseenter", this.creditsEventHandlers.closeHover);
     }
 
-    document.addEventListener("keydown", (e) => {
-      if (this.creditsOpen && e.code === "Escape") {
-        this.hideCredits();
-      }
-    });
+    if (this.creditsModal) {
+      this.creditsModal.addEventListener("click", this.creditsEventHandlers.modalClick);
+    }
+
+    document.addEventListener("keydown", this.creditsEventHandlers.escapeKey);
+  }
+
+  removeCreditsEventListeners() {
+    if (!this.creditsEventHandlers) return;
+
+    const closeCredits = document.getElementById("closeCredits");
+    if (closeCredits) {
+      closeCredits.removeEventListener("click", this.creditsEventHandlers.closeClick);
+      closeCredits.removeEventListener("mouseenter", this.creditsEventHandlers.closeHover);
+    }
+
+    if (this.creditsModal) {
+      this.creditsModal.removeEventListener("click", this.creditsEventHandlers.modalClick);
+    }
+
+    document.removeEventListener("keydown", this.creditsEventHandlers.escapeKey);
+    this.creditsEventHandlers = null;
   }
 
   showCredits() {

@@ -45,6 +45,9 @@ class MatchScreen extends Screen {
     this.maxDragHistoryLength = 5;
     this.velocityScale = 12; // Scale factor for throw velocity - increased significantly
     this.maxThrowVelocity = 45; // Maximum throw velocity - increased for more dramatic throws
+
+    // Track active timeouts for cleanup
+    this.activeTimeouts = [];
   }
 
   createLayoutCache() {
@@ -98,6 +101,9 @@ class MatchScreen extends Screen {
     this.draggedSock = null;
     this.isDragging = false;
     this.dropZoneHover = null;
+
+    // Clear any lingering timeouts from previous instances
+    this.clearAllTimeouts();
     this.sockPileHover = false;
     this.matchStreak = 0;
     this.lastMatchTime = 0;
@@ -123,9 +129,22 @@ class MatchScreen extends Screen {
   cleanup() {
     super.cleanup();
 
+    // Clear all active timeouts
+    this.clearAllTimeouts();
+
+    // Reset canvas transform in case shake is still active
+    if (this.game.canvas) {
+      this.game.canvas.style.transform = '';
+    }
+
     // Stop match music when leaving match screen
     console.log("🎵 Match screen cleanup - stopping match music");
     this.game.audioManager.stopMusic();
+  }
+
+  clearAllTimeouts() {
+    this.activeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    this.activeTimeouts = [];
   }
 
   onResize() {
@@ -586,9 +605,10 @@ class MatchScreen extends Screen {
           this.game.audioManager.playSound("easter-egg-match", false, 0.5);
 
           // Play points gained sound with slight delay
-          setTimeout(() => {
+          const timeoutId = setTimeout(() => {
             this.game.audioManager.playSound("points-gained", false, 0.4);
           }, 500);
+          this.activeTimeouts.push(timeoutId);
 
           this.startMatchAnimation(pairZones[0].sock, pairZones[1].sock);
           pairZones[0].sock = null;
@@ -689,7 +709,8 @@ class MatchScreen extends Screen {
         canvas.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
         shakeCount++;
         shakeIntensity *= 0.85;
-        setTimeout(shake, 40); // Slightly faster shake
+        const timeoutId = setTimeout(shake, 40); // Slightly faster shake
+        this.activeTimeouts.push(timeoutId);
       } else {
         canvas.style.transform = originalTransform;
       }
@@ -718,7 +739,8 @@ class MatchScreen extends Screen {
         canvas.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
         shakeCount++;
         shakeIntensity *= 0.8;
-        setTimeout(shake, 50);
+        const timeoutId = setTimeout(shake, 50);
+        this.activeTimeouts.push(timeoutId);
       } else {
         canvas.style.transform = originalTransform;
       }

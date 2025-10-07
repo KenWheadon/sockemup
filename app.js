@@ -68,6 +68,7 @@ class SockGame {
     this.frameCount = 0;
     this.fpsDisplay = 0;
     this.fpsTimer = 0;
+    this.animationFrameId = null;
 
     // Initialize screens - now using the base Screen class
     this.levelSelect = new LevelSelect(this);
@@ -78,6 +79,17 @@ class SockGame {
 
     // Game objects for shooting phase
     this.crosshair = { x: 600, y: 400 };
+
+    // Bind event handlers to preserve 'this' context for cleanup
+    this.handleMouseDown = this.handleMouseDown.bind(this);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
+    this.handleMouseUp = this.handleMouseUp.bind(this);
+    this.handleClick = this.handleClick.bind(this);
+    this.handleResize = this.handleResize.bind(this);
+    this.handleKeyDown = this.handleKeyDown.bind(this);
+    this.handleTouchStart = this.handleTouchStart.bind(this);
+    this.handleTouchMove = this.handleTouchMove.bind(this);
+    this.handleTouchEnd = this.handleTouchEnd.bind(this);
   }
 
   initializeCanvas() {
@@ -313,25 +325,37 @@ class SockGame {
   }
 
   setupEventListeners() {
-    this.canvas.addEventListener("mousedown", (e) => this.handleMouseDown(e));
-    this.canvas.addEventListener("mousemove", (e) => this.handleMouseMove(e));
-    this.canvas.addEventListener("mouseup", (e) => this.handleMouseUp(e));
-    this.canvas.addEventListener("click", (e) => this.handleClick(e));
-    window.addEventListener("resize", () => this.handleResize());
+    this.canvas.addEventListener("mousedown", this.handleMouseDown);
+    this.canvas.addEventListener("mousemove", this.handleMouseMove);
+    this.canvas.addEventListener("mouseup", this.handleMouseUp);
+    this.canvas.addEventListener("click", this.handleClick);
+    window.addEventListener("resize", this.handleResize);
 
     // Phase 1.3 - Keyboard listener for pause (P or ESC)
-    window.addEventListener("keydown", (e) => this.handleKeyDown(e));
+    window.addEventListener("keydown", this.handleKeyDown);
 
     // Phase 2.3 - Touch event listeners for tablet support
-    this.canvas.addEventListener("touchstart", (e) => this.handleTouchStart(e), {
+    this.canvas.addEventListener("touchstart", this.handleTouchStart, {
       passive: false,
     });
-    this.canvas.addEventListener("touchmove", (e) => this.handleTouchMove(e), {
+    this.canvas.addEventListener("touchmove", this.handleTouchMove, {
       passive: false,
     });
-    this.canvas.addEventListener("touchend", (e) => this.handleTouchEnd(e), {
+    this.canvas.addEventListener("touchend", this.handleTouchEnd, {
       passive: false,
     });
+  }
+
+  removeEventListeners() {
+    this.canvas.removeEventListener("mousedown", this.handleMouseDown);
+    this.canvas.removeEventListener("mousemove", this.handleMouseMove);
+    this.canvas.removeEventListener("mouseup", this.handleMouseUp);
+    this.canvas.removeEventListener("click", this.handleClick);
+    window.removeEventListener("resize", this.handleResize);
+    window.removeEventListener("keydown", this.handleKeyDown);
+    this.canvas.removeEventListener("touchstart", this.handleTouchStart);
+    this.canvas.removeEventListener("touchmove", this.handleTouchMove);
+    this.canvas.removeEventListener("touchend", this.handleTouchEnd);
   }
 
   // Phase 2.3 - Touch event handlers
@@ -796,10 +820,33 @@ class SockGame {
         this.render();
       }
 
-      requestAnimationFrame(gameLoop);
+      this.animationFrameId = requestAnimationFrame(gameLoop);
     };
 
-    requestAnimationFrame(gameLoop);
+    this.animationFrameId = requestAnimationFrame(gameLoop);
+  }
+
+  stopGameLoop() {
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+  }
+
+  cleanup() {
+    console.log("🧹 Cleaning up SockGame...");
+    this.stopGameLoop();
+    this.removeEventListeners();
+
+    // Cleanup all screens
+    if (this.levelSelect) this.levelSelect.cleanup();
+    if (this.matchScreen) this.matchScreen.cleanup();
+    if (this.throwingScreen) this.throwingScreen.cleanup();
+    if (this.levelEndScreen) this.levelEndScreen.cleanup();
+
+    // Cleanup managers
+    if (this.audioManager) this.audioManager.cleanup();
+    if (this.feedbackManager) this.feedbackManager.reset();
   }
 }
 

@@ -8,6 +8,7 @@ class AudioManager {
     this.musicVolume = 0.4;
     this.sfxVolume = 0.7;
     this.isFading = false;
+    this.fadeInterval = null;
 
     // Enable audio on first user interaction
     document.addEventListener(
@@ -81,10 +82,22 @@ class AudioManager {
       this.currentMusicName = null;
       this.isFading = false;
     }
+
+    // Clear any active fade interval
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
   }
 
   fadeOutMusic(duration = 1000) {
     if (!this.currentMusic || this.isFading) return;
+
+    // Clear any existing fade interval
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
 
     console.log(`🔇 Fading out music: ${this.currentMusicName}`);
     this.isFading = true;
@@ -95,9 +108,10 @@ class AudioManager {
     const volumeStep = startVolume / fadeSteps;
 
     let step = 0;
-    const fadeInterval = setInterval(() => {
+    this.fadeInterval = setInterval(() => {
       if (!this.currentMusic || !this.isFading) {
-        clearInterval(fadeInterval);
+        clearInterval(this.fadeInterval);
+        this.fadeInterval = null;
         return;
       }
 
@@ -105,7 +119,8 @@ class AudioManager {
       this.currentMusic.volume = Math.max(0, startVolume - volumeStep * step);
 
       if (step >= fadeSteps) {
-        clearInterval(fadeInterval);
+        clearInterval(this.fadeInterval);
+        this.fadeInterval = null;
         this.stopMusic();
       }
     }, stepDuration);
@@ -157,5 +172,28 @@ class AudioManager {
 
   setSfxVolume(volume) {
     this.sfxVolume = Math.max(0, Math.min(1, volume));
+  }
+
+  cleanup() {
+    console.log("🧹 Cleaning up AudioManager...");
+
+    // Clear fade interval
+    if (this.fadeInterval) {
+      clearInterval(this.fadeInterval);
+      this.fadeInterval = null;
+    }
+
+    // Stop and cleanup all sounds
+    Object.keys(this.sounds).forEach((soundName) => {
+      const audio = this.sounds[soundName];
+      audio.pause();
+      audio.currentTime = 0;
+      audio.src = ''; // Release audio source
+    });
+
+    this.sounds = {};
+    this.currentMusic = null;
+    this.currentMusicName = null;
+    this.isFading = false;
   }
 }
