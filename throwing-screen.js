@@ -47,6 +47,10 @@ class ThrowingScreen extends Screen {
     this.levelCompleteAudioPlayed = false;
     this.gameOverAudioPlayed = false;
 
+    // Achievement tracking
+    this.perfectThrowsThisLevel = 0;
+    this.missedThrows = 0;
+
     // Exit button
     this.exitButton = {
       x: 0,
@@ -73,6 +77,10 @@ class ThrowingScreen extends Screen {
     // Reset audio state
     this.levelCompleteAudioPlayed = false;
     this.gameOverAudioPlayed = false;
+
+    // Reset achievement tracking
+    this.perfectThrowsThisLevel = 0;
+    this.missedThrows = 0;
 
     // Setup Martha for current level
     const level = GameConfig.LEVELS[this.game.currentLevel];
@@ -320,8 +328,9 @@ class ThrowingScreen extends Screen {
         sockball.bounced = true;
       }
 
-      // Remove if falls off bottom
+      // Remove if falls off bottom (counts as a miss)
       if (sockball.y > canvasHeight + sockball.size) {
+        this.missedThrows++;
         return false;
       }
 
@@ -338,6 +347,15 @@ class ThrowingScreen extends Screen {
           // Phase 2.2 - Notify feedback manager of catch quality
           if (catchQuality === "PERFECT") {
             this.game.feedbackManager.onPerfectCatch();
+            this.perfectThrowsThisLevel++;
+
+            // Achievement: PERFECT_THROW
+            this.game.unlockAchievement("perfect_throw");
+
+            // Achievement: PERFECTIONIST (10 perfect throws in one level)
+            if (this.perfectThrowsThisLevel >= 10) {
+              this.game.unlockAchievement("perfectionist");
+            }
           } else if (catchQuality === "GOOD") {
             this.game.feedbackManager.onGoodCatch();
           } else {
@@ -365,6 +383,11 @@ class ThrowingScreen extends Screen {
 
         // Phase 2.2 - Trigger level complete feedback
         this.game.feedbackManager.onLevelComplete();
+
+        // Achievement: MARTHAS_FAVORITE (complete level without missing any throws)
+        if (this.missedThrows === 0 && this.sockballsThrown > 0) {
+          this.game.unlockAchievement("marthas_favorite");
+        }
       }
 
       if (!this.marthaManager.onScreen) {

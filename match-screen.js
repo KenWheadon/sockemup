@@ -106,6 +106,11 @@ class MatchScreen extends Screen {
     // Reset timer to 0 at start of each round
     this.game.timeRemaining = 0;
 
+    // Track achievements for this level
+    this.firstMatchMade = false;
+    this.matchCount = 0;
+    this.matchStartTime = Date.now();
+
     // Start match music
     console.log("🎵 Match screen setup - starting match music");
     this.game.audioManager.playMusic("match-music", true, 0.3);
@@ -438,6 +443,23 @@ class MatchScreen extends Screen {
           pairZones[1].sock = null;
           matchFound = true;
 
+          // Track match count for achievements
+          this.matchCount++;
+
+          // Achievement: FIRST_MATCH
+          if (!this.firstMatchMade) {
+            this.firstMatchMade = true;
+            this.game.unlockAchievement("first_match");
+          }
+
+          // Achievement: QUICK_HANDS (5 pairs in under 10 seconds)
+          if (this.matchCount === 5) {
+            const timeElapsed = (currentTime - this.matchStartTime) / 1000;
+            if (timeElapsed < 10) {
+              this.game.unlockAchievement("quick_hands");
+            }
+          }
+
           // Update streak
           if (currentTime - this.lastMatchTime < 3000) {
             this.matchStreak++;
@@ -445,6 +467,11 @@ class MatchScreen extends Screen {
             this.matchStreak = 1;
           }
           this.lastMatchTime = currentTime;
+
+          // Achievement: STREAK_KING (5x match streak)
+          if (this.matchStreak >= 5) {
+            this.game.unlockAchievement("streak_king");
+          }
 
           // Screen shake effect
           this.createScreenShake();
@@ -584,11 +611,17 @@ class MatchScreen extends Screen {
       const level = GameConfig.LEVELS[this.game.currentLevel];
       const timeLimit = level.matchingTime;
       const timeTaken = Math.floor(this.game.timeRemaining);
+      const timeRemaining = timeLimit - timeTaken;
 
       if (timeTaken <= timeLimit) {
         // Award 25 bonus points for finishing within time
         this.game.playerPoints += 25;
         console.log(`⏱️ Time bonus! Finished in ${timeTaken}s (limit: ${timeLimit}s) - +25 points`);
+      }
+
+      // Achievement: SPEEDY_MATCHER (complete with 30+ seconds remaining)
+      if (timeRemaining >= 30) {
+        this.game.unlockAchievement("speedy_matcher");
       }
 
       this.game.startThrowingPhase();

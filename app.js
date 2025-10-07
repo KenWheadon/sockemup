@@ -519,6 +519,35 @@ class SockGame {
     this.saveGameData();
   }
 
+  // Achievement tracking system
+  unlockAchievement(achievementId) {
+    if (!this.achievements[achievementId]) {
+      console.warn(`Achievement ${achievementId} not found`);
+      return false;
+    }
+
+    if (this.achievements[achievementId].unlocked) {
+      return false; // Already unlocked
+    }
+
+    // Unlock the achievement
+    this.achievements[achievementId].unlocked = true;
+    this.achievements[achievementId].unlockedAt = Date.now();
+
+    console.log(`🏆 Achievement unlocked: ${this.achievements[achievementId].name}`);
+
+    // Trigger visual notification
+    if (this.feedbackManager) {
+      this.feedbackManager.showAchievementUnlocked(this.achievements[achievementId]);
+    }
+
+    // Play achievement sound
+    this.audioManager.playSound("level-complete", false, 0.4);
+
+    this.saveGameData();
+    return true;
+  }
+
   startLevel(levelIndex, difficulty = null) {
     this.currentLevel = levelIndex;
     const baseLevel = GameConfig.LEVELS[levelIndex];

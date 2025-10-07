@@ -35,6 +35,9 @@ class FeedbackManager {
 
     // Visual feedback
     this.feedbackAnimations = [];
+
+    // Achievement notifications
+    this.achievementNotifications = [];
   }
 
   update(deltaTime) {
@@ -85,6 +88,14 @@ class FeedbackManager {
       anim.y -= anim.velocity * (deltaTime / 16.67);
       anim.alpha = Math.min(1, anim.timer / anim.duration);
       return anim.timer > 0;
+    });
+
+    // Update achievement notifications
+    this.achievementNotifications = this.achievementNotifications.filter((notif) => {
+      notif.timer -= deltaTime;
+      notif.y -= notif.velocity * (deltaTime / 16.67);
+      notif.alpha = Math.min(1, notif.timer / notif.duration);
+      return notif.timer > 0;
     });
 
     // Check streak timeout
@@ -180,6 +191,19 @@ class FeedbackManager {
     });
   }
 
+  // Show achievement unlocked notification
+  showAchievementUnlocked(achievement) {
+    this.achievementNotifications.push({
+      achievement: achievement,
+      x: this.game.getCanvasWidth() / 2,
+      y: this.game.getCanvasHeight() / 4,
+      alpha: 1,
+      velocity: 0.5,
+      timer: 4000,
+      duration: 4000,
+    });
+  }
+
   // Queue a dialogue message
   showDialogue(text, color = "#FFFFFF", duration = 2000) {
     // Don't queue if same message is already showing
@@ -266,6 +290,11 @@ class FeedbackManager {
 
       ctx.restore();
     });
+
+    // Render achievement notifications
+    this.achievementNotifications.forEach((notif) => {
+      this.renderAchievementNotification(ctx, notif);
+    });
   }
 
   renderDialogueBubble(ctx) {
@@ -347,6 +376,64 @@ class FeedbackManager {
     ctx.restore();
   }
 
+  renderAchievementNotification(ctx, notif) {
+    ctx.save();
+
+    const achievement = notif.achievement;
+    const boxWidth = this.game.getScaledValue(400);
+    const boxHeight = this.game.getScaledValue(100);
+    const x = notif.x - boxWidth / 2;
+    const y = notif.y - boxHeight / 2;
+    const radius = this.game.getScaledValue(12);
+
+    // Background with glow
+    ctx.globalAlpha = notif.alpha * 0.95;
+    ctx.shadowColor = "#FFD700";
+    ctx.shadowBlur = this.game.getScaledValue(20);
+
+    // Gold gradient background
+    const gradient = ctx.createLinearGradient(x, y, x, y + boxHeight);
+    gradient.addColorStop(0, "rgba(255, 215, 0, 0.95)");
+    gradient.addColorStop(1, "rgba(255, 165, 0, 0.85)");
+    ctx.fillStyle = gradient;
+
+    this.drawRoundedRect(ctx, x, y, boxWidth, boxHeight, radius);
+    ctx.fill();
+
+    // Border
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.lineWidth = this.game.getScaledValue(3);
+    this.drawRoundedRect(ctx, x, y, boxWidth, boxHeight, radius);
+    ctx.stroke();
+
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+
+    // Achievement icon
+    ctx.globalAlpha = notif.alpha;
+    ctx.font = `${this.game.getScaledValue(48)}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillText(achievement.icon, notif.x - boxWidth / 4, notif.y);
+
+    // Achievement text
+    ctx.font = `bold ${this.game.getScaledValue(14)}px Courier New`;
+    ctx.fillStyle = "rgba(40, 40, 40, 0.9)";
+    ctx.textAlign = "left";
+    ctx.fillText("🏆 ACHIEVEMENT UNLOCKED!", notif.x - boxWidth / 8, notif.y - this.game.getScaledValue(20));
+
+    ctx.font = `bold ${this.game.getScaledValue(20)}px Courier New`;
+    ctx.fillStyle = "rgba(20, 20, 20, 0.95)";
+    ctx.fillText(achievement.name, notif.x - boxWidth / 8, notif.y + this.game.getScaledValue(5));
+
+    ctx.font = `${this.game.getScaledValue(12)}px Courier New`;
+    ctx.fillStyle = "rgba(40, 40, 40, 0.8)";
+    ctx.fillText(achievement.description, notif.x - boxWidth / 8, notif.y + this.game.getScaledValue(25));
+
+    ctx.restore();
+  }
+
   drawRoundedRect(ctx, x, y, width, height, radius) {
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
@@ -373,5 +460,6 @@ class FeedbackManager {
     this.lastActionTime = Date.now();
     this.lastEncouragementTime = 0;
     this.feedbackAnimations = [];
+    // Don't reset achievement notifications - they should persist across screens
   }
 }

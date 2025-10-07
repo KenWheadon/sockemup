@@ -1,0 +1,19 @@
+Week,Task,Sub-steps/Notes,Estimated Effort (hrs),Status,Planned Start,Planned End,Actual Start,Actual End,Actual Effort (hrs),Dependencies,Progress (%)
+1,Improve Martha AI pathing,Enhance navigation and obstacle avoidance.,2,Not Started,2025-10-06,2025-10-12,,,,Existing AI code,0
+1,Add catch radius,Implement forgiveness mechanic for throws.,2,Not Started,2025-10-06,2025-10-12,,,,Throwing mechanics,0
+1,Add sorting pause,UI toggle for pausing sorting section.,1,Not Started,2025-10-06,2025-10-12,,,,UI system,0
+1,Add encouraging feedback,Success messages on key actions.,1,Not Started,2025-10-06,2025-10-12,,,,Event system,0
+1,Add mini achievement system,"Implement trackers for ""First Match"", ""Perfect Throw"", etc. with pop-ups.",3,Not Started,2025-10-06,2025-10-12,,,,Scoring system,0
+1,Add story intro,Short text or cinematic sequence.,1,Not Started,2025-10-06,2025-10-12,,,,None,0
+1,Add touchscreen basics,Gesture mapping for accessibility.,2,Not Started,2025-10-06,2025-10-12,,,,Input handling,0
+2,Add 3 levels + backgrounds,Vary layouts; add level-specific tiles with more socks.,7,Not Started,2025-10-13,2025-10-19,,,,Week 1 mechanics,0
+2,True Pixel Art updates,Convert sprites/UI to authentic style.,3,Not Started,2025-10-13,2025-10-19,,,,Art assets,0
+2,Improve tutorial,Animated tooltips on first play.,2,Not Started,2025-10-13,2025-10-19,,,,UI polish,0
+2,UI/UX polish,"Refine level select, sorting, throwing, score screens.",3,Not Started,2025-10-13,2025-10-19,,,,Existing UI,0
+2,Sound/music enhancements,Add SFX and loopable track.,2,Not Started,2025-10-13,2025-10-19,,,,Audio system,0
+3,Progressive Difficulty,Easy default; unlock +1/+2/+3/+4 modes post-clear. 1) Save flag. 2) Parametrize speed. 3) UI menu.,5,Not Started,2025-10-20,2025-10-26,,,,"Save system, levels",0
+3,GFL App Integration,1) Export test build. 2) Map inputs. 3) Test embedding. Resources: Platform docs.,3.5,Not Started,2025-10-20,2025-10-26,,,,Week 2 build,0
+3,Marketing Materials,"Screenshots, GIF trailer, 1-page pitch. Use Canva template.",2.5,Not Started,2025-10-20,2025-10-26,,,,Week 2 assets,0
+4,Full QA/Testing,1) Checklist playthroughs. 2) Beta testers. 3) Balance tweaks.,5,Not Started,2025-10-27,2025-11-02,,,,Full build,0
+4,Expand Animations,"Idle bounces, fluid catches if time. Use Aseprite.",3,Not Started,2025-10-27,2025-11-02,,,,Pixel art,0
+4,Buffer,Spillover or final export.,1.5,Not Started,2025-10-27,2025-11-02,,,,None,0

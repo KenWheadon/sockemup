@@ -215,6 +215,28 @@ class LevelEndScreen extends Screen {
           this.game.currentLevel,
           this.game.currentDifficulty
         );
+
+        // Achievement: SOCK_MASTER (complete all 9 levels)
+        const allLevelsCompleted = this.game.completedLevels.every(completed => completed);
+        if (allLevelsCompleted) {
+          this.game.unlockAchievement("sock_master");
+        }
+
+        // Achievement: NEW_GAME_PLUS_HERO (complete any level on +1 difficulty)
+        if (this.game.currentDifficulty >= 1) {
+          this.game.unlockAchievement("new_game_plus_hero");
+        }
+
+        // Achievement: ULTIMATE_CHAMPION (complete all levels on +4 difficulty)
+        if (this.game.currentDifficulty >= 4) {
+          const allLevelsCompletedOnPlus4 = GameConfig.LEVELS.every((_, index) => {
+            return this.game.difficultyCompletions[index] &&
+                   this.game.difficultyCompletions[index].includes(4);
+          });
+          if (allLevelsCompletedOnPlus4) {
+            this.game.unlockAchievement("ultimate_champion");
+          }
+        }
       }
 
       this.game.saveGameData();
