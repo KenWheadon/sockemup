@@ -199,7 +199,10 @@ class LevelEndScreen extends Screen {
     }
 
     if (this.continueButton.hovered) {
-      this.game.playerPoints += this.totalScore;
+      this.game.playerPoints = Math.max(
+        0,
+        this.game.playerPoints + this.totalScore
+      );
 
       // Mark level as complete if no rent penalty
       if (this.rentPenalty === 0) {
@@ -217,7 +220,9 @@ class LevelEndScreen extends Screen {
         );
 
         // Achievement: SOCK_MASTER (complete all 9 levels)
-        const allLevelsCompleted = this.game.completedLevels.every(completed => completed);
+        const allLevelsCompleted = this.game.completedLevels.every(
+          (completed) => completed
+        );
         if (allLevelsCompleted) {
           this.game.unlockAchievement("sock_master");
         }
@@ -229,10 +234,14 @@ class LevelEndScreen extends Screen {
 
         // Achievement: ULTIMATE_CHAMPION (complete all levels on +4 difficulty)
         if (this.game.currentDifficulty >= 4) {
-          const allLevelsCompletedOnPlus4 = GameConfig.LEVELS.every((_, index) => {
-            return this.game.difficultyCompletions[index] &&
-                   this.game.difficultyCompletions[index].includes(4);
-          });
+          const allLevelsCompletedOnPlus4 = GameConfig.LEVELS.every(
+            (_, index) => {
+              return (
+                this.game.difficultyCompletions[index] &&
+                this.game.difficultyCompletions[index].includes(4)
+              );
+            }
+          );
           if (allLevelsCompletedOnPlus4) {
             this.game.unlockAchievement("ultimate_champion");
           }
@@ -404,7 +413,8 @@ class LevelEndScreen extends Screen {
   }
 
   renderExitButton(ctx) {
-    const exitButtonX = this.game.getCanvasWidth() - this.game.getScaledValue(80);
+    const exitButtonX =
+      this.game.getCanvasWidth() - this.game.getScaledValue(80);
     const exitButtonY = this.game.getScaledValue(30);
     const exitButtonWidth = this.game.getScaledValue(120);
     const exitButtonHeight = this.game.getScaledValue(40);
@@ -417,21 +427,52 @@ class LevelEndScreen extends Screen {
     this.exitButton.height = exitButtonHeight;
 
     ctx.save();
-    ctx.fillStyle = this.exitButton.hovered ? "rgba(220, 60, 60, 0.9)" : "rgba(180, 40, 40, 0.8)";
-    ctx.strokeStyle = this.exitButton.hovered ? "rgba(255, 100, 100, 0.8)" : "rgba(255, 80, 80, 0.5)";
+    ctx.fillStyle = this.exitButton.hovered
+      ? "rgba(220, 60, 60, 0.9)"
+      : "rgba(180, 40, 40, 0.8)";
+    ctx.strokeStyle = this.exitButton.hovered
+      ? "rgba(255, 100, 100, 0.8)"
+      : "rgba(255, 80, 80, 0.5)";
     ctx.lineWidth = 2;
 
     const radius = this.game.getScaledValue(8);
     ctx.beginPath();
     ctx.moveTo(exitButtonLeft + radius, exitButtonTop);
     ctx.lineTo(exitButtonLeft + exitButtonWidth - radius, exitButtonTop);
-    ctx.arcTo(exitButtonLeft + exitButtonWidth, exitButtonTop, exitButtonLeft + exitButtonWidth, exitButtonTop + radius, radius);
-    ctx.lineTo(exitButtonLeft + exitButtonWidth, exitButtonTop + exitButtonHeight - radius);
-    ctx.arcTo(exitButtonLeft + exitButtonWidth, exitButtonTop + exitButtonHeight, exitButtonLeft + exitButtonWidth - radius, exitButtonTop + exitButtonHeight, radius);
+    ctx.arcTo(
+      exitButtonLeft + exitButtonWidth,
+      exitButtonTop,
+      exitButtonLeft + exitButtonWidth,
+      exitButtonTop + radius,
+      radius
+    );
+    ctx.lineTo(
+      exitButtonLeft + exitButtonWidth,
+      exitButtonTop + exitButtonHeight - radius
+    );
+    ctx.arcTo(
+      exitButtonLeft + exitButtonWidth,
+      exitButtonTop + exitButtonHeight,
+      exitButtonLeft + exitButtonWidth - radius,
+      exitButtonTop + exitButtonHeight,
+      radius
+    );
     ctx.lineTo(exitButtonLeft + radius, exitButtonTop + exitButtonHeight);
-    ctx.arcTo(exitButtonLeft, exitButtonTop + exitButtonHeight, exitButtonLeft, exitButtonTop + exitButtonHeight - radius, radius);
+    ctx.arcTo(
+      exitButtonLeft,
+      exitButtonTop + exitButtonHeight,
+      exitButtonLeft,
+      exitButtonTop + exitButtonHeight - radius,
+      radius
+    );
     ctx.lineTo(exitButtonLeft, exitButtonTop + radius);
-    ctx.arcTo(exitButtonLeft, exitButtonTop, exitButtonLeft + radius, exitButtonTop, radius);
+    ctx.arcTo(
+      exitButtonLeft,
+      exitButtonTop,
+      exitButtonLeft + radius,
+      exitButtonTop,
+      radius
+    );
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
