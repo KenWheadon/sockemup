@@ -191,6 +191,76 @@ class LevelEndScreen extends Screen {
     this.continueButton.pressed = false;
   }
 
+  handleKeyDown(e) {
+    // Enter or Space to continue
+    if (e.key === "Enter" || e.key === " ") {
+      this.handleContinue();
+      e.preventDefault();
+    }
+    // Escape to exit to menu
+    else if (e.key === "Escape") {
+      this.game.audioManager.playSound("click", false, 0.5);
+      this.game.changeGameState("menu");
+      e.preventDefault();
+    }
+  }
+
+  handleContinue() {
+    this.game.playerPoints = Math.max(
+      0,
+      this.game.playerPoints + this.totalScore
+    );
+
+    // Mark level as complete if no rent penalty
+    if (this.rentPenalty === 0) {
+      this.game.completedLevels[this.game.currentLevel] = true;
+      console.log(
+        `Level ${
+          this.game.currentLevel + 1
+        } marked as complete - no rent penalty!`
+      );
+
+      // Phase 3.3 - Track difficulty completion
+      this.game.markLevelCompleted(
+        this.game.currentLevel,
+        this.game.currentDifficulty
+      );
+
+      // Achievement: SOCK_MASTER (complete all 9 levels)
+      const allLevelsCompleted = this.game.completedLevels.every(
+        (completed) => completed
+      );
+      if (allLevelsCompleted) {
+        this.game.unlockAchievement("sock_master");
+      }
+
+      // Achievement: NEW_GAME_PLUS_HERO (complete any level on +1 difficulty)
+      if (this.game.currentDifficulty >= 1) {
+        this.game.unlockAchievement("new_game_plus_hero");
+      }
+
+      // Achievement: ULTIMATE_CHAMPION (complete all levels on +4 difficulty)
+      if (this.game.currentDifficulty >= 4) {
+        const allLevelsCompletedOnPlus4 = GameConfig.LEVELS.every(
+          (_, index) => {
+            return (
+              this.game.difficultyCompletions[index] &&
+              this.game.difficultyCompletions[index].includes(4)
+            );
+          }
+        );
+        if (allLevelsCompletedOnPlus4) {
+          this.game.unlockAchievement("ultimate_champion");
+        }
+      }
+    }
+
+    this.game.saveGameData();
+
+    // Use the new state management system to return to menu
+    this.game.changeGameState("menu");
+  }
+
   onClick(x, y) {
     if (this.exitButton.hovered) {
       this.game.audioManager.playSound("click", false, 0.5);
@@ -199,59 +269,7 @@ class LevelEndScreen extends Screen {
     }
 
     if (this.continueButton.hovered) {
-      this.game.playerPoints = Math.max(
-        0,
-        this.game.playerPoints + this.totalScore
-      );
-
-      // Mark level as complete if no rent penalty
-      if (this.rentPenalty === 0) {
-        this.game.completedLevels[this.game.currentLevel] = true;
-        console.log(
-          `Level ${
-            this.game.currentLevel + 1
-          } marked as complete - no rent penalty!`
-        );
-
-        // Phase 3.3 - Track difficulty completion
-        this.game.markLevelCompleted(
-          this.game.currentLevel,
-          this.game.currentDifficulty
-        );
-
-        // Achievement: SOCK_MASTER (complete all 9 levels)
-        const allLevelsCompleted = this.game.completedLevels.every(
-          (completed) => completed
-        );
-        if (allLevelsCompleted) {
-          this.game.unlockAchievement("sock_master");
-        }
-
-        // Achievement: NEW_GAME_PLUS_HERO (complete any level on +1 difficulty)
-        if (this.game.currentDifficulty >= 1) {
-          this.game.unlockAchievement("new_game_plus_hero");
-        }
-
-        // Achievement: ULTIMATE_CHAMPION (complete all levels on +4 difficulty)
-        if (this.game.currentDifficulty >= 4) {
-          const allLevelsCompletedOnPlus4 = GameConfig.LEVELS.every(
-            (_, index) => {
-              return (
-                this.game.difficultyCompletions[index] &&
-                this.game.difficultyCompletions[index].includes(4)
-              );
-            }
-          );
-          if (allLevelsCompletedOnPlus4) {
-            this.game.unlockAchievement("ultimate_champion");
-          }
-        }
-      }
-
-      this.game.saveGameData();
-
-      // Use the new state management system to return to menu
-      this.game.changeGameState("menu");
+      this.handleContinue();
     }
   }
 

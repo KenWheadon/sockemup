@@ -162,6 +162,39 @@ class StoryManager {
     return true;
   }
 
+  handleKeyDown(e) {
+    if (!this.showingStory) return;
+
+    // Escape to skip/close story
+    if (e.key === "Escape") {
+      this.hide();
+      e.preventDefault();
+    }
+    // Left arrow or 'a' for previous slide
+    else if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
+      if (this.currentSlideIndex > 0) {
+        this.previousSlide();
+        e.preventDefault();
+      }
+    }
+    // Right arrow, Enter, Space, or 'd' for next slide
+    else if (
+      e.key === "ArrowRight" ||
+      e.key === "Enter" ||
+      e.key === " " ||
+      e.key === "d" ||
+      e.key === "D"
+    ) {
+      if (this.currentSlideIndex < this.slides.length - 1) {
+        this.nextSlide();
+      } else {
+        // Last slide - close story
+        this.hide();
+      }
+      e.preventDefault();
+    }
+  }
+
   handleClick(x, y) {
     if (!this.showingStory) return false;
 

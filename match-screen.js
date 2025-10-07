@@ -18,6 +18,10 @@ class MatchScreen extends Screen {
     this.sockPileClicked = false;
     this.pulseTimer = 0;
 
+    // Keyboard control state
+    this.selectedSock = null;
+    this.sockSelectedByKeyboard = false;
+
     // Pause button
     this.pauseButton = {
       x: 0,
@@ -171,6 +175,154 @@ class MatchScreen extends Screen {
     sockPile.y = layout.sockPileY;
     sockPile.width = layout.sockPileSize;
     sockPile.height = layout.sockPileSize;
+  }
+
+  handleKeyDown(e) {
+    // Space to shoot sock from pile
+    if (e.key === " ") {
+      if (!this.isPaused) {
+        this.shootSockFromPile();
+        e.preventDefault();
+      }
+      return;
+    }
+
+    // Tab to cycle through socks (for selecting/dragging)
+    if (e.key === "Tab") {
+      if (!this.isPaused) {
+        this.selectNextSock();
+        e.preventDefault();
+      }
+      return;
+    }
+
+    // Arrow keys to move selected sock
+    if (
+      e.key === "ArrowLeft" ||
+      e.key === "ArrowRight" ||
+      e.key === "ArrowUp" ||
+      e.key === "ArrowDown"
+    ) {
+      if (!this.isPaused && this.selectedSock) {
+        this.moveSelectedSock(e.key);
+        e.preventDefault();
+      }
+      return;
+    }
+
+    // Enter to drop selected sock
+    if (e.key === "Enter") {
+      if (!this.isPaused && this.selectedSock) {
+        this.dropSelectedSock();
+        e.preventDefault();
+      }
+      return;
+    }
+  }
+
+  selectNextSock() {
+    const activeSocks = this.sockManager.socks.filter((s) => s.active);
+    if (activeSocks.length === 0) return;
+
+    // If no sock selected, select first active sock
+    if (!this.selectedSock) {
+      this.selectedSock = activeSocks[0];
+      this.sockSelectedByKeyboard = true;
+      return;
+    }
+
+    // Find current sock index and select next
+    const currentIndex = activeSocks.indexOf(this.selectedSock);
+    const nextIndex = (currentIndex + 1) % activeSocks.length;
+    this.selectedSock = activeSocks[nextIndex];
+    this.sockSelectedByKeyboard = true;
+  }
+
+  moveSelectedSock(key) {
+    if (!this.selectedSock) return;
+
+    const moveSpeed = this.game.getScaledValue(10);
+
+    switch (key) {
+      case "ArrowLeft":
+        this.selectedSock.x -= moveSpeed;
+        break;
+      case "ArrowRight":
+        this.selectedSock.x += moveSpeed;
+        break;
+      case "ArrowUp":
+        this.selectedSock.y -= moveSpeed;
+        break;
+      case "ArrowDown":
+        this.selectedSock.y += moveSpeed;
+        break;
+    }
+
+    // Keep within canvas bounds
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const sockSize = this.game.getScaledValue(40);
+
+    this.selectedSock.x = Math.max(
+      sockSize,
+      Math.min(canvasWidth - sockSize, this.selectedSock.x)
+    );
+    this.selectedSock.y = Math.max(
+      sockSize,
+      Math.min(canvasHeight - sockSize, this.selectedSock.y)
+    );
+
+    // Reset velocity when moved by keyboard
+    this.selectedSock.vx = 0;
+    this.selectedSock.vy = 0;
+  }
+
+  dropSelectedSock() {
+    if (!this.selectedSock) return;
+
+    // Check if sock is near a drop zone
+    const nearbyZone = this.findNearbyDropZone(this.selectedSock);
+    if (nearbyZone && !nearbyZone.sock) {
+      this.placeSockInZone(this.selectedSock, nearbyZone);
+    }
+
+    // Deselect the sock
+    this.selectedSock = null;
+    this.sockSelectedByKeyboard = false;
+  }
+
+  findNearbyDropZone(sock) {
+    const snapDistance = this.game.getScaledValue(100);
+
+    for (const zone of this.dropZones) {
+      const dx = sock.x - zone.x;
+      const dy = sock.y - zone.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < snapDistance) {
+        return zone;
+      }
+    }
+
+    return null;
+  }
+
+  placeSockInZone(sock, zone) {
+    zone.sock = sock;
+    sock.x = zone.x;
+    sock.y = zone.y;
+    sock.vx = 0;
+    sock.vy = 0;
+    sock.rotationSpeed = 0;
+
+    // Create snap effect
+    this.createSnapEffect(zone);
+
+    // Play snap sound
+    this.game.audioManager.playSound("snap", false, 0.3);
+
+    // Check for matches
+    this.checkForMatches();
   }
 
   onMouseDown(x, y) {

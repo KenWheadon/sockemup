@@ -902,6 +902,136 @@ class LevelSelect extends Screen {
     }
   }
 
+  handleKeyDown(e) {
+    // If story is showing, let it handle keyboard
+    if (this.game.storyManager.showingStory) {
+      return; // Story manager will handle its own keys
+    }
+
+    // If credits modal is open, close with Escape
+    if (this.creditsOpen) {
+      if (e.key === "Escape") {
+        this.hideCredits();
+        e.preventDefault();
+      }
+      return;
+    }
+
+    // Achievements drawer toggle with 'A' key
+    if (e.key === "a" || e.key === "A") {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.toggleAchievementsDrawer();
+      e.preventDefault();
+      return;
+    }
+
+    // Story replay with 'S' key
+    if (e.key === "s" || e.key === "S") {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.game.storyManager.show();
+      e.preventDefault();
+      return;
+    }
+
+    // Credits with 'C' key
+    if (e.key === "c" || e.key === "C") {
+      this.showCredits();
+      e.preventDefault();
+      return;
+    }
+
+    // Number keys 1-9 for quick level selection
+    const numKey = parseInt(e.key);
+    if (numKey >= 1 && numKey <= 9) {
+      const levelIndex = numKey - 1;
+      if (levelIndex < GameConfig.LEVELS.length) {
+        this.selectLevel(levelIndex);
+        e.preventDefault();
+      }
+      return;
+    }
+
+    // Arrow key navigation
+    if (
+      e.key === "ArrowLeft" ||
+      e.key === "ArrowRight" ||
+      e.key === "ArrowUp" ||
+      e.key === "ArrowDown"
+    ) {
+      this.navigateLevels(e.key);
+      e.preventDefault();
+      return;
+    }
+
+    // Enter to select highlighted level
+    if (e.key === "Enter" || e.key === " ") {
+      if (this.selectedLevel !== -1) {
+        this.selectLevel(this.selectedLevel);
+        e.preventDefault();
+      }
+      return;
+    }
+  }
+
+  navigateLevels(key) {
+    const totalLevels = GameConfig.LEVELS.length;
+    const columns = this.levelConfig.columns;
+
+    // Initialize selection if nothing selected
+    if (this.selectedLevel === -1) {
+      this.selectedLevel = 0;
+      this.hoveredLevel = 0;
+      this.game.audioManager.playSound("button-hover", false, 0.3);
+      return;
+    }
+
+    let newSelection = this.selectedLevel;
+
+    switch (key) {
+      case "ArrowLeft":
+        if (newSelection % columns > 0) {
+          newSelection--;
+        }
+        break;
+      case "ArrowRight":
+        if (newSelection % columns < columns - 1 && newSelection < totalLevels - 1) {
+          newSelection++;
+        }
+        break;
+      case "ArrowUp":
+        if (newSelection >= columns) {
+          newSelection -= columns;
+        }
+        break;
+      case "ArrowDown":
+        if (newSelection + columns < totalLevels) {
+          newSelection += columns;
+        }
+        break;
+    }
+
+    if (newSelection !== this.selectedLevel) {
+      this.selectedLevel = newSelection;
+      this.hoveredLevel = newSelection;
+      this.game.audioManager.playSound("button-hover", false, 0.3);
+    }
+  }
+
+  selectLevel(levelIndex) {
+    if (this.game.unlockedLevels[levelIndex]) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.game.startLevel(levelIndex);
+    } else if (this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex]) {
+      this.game.audioManager.playSound("level-unlock", false, 0.6);
+      this.game.playerPoints -= GameConfig.LEVEL_COSTS[levelIndex];
+      this.game.unlockedLevels[levelIndex] = true;
+      this.game.saveGameData();
+      this.game.startLevel(levelIndex);
+    } else {
+      this.game.audioManager.playSound("button-click", false, 0.2);
+    }
+  }
+
   onClick(x, y) {
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.handleClick(x, y);
@@ -942,20 +1072,8 @@ class LevelSelect extends Screen {
 
     const levelIndex = this.getLevelAtPosition(x, y);
     if (levelIndex !== -1) {
-      if (this.game.unlockedLevels[levelIndex]) {
-        this.game.audioManager.playSound("button-click", false, 0.5);
-        this.game.startLevel(levelIndex);
-        return true;
-      } else if (this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex]) {
-        this.game.audioManager.playSound("level-unlock", false, 0.6);
-        this.game.playerPoints -= GameConfig.LEVEL_COSTS[levelIndex];
-        this.game.unlockedLevels[levelIndex] = true;
-        this.game.saveGameData();
-        this.game.startLevel(levelIndex);
-        return true;
-      } else {
-        this.game.audioManager.playSound("button-click", false, 0.2);
-      }
+      this.selectLevel(levelIndex);
+      return true;
     }
 
     return false;

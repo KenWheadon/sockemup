@@ -37,6 +37,11 @@ class ThrowingScreen extends Screen {
     this.mouseX = 0;
     this.mouseY = 0;
 
+    // Keyboard aiming
+    this.keyboardAimX = null;
+    this.keyboardAimY = null;
+    this.aimSpeed = 5;
+
     // Background image
     this.backgroundImage = null;
 
@@ -163,9 +168,69 @@ class ThrowingScreen extends Screen {
     return cache;
   }
 
+  handleKeyDown(e) {
+    // Initialize keyboard aim position at center if not set
+    if (this.keyboardAimX === null || this.keyboardAimY === null) {
+      this.keyboardAimX = this.game.getCanvasWidth() / 2;
+      this.keyboardAimY = this.game.getCanvasHeight() / 2;
+    }
+
+    // Arrow keys to aim
+    if (
+      e.key === "ArrowLeft" ||
+      e.key === "ArrowRight" ||
+      e.key === "ArrowUp" ||
+      e.key === "ArrowDown"
+    ) {
+      this.moveAim(e.key);
+      e.preventDefault();
+      return;
+    }
+
+    // Space or Enter to throw at keyboard aim position
+    if (e.key === " " || e.key === "Enter") {
+      if (this.canThrow() && this.keyboardAimX !== null) {
+        this.throwSockball(this.keyboardAimX, this.keyboardAimY);
+        e.preventDefault();
+      }
+      return;
+    }
+  }
+
+  moveAim(key) {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const moveSpeed = this.game.getScaledValue(this.aimSpeed);
+
+    switch (key) {
+      case "ArrowLeft":
+        this.keyboardAimX = Math.max(0, this.keyboardAimX - moveSpeed);
+        break;
+      case "ArrowRight":
+        this.keyboardAimX = Math.min(canvasWidth, this.keyboardAimX + moveSpeed);
+        break;
+      case "ArrowUp":
+        this.keyboardAimY = Math.max(0, this.keyboardAimY - moveSpeed);
+        break;
+      case "ArrowDown":
+        this.keyboardAimY = Math.min(canvasHeight, this.keyboardAimY + moveSpeed);
+        break;
+    }
+
+    // Update trajectory preview with keyboard aim
+    if (this.canThrow()) {
+      this.updateTrajectoryPreview(this.keyboardAimX, this.keyboardAimY);
+      this.showTrajectory = true;
+    }
+  }
+
   onMouseMove(x, y) {
     this.mouseX = x;
     this.mouseY = y;
+
+    // Reset keyboard aim when mouse moves
+    this.keyboardAimX = null;
+    this.keyboardAimY = null;
 
     // Check exit button hover
     if (

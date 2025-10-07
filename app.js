@@ -371,7 +371,17 @@ class SockGame {
 
   // Phase 1.3 - Handle keyboard input
   handleKeyDown(e) {
-    // Pause/Resume with P or ESC key
+    // Route keyboard events to current screen if it has a handler
+    const currentScreen = this.getCurrentScreen();
+    if (currentScreen && typeof currentScreen.handleKeyDown === 'function') {
+      currentScreen.handleKeyDown(e);
+      // If screen handled the event, return early
+      if (e.defaultPrevented) {
+        return;
+      }
+    }
+
+    // Pause/Resume with P or ESC key (for gameplay screens)
     if (e.key === "p" || e.key === "P" || e.key === "Escape") {
       if (
         this.gameState === "matching" ||
@@ -398,6 +408,24 @@ class SockGame {
         this.changeGameState("menu");
         e.preventDefault();
       }
+    }
+  }
+
+  // Helper to get current screen object
+  getCurrentScreen() {
+    switch (this.gameState) {
+      case "menu":
+        return this.levelSelect;
+      case "matching":
+        return this.matchScreen;
+      case "throwing":
+        return this.throwingScreen;
+      case "gameOver":
+        return this.levelEndScreen;
+      case "story":
+        return this.storyManager;
+      default:
+        return null;
     }
   }
 
