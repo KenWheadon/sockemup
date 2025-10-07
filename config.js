@@ -84,7 +84,7 @@ const GameConfig = {
   THROWING_BOUNDS: {
     LEFT: 0,
     RIGHT: 1200,
-    TOP: 0,
+    TOP: 240, // Bottom 70% of screen (30% from top = 800 * 0.3 = 240)
     BOTTOM: 800,
   },
 
@@ -97,7 +97,7 @@ const GameConfig = {
   MARTHA_PATTERNS: {
     HORIZONTAL: {
       name: "horizontal",
-      baseSpeed: 1.6,
+      baseSpeed: 1.5,
       description: "Moves left and right",
     },
     VERTICAL: {
@@ -107,17 +107,17 @@ const GameConfig = {
     },
     DIAGONAL: {
       name: "diagonal",
-      baseSpeed: 1.8,
+      baseSpeed: 1.5,
       description: "Moves in diagonal patterns",
     },
     CIRCULAR: {
       name: "circular",
-      baseSpeed: 1.1,
+      baseSpeed: 1.5,
       description: "Moves in circular patterns",
     },
     RANDOM: {
       name: "random",
-      baseSpeed: 1.2,
+      baseSpeed: 1.5,
       description: "Moves randomly",
     },
   },

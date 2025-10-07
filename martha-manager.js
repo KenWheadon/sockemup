@@ -20,7 +20,7 @@ class MarthaManager {
     this.patternData = {};
     this.patternTimer = 0;
     this.patternSwitchTimer = 0;
-    this.patternSwitchInterval = 6000; // Switch patterns every 6 seconds (doubled for consistency)
+    this.patternSwitchInterval = 9000; // Switch patterns every 9 seconds for better predictability
 
     // Animation state
     this.animationFrame = 0;
@@ -75,28 +75,8 @@ class MarthaManager {
       bottom: GameConfig.THROWING_BOUNDS.BOTTOM,
     };
 
-    // Enhanced AI improvement properties - SMOOTHED
-    this.edgeBuffer = 100; // Larger buffer for gentler transitions
-    this.centerAttraction = 0.001; // Reduced for less aggressive pulling
-    this.edgeRepulsion = 0.04; // Reduced for smoother edge behavior
-    this.lastEdgeHit = 0; // Timer to prevent rapid edge bouncing
-    this.edgeHitCooldown = 1000; // Longer cooldown
-
-    // Enhanced edge escape system
-    this.isEscapingEdge = false;
-    this.edgeEscapeTimer = 0;
-    this.edgeEscapeDuration = 2000; // Even longer for smoother escape
-    this.edgeEscapeDirection = { x: 0, y: 0 };
-    this.edgeEscapeSpeed = 2; // Slower, smoother escape speed
-
-    // Movement prediction system - SIMPLIFIED
-    this.predictedPosition = { x: 0, y: 0 };
-    this.predictionSteps = 5; // Reduced prediction complexity
-
-    // Momentum dampening for smoother movement - IMPROVED
-    this.momentum = { x: 0, y: 0 };
-    this.momentumDamping = 0.92; // Slightly more dampening for smoothness
-    this.velocitySmoothing = 0.85; // New: Smooth velocity changes
+    // Simplified edge handling - smaller buffer for more usable space
+    this.edgeBuffer = 40; // Reduced from 100 for more play area
 
     // Audio tracking
     this.hasPlayedAngrySound = false;
@@ -130,14 +110,10 @@ class MarthaManager {
     this.hitEffect.active = false;
     this.hitEffect.pointPopups = [];
 
-    // Reset animation and edge escape state
+    // Reset animation state
     this.animationFrame = 0;
     this.animationTimer = 0;
     this.currentFrameIndex = 0;
-    this.isEscapingEdge = false;
-    this.edgeEscapeTimer = 0;
-    this.momentum = { x: 0, y: 0 };
-    this.prevVelocity = null; // Reset velocity smoothing
 
     // Reset audio flags
     this.hasPlayedAngrySound = false;
@@ -158,19 +134,8 @@ class MarthaManager {
     // Update hit effects
     this.updateHitEffects(deltaTime);
 
-    // Update edge escape timer
-    if (this.isEscapingEdge) {
-      this.edgeEscapeTimer -= deltaTime;
-      if (this.edgeEscapeTimer <= 0) {
-        this.isEscapingEdge = false;
-      }
-    }
-
-    // Handle pattern switching (only if not escaping edge)
-    if (
-      !this.isEscapingEdge &&
-      this.patternSwitchTimer >= this.patternSwitchInterval
-    ) {
+    // Handle pattern switching
+    if (this.patternSwitchTimer >= this.patternSwitchInterval) {
       this.switchPattern();
       this.patternSwitchTimer = 0;
     }
@@ -181,15 +146,11 @@ class MarthaManager {
     } else if (this.isEntering) {
       this.updateEnterMovement(deltaTime);
     } else if (this.onScreen) {
-      if (this.isEscapingEdge) {
-        this.updateEdgeEscapeMovement(deltaTime);
-      } else {
-        this.updatePatternMovement(deltaTime);
-      }
+      this.updatePatternMovement(deltaTime);
     }
 
-    // Apply enhanced movement with prediction
-    this.applyEnhancedMovement(deltaTime);
+    // Apply movement and bounds checking
+    this.applyMovement(deltaTime);
 
     // Check for audio triggers
     this.checkAudioTriggers();
@@ -310,145 +271,6 @@ class MarthaManager {
         this.updateRandomPattern(timeMultiplier);
         break;
     }
-
-    // Apply enhanced AI improvements
-    this.applyEnhancedAI(timeMultiplier);
-  }
-
-  updateEdgeEscapeMovement(deltaTime) {
-    const timeMultiplier = deltaTime / 16.67;
-
-    // Move in the escape direction with fixed speed
-    this.velocity.x =
-      this.edgeEscapeDirection.x * this.edgeEscapeSpeed * timeMultiplier;
-    this.velocity.y =
-      this.edgeEscapeDirection.y * this.edgeEscapeSpeed * timeMultiplier;
-
-    // Update facing direction
-    if (Math.abs(this.velocity.x) > 0.1) {
-      this.facingRight = this.velocity.x > 0;
-    }
-  }
-
-  applyEnhancedAI(timeMultiplier) {
-    // Predict future position to prevent edge collisions
-    this.predictMovement();
-
-    // Apply center attraction when far from center
-    this.applyCenterAttraction(timeMultiplier);
-
-    // Apply edge repulsion with prediction
-    this.applyPredictiveEdgeRepulsion(timeMultiplier);
-
-    // Apply momentum dampening for smoother movement
-    this.applyMomentumDampening(timeMultiplier);
-  }
-
-  predictMovement() {
-    // Predict where Martha will be in the next few frames
-    let predX = this.x;
-    let predY = this.y;
-    let predVX = this.velocity.x;
-    let predVY = this.velocity.y;
-
-    for (let i = 0; i < this.predictionSteps; i++) {
-      predX += predVX;
-      predY += predVY;
-    }
-
-    this.predictedPosition.x = predX;
-    this.predictedPosition.y = predY;
-  }
-
-  applyCenterAttraction(timeMultiplier) {
-    const centerX =
-      this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
-    const centerY =
-      this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
-
-    const distanceFromCenterX = centerX - this.x;
-    const distanceFromCenterY = centerY - this.y;
-    const distanceFromCenter = Math.sqrt(
-      distanceFromCenterX * distanceFromCenterX +
-        distanceFromCenterY * distanceFromCenterY
-    );
-
-    // Only apply center attraction if Martha is far from center
-    const maxDistance =
-      Math.min(
-        this.bounds.right - this.bounds.left,
-        this.bounds.bottom - this.bounds.top
-      ) / 2.5;
-
-    if (distanceFromCenter > maxDistance) {
-      const attractionStrength = Math.min(
-        (distanceFromCenter - maxDistance) / maxDistance,
-        1
-      );
-      this.velocity.x +=
-        distanceFromCenterX *
-        this.centerAttraction *
-        attractionStrength *
-        timeMultiplier;
-      this.velocity.y +=
-        distanceFromCenterY *
-        this.centerAttraction *
-        attractionStrength *
-        timeMultiplier;
-    }
-  }
-
-  applyPredictiveEdgeRepulsion(timeMultiplier) {
-    // Simplified: use only current position for smoother behavior
-    // Use linear repulsion instead of squared for gentler force
-
-    // Left edge repulsion
-    if (this.x < this.bounds.left + this.edgeBuffer) {
-      const distance = this.bounds.left + this.edgeBuffer - this.x;
-      const repulsionForce = distance / this.edgeBuffer; // Linear instead of squared
-      this.velocity.x += repulsionForce * this.edgeRepulsion * timeMultiplier;
-    }
-
-    // Right edge repulsion
-    if (this.x > this.bounds.right - this.width - this.edgeBuffer) {
-      const distance = this.x - (this.bounds.right - this.width - this.edgeBuffer);
-      const repulsionForce = distance / this.edgeBuffer; // Linear instead of squared
-      this.velocity.x -= repulsionForce * this.edgeRepulsion * timeMultiplier;
-    }
-
-    // Top edge repulsion
-    if (this.y < this.bounds.top + this.edgeBuffer) {
-      const distance = this.bounds.top + this.edgeBuffer - this.y;
-      const repulsionForce = distance / this.edgeBuffer; // Linear instead of squared
-      this.velocity.y += repulsionForce * this.edgeRepulsion * timeMultiplier;
-    }
-
-    // Bottom edge repulsion
-    if (this.y > this.bounds.bottom - this.height - this.edgeBuffer) {
-      const distance = this.y - (this.bounds.bottom - this.height - this.edgeBuffer);
-      const repulsionForce = distance / this.edgeBuffer; // Linear instead of squared
-      this.velocity.y -= repulsionForce * this.edgeRepulsion * timeMultiplier;
-    }
-  }
-
-  applyMomentumDampening(timeMultiplier) {
-    // Simplified momentum system - just smooth the velocity changes
-    // Store previous velocity
-    if (!this.prevVelocity) {
-      this.prevVelocity = { x: this.velocity.x, y: this.velocity.y };
-    }
-
-    // Interpolate between previous and current velocity for smoothness
-    const smoothX = this.prevVelocity.x * (1 - this.velocitySmoothing) + this.velocity.x * this.velocitySmoothing;
-    const smoothY = this.prevVelocity.y * (1 - this.velocitySmoothing) + this.velocity.y * this.velocitySmoothing;
-
-    // Update previous velocity
-    this.prevVelocity.x = smoothX;
-    this.prevVelocity.y = smoothY;
-
-    // Apply smoothed velocity
-    this.velocity.x = smoothX;
-    this.velocity.y = smoothY;
   }
 
   updateHorizontalPattern(timeMultiplier) {
@@ -457,15 +279,8 @@ class MarthaManager {
       this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
     this.velocity.y = 0;
 
-    // Check for direction change with enhanced buffer
-    if (
-      (this.direction > 0 &&
-        this.x >= this.bounds.right - this.width - this.edgeBuffer) ||
-      (this.direction < 0 && this.x <= this.bounds.left + this.edgeBuffer)
-    ) {
-      this.direction *= -1;
-      this.facingRight = this.direction > 0;
-    }
+    // Update facing direction
+    this.facingRight = this.direction > 0;
   }
 
   updateVerticalPattern(timeMultiplier) {
@@ -473,15 +288,6 @@ class MarthaManager {
     this.velocity.x = 0;
     this.velocity.y =
       this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
-
-    // Check for direction change with enhanced buffer
-    if (
-      (this.direction > 0 &&
-        this.y >= this.bounds.bottom - this.height - this.edgeBuffer) ||
-      (this.direction < 0 && this.y <= this.bounds.top + this.edgeBuffer)
-    ) {
-      this.direction *= -1;
-    }
   }
 
   updateDiagonalPattern(timeMultiplier) {
@@ -501,24 +307,8 @@ class MarthaManager {
       this.patternSpeed *
       timeMultiplier;
 
-    // Check for direction change with enhanced buffer
-    if (
-      (this.patternData.diagonalDirection.x > 0 &&
-        this.x >= this.bounds.right - this.width - this.edgeBuffer) ||
-      (this.patternData.diagonalDirection.x < 0 &&
-        this.x <= this.bounds.left + this.edgeBuffer)
-    ) {
-      this.patternData.diagonalDirection.x *= -1;
-      this.facingRight = this.patternData.diagonalDirection.x > 0;
-    }
-    if (
-      (this.patternData.diagonalDirection.y > 0 &&
-        this.y >= this.bounds.bottom - this.height - this.edgeBuffer) ||
-      (this.patternData.diagonalDirection.y < 0 &&
-        this.y <= this.bounds.top + this.edgeBuffer)
-    ) {
-      this.patternData.diagonalDirection.y *= -1;
-    }
+    // Update facing direction
+    this.facingRight = this.patternData.diagonalDirection.x > 0;
   }
 
   updateCircularPattern(timeMultiplier) {
@@ -529,10 +319,10 @@ class MarthaManager {
         this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
       this.patternData.centerY =
         this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
-      // Reduce radius to keep Martha well away from edges
+      // Larger radius for more interesting circular movement
       this.patternData.radius = Math.min(
-        (this.bounds.right - this.bounds.left) / 3.5,
-        (this.bounds.bottom - this.bounds.top) / 3.5
+        (this.bounds.right - this.bounds.left) / 2.8,
+        (this.bounds.bottom - this.bounds.top) / 2.8
       );
     }
 
@@ -555,8 +345,8 @@ class MarthaManager {
   updateRandomPattern(timeMultiplier) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.RANDOM.baseSpeed;
 
-    // Change direction randomly, but less frequently
-    if (Math.random() < 0.008) {
+    // Change direction less frequently for more predictable movement
+    if (Math.random() < 0.004) {
       this.patternData.randomDirection = {
         x: (Math.random() - 0.5) * 2,
         y: (Math.random() - 0.5) * 2,
@@ -581,47 +371,55 @@ class MarthaManager {
     this.facingRight = this.velocity.x > 0;
   }
 
-  applyEnhancedMovement(deltaTime) {
+  applyMovement(deltaTime) {
     // Apply velocity
     this.x += this.velocity.x;
     this.y += this.velocity.y;
 
-    // Enhanced bounds checking with better edge escape
+    // Simple bounds checking with direction reversal
     if (!this.isExiting && !this.isEntering) {
-      let hitEdge = false;
-      let escapeDirection = { x: 0, y: 0 };
-
       // Left boundary
       if (this.x < this.bounds.left) {
-        this.x = this.bounds.left + 5;
-        escapeDirection.x = 1;
-        hitEdge = true;
+        this.x = this.bounds.left;
+        this.velocity.x = Math.abs(this.velocity.x); // Bounce right
+        if (this.currentPattern === "horizontal") {
+          this.direction = 1;
+        } else if (this.patternData.diagonalDirection) {
+          this.patternData.diagonalDirection.x = 1;
+        }
       }
 
       // Right boundary
       if (this.x > this.bounds.right - this.width) {
-        this.x = this.bounds.right - this.width - 5;
-        escapeDirection.x = -1;
-        hitEdge = true;
+        this.x = this.bounds.right - this.width;
+        this.velocity.x = -Math.abs(this.velocity.x); // Bounce left
+        if (this.currentPattern === "horizontal") {
+          this.direction = -1;
+        } else if (this.patternData.diagonalDirection) {
+          this.patternData.diagonalDirection.x = -1;
+        }
       }
 
       // Top boundary
       if (this.y < this.bounds.top) {
-        this.y = this.bounds.top + 5;
-        escapeDirection.y = 1;
-        hitEdge = true;
+        this.y = this.bounds.top;
+        this.velocity.y = Math.abs(this.velocity.y); // Bounce down
+        if (this.currentPattern === "vertical") {
+          this.direction = 1;
+        } else if (this.patternData.diagonalDirection) {
+          this.patternData.diagonalDirection.y = 1;
+        }
       }
 
       // Bottom boundary
       if (this.y > this.bounds.bottom - this.height) {
-        this.y = this.bounds.bottom - this.height - 5;
-        escapeDirection.y = -1;
-        hitEdge = true;
-      }
-
-      // If we hit an edge, start enhanced edge escape
-      if (hitEdge) {
-        this.startEnhancedEdgeEscape(escapeDirection);
+        this.y = this.bounds.bottom - this.height;
+        this.velocity.y = -Math.abs(this.velocity.y); // Bounce up
+        if (this.currentPattern === "vertical") {
+          this.direction = -1;
+        } else if (this.patternData.diagonalDirection) {
+          this.patternData.diagonalDirection.y = -1;
+        }
       }
 
       // Update facing direction based on velocity
@@ -629,50 +427,6 @@ class MarthaManager {
         this.facingRight = this.velocity.x > 0;
       }
     }
-  }
-
-  startEnhancedEdgeEscape(escapeDirection) {
-    this.isEscapingEdge = true;
-    this.edgeEscapeTimer = this.edgeEscapeDuration;
-
-    // Calculate escape direction toward center
-    const centerX =
-      this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
-    const centerY =
-      this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
-
-    const toCenterX = centerX - this.x;
-    const toCenterY = centerY - this.y;
-    const toCenterDistance = Math.sqrt(
-      toCenterX * toCenterX + toCenterY * toCenterY
-    );
-
-    // Normalize and blend with edge escape direction
-    if (toCenterDistance > 0) {
-      const normalizedToCenterX = toCenterX / toCenterDistance;
-      const normalizedToCenterY = toCenterY / toCenterDistance;
-
-      // Blend edge escape direction with center direction
-      this.edgeEscapeDirection.x =
-        (escapeDirection.x + normalizedToCenterX) * 0.5;
-      this.edgeEscapeDirection.y =
-        (escapeDirection.y + normalizedToCenterY) * 0.5;
-    } else {
-      this.edgeEscapeDirection = escapeDirection;
-    }
-
-    // Normalize escape direction
-    const escapeDistance = Math.sqrt(
-      this.edgeEscapeDirection.x * this.edgeEscapeDirection.x +
-        this.edgeEscapeDirection.y * this.edgeEscapeDirection.y
-    );
-
-    if (escapeDistance > 0) {
-      this.edgeEscapeDirection.x /= escapeDistance;
-      this.edgeEscapeDirection.y /= escapeDistance;
-    }
-
-    this.facingRight = this.edgeEscapeDirection.x > 0;
   }
 
   switchPattern() {
@@ -980,27 +734,6 @@ class MarthaManager {
         this.bounds.right - this.bounds.left,
         this.bounds.bottom - this.bounds.top
       );
-
-      // Draw edge buffer zones
-      ctx.strokeStyle = "rgba(255, 255, 0, 0.3)";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(
-        this.bounds.left + this.edgeBuffer,
-        this.bounds.top + this.edgeBuffer,
-        this.bounds.right - this.bounds.left - this.edgeBuffer * 2,
-        this.bounds.bottom - this.bounds.top - this.edgeBuffer * 2
-      );
-
-      // Draw predicted position
-      if (this.predictedPosition) {
-        ctx.fillStyle = "rgba(0, 255, 0, 0.5)";
-        ctx.fillRect(
-          this.predictedPosition.x,
-          this.predictedPosition.y,
-          10,
-          10
-        );
-      }
     }
 
     // Phase 2.1 - Draw point popups with quality colors
