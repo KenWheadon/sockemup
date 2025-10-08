@@ -3278,7 +3278,6 @@ class LevelSelect extends Screen {
 
     ctx.restore();
   }
-}
 
   // Story Panel Viewer - Add to level-select
   openStoryViewer() {
@@ -3292,3 +3291,4 @@ class LevelSelect extends Screen {
   closeStoryViewer() {
     this.storyViewer.isOpen = false;
   }
+}
