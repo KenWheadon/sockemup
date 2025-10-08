@@ -774,6 +774,9 @@ class MatchScreen extends Screen {
 
     this.sockManager.update(deltaTime);
 
+    // Update feedback manager for achievement toasts
+    this.game.feedbackManager.update(deltaTime);
+
     this.dropZones.forEach((zone) => {
       if (zone.glowEffect > 0) zone.glowEffect--;
       if (zone.hoverEffect > 0) zone.hoverEffect--;
@@ -827,6 +830,9 @@ class MatchScreen extends Screen {
     this.sockManager.renderSockballAnimations(ctx);
     this.sockManager.renderParticleEffects(ctx);
     this.renderMatchScreenUI(ctx);
+
+    // Render feedback manager for achievement toasts
+    this.game.feedbackManager.render(ctx);
   }
 
   renderDropZonePairBoxes(ctx) {
