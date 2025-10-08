@@ -179,29 +179,10 @@ class LevelSelect extends Screen {
       },
     };
 
-    // NEW GAME+ Difficulty Selection Modal
-    this.difficultyModal = {
-      isOpen: false,
-      selectedLevel: -1,
-      selectedDifficulty: 0,
-      hoveredDifficulty: -1,
-      animationProgress: 0,
-      buttons: [], // Will contain difficulty buttons
-    };
-
-    // Story Panel Viewer
-    this.storyViewer = {
-      isOpen: false,
-      currentPanel: 0,
-      animationProgress: 0,
-      button: {
-        x: 0,
-        y: 0,
-        width: 140,
-        height: 40,
-        hovered: false,
-      },
-    };
+    // Initialize UI helpers and modules
+    this.uiHelpers = new UIHelpers(this.game);
+    this.storyViewer = new StoryViewer(this.game, this.uiHelpers);
+    this.difficultyModal = new DifficultyModal(this.game, this.uiHelpers);
 
     // Story unlock animation
     this.storyUnlockAnimation = {
@@ -602,17 +583,8 @@ class LevelSelect extends Screen {
     }
 
     // NEW GAME+: Animate difficulty modal
-    if (this.difficultyModal.isOpen) {
-      this.difficultyModal.animationProgress = Math.min(
-        1,
-        this.difficultyModal.animationProgress + deltaTime * 0.004
-      );
-    } else {
-      this.difficultyModal.animationProgress = Math.max(
-        0,
-        this.difficultyModal.animationProgress - deltaTime * 0.006
-      );
-    }
+    // Update difficulty modal animations
+    this.difficultyModal.update(deltaTime);
 
     for (let i = 0; i < this.levelHoverAnimations.length; i++) {
       const isHovered = this.hoveredLevel === i;
@@ -636,11 +608,12 @@ class LevelSelect extends Screen {
       }
     }
 
+    // Update story viewer animations
+    this.storyViewer.update(deltaTime);
+
     this.storyReplayButton.hoverProgress =
       this.storyReplayButton.hoverProgress || 0;
     this.creditsButton.hoverProgress = this.creditsButton.hoverProgress || 0;
-    this.storyViewer.button.hoverProgress =
-      this.storyViewer.button.hoverProgress || 0;
 
     const buttonAnimSpeed = 0.008;
 
@@ -667,19 +640,6 @@ class LevelSelect extends Screen {
       this.creditsButton.hoverProgress = Math.max(
         this.creditsButton.hoverProgress - buttonAnimSpeed * deltaTime,
         creditsTarget
-      );
-    }
-
-    const storyViewerTarget = this.storyViewer.button.hovered ? 1 : 0;
-    if (this.storyViewer.button.hoverProgress < storyViewerTarget) {
-      this.storyViewer.button.hoverProgress = Math.min(
-        this.storyViewer.button.hoverProgress + buttonAnimSpeed * deltaTime,
-        storyViewerTarget
-      );
-    } else if (this.storyViewer.button.hoverProgress > storyViewerTarget) {
-      this.storyViewer.button.hoverProgress = Math.max(
-        this.storyViewer.button.hoverProgress - buttonAnimSpeed * deltaTime,
-        storyViewerTarget
       );
     }
 
@@ -859,19 +819,7 @@ class LevelSelect extends Screen {
 
     // NEW GAME+: Handle difficulty modal hover
     if (this.difficultyModal.isOpen) {
-      this.difficultyModal.hoveredDifficulty = -1;
-      for (let i = 0; i < this.difficultyModal.buttons.length; i++) {
-        const button = this.difficultyModal.buttons[i];
-        if (
-          x >= button.x &&
-          x <= button.x + button.width &&
-          y >= button.y &&
-          y <= button.y + button.height
-        ) {
-          this.difficultyModal.hoveredDifficulty = button.difficulty;
-          break;
-        }
-      }
+      this.difficultyModal.updateHover(x, y);
       return;
     }
 
@@ -910,17 +858,8 @@ class LevelSelect extends Screen {
       height: layout.creditsButtonHeight,
     });
 
-    const storyViewerButtonX =
-      layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2;
-    const storyViewerButtonY =
-      layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2;
-
-    this.storyViewer.button.hovered = this.isPointInRect(x, y, {
-      x: storyViewerButtonX,
-      y: storyViewerButtonY,
-      width: layout.storyViewerButtonWidth,
-      height: layout.storyViewerButtonHeight,
-    });
+    // Update story viewer button hover
+    this.storyViewer.updateButtonHover(x, y, layout);
 
     const drawerButtonX =
       layout.achievementsDrawerButtonX -
@@ -1153,35 +1092,7 @@ class LevelSelect extends Screen {
     }
 
     // If story viewer is open, handle navigation
-    if (this.storyViewer.isOpen) {
-      if (e.key === "Escape") {
-        this.closeStoryViewer();
-        e.preventDefault();
-        return;
-      }
-
-      // Get unlocked panels
-      const unlockedPanels = [];
-      for (let i = 0; i < this.game.unlockedStoryPanels.length; i++) {
-        if (this.game.unlockedStoryPanels[i]) {
-          unlockedPanels.push(i);
-        }
-      }
-
-      if (e.key === "ArrowLeft" && this.storyViewer.currentPanel > 0) {
-        this.storyViewer.currentPanel--;
-        this.game.audioManager.playSound("button-click", false, 0.5);
-        e.preventDefault();
-        return;
-      }
-
-      if (e.key === "ArrowRight" && this.storyViewer.currentPanel < unlockedPanels.length - 1) {
-        this.storyViewer.currentPanel++;
-        this.game.audioManager.playSound("button-click", false, 0.5);
-        e.preventDefault();
-        return;
-      }
-
+    if (this.storyViewer.handleKeyPress(e)) {
       return;
     }
 
@@ -1291,7 +1202,7 @@ class LevelSelect extends Screen {
 
       // NEW GAME+: Show difficulty selection if completed
       if (this.game.completedLevels[levelIndex] && this.game.highestUnlockedDifficulty > 0) {
-        this.openDifficultyModal(levelIndex);
+        this.difficultyModal.open(levelIndex);
       } else {
         this.game.startLevel(levelIndex, 0); // Start at base difficulty
       }
@@ -1389,14 +1300,12 @@ class LevelSelect extends Screen {
     }
 
     // Handle story viewer modal clicks
-    if (this.storyViewer.isOpen) {
-      this.handleStoryViewerClick(x, y);
+    if (this.storyViewer.handleClick(x, y)) {
       return;
     }
 
     // NEW GAME+: Handle difficulty modal clicks
-    if (this.difficultyModal.isOpen) {
-      this.handleDifficultyModalClick(x, y);
+    if (this.difficultyModal.handleClick(x, y)) {
       return;
     }
 
@@ -1423,7 +1332,7 @@ class LevelSelect extends Screen {
     }
 
     if (this.storyViewer.button.hovered) {
-      this.openStoryViewer();
+      this.storyViewer.open();
       return true;
     }
 
@@ -1855,13 +1764,11 @@ class LevelSelect extends Screen {
     this.renderPlayerStats(ctx);
     this.renderCreditsButton(ctx);
     this.renderStoryReplayButton(ctx);
-    this.renderStoryViewerButton(ctx);
+    this.storyViewer.renderButton(ctx, this.layoutCache);
     this.renderAchievementsDrawer(ctx);
 
     // NEW GAME+: Render difficulty modal if open
-    if (this.difficultyModal.animationProgress > 0) {
-      this.renderDifficultyModal(ctx);
-    }
+    this.difficultyModal.render(ctx, this.layoutCache);
 
     if (this.easterEggActive) {
       this.renderEasterDropZones(ctx);
@@ -1881,9 +1788,7 @@ class LevelSelect extends Screen {
     }
 
     // Render story viewer modal
-    if (this.storyViewer.isOpen) {
-      this.renderStoryViewerModal(ctx);
-    }
+    this.storyViewer.renderModal(ctx, this.layoutCache);
 
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.render(ctx);
