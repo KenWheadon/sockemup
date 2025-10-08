@@ -223,6 +223,7 @@ class SockManager {
     const timeMultiplier = deltaTime / 16.67;
 
     this.matchAnimations.forEach((animation, index) => {
+      const oldTimer = animation.timer;
       animation.timer += timeMultiplier;
 
       if (animation.phase === "wiggle") {
@@ -235,7 +236,8 @@ class SockManager {
         animation.wiggleIntensity =
           Math.sin(wiggleFreq) * this.game.getScaledValue(3) * easeProgress;
 
-        if (animation.timer % 8 === 0) {
+        // Fix Bug #14: Check if we crossed a multiple of 8 (for floating-point timer)
+        if (Math.floor(animation.timer / 8) > Math.floor(oldTimer / 8)) {
           this.particleEffects.push({
             x:
               animation.centerX +

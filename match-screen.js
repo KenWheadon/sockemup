@@ -113,7 +113,7 @@ class MatchScreen extends Screen {
     this.pulseTimer = 0;
     this.dragHistory = [];
 
-    // Reset timer to 0 at start of each round
+    // Fix Bug #19-20: Reset to 0 (timeRemaining actually tracks ELAPSED time)
     this.game.timeRemaining = 0;
 
     // Track achievements for this level
@@ -606,6 +606,8 @@ class MatchScreen extends Screen {
 
           // Play points gained sound with slight delay
           const timeoutId = setTimeout(() => {
+            // Fix Bug #4: Guard clause to prevent execution after screen cleanup
+            if (this.game.gameState !== 'matching') return;
             this.game.audioManager.playSound("points-gained", false, 0.4);
           }, 500);
           this.activeTimeouts.push(timeoutId);
@@ -755,10 +757,10 @@ class MatchScreen extends Screen {
       this.pulseTimer += deltaTime * 0.005; // Slow pulse
     }
 
-    // Fixed timer: Count UP instead of down - only if pile has been clicked and not paused
+    // Fix Bug #19-20: Count UP (elapsed time) - only if pile has been clicked and not paused
     if (this.sockPileClicked && !this.isPaused) {
       const timeIncrement = deltaTime / 1000; // Convert milliseconds to seconds
-      this.game.timeRemaining += timeIncrement;
+      this.game.timeRemaining += timeIncrement; // Note: Despite name, this tracks elapsed time
     }
 
     this.sockManager.socks.forEach((sock) => {
@@ -777,20 +779,23 @@ class MatchScreen extends Screen {
       if (zone.hoverEffect > 0) zone.hoverEffect--;
     });
 
+    // Fix Bug #10: Add bounds checking for level access
+    const level = GameConfig.LEVELS[this.game.currentLevel];
+    if (!level) return; // Guard clause
+
     if (
       this.sockManager.getSockListLength() === 0 &&
-      this.game.sockBalls >= GameConfig.LEVELS[this.game.currentLevel].sockPairs
+      this.game.sockBalls >= level.sockPairs
     ) {
-      // Check if player finished within the time limit for bonus points
-      const level = GameConfig.LEVELS[this.game.currentLevel];
+      // Fix Bug #19-20: Check if player finished within the time limit for bonus points
       const timeLimit = level.matchingTime;
-      const timeTaken = Math.floor(this.game.timeRemaining);
-      const timeRemaining = timeLimit - timeTaken;
+      const timeElapsed = Math.floor(this.game.timeRemaining); // Despite name, this is elapsed time
+      const timeRemaining = timeLimit - timeElapsed;
 
-      if (timeTaken <= timeLimit) {
+      if (timeElapsed <= timeLimit) {
         // Award 25 bonus points for finishing within time
         this.game.playerPoints += 25;
-        console.log(`⏱️ Time bonus! Finished in ${timeTaken}s (limit: ${timeLimit}s) - +25 points`);
+        console.log(`⏱️ Time bonus! Finished in ${timeElapsed}s (limit: ${timeLimit}s) - +25 points`);
       }
 
       // Achievement: SPEEDY_MATCHER (complete with 30+ seconds remaining)
@@ -965,14 +970,14 @@ class MatchScreen extends Screen {
     ctx.fill();
     ctx.restore();
 
-    // Time at top center - counting UP with time limit shown
-    const timeValue = Math.max(0, Math.floor(this.game.timeRemaining));
+    // Fix Bug #19-20: Time at top center - counting UP (elapsed) with time limit shown
+    const timeElapsed = Math.max(0, Math.floor(this.game.timeRemaining)); // Despite name, this is elapsed
     const timeLimit = GameConfig.LEVELS[this.game.currentLevel].matchingTime;
-    const isOverTime = timeValue > timeLimit;
+    const isOverTime = timeElapsed > timeLimit;
 
     const timeColor = isOverTime
       ? "rgba(255, 68, 68, 0.9)"
-      : timeValue > timeLimit * 0.8
+      : timeElapsed > timeLimit * 0.8
       ? "rgba(255, 200, 68, 0.9)"
       : "rgba(255, 255, 255, 0.9)";
 
@@ -981,7 +986,7 @@ class MatchScreen extends Screen {
     ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
     ctx.strokeStyle = isOverTime ? "rgba(255, 68, 68, 0.6)" : "rgba(255, 255, 255, 0.3)";
     ctx.lineWidth = 2;
-    const timeText = `Time: ${timeValue}s / ${timeLimit}s`;
+    const timeText = `Time: ${timeElapsed}s / ${timeLimit}s`;
     const timeMetrics = ctx.measureText(timeText);
     const timePadding = this.game.getScaledValue(16);
     const timeBoxWidth = timeMetrics.width + timePadding * 10;

@@ -16,7 +16,8 @@ class SockGame {
     this.playerPoints = 0;
     this.sockBalls = 0;
     this.matchingTime = 60;
-    this.timeRemaining = 60;
+    // Fix Bug #19-20: Despite the name, this actually tracks ELAPSED time (counts up from 0)
+    this.timeRemaining = 60; // NOTE: This will be reset to 0 in match screen setup
 
     this.images = {};
     this.loadedImages = 0;
@@ -623,6 +624,7 @@ class SockGame {
     };
 
     this.matchingTime = level.matchingTime;
+    // Fix Bug #19-20: This will be reset to 0 in match screen (tracks elapsed, not remaining)
     this.timeRemaining = level.matchingTime;
     this.sockBalls = 0;
 
@@ -640,21 +642,14 @@ class SockGame {
   }
 
   generateSockList(level) {
+    // Fix Bug #25: Ensure pairs are always created correctly
     this.sockList = [];
-    const socksPerType = Math.floor(
-      (level.sockPairs * 2) / level.typesAvailable.length
-    );
+    const types = level.typesAvailable;
 
-    level.typesAvailable.forEach((type) => {
-      for (let i = 0; i < socksPerType; i++) {
-        this.sockList.push(type);
-      }
-    });
-
-    // Add remaining socks to reach exact pair count
-    const remaining = level.sockPairs * 2 - this.sockList.length;
-    for (let i = 0; i < remaining; i++) {
-      this.sockList.push(level.typesAvailable[i % level.typesAvailable.length]);
+    // Create guaranteed pairs by adding each sock twice
+    for (let i = 0; i < level.sockPairs; i++) {
+      const type = types[i % types.length];
+      this.sockList.push(type, type); // Always add pairs together
     }
 
     this.shuffleArray(this.sockList);
@@ -668,68 +663,88 @@ class SockGame {
   }
 
   handleMouseDown(e) {
-    const coords = this.screenToCanvas(e.clientX, e.clientY);
-    const x = coords.x;
-    const y = coords.y;
+    try {
+      // Fix Bug #17: Add error handling for coordinate conversion
+      const coords = this.screenToCanvas(e.clientX, e.clientY);
+      const x = coords.x;
+      const y = coords.y;
 
-    // Use the new Screen base class method
-    if (this.gameState === "menu") {
-      this.levelSelect.handleMouseDown(x, y);
-    } else if (this.gameState === "matching") {
-      this.matchScreen.handleMouseDown(x, y);
-    } else if (this.gameState === "throwing") {
-      this.throwingScreen.handleMouseDown(x, y);
-    } else if (this.gameState === "gameOver") {
-      this.levelEndScreen.handleMouseDown(x, y);
+      // Use the new Screen base class method
+      if (this.gameState === "menu") {
+        this.levelSelect.handleMouseDown(x, y);
+      } else if (this.gameState === "matching") {
+        this.matchScreen.handleMouseDown(x, y);
+      } else if (this.gameState === "throwing") {
+        this.throwingScreen.handleMouseDown(x, y);
+      } else if (this.gameState === "gameOver") {
+        this.levelEndScreen.handleMouseDown(x, y);
+      }
+    } catch (error) {
+      console.error('Error handling mouse down:', error);
     }
   }
 
   handleMouseMove(e) {
-    const coords = this.screenToCanvas(e.clientX, e.clientY);
-    const x = coords.x;
-    const y = coords.y;
+    try {
+      // Fix Bug #17: Add error handling for coordinate conversion
+      const coords = this.screenToCanvas(e.clientX, e.clientY);
+      const x = coords.x;
+      const y = coords.y;
 
-    // Use the new Screen base class method
-    if (this.gameState === "menu") {
-      this.levelSelect.handleMouseMove(x, y);
-    } else if (this.gameState === "matching") {
-      this.matchScreen.handleMouseMove(x, y);
-    } else if (this.gameState === "throwing") {
-      this.throwingScreen.handleMouseMove(x, y);
-    } else if (this.gameState === "gameOver") {
-      this.levelEndScreen.handleMouseMove(x, y);
+      // Use the new Screen base class method
+      if (this.gameState === "menu") {
+        this.levelSelect.handleMouseMove(x, y);
+      } else if (this.gameState === "matching") {
+        this.matchScreen.handleMouseMove(x, y);
+      } else if (this.gameState === "throwing") {
+        this.throwingScreen.handleMouseMove(x, y);
+      } else if (this.gameState === "gameOver") {
+        this.levelEndScreen.handleMouseMove(x, y);
+      }
+    } catch (error) {
+      console.error('Error handling mouse move:', error);
     }
   }
 
   handleMouseUp(e) {
-    const coords = this.screenToCanvas(e.clientX, e.clientY);
-    const x = coords.x;
-    const y = coords.y;
+    try {
+      // Fix Bug #17: Add error handling for coordinate conversion
+      const coords = this.screenToCanvas(e.clientX, e.clientY);
+      const x = coords.x;
+      const y = coords.y;
 
-    // Use the new Screen base class method
-    if (this.gameState === "menu") {
-      this.levelSelect.handleMouseUp(x, y);
-    } else if (this.gameState === "matching") {
-      this.matchScreen.handleMouseUp();
-    } else if (this.gameState === "throwing") {
-      this.throwingScreen.handleMouseUp(x, y);
-    } else if (this.gameState === "gameOver") {
-      this.levelEndScreen.handleMouseUp();
+      // Use the new Screen base class method
+      if (this.gameState === "menu") {
+        this.levelSelect.handleMouseUp(x, y);
+      } else if (this.gameState === "matching") {
+        this.matchScreen.handleMouseUp();
+      } else if (this.gameState === "throwing") {
+        this.throwingScreen.handleMouseUp(x, y);
+      } else if (this.gameState === "gameOver") {
+        this.levelEndScreen.handleMouseUp();
+      }
+    } catch (error) {
+      console.error('Error handling mouse up:', error);
     }
   }
 
   handleClick(e) {
-    const coords = this.screenToCanvas(e.clientX, e.clientY);
-    const x = coords.x;
-    const y = coords.y;
+    try {
+      // Fix Bug #17: Add error handling for coordinate conversion
+      const coords = this.screenToCanvas(e.clientX, e.clientY);
+      const x = coords.x;
+      const y = coords.y;
 
-    // Use the new Screen base class method
-    if (this.gameState === "menu") {
-      this.levelSelect.handleClick(x, y);
-    } else if (this.gameState === "throwing") {
-      this.throwingScreen.handleClick(x, y);
-    } else if (this.gameState === "gameOver") {
-      this.levelEndScreen.handleClick(x, y);
+      // Use the new Screen base class method
+      if (this.gameState === "menu") {
+        this.levelSelect.handleClick(x, y);
+      } else if (this.gameState === "throwing") {
+        this.throwingScreen.handleClick(x, y);
+      } else if (this.gameState === "gameOver") {
+        this.levelEndScreen.handleClick(x, y);
+      }
+    } catch (error) {
+      console.error('Error handling click:', error);
     }
   }
 

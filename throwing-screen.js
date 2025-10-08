@@ -305,7 +305,7 @@ class ThrowingScreen extends Screen {
     if (!this.canThrow()) return;
 
     // Get the sockball type from the queue
-    const sockballType = this.game.getNextSockballFromQueue();
+    let sockballType = this.game.getNextSockballFromQueue(); // Fix Bug #2: Use 'let' for reassignment
     if (!sockballType) {
       console.warn("No sockball type available from queue, using random");
       sockballType = Math.floor(Math.random() * 6) + 1;

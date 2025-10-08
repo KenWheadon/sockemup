@@ -23,7 +23,7 @@ class LevelSelect extends Screen {
     this.MARTHA_CONFIG = {
       offsetX: 150,
       offsetY: 250,
-      maxSize: 120,
+      maxSize: 200, // Increased from 120 to make Martha bigger
       maintainAspectRatio: true,
     };
 
@@ -55,6 +55,31 @@ class LevelSelect extends Screen {
     this.marthaWiggleTimer = 0;
     this.marthaWiggling = false;
     this.marthaImageSize = { width: 0, height: 0 };
+
+    // Martha quote system
+    this.marthaQuotes = [
+      "Rent's due, kiddo!",
+      "I could really up my rates if you just leave...",
+      "I want to evict you, so you better not pay rent!",
+      "Your lease is up for renewal... at TRIPLE the price!",
+      "I'm thinking of turning this into a parking lot.",
+      "You know what? I need this place for my sock collection!",
+      "I've got 10 other tenants ready to pay more!",
+      "Ever thought about moving? Like, today?",
+      "This place would make a great storage unit!",
+      "I'm quadrupling rent next month!",
+      "Pack your socks, we're done here!",
+      "I need this space for my pet rock collection.",
+      "Your neighbors complained about your sock sorting!",
+      "Time to pay up or ship out!",
+      "I'm converting this to a juice bar!",
+    ];
+    this.currentQuote = "";
+    this.quoteTimer = 0;
+    this.quoteInterval = this.getRandomQuoteInterval();
+    this.quoteDisplayTime = 0;
+    this.quoteMaxDisplayTime = 4000; // Show quote for 4 seconds
+    this.showingQuote = false;
 
     // Easter egg drop zones
     this.easterDropZones = [];
@@ -152,6 +177,7 @@ class LevelSelect extends Screen {
   calculateMarthaImageSize() {
     const marthaImage = this.game.images["martha-demand.png"];
     if (!marthaImage) {
+      console.warn('Martha image not found: martha-demand.png'); // Fix Bug #12: Add error logging
       this.marthaImageSize = { width: 0, height: 0 };
       return;
     }
@@ -318,9 +344,23 @@ class LevelSelect extends Screen {
     this.setupEasterDropZones();
     this.setupCreditsModal();
 
+    // Initialize quote system
+    this.quoteTimer = 0;
+    this.quoteInterval = this.getRandomQuoteInterval();
+    this.showingQuote = false;
+
     if (this.game.storyManager.shouldShowStory()) {
       this.game.storyManager.show();
     }
+  }
+
+  getRandomQuoteInterval() {
+    // Random interval between 10-20 seconds (10000-20000 ms)
+    return 10000 + Math.random() * 10000;
+  }
+
+  getRandomQuote() {
+    return this.marthaQuotes[Math.floor(Math.random() * this.marthaQuotes.length)];
   }
 
   cleanup() {
@@ -410,6 +450,11 @@ class LevelSelect extends Screen {
   }
 
   setupCreditsEventListeners() {
+    // Fix Bug #5: Remove old listeners before adding new ones to prevent duplication
+    if (this.creditsEventHandlers) {
+      this.removeCreditsEventListeners();
+    }
+
     const closeCredits = document.getElementById("closeCredits");
 
     // Store bound handlers for cleanup
@@ -563,6 +608,26 @@ class LevelSelect extends Screen {
       }
     }
 
+    // Update Martha quote system
+    if (this.showingQuote) {
+      this.quoteDisplayTime += deltaTime;
+      if (this.quoteDisplayTime >= this.quoteMaxDisplayTime) {
+        // Hide quote and reset timer
+        this.showingQuote = false;
+        this.quoteDisplayTime = 0;
+        this.quoteTimer = 0;
+        this.quoteInterval = this.getRandomQuoteInterval();
+      }
+    } else {
+      this.quoteTimer += deltaTime;
+      if (this.quoteTimer >= this.quoteInterval) {
+        // Show new quote
+        this.currentQuote = this.getRandomQuote();
+        this.showingQuote = true;
+        this.quoteDisplayTime = 0;
+      }
+    }
+
     this.easterDropZones.forEach((zone) => {
       if (zone.glowEffect > 0) zone.glowEffect--;
       if (zone.hoverEffect > 0) zone.hoverEffect--;
@@ -617,8 +682,9 @@ class LevelSelect extends Screen {
   updateMenuSocks(deltaTime) {
     const timeMultiplier = deltaTime / 16.67;
 
-    this.menuSocks.forEach((sock, index) => {
-      if (sock === this.dragSock || this.isSockInDropZone(sock)) return;
+    // Fix Bug #21: Use filter instead of splice during iteration to avoid index issues
+    this.menuSocks = this.menuSocks.filter((sock) => {
+      if (sock === this.dragSock || this.isSockInDropZone(sock)) return true;
 
       sock.vx *= Math.pow(this.menuPhysics.friction, timeMultiplier);
       sock.vy *= Math.pow(this.menuPhysics.friction, timeMultiplier);
@@ -637,12 +703,11 @@ class LevelSelect extends Screen {
       if (this.isSockOutsideBounds(sock)) {
         this.clearSockFromDropZones(sock);
 
-        this.menuSocks.splice(index, 1);
         if (sock === this.dragSock) {
           this.isDragging = false;
           this.dragSock = null;
         }
-        return;
+        return false; // Remove from array
       }
 
       if (
@@ -655,9 +720,9 @@ class LevelSelect extends Screen {
           sock.rotationSpeed = 0;
         }
       }
-    });
 
-    this.menuSocks = this.menuSocks.filter((sock) => sock !== undefined);
+      return true; // Keep in array
+    });
   }
 
   clearSockFromDropZones(sock) {
@@ -1645,7 +1710,101 @@ class LevelSelect extends Screen {
       );
 
       ctx.restore();
+
+      // Render quote bubble if showing
+      if (this.showingQuote && this.currentQuote) {
+        this.renderMarthaQuote(ctx, layout);
+      }
     }
+  }
+
+  renderMarthaQuote(ctx, layout) {
+    ctx.save();
+
+    // Calculate fade in/out alpha
+    const fadeTime = 500; // 500ms fade
+    let alpha = 1;
+    if (this.quoteDisplayTime < fadeTime) {
+      alpha = this.quoteDisplayTime / fadeTime;
+    } else if (this.quoteDisplayTime > this.quoteMaxDisplayTime - fadeTime) {
+      alpha = (this.quoteMaxDisplayTime - this.quoteDisplayTime) / fadeTime;
+    }
+
+    // Position quote bubble above Martha
+    const bubbleX = layout.marthaX;
+    const bubbleY = layout.marthaY - layout.marthaHeight / 2 - this.game.getScaledValue(80);
+
+    const padding = this.game.getScaledValue(15);
+    const fontSize = this.game.getScaledValue(16);
+    const maxWidth = this.game.getScaledValue(280);
+
+    // Measure text
+    ctx.font = `bold ${fontSize}px Courier New`;
+    const words = this.currentQuote.split(' ');
+    const lines = [];
+    let currentLine = words[0];
+
+    for (let i = 1; i < words.length; i++) {
+      const testLine = currentLine + ' ' + words[i];
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > maxWidth - padding * 2) {
+        lines.push(currentLine);
+        currentLine = words[i];
+      } else {
+        currentLine = testLine;
+      }
+    }
+    lines.push(currentLine);
+
+    const lineHeight = fontSize * 1.3;
+    const bubbleWidth = Math.min(maxWidth, Math.max(...lines.map(line => ctx.measureText(line).width)) + padding * 2);
+    const bubbleHeight = lines.length * lineHeight + padding * 2;
+
+    // Draw speech bubble tail
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+    ctx.lineWidth = this.game.getScaledValue(2);
+
+    const tailSize = this.game.getScaledValue(15);
+    ctx.beginPath();
+    ctx.moveTo(bubbleX, bubbleY + bubbleHeight / 2);
+    ctx.lineTo(bubbleX - tailSize / 2, bubbleY + bubbleHeight / 2 - tailSize);
+    ctx.lineTo(bubbleX + tailSize / 2, bubbleY + bubbleHeight / 2 - tailSize);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw bubble background
+    const radius = this.game.getScaledValue(10);
+    const bubbleLeft = bubbleX - bubbleWidth / 2;
+    const bubbleTop = bubbleY - bubbleHeight / 2;
+
+    ctx.beginPath();
+    ctx.moveTo(bubbleLeft + radius, bubbleTop);
+    ctx.lineTo(bubbleLeft + bubbleWidth - radius, bubbleTop);
+    ctx.arcTo(bubbleLeft + bubbleWidth, bubbleTop, bubbleLeft + bubbleWidth, bubbleTop + radius, radius);
+    ctx.lineTo(bubbleLeft + bubbleWidth, bubbleTop + bubbleHeight - radius);
+    ctx.arcTo(bubbleLeft + bubbleWidth, bubbleTop + bubbleHeight, bubbleLeft + bubbleWidth - radius, bubbleTop + bubbleHeight, radius);
+    ctx.lineTo(bubbleLeft + radius, bubbleTop + bubbleHeight);
+    ctx.arcTo(bubbleLeft, bubbleTop + bubbleHeight, bubbleLeft, bubbleTop + bubbleHeight - radius, radius);
+    ctx.lineTo(bubbleLeft, bubbleTop + radius);
+    ctx.arcTo(bubbleLeft, bubbleTop, bubbleLeft + radius, bubbleTop, radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Draw text
+    ctx.fillStyle = "rgba(0, 0, 0, 0.9)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const textStartY = bubbleY - (lines.length - 1) * lineHeight / 2;
+    lines.forEach((line, index) => {
+      ctx.fillText(line, bubbleX, textStartY + index * lineHeight);
+    });
+
+    ctx.restore();
   }
 
   renderCreditsButton(ctx) {

@@ -240,11 +240,12 @@ class MarthaManager {
     this.velocity.x = this.exitDirection * enterSpeed;
     this.velocity.y = 0;
 
+    // Fix Bug #8: Use <= and >= for edge case handling
     // Check if Martha is back on screen
-    if (this.exitDirection > 0 && this.x < this.bounds.right - this.width) {
+    if (this.exitDirection > 0 && this.x <= this.bounds.right - this.width) {
       this.isEntering = false;
       this.x = this.bounds.right - this.width;
-    } else if (this.exitDirection < 0 && this.x > this.bounds.left) {
+    } else if (this.exitDirection < 0 && this.x >= this.bounds.left) {
       this.isEntering = false;
       this.x = this.bounds.left;
     }

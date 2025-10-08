@@ -48,11 +48,12 @@ class AudioManager {
       this.stopMusic();
     }
 
-    // Don't restart if same music is already playing
+    // Fix Bug #16: Don't restart if same music is already playing (and not ended)
     if (
       this.currentMusicName === musicName &&
       this.currentMusic &&
-      !this.currentMusic.paused
+      !this.currentMusic.paused &&
+      !this.currentMusic.ended
     ) {
       console.log(`🎵 Music ${musicName} already playing, skipping restart`);
       return;
