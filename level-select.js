@@ -51,6 +51,12 @@ class LevelSelect extends Screen {
     this.currentSockType = 1;
     this.dropZoneHover = null;
 
+    // Drag momentum tracking (fix for sock physics)
+    this.lastMouseX = 0;
+    this.lastMouseY = 0;
+    this.mouseVelocityX = 0;
+    this.mouseVelocityY = 0;
+
     // Martha display and animation
     this.marthaWiggleTimer = 0;
     this.marthaWiggling = false;
@@ -816,6 +822,12 @@ class LevelSelect extends Screen {
   }
 
   onMouseMove(x, y) {
+    // Fix: Track mouse velocity for drag momentum
+    this.mouseVelocityX = x - this.lastMouseX;
+    this.mouseVelocityY = y - this.lastMouseY;
+    this.lastMouseX = x;
+    this.lastMouseY = y;
+
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.handleMouseMove(x, y);
       return;
@@ -1028,6 +1040,13 @@ class LevelSelect extends Screen {
         this.dragOffset.y = y - sock.y;
         sock.vx = 0;
         sock.vy = 0;
+
+        // Initialize mouse position to prevent velocity spike
+        this.lastMouseX = x;
+        this.lastMouseY = y;
+        this.mouseVelocityX = 0;
+        this.mouseVelocityY = 0;
+
         return true;
       }
     }
@@ -1059,9 +1078,20 @@ class LevelSelect extends Screen {
       });
 
       if (!snapped) {
-        sock.vx = (Math.random() - 0.5) * 8;
-        sock.vy = (Math.random() - 0.5) * 8;
-        sock.rotationSpeed = (Math.random() - 0.5) * 0.1;
+        // FIX: Apply drag momentum instead of random velocity
+        const momentumMultiplier = 0.8; // Adjust for feel
+
+        // Clamp velocity to prevent excessive speeds
+        const maxVelocity = 20;
+        const clampedVx = Math.max(-maxVelocity, Math.min(maxVelocity, this.mouseVelocityX * momentumMultiplier));
+        const clampedVy = Math.max(-maxVelocity, Math.min(maxVelocity, this.mouseVelocityY * momentumMultiplier));
+
+        sock.vx = clampedVx;
+        sock.vy = clampedVy;
+
+        // Add subtle rotation based on velocity
+        const velocityMagnitude = Math.sqrt(sock.vx * sock.vx + sock.vy * sock.vy);
+        sock.rotationSpeed = (velocityMagnitude / 100) * (Math.random() > 0.5 ? 1 : -1);
       }
 
       this.isDragging = false;
