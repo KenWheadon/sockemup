@@ -519,6 +519,13 @@ class SockGame {
       // Story panels
       this.unlockedStoryPanels = data.unlockedStoryPanels || Array(9).fill(false);
 
+      // Unlock story panels for already-completed levels on base difficulty
+      for (let i = 0; i < this.completedLevels.length; i++) {
+        if (this.completedLevels[i] && !this.unlockedStoryPanels[i]) {
+          this.unlockedStoryPanels[i] = true;
+        }
+      }
+
       // Load achievements (merge with defaults for new achievements)
       if (data.achievements) {
         this.achievements = this.initializeAchievements();

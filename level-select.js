@@ -592,6 +592,15 @@ class LevelSelect extends Screen {
       return;
     }
 
+    // Update story unlock animation
+    if (this.storyUnlockAnimation.isPlaying) {
+      this.storyUnlockAnimation.animationProgress += deltaTime * 0.0008;
+      if (this.storyUnlockAnimation.animationProgress >= 1) {
+        this.storyUnlockAnimation.isPlaying = false;
+        this.storyUnlockAnimation.animationProgress = 0;
+      }
+    }
+
     // NEW GAME+: Animate difficulty modal
     if (this.difficultyModal.isOpen) {
       this.difficultyModal.animationProgress = Math.min(
@@ -630,6 +639,8 @@ class LevelSelect extends Screen {
     this.storyReplayButton.hoverProgress =
       this.storyReplayButton.hoverProgress || 0;
     this.creditsButton.hoverProgress = this.creditsButton.hoverProgress || 0;
+    this.storyViewer.button.hoverProgress =
+      this.storyViewer.button.hoverProgress || 0;
 
     const buttonAnimSpeed = 0.008;
 
@@ -656,6 +667,19 @@ class LevelSelect extends Screen {
       this.creditsButton.hoverProgress = Math.max(
         this.creditsButton.hoverProgress - buttonAnimSpeed * deltaTime,
         creditsTarget
+      );
+    }
+
+    const storyViewerTarget = this.storyViewer.button.hovered ? 1 : 0;
+    if (this.storyViewer.button.hoverProgress < storyViewerTarget) {
+      this.storyViewer.button.hoverProgress = Math.min(
+        this.storyViewer.button.hoverProgress + buttonAnimSpeed * deltaTime,
+        storyViewerTarget
+      );
+    } else if (this.storyViewer.button.hoverProgress > storyViewerTarget) {
+      this.storyViewer.button.hoverProgress = Math.max(
+        this.storyViewer.button.hoverProgress - buttonAnimSpeed * deltaTime,
+        storyViewerTarget
       );
     }
 
@@ -884,6 +908,18 @@ class LevelSelect extends Screen {
       y: creditsButtonY,
       width: layout.creditsButtonWidth,
       height: layout.creditsButtonHeight,
+    });
+
+    const storyViewerButtonX =
+      layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2;
+    const storyViewerButtonY =
+      layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2;
+
+    this.storyViewer.button.hovered = this.isPointInRect(x, y, {
+      x: storyViewerButtonX,
+      y: storyViewerButtonY,
+      width: layout.storyViewerButtonWidth,
+      height: layout.storyViewerButtonHeight,
     });
 
     const drawerButtonX =
@@ -1116,6 +1152,39 @@ class LevelSelect extends Screen {
       return;
     }
 
+    // If story viewer is open, handle navigation
+    if (this.storyViewer.isOpen) {
+      if (e.key === "Escape") {
+        this.closeStoryViewer();
+        e.preventDefault();
+        return;
+      }
+
+      // Get unlocked panels
+      const unlockedPanels = [];
+      for (let i = 0; i < this.game.unlockedStoryPanels.length; i++) {
+        if (this.game.unlockedStoryPanels[i]) {
+          unlockedPanels.push(i);
+        }
+      }
+
+      if (e.key === "ArrowLeft" && this.storyViewer.currentPanel > 0) {
+        this.storyViewer.currentPanel--;
+        this.game.audioManager.playSound("button-click", false, 0.5);
+        e.preventDefault();
+        return;
+      }
+
+      if (e.key === "ArrowRight" && this.storyViewer.currentPanel < unlockedPanels.length - 1) {
+        this.storyViewer.currentPanel++;
+        this.game.audioManager.playSound("button-click", false, 0.5);
+        e.preventDefault();
+        return;
+      }
+
+      return;
+    }
+
     // Achievements drawer toggle with 'A' key
     if (e.key === "a" || e.key === "A") {
       this.game.audioManager.playSound("button-click", false, 0.5);
@@ -1319,6 +1388,12 @@ class LevelSelect extends Screen {
       return;
     }
 
+    // Handle story viewer modal clicks
+    if (this.storyViewer.isOpen) {
+      this.handleStoryViewerClick(x, y);
+      return;
+    }
+
     // NEW GAME+: Handle difficulty modal clicks
     if (this.difficultyModal.isOpen) {
       this.handleDifficultyModalClick(x, y);
@@ -1344,6 +1419,11 @@ class LevelSelect extends Screen {
     if (this.storyReplayButton.hovered) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.game.storyManager.show();
+      return true;
+    }
+
+    if (this.storyViewer.button.hovered) {
+      this.openStoryViewer();
       return true;
     }
 
@@ -1775,6 +1855,7 @@ class LevelSelect extends Screen {
     this.renderPlayerStats(ctx);
     this.renderCreditsButton(ctx);
     this.renderStoryReplayButton(ctx);
+    this.renderStoryViewerButton(ctx);
     this.renderAchievementsDrawer(ctx);
 
     // NEW GAME+: Render difficulty modal if open
@@ -1792,6 +1873,16 @@ class LevelSelect extends Screen {
 
     if (this.easterEggActive) {
       this.renderMenuSocks(ctx);
+    }
+
+    // Render story unlock notification
+    if (this.storyUnlockAnimation.isPlaying) {
+      this.renderStoryUnlockNotification(ctx);
+    }
+
+    // Render story viewer modal
+    if (this.storyViewer.isOpen) {
+      this.renderStoryViewerModal(ctx);
     }
 
     if (this.game.storyManager.showingStory) {
@@ -1928,9 +2019,9 @@ class LevelSelect extends Screen {
       alpha = (this.quoteMaxDisplayTime - this.quoteDisplayTime) / fadeTime;
     }
 
-    // Position quote bubble above Martha
+    // Position quote bubble below Martha
     const bubbleX = layout.marthaX;
-    const bubbleY = layout.marthaY - layout.marthaHeight / 2 - this.game.getScaledValue(80);
+    const bubbleY = layout.marthaY + layout.marthaHeight / 2 + this.game.getScaledValue(60);
 
     const padding = this.game.getScaledValue(15);
     const fontSize = this.game.getScaledValue(16);
@@ -1958,7 +2049,7 @@ class LevelSelect extends Screen {
     const bubbleWidth = Math.min(maxWidth, Math.max(...lines.map(line => ctx.measureText(line).width)) + padding * 2);
     const bubbleHeight = lines.length * lineHeight + padding * 2;
 
-    // Draw speech bubble tail
+    // Draw speech bubble tail pointing upward
     ctx.globalAlpha = alpha;
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
     ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
@@ -1966,9 +2057,9 @@ class LevelSelect extends Screen {
 
     const tailSize = this.game.getScaledValue(15);
     ctx.beginPath();
-    ctx.moveTo(bubbleX, bubbleY + bubbleHeight / 2);
-    ctx.lineTo(bubbleX - tailSize / 2, bubbleY + bubbleHeight / 2 - tailSize);
-    ctx.lineTo(bubbleX + tailSize / 2, bubbleY + bubbleHeight / 2 - tailSize);
+    ctx.moveTo(bubbleX, bubbleY - bubbleHeight / 2);
+    ctx.lineTo(bubbleX - tailSize / 2, bubbleY - bubbleHeight / 2 + tailSize);
+    ctx.lineTo(bubbleX + tailSize / 2, bubbleY - bubbleHeight / 2 + tailSize);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
@@ -2188,6 +2279,93 @@ class LevelSelect extends Screen {
       "📖 Story",
       layout.storyReplayButtonX,
       layout.storyReplayButtonY,
+      {
+        fontSize: layout.smallFontSize,
+        color: "white",
+        weight: "bold",
+      }
+    );
+  }
+
+  renderStoryViewerButton(ctx) {
+    const layout = this.layoutCache;
+    const button = this.storyViewer.button;
+
+    // Check how many panels are unlocked
+    const unlockedCount = this.game.unlockedStoryPanels.filter(u => u).length;
+    if (unlockedCount === 0) return; // Don't show button if no panels unlocked
+
+    ctx.save();
+
+    const x = layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2;
+    const y = layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2;
+    const radius = this.game.getScaledValue(8);
+
+    const gradient = ctx.createLinearGradient(
+      x,
+      y,
+      x,
+      y + layout.storyViewerButtonHeight
+    );
+    if (button.hovered) {
+      gradient.addColorStop(0, "rgba(180, 100, 255, 0.95)");
+      gradient.addColorStop(1, "rgba(130, 65, 225, 0.95)");
+    } else {
+      gradient.addColorStop(0, "rgba(150, 80, 200, 0.85)");
+      gradient.addColorStop(1, "rgba(100, 50, 180, 0.85)");
+    }
+    ctx.fillStyle = gradient;
+
+    if (button.hovered) {
+      ctx.shadowColor = "rgba(180, 100, 255, 0.6)";
+      ctx.shadowBlur = this.game.getScaledValue(12);
+    }
+
+    ctx.strokeStyle = button.hovered
+      ? "rgba(200, 150, 255, 0.9)"
+      : "rgba(150, 100, 237, 0.6)";
+    ctx.lineWidth = this.game.getScaledValue(3);
+
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + layout.storyViewerButtonWidth - radius, y);
+    ctx.quadraticCurveTo(
+      x + layout.storyViewerButtonWidth,
+      y,
+      x + layout.storyViewerButtonWidth,
+      y + radius
+    );
+    ctx.lineTo(
+      x + layout.storyViewerButtonWidth,
+      y + layout.storyViewerButtonHeight - radius
+    );
+    ctx.quadraticCurveTo(
+      x + layout.storyViewerButtonWidth,
+      y + layout.storyViewerButtonHeight,
+      x + layout.storyViewerButtonWidth - radius,
+      y + layout.storyViewerButtonHeight
+    );
+    ctx.lineTo(x + radius, y + layout.storyViewerButtonHeight);
+    ctx.quadraticCurveTo(
+      x,
+      y + layout.storyViewerButtonHeight,
+      x,
+      y + layout.storyViewerButtonHeight - radius
+    );
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.restore();
+
+    this.renderText(
+      ctx,
+      `📚 Panels (${unlockedCount}/9)`,
+      layout.storyViewerButtonX,
+      layout.storyViewerButtonY,
       {
         fontSize: layout.smallFontSize,
         color: "white",
@@ -2598,6 +2776,303 @@ class LevelSelect extends Screen {
 
       ctx.restore();
     }
+  }
+
+  renderStoryUnlockNotification(ctx) {
+    const panelIndex = this.storyUnlockAnimation.panelIndex;
+    const progress = this.storyUnlockAnimation.animationProgress;
+    const panel = GameConfig.STORY_PANELS[panelIndex];
+
+    if (!panel) return;
+
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
+    // Animation phases
+    const fadeInDuration = 0.15;
+    const stayDuration = 0.7;
+    const fadeOutDuration = 0.15;
+
+    let alpha = 1;
+    if (progress < fadeInDuration) {
+      alpha = progress / fadeInDuration;
+    } else if (progress > stayDuration) {
+      alpha = 1 - (progress - stayDuration) / fadeOutDuration;
+    }
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Toast notification at top center
+    const boxWidth = this.game.getScaledValue(400);
+    const boxHeight = this.game.getScaledValue(60);
+    const x = canvasWidth / 2 - boxWidth / 2;
+    const slideOffset = (1 - Math.min(progress / fadeInDuration, 1)) * -boxHeight;
+    const y = this.game.getScaledValue(70) + slideOffset;
+    const radius = this.game.getScaledValue(8);
+
+    // Dark background with purple accent
+    ctx.fillStyle = "rgba(40, 40, 40, 0.95)";
+    this.drawRoundedRect(ctx, x, y, boxWidth, boxHeight, radius);
+    ctx.fill();
+
+    // Purple border for story content
+    ctx.strokeStyle = "rgba(138, 43, 226, 0.8)";
+    ctx.lineWidth = this.game.getScaledValue(2);
+    this.drawRoundedRect(ctx, x, y, boxWidth, boxHeight, radius);
+    ctx.stroke();
+
+    // Book icon
+    const iconX = x + this.game.getScaledValue(25);
+    const iconY = y + boxHeight / 2;
+    ctx.font = `${this.game.getScaledValue(28)}px Arial`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#BA55D3";
+    ctx.fillText("📖", iconX, iconY);
+
+    // Text
+    const textX = iconX + this.game.getScaledValue(45);
+    ctx.font = `bold ${this.game.getScaledValue(14)}px Courier New`;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.fillText("Story Panel Unlocked:", textX, iconY - this.game.getScaledValue(10));
+
+    ctx.font = `bold ${this.game.getScaledValue(16)}px Courier New`;
+    ctx.fillStyle = "#BA55D3";
+    ctx.fillText(panel.title, textX, iconY + this.game.getScaledValue(12));
+
+    ctx.restore();
+  }
+
+  renderStoryViewerModal(ctx) {
+    if (!this.storyViewer.isOpen) return;
+
+    const layout = this.layoutCache;
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
+    ctx.save();
+
+    // Dark overlay
+    ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    // Modal dimensions
+    const modalWidth = this.game.getScaledValue(700);
+    const modalHeight = this.game.getScaledValue(500);
+    const modalX = (canvasWidth - modalWidth) / 2;
+    const modalY = (canvasHeight - modalHeight) / 2;
+    const radius = this.game.getScaledValue(12);
+
+    // Modal background
+    const bgGradient = ctx.createLinearGradient(
+      modalX,
+      modalY,
+      modalX,
+      modalY + modalHeight
+    );
+    bgGradient.addColorStop(0, "rgba(30, 20, 45, 0.98)");
+    bgGradient.addColorStop(1, "rgba(20, 15, 35, 0.98)");
+    ctx.fillStyle = bgGradient;
+    this.drawRoundedRect(ctx, modalX, modalY, modalWidth, modalHeight, radius);
+    ctx.fill();
+
+    // Modal border
+    ctx.strokeStyle = "rgba(180, 100, 255, 0.6)";
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.shadowColor = "rgba(180, 100, 255, 0.4)";
+    ctx.shadowBlur = this.game.getScaledValue(15);
+    this.drawRoundedRect(ctx, modalX, modalY, modalWidth, modalHeight, radius);
+    ctx.stroke();
+
+    ctx.shadowColor = "transparent";
+    ctx.shadowBlur = 0;
+
+    // Title
+    this.renderText(
+      ctx,
+      "📚 Story Panels",
+      canvasWidth / 2,
+      modalY + this.game.getScaledValue(40),
+      {
+        fontSize: layout.headerFontSize,
+        color: "#BA55D3",
+        weight: "bold",
+        align: "center",
+      }
+    );
+
+    // Find the current unlocked panel to display
+    const unlockedPanels = [];
+    for (let i = 0; i < this.game.unlockedStoryPanels.length; i++) {
+      if (this.game.unlockedStoryPanels[i]) {
+        unlockedPanels.push(i);
+      }
+    }
+
+    if (unlockedPanels.length === 0) {
+      this.renderText(
+        ctx,
+        "No panels unlocked yet!",
+        canvasWidth / 2,
+        canvasHeight / 2,
+        {
+          fontSize: layout.bodyFontSize,
+          color: "rgba(255, 255, 255, 0.7)",
+          align: "center",
+        }
+      );
+      ctx.restore();
+      return;
+    }
+
+    // Make sure current panel is valid
+    if (this.storyViewer.currentPanel >= unlockedPanels.length) {
+      this.storyViewer.currentPanel = 0;
+    }
+
+    const panelIndex = unlockedPanels[this.storyViewer.currentPanel];
+    const panel = GameConfig.STORY_PANELS[panelIndex];
+
+    // Panel content area
+    const contentY = modalY + this.game.getScaledValue(100);
+    const contentHeight = modalHeight - this.game.getScaledValue(180);
+
+    // Panel image (if available)
+    const imageSize = this.game.getScaledValue(150);
+    const imageX = canvasWidth / 2 - imageSize / 2;
+    const imageY = contentY + this.game.getScaledValue(20);
+
+    if (panel.image && this.game.images[panel.image]) {
+      ctx.save();
+      ctx.shadowColor = "rgba(180, 100, 255, 0.3)";
+      ctx.shadowBlur = this.game.getScaledValue(10);
+      ctx.drawImage(
+        this.game.images[panel.image],
+        imageX,
+        imageY,
+        imageSize,
+        imageSize
+      );
+      ctx.restore();
+    }
+
+    // Panel title
+    this.renderText(
+      ctx,
+      panel.title,
+      canvasWidth / 2,
+      imageY + imageSize + this.game.getScaledValue(30),
+      {
+        fontSize: layout.titleFontSize,
+        color: "#FFD700",
+        weight: "bold",
+        align: "center",
+      }
+    );
+
+    // Panel text (word-wrapped)
+    const textY = imageY + imageSize + this.game.getScaledValue(60);
+    const textMaxWidth = modalWidth - this.game.getScaledValue(80);
+    const lineHeight = this.game.getScaledValue(22);
+
+    ctx.font = `${layout.bodyFontSize}px Courier New`;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+
+    const words = panel.text.split(" ");
+    let line = "";
+    let y = textY;
+    const lines = [];
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + " ";
+      const metrics = ctx.measureText(testLine);
+      if (metrics.width > textMaxWidth && i > 0) {
+        lines.push(line);
+        line = words[i] + " ";
+      } else {
+        line = testLine;
+      }
+    }
+    lines.push(line);
+
+    lines.forEach((line, index) => {
+      ctx.fillText(line, canvasWidth / 2, y + index * lineHeight);
+    });
+
+    // Navigation info
+    this.renderText(
+      ctx,
+      `Panel ${this.storyViewer.currentPanel + 1} of ${unlockedPanels.length}`,
+      canvasWidth / 2,
+      modalY + modalHeight - this.game.getScaledValue(50),
+      {
+        fontSize: layout.smallFontSize,
+        color: "rgba(255, 255, 255, 0.6)",
+        align: "center",
+      }
+    );
+
+    // Navigation buttons
+    const buttonY = modalY + modalHeight - this.game.getScaledValue(90);
+    const buttonWidth = this.game.getScaledValue(100);
+    const buttonHeight = this.game.getScaledValue(35);
+    const buttonSpacing = this.game.getScaledValue(120);
+
+    // Previous button (only if not first panel)
+    if (this.storyViewer.currentPanel > 0) {
+      const prevX = canvasWidth / 2 - buttonSpacing;
+      this.renderNavigationButton(ctx, prevX, buttonY, buttonWidth, buttonHeight, "← Prev", false);
+    }
+
+    // Next button (only if not last panel)
+    if (this.storyViewer.currentPanel < unlockedPanels.length - 1) {
+      const nextX = canvasWidth / 2 + buttonSpacing;
+      this.renderNavigationButton(ctx, nextX, buttonY, buttonWidth, buttonHeight, "Next →", false);
+    }
+
+    // Close button
+    const closeX = canvasWidth / 2;
+    this.renderNavigationButton(ctx, closeX, buttonY, buttonWidth, buttonHeight, "Close", true);
+
+    ctx.restore();
+  }
+
+  renderNavigationButton(ctx, x, y, width, height, text, isClose) {
+    const radius = this.game.getScaledValue(6);
+    const buttonX = x - width / 2;
+    const buttonY = y - height / 2;
+
+    ctx.save();
+
+    const gradient = ctx.createLinearGradient(buttonX, buttonY, buttonX, buttonY + height);
+    if (isClose) {
+      gradient.addColorStop(0, "rgba(200, 50, 50, 0.8)");
+      gradient.addColorStop(1, "rgba(150, 30, 30, 0.8)");
+    } else {
+      gradient.addColorStop(0, "rgba(100, 150, 255, 0.8)");
+      gradient.addColorStop(1, "rgba(65, 105, 225, 0.8)");
+    }
+    ctx.fillStyle = gradient;
+    this.drawRoundedRect(ctx, buttonX, buttonY, width, height, radius);
+    ctx.fill();
+
+    ctx.strokeStyle = isClose ? "rgba(255, 100, 100, 0.6)" : "rgba(150, 200, 255, 0.6)";
+    ctx.lineWidth = this.game.getScaledValue(2);
+    this.drawRoundedRect(ctx, buttonX, buttonY, width, height, radius);
+    ctx.stroke();
+
+    ctx.restore();
+
+    this.renderText(ctx, text, x, y, {
+      fontSize: this.game.getScaledValue(14),
+      color: "white",
+      weight: "bold",
+      align: "center",
+      baseline: "middle",
+    });
   }
 
   renderEasterDropZones(ctx) {
@@ -3279,6 +3754,21 @@ class LevelSelect extends Screen {
     ctx.restore();
   }
 
+  // Helper method for drawing rounded rectangles
+  drawRoundedRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+    ctx.lineTo(x + radius, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+  }
+
   // Story Panel Viewer - Add to level-select
   openStoryViewer() {
     const unlockedCount = this.game.unlockedStoryPanels.filter(u => u).length;
@@ -3290,5 +3780,73 @@ class LevelSelect extends Screen {
 
   closeStoryViewer() {
     this.storyViewer.isOpen = false;
+    this.game.audioManager.playSound("button-click", false, 0.5);
+  }
+
+  handleStoryViewerClick(x, y) {
+    if (!this.storyViewer.isOpen) return false;
+
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const modalWidth = this.game.getScaledValue(700);
+    const modalHeight = this.game.getScaledValue(500);
+    const modalY = (canvasHeight - modalHeight) / 2;
+
+    const buttonY = modalY + modalHeight - this.game.getScaledValue(90);
+    const buttonWidth = this.game.getScaledValue(100);
+    const buttonHeight = this.game.getScaledValue(35);
+    const buttonSpacing = this.game.getScaledValue(120);
+
+    // Get unlocked panels
+    const unlockedPanels = [];
+    for (let i = 0; i < this.game.unlockedStoryPanels.length; i++) {
+      if (this.game.unlockedStoryPanels[i]) {
+        unlockedPanels.push(i);
+      }
+    }
+
+    // Check close button
+    const closeX = canvasWidth / 2;
+    if (this.isPointInRect(x, y, {
+      x: closeX - buttonWidth / 2,
+      y: buttonY - buttonHeight / 2,
+      width: buttonWidth,
+      height: buttonHeight
+    })) {
+      this.closeStoryViewer();
+      return true;
+    }
+
+    // Check previous button
+    if (this.storyViewer.currentPanel > 0) {
+      const prevX = canvasWidth / 2 - buttonSpacing;
+      if (this.isPointInRect(x, y, {
+        x: prevX - buttonWidth / 2,
+        y: buttonY - buttonHeight / 2,
+        width: buttonWidth,
+        height: buttonHeight
+      })) {
+        this.storyViewer.currentPanel--;
+        this.game.audioManager.playSound("button-click", false, 0.5);
+        return true;
+      }
+    }
+
+    // Check next button
+    if (this.storyViewer.currentPanel < unlockedPanels.length - 1) {
+      const nextX = canvasWidth / 2 + buttonSpacing;
+      if (this.isPointInRect(x, y, {
+        x: nextX - buttonWidth / 2,
+        y: buttonY - buttonHeight / 2,
+        width: buttonWidth,
+        height: buttonHeight
+      })) {
+        this.storyViewer.currentPanel++;
+        this.game.audioManager.playSound("button-click", false, 0.5);
+        return true;
+      }
+    }
+
+    return true; // Consume click to prevent background interaction
   }
 }
