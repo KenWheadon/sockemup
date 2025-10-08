@@ -2857,9 +2857,9 @@ class LevelSelect extends Screen {
     ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    // Modal dimensions
+    // Modal dimensions - taller to fit content better
     const modalWidth = this.game.getScaledValue(700);
-    const modalHeight = this.game.getScaledValue(500);
+    const modalHeight = this.game.getScaledValue(600);
     const modalX = (canvasWidth - modalWidth) / 2;
     const modalY = (canvasHeight - modalHeight) / 2;
     const radius = this.game.getScaledValue(12);
@@ -2893,7 +2893,7 @@ class LevelSelect extends Screen {
       ctx,
       "📚 Story Panels",
       canvasWidth / 2,
-      modalY + this.game.getScaledValue(40),
+      modalY + this.game.getScaledValue(30),
       {
         fontSize: layout.headerFontSize,
         color: "#BA55D3",
@@ -2934,14 +2934,10 @@ class LevelSelect extends Screen {
     const panelIndex = unlockedPanels[this.storyViewer.currentPanel];
     const panel = GameConfig.STORY_PANELS[panelIndex];
 
-    // Panel content area
-    const contentY = modalY + this.game.getScaledValue(100);
-    const contentHeight = modalHeight - this.game.getScaledValue(180);
-
-    // Panel image (if available)
-    const imageSize = this.game.getScaledValue(150);
+    // Panel image (if available) - smaller and at top
+    const imageSize = this.game.getScaledValue(120);
     const imageX = canvasWidth / 2 - imageSize / 2;
-    const imageY = contentY + this.game.getScaledValue(20);
+    const imageY = modalY + this.game.getScaledValue(80);
 
     if (panel.image && this.game.images[panel.image]) {
       ctx.save();
@@ -2957,24 +2953,25 @@ class LevelSelect extends Screen {
       ctx.restore();
     }
 
-    // Panel title
+    // Panel title - positioned below image
+    const titleY = imageY + imageSize + this.game.getScaledValue(20);
     this.renderText(
       ctx,
       panel.title,
       canvasWidth / 2,
-      imageY + imageSize + this.game.getScaledValue(30),
+      titleY,
       {
-        fontSize: layout.titleFontSize,
+        fontSize: this.game.getScaledValue(20),
         color: "#FFD700",
         weight: "bold",
         align: "center",
       }
     );
 
-    // Panel text (word-wrapped)
-    const textY = imageY + imageSize + this.game.getScaledValue(60);
-    const textMaxWidth = modalWidth - this.game.getScaledValue(80);
-    const lineHeight = this.game.getScaledValue(22);
+    // Panel text (word-wrapped) - starts below title
+    const textY = titleY + this.game.getScaledValue(35);
+    const textMaxWidth = modalWidth - this.game.getScaledValue(100);
+    const lineHeight = this.game.getScaledValue(20);
 
     ctx.font = `${layout.bodyFontSize}px Courier New`;
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
@@ -2998,25 +2995,21 @@ class LevelSelect extends Screen {
     }
     lines.push(line);
 
-    lines.forEach((line, index) => {
+    // Limit lines to prevent text from overlapping buttons
+    const maxLines = 8;
+    const displayLines = lines.slice(0, maxLines);
+
+    displayLines.forEach((line, index) => {
       ctx.fillText(line, canvasWidth / 2, y + index * lineHeight);
     });
 
-    // Navigation info
-    this.renderText(
-      ctx,
-      `Panel ${this.storyViewer.currentPanel + 1} of ${unlockedPanels.length}`,
-      canvasWidth / 2,
-      modalY + modalHeight - this.game.getScaledValue(50),
-      {
-        fontSize: layout.smallFontSize,
-        color: "rgba(255, 255, 255, 0.6)",
-        align: "center",
-      }
-    );
+    // Add ellipsis if text was truncated
+    if (lines.length > maxLines) {
+      ctx.fillText("...", canvasWidth / 2, y + maxLines * lineHeight);
+    }
 
-    // Navigation buttons
-    const buttonY = modalY + modalHeight - this.game.getScaledValue(90);
+    // Navigation buttons at bottom
+    const buttonY = modalY + modalHeight - this.game.getScaledValue(60);
     const buttonWidth = this.game.getScaledValue(100);
     const buttonHeight = this.game.getScaledValue(35);
     const buttonSpacing = this.game.getScaledValue(120);
@@ -3036,6 +3029,19 @@ class LevelSelect extends Screen {
     // Close button
     const closeX = canvasWidth / 2;
     this.renderNavigationButton(ctx, closeX, buttonY, buttonWidth, buttonHeight, "Close", true);
+
+    // Navigation info - render below buttons
+    this.renderText(
+      ctx,
+      `Panel ${this.storyViewer.currentPanel + 1} of ${unlockedPanels.length}`,
+      canvasWidth / 2,
+      buttonY + this.game.getScaledValue(35),
+      {
+        fontSize: this.game.getScaledValue(12),
+        color: "rgba(255, 255, 255, 0.5)",
+        align: "center",
+      }
+    );
 
     ctx.restore();
   }
@@ -3789,10 +3795,10 @@ class LevelSelect extends Screen {
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
     const modalWidth = this.game.getScaledValue(700);
-    const modalHeight = this.game.getScaledValue(500);
+    const modalHeight = this.game.getScaledValue(600);
     const modalY = (canvasHeight - modalHeight) / 2;
 
-    const buttonY = modalY + modalHeight - this.game.getScaledValue(90);
+    const buttonY = modalY + modalHeight - this.game.getScaledValue(60);
     const buttonWidth = this.game.getScaledValue(100);
     const buttonHeight = this.game.getScaledValue(35);
     const buttonSpacing = this.game.getScaledValue(120);
