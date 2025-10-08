@@ -77,7 +77,7 @@ class MatchScreen extends Screen {
       instructionArrowX: canvasWidth / 2 + this.game.getScaledValue(90),
       instructionArrowY: canvasHeight - this.game.getScaledValue(100),
       streakX: canvasWidth - this.game.getScaledValue(20),
-      streakY: this.game.getScaledValue(30),
+      streakY: this.game.getScaledValue(90), // Moved below buttons
       // Pause button in top-right
       pauseButtonX: canvasWidth - this.game.getScaledValue(80),
       pauseButtonY: this.game.getScaledValue(30),

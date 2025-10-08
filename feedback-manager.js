@@ -93,8 +93,29 @@ class FeedbackManager {
     // Update achievement notifications
     this.achievementNotifications = this.achievementNotifications.filter((notif) => {
       notif.timer -= deltaTime;
-      notif.y -= notif.velocity * (deltaTime / 16.67);
-      notif.alpha = Math.min(1, notif.timer / notif.duration);
+
+      // Slide in animation (first 300ms)
+      if (notif.slideIn < 1) {
+        notif.slideIn += deltaTime / 300;
+        notif.slideIn = Math.min(1, notif.slideIn);
+      }
+
+      // Fade in/out
+      const fadeInDuration = 300;
+      const fadeOutDuration = 500;
+      const elapsed = notif.duration - notif.timer;
+
+      if (elapsed < fadeInDuration) {
+        // Fade in
+        notif.alpha = elapsed / fadeInDuration;
+      } else if (notif.timer < fadeOutDuration) {
+        // Fade out
+        notif.alpha = notif.timer / fadeOutDuration;
+      } else {
+        // Full visibility
+        notif.alpha = 1;
+      }
+
       return notif.timer > 0;
     });
 
@@ -196,11 +217,12 @@ class FeedbackManager {
     this.achievementNotifications.push({
       achievement: achievement,
       x: this.game.getCanvasWidth() / 2,
-      y: this.game.getCanvasHeight() / 4,
-      alpha: 1,
-      velocity: 0.5,
-      timer: 4000,
-      duration: 4000,
+      y: this.game.getScaledValue(60), // Near top of screen
+      alpha: 0,
+      slideIn: 0, // Animation progress 0-1
+      velocity: 0,
+      timer: 3000, // 3 seconds total
+      duration: 3000,
     });
   }
 
@@ -380,56 +402,54 @@ class FeedbackManager {
     ctx.save();
 
     const achievement = notif.achievement;
-    const boxWidth = this.game.getScaledValue(400);
-    const boxHeight = this.game.getScaledValue(100);
+
+    // Smaller, more compact design
+    const boxWidth = this.game.getScaledValue(320);
+    const boxHeight = this.game.getScaledValue(50);
+    const radius = this.game.getScaledValue(8);
+
+    // Slide in from top
+    const slideOffset = (1 - notif.slideIn) * -boxHeight;
     const x = notif.x - boxWidth / 2;
-    const y = notif.y - boxHeight / 2;
-    const radius = this.game.getScaledValue(12);
+    const y = notif.y + slideOffset;
 
-    // Background with glow
-    ctx.globalAlpha = notif.alpha * 0.95;
-    ctx.shadowColor = "#FFD700";
-    ctx.shadowBlur = this.game.getScaledValue(20);
+    // Subtle background with slight transparency
+    ctx.globalAlpha = notif.alpha * 0.92;
 
-    // Gold gradient background
-    const gradient = ctx.createLinearGradient(x, y, x, y + boxHeight);
-    gradient.addColorStop(0, "rgba(255, 215, 0, 0.95)");
-    gradient.addColorStop(1, "rgba(255, 165, 0, 0.85)");
-    ctx.fillStyle = gradient;
-
+    // Dark background with gold accent
+    ctx.fillStyle = "rgba(40, 40, 40, 0.95)";
     this.drawRoundedRect(ctx, x, y, boxWidth, boxHeight, radius);
     ctx.fill();
 
-    // Border
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.lineWidth = this.game.getScaledValue(3);
+    // Subtle gold border
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.7)";
+    ctx.lineWidth = this.game.getScaledValue(2);
     this.drawRoundedRect(ctx, x, y, boxWidth, boxHeight, radius);
     ctx.stroke();
 
+    // Reset shadow
     ctx.shadowColor = "transparent";
     ctx.shadowBlur = 0;
-
-    // Achievement icon
     ctx.globalAlpha = notif.alpha;
-    ctx.font = `${this.game.getScaledValue(48)}px Arial`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#FFFFFF";
-    ctx.fillText(achievement.icon, notif.x - boxWidth / 4, notif.y);
 
-    // Achievement text
-    ctx.font = `bold ${this.game.getScaledValue(14)}px Courier New`;
-    ctx.fillStyle = "rgba(40, 40, 40, 0.9)";
+    // Achievement icon (smaller)
+    const iconX = x + this.game.getScaledValue(20);
+    const iconY = y + boxHeight / 2;
+    ctx.font = `${this.game.getScaledValue(24)}px Arial`;
     ctx.textAlign = "left";
-    ctx.fillText("🏆 ACHIEVEMENT UNLOCKED!", notif.x - boxWidth / 8, notif.y - this.game.getScaledValue(20));
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#FFD700";
+    ctx.fillText(achievement.icon, iconX, iconY);
 
-    ctx.font = `bold ${this.game.getScaledValue(20)}px Courier New`;
-    ctx.fillStyle = "rgba(20, 20, 20, 0.95)";
-    ctx.fillText(achievement.name, notif.x - boxWidth / 8, notif.y + this.game.getScaledValue(5));
+    // Simple text: "Achievement Unlocked: Name"
+    const textX = iconX + this.game.getScaledValue(35);
+    ctx.font = `bold ${this.game.getScaledValue(14)}px Courier New`;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.fillText("Achievement Unlocked:", textX, iconY - this.game.getScaledValue(8));
 
-    ctx.font = `${this.game.getScaledValue(12)}px Courier New`;
-    ctx.fillStyle = "rgba(40, 40, 40, 0.8)";
-    ctx.fillText(achievement.description, notif.x - boxWidth / 8, notif.y + this.game.getScaledValue(25));
+    ctx.font = `bold ${this.game.getScaledValue(16)}px Courier New`;
+    ctx.fillStyle = "#FFD700";
+    ctx.fillText(achievement.name, textX, iconY + this.game.getScaledValue(10));
 
     ctx.restore();
   }
