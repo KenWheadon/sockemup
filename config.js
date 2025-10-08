@@ -665,4 +665,62 @@ const GameConfig = {
     if (messages.length === 0) return "";
     return messages[Math.floor(Math.random() * messages.length)];
   },
+
+  // Martha's Sockball Saga - Unlockable Story Panels
+  STORY_PANELS: [
+    {
+      id: "panel_1",
+      title: "The Collection",
+      text: "Martha wasn't always a landlord. Once, she was Marthilda Socksworth III, heiress to the Socksworth Sockball fortune. Her family made millions selling sockballs as premium stress-relief toys to stressed-out fantasy executives.",
+      image: "martha.png",
+    },
+    {
+      id: "panel_2",
+      title: "The Incident",
+      text: "Everything changed the day a magical sockball exploded in the family factory. The enchanted cotton fibers shrunk poor Marthilda from 6 feet tall to her current 3-foot goblin-like stature. The doctors said it was permanent. Her family said she was 'easier to store.'",
+      image: "martha2.png",
+    },
+    {
+      id: "panel_3",
+      title: "The Betrayal",
+      text: "Her greedy cousin Reginald took over the company, claiming Martha was 'too small to manage big business.' He renamed it 'Reginald's Remarkable Sockballs' and kicked her out. She swore revenge against all sockballs that day.",
+      image: "martha3.png",
+    },
+    {
+      id: "panel_4",
+      title: "The Property Scheme",
+      text: "With her tiny inheritance, Martha bought this building - the cheapest property in town (it was haunted, but she scared the ghosts away by being scarier). She became a landlord to fund her ultimate plan: collecting enough sockballs to recreate the explosion and return to normal size.",
+      image: "martha-rentdue.png",
+    },
+    {
+      id: "panel_5",
+      title: "The Science",
+      text: "Martha discovered that if she catches exactly the right number of sockballs thrown at precisely the right speed, she can extract their 'size essence.' That's why she demands rent in sockballs! But if they hit her face... she gets distracted by painful memories and loses count.",
+      image: "martha-demand.png",
+    },
+    {
+      id: "panel_6",
+      title: "The Secret Lab",
+      text: "Behind the walls of your apartment, Martha has built a laboratory filled with collected sockballs. She's been documenting every texture, every pattern, every stitch. The landlady inspections? She's actually checking if YOU'VE been making sockballs on the side!",
+      image: "martha.png",
+    },
+    {
+      id: "panel_7",
+      title: "The Competition",
+      text: "Plot twist: Cousin Reginald has been sending magical sockballs to Martha's tenants, hoping to cause another explosion that would shrink HER even smaller. That's why the sockballs are different colors - they're sabotaged! Martha's been protecting you by demanding you throw them at her instead!",
+      image: "martha2.png",
+    },
+    {
+      id: "panel_8",
+      title: "The Truth",
+      text: "Martha doesn't actually dodge the sockballs - she's trying to catch them with her HANDS, but her arms are too short! When they hit her body, she absorbs their magic. When they hit her face, she sneezes uncontrollably for hours. She's been collecting your 'successful' throws this whole time!",
+      image: "martha3.png",
+    },
+    {
+      id: "panel_9",
+      title: "The Transformation",
+      text: "You've done it! Martha has collected enough sockballs to reverse the curse! As the final sockball hits her, there's a flash of light and... she grows half an inch taller. 'HALF AN INCH!' she screams. 'I need 10,000 MORE YEARS of this!' She raises your rent. You're stuck here forever. THE END... or is it?",
+      image: "martha-win.png",
+    },
+  ],
 };

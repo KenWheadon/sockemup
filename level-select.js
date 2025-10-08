@@ -172,6 +172,38 @@ class LevelSelect extends Screen {
         hovered: false,
       },
     };
+
+    // NEW GAME+ Difficulty Selection Modal
+    this.difficultyModal = {
+      isOpen: false,
+      selectedLevel: -1,
+      selectedDifficulty: 0,
+      hoveredDifficulty: -1,
+      animationProgress: 0,
+      buttons: [], // Will contain difficulty buttons
+    };
+
+    // Story Panel Viewer
+    this.storyViewer = {
+      isOpen: false,
+      currentPanel: 0,
+      animationProgress: 0,
+      button: {
+        x: 0,
+        y: 0,
+        width: 140,
+        height: 40,
+        hovered: false,
+      },
+    };
+
+    // Story unlock animation
+    this.storyUnlockAnimation = {
+      isPlaying: false,
+      panelIndex: -1,
+      animationProgress: 0,
+      duration: 2000, // 2 seconds
+    };
   }
 
   calculateMarthaImageSize() {
@@ -255,6 +287,10 @@ class LevelSelect extends Screen {
       storyReplayButtonY: this.game.getScaledValue(110),
       storyReplayButtonWidth: this.game.getScaledValue(120),
       storyReplayButtonHeight: this.game.getScaledValue(40),
+      storyViewerButtonX: canvasWidth - this.game.getScaledValue(80),
+      storyViewerButtonY: this.game.getScaledValue(170),
+      storyViewerButtonWidth: this.game.getScaledValue(140),
+      storyViewerButtonHeight: this.game.getScaledValue(40),
       achievementsDrawerWidth: this.game.getScaledValue(500),
       achievementsDrawerButtonX: this.game.getScaledValue(35),
       achievementsDrawerButtonY: this.game.getScaledValue(50),
@@ -322,6 +358,14 @@ class LevelSelect extends Screen {
 
     console.log("🎵 Level select setup - starting menu music");
     this.game.audioManager.playMusic("menu-music", true);
+
+    // Check for newly unlocked story panel
+    if (this.game.newStoryPanelUnlocked >= 0) {
+      this.storyUnlockAnimation.isPlaying = true;
+      this.storyUnlockAnimation.panelIndex = this.game.newStoryPanelUnlocked;
+      this.storyUnlockAnimation.animationProgress = 0;
+      this.game.newStoryPanelUnlocked = -1; // Reset flag
+    }
 
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
@@ -540,6 +584,19 @@ class LevelSelect extends Screen {
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.update(deltaTime);
       return;
+    }
+
+    // NEW GAME+: Animate difficulty modal
+    if (this.difficultyModal.isOpen) {
+      this.difficultyModal.animationProgress = Math.min(
+        1,
+        this.difficultyModal.animationProgress + deltaTime * 0.004
+      );
+    } else {
+      this.difficultyModal.animationProgress = Math.max(
+        0,
+        this.difficultyModal.animationProgress - deltaTime * 0.006
+      );
     }
 
     for (let i = 0; i < this.levelHoverAnimations.length; i++) {
@@ -761,6 +818,24 @@ class LevelSelect extends Screen {
   onMouseMove(x, y) {
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.handleMouseMove(x, y);
+      return;
+    }
+
+    // NEW GAME+: Handle difficulty modal hover
+    if (this.difficultyModal.isOpen) {
+      this.difficultyModal.hoveredDifficulty = -1;
+      for (let i = 0; i < this.difficultyModal.buttons.length; i++) {
+        const button = this.difficultyModal.buttons[i];
+        if (
+          x >= button.x &&
+          x <= button.x + button.width &&
+          y >= button.y &&
+          y <= button.y + button.height
+        ) {
+          this.difficultyModal.hoveredDifficulty = button.difficulty;
+          break;
+        }
+      }
       return;
     }
 
@@ -1114,21 +1189,109 @@ class LevelSelect extends Screen {
   selectLevel(levelIndex) {
     if (this.game.unlockedLevels[levelIndex]) {
       this.game.audioManager.playSound("button-click", false, 0.5);
-      this.game.startLevel(levelIndex);
+
+      // NEW GAME+: Show difficulty selection if completed
+      if (this.game.completedLevels[levelIndex] && this.game.highestUnlockedDifficulty > 0) {
+        this.openDifficultyModal(levelIndex);
+      } else {
+        this.game.startLevel(levelIndex, 0); // Start at base difficulty
+      }
     } else if (this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex]) {
       this.game.audioManager.playSound("level-unlock", false, 0.6);
       this.game.playerPoints -= GameConfig.LEVEL_COSTS[levelIndex];
       this.game.unlockedLevels[levelIndex] = true;
       this.game.saveGameData();
-      this.game.startLevel(levelIndex);
+      this.game.startLevel(levelIndex, 0); // Start at base difficulty
     } else {
       this.game.audioManager.playSound("button-click", false, 0.2);
+    }
+  }
+
+  openDifficultyModal(levelIndex) {
+    this.difficultyModal.isOpen = true;
+    this.difficultyModal.selectedLevel = levelIndex;
+    this.difficultyModal.selectedDifficulty = 0;
+    this.difficultyModal.hoveredDifficulty = -1;
+    this.difficultyModal.animationProgress = 0;
+    this.setupDifficultyButtons();
+  }
+
+  closeDifficultyModal() {
+    this.difficultyModal.isOpen = false;
+    this.difficultyModal.selectedLevel = -1;
+  }
+
+  setupDifficultyButtons() {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const modalWidth = this.game.getScaledValue(600);
+    const modalHeight = this.game.getScaledValue(500);
+    const modalX = (canvasWidth - modalWidth) / 2;
+    const modalY = (canvasHeight - modalHeight) / 2;
+
+    this.difficultyModal.buttons = [];
+
+    // Create buttons for each unlocked difficulty
+    for (let i = 0; i <= this.game.highestUnlockedDifficulty; i++) {
+      const buttonY = modalY + this.game.getScaledValue(150 + i * 70);
+      this.difficultyModal.buttons.push({
+        difficulty: i,
+        x: modalX + modalWidth / 2 - this.game.getScaledValue(200),
+        y: buttonY,
+        width: this.game.getScaledValue(400),
+        height: this.game.getScaledValue(60),
+      });
+    }
+  }
+
+  startLevelWithDifficulty(difficulty) {
+    this.game.audioManager.playSound("button-click", false, 0.5);
+    this.closeDifficultyModal();
+    this.game.startLevel(this.difficultyModal.selectedLevel, difficulty);
+  }
+
+  handleDifficultyModalClick(x, y) {
+    // Check if clicked on a difficulty button
+    for (const button of this.difficultyModal.buttons) {
+      if (
+        x >= button.x &&
+        x <= button.x + button.width &&
+        y >= button.y &&
+        y <= button.y + button.height
+      ) {
+        this.startLevelWithDifficulty(button.difficulty);
+        return;
+      }
+    }
+
+    // Check if clicked outside modal to close (on overlay)
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const modalWidth = this.game.getScaledValue(600);
+    const modalHeight = this.game.getScaledValue(500);
+    const modalX = (canvasWidth - modalWidth) / 2;
+    const modalY = (canvasHeight - modalHeight) / 2;
+
+    const clickedOutside =
+      x < modalX ||
+      x > modalX + modalWidth ||
+      y < modalY ||
+      y > modalY + modalHeight;
+
+    if (clickedOutside) {
+      this.closeDifficultyModal();
     }
   }
 
   onClick(x, y) {
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.handleClick(x, y);
+      return;
+    }
+
+    // NEW GAME+: Handle difficulty modal clicks
+    if (this.difficultyModal.isOpen) {
+      this.handleDifficultyModalClick(x, y);
       return;
     }
 
@@ -1583,6 +1746,11 @@ class LevelSelect extends Screen {
     this.renderCreditsButton(ctx);
     this.renderStoryReplayButton(ctx);
     this.renderAchievementsDrawer(ctx);
+
+    // NEW GAME+: Render difficulty modal if open
+    if (this.difficultyModal.animationProgress > 0) {
+      this.renderDifficultyModal(ctx);
+    }
 
     if (this.easterEggActive) {
       this.renderEasterDropZones(ctx);
@@ -2720,6 +2888,19 @@ class LevelSelect extends Screen {
           starSize
         );
         ctx.restore();
+
+        // NEW GAME+: Show difficulty indicator if unlocked
+        if (this.game.highestUnlockedDifficulty > 0) {
+          ctx.save();
+          ctx.fillStyle = "rgba(100, 150, 255, 0.9)";
+          ctx.font = `bold ${this.game.getScaledValue(12)}px Courier New`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+          ctx.shadowBlur = this.game.getScaledValue(2);
+          ctx.fillText("NEW GAME+", x, y + this.game.getScaledValue(45));
+          ctx.restore();
+        }
       }
 
       ctx.save();
@@ -2924,4 +3105,160 @@ class LevelSelect extends Screen {
   destroy() {
     this.cleanup();
   }
+
+  // NEW GAME+ Difficulty Selection Modal Rendering
+  renderDifficultyModal(ctx) {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const modalWidth = this.game.getScaledValue(600);
+    const modalHeight = this.game.getScaledValue(500);
+    const modalX = (canvasWidth - modalWidth) / 2;
+    const modalY = (canvasHeight - modalHeight) / 2;
+
+    const progress = this.easeOutBack(this.difficultyModal.animationProgress);
+
+    ctx.save();
+    ctx.globalAlpha = this.difficultyModal.animationProgress;
+
+    // Dark overlay
+    ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    // Modal background with scaling animation
+    ctx.save();
+    ctx.translate(canvasWidth / 2, canvasHeight / 2);
+    ctx.scale(progress, progress);
+    ctx.translate(-canvasWidth / 2, -canvasHeight / 2);
+
+    // Modal panel
+    const gradient = ctx.createLinearGradient(modalX, modalY, modalX + modalWidth, modalY + modalHeight);
+    gradient.addColorStop(0, "rgba(30, 30, 60, 0.95)");
+    gradient.addColorStop(1, "rgba(20, 20, 40, 0.95)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(modalX, modalY, modalWidth, modalHeight);
+
+    // Border
+    ctx.strokeStyle = "rgba(100, 150, 255, 0.6)";
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.strokeRect(modalX, modalY, modalWidth, modalHeight);
+
+    // Glow effect
+    ctx.shadowColor = "#4ECDC4";
+    ctx.shadowBlur = this.game.getScaledValue(20);
+    ctx.strokeRect(modalX, modalY, modalWidth, modalHeight);
+
+    ctx.restore();
+
+    // Title
+    ctx.save();
+    ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+    ctx.shadowBlur = this.game.getScaledValue(5);
+    ctx.fillStyle = "#FFD700";
+    ctx.font = `bold ${this.game.getScaledValue(36)}px Courier New`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("SELECT DIFFICULTY", canvasWidth / 2, modalY + this.game.getScaledValue(30));
+    ctx.restore();
+
+    // Level info
+    const levelNum = this.difficultyModal.selectedLevel + 1;
+    ctx.save();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.font = `${this.game.getScaledValue(20)}px Courier New`;
+    ctx.textAlign = "center";
+    ctx.fillText(`Level ${levelNum}`, canvasWidth / 2, modalY + this.game.getScaledValue(80));
+    ctx.restore();
+
+    // Difficulty buttons
+    for (const button of this.difficultyModal.buttons) {
+      this.renderDifficultyButton(ctx, button);
+    }
+
+    // Instructions
+    ctx.save();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.font = `${this.game.getScaledValue(14)}px Courier New`;
+    ctx.textAlign = "center";
+    ctx.fillText("Click outside to cancel", canvasWidth / 2, modalY + modalHeight - this.game.getScaledValue(30));
+    ctx.restore();
+
+    ctx.restore();
+  }
+
+  renderDifficultyButton(ctx, button) {
+    const difficultyMode = GameConfig.getDifficultyMode(button.difficulty);
+    const isHovered = this.difficultyModal.hoveredDifficulty === button.difficulty;
+    const isCompleted = this.game.difficultyCompletions[this.difficultyModal.selectedLevel] &&
+                       this.game.difficultyCompletions[this.difficultyModal.selectedLevel].includes(button.difficulty);
+
+    ctx.save();
+
+    // Button background
+    const gradient = ctx.createLinearGradient(button.x, button.y, button.x + button.width, button.y + button.height);
+    if (isHovered) {
+      gradient.addColorStop(0, "rgba(100, 150, 255, 0.4)");
+      gradient.addColorStop(1, "rgba(75, 125, 230, 0.4)");
+    } else {
+      gradient.addColorStop(0, "rgba(50, 50, 80, 0.6)");
+      gradient.addColorStop(1, "rgba(40, 40, 70, 0.6)");
+    }
+    ctx.fillStyle = gradient;
+    ctx.fillRect(button.x, button.y, button.width, button.height);
+
+    // Button border
+    if (isCompleted) {
+      ctx.strokeStyle = "rgba(255, 215, 0, 0.8)";
+      ctx.lineWidth = this.game.getScaledValue(3);
+    } else if (isHovered) {
+      ctx.strokeStyle = "rgba(100, 150, 255, 0.8)";
+      ctx.lineWidth = this.game.getScaledValue(3);
+      ctx.shadowColor = "#4ECDC4";
+      ctx.shadowBlur = this.game.getScaledValue(15);
+    } else {
+      ctx.strokeStyle = "rgba(100, 100, 100, 0.5)";
+      ctx.lineWidth = this.game.getScaledValue(2);
+    }
+    ctx.strokeRect(button.x, button.y, button.width, button.height);
+
+    // Difficulty name with stars
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = isCompleted ? "#FFD700" : "#FFFFFF";
+    ctx.font = `bold ${this.game.getScaledValue(24)}px Courier New`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const difficultyText = button.difficulty === 0 ? "NORMAL" : `NEW GAME ${difficultyMode.displayName}`;
+    ctx.fillText(difficultyText, button.x + button.width / 2, button.y + this.game.getScaledValue(20));
+
+    // Stats info
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.font = `${this.game.getScaledValue(14)}px Courier New`;
+
+    const statsText = button.difficulty === 0
+      ? "Standard difficulty"
+      : `Speed: ${(difficultyMode.speedMultiplier * 100).toFixed(0)}% | Time: ${(difficultyMode.timeMultiplier * 100).toFixed(0)}%`;
+    ctx.fillText(statsText, button.x + button.width / 2, button.y + button.height - this.game.getScaledValue(15));
+
+    // Completion checkmark
+    if (isCompleted) {
+      ctx.fillStyle = "#FFD700";
+      ctx.font = `${this.game.getScaledValue(20)}px Courier New`;
+      ctx.fillText("✓", button.x + this.game.getScaledValue(30), button.y + button.height / 2);
+    }
+
+    ctx.restore();
+  }
 }
+
+  // Story Panel Viewer - Add to level-select
+  openStoryViewer() {
+    const unlockedCount = this.game.unlockedStoryPanels.filter(u => u).length;
+    if (unlockedCount === 0) return;
+    this.storyViewer.isOpen = true;
+    this.storyViewer.currentPanel = 0;
+    this.game.audioManager.playSound("button-click", false, 0.5);
+  }
+
+  closeStoryViewer() {
+    this.storyViewer.isOpen = false;
+  }

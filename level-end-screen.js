@@ -82,6 +82,12 @@ class LevelEndScreen extends Screen {
     this.titleBounceTimer = 0;
     this.marthaScaleTimer = 0;
 
+    // Check if NEW GAME+ was just unlocked
+    this.showingNewGamePlusUnlock = this.game.showNewGamePlusNotification;
+    if (this.showingNewGamePlusUnlock) {
+      this.game.showNewGamePlusNotification = false; // Reset flag
+    }
+
     console.log(
       "🎵 Level end screen setup - no music started here (handled by throwing screen)"
     );
@@ -377,6 +383,12 @@ class LevelEndScreen extends Screen {
     this.renderContent(ctx);
     this.renderContinueButton(ctx);
     this.renderExitButton(ctx);
+
+    // NEW GAME+: Render unlock notification if just unlocked
+    if (this.showingNewGamePlusUnlock) {
+      this.renderNewGamePlusUnlock(ctx);
+    }
+
     ctx.restore();
   }
 
@@ -862,6 +874,66 @@ class LevelEndScreen extends Screen {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText("Exit", exitButtonX, exitButtonY);
+    ctx.restore();
+  }
+
+  // NEW GAME+ Unlock Notification
+  renderNewGamePlusUnlock(ctx) {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const bannerHeight = this.game.getScaledValue(200);
+    const bannerY = this.game.getScaledValue(50);
+
+    ctx.save();
+
+    // Semi-transparent background overlay
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    ctx.fillRect(0, bannerY - this.game.getScaledValue(20), canvasWidth, bannerHeight + this.game.getScaledValue(40));
+
+    // Banner background
+    const gradient = ctx.createLinearGradient(0, bannerY, 0, bannerY + bannerHeight);
+    gradient.addColorStop(0, "rgba(100, 150, 255, 0.9)");
+    gradient.addColorStop(1, "rgba(75, 125, 230, 0.9)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, bannerY, canvasWidth, bannerHeight);
+
+    // Border
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.8)";
+    ctx.lineWidth = this.game.getScaledValue(4);
+    ctx.strokeRect(0, bannerY, canvasWidth, bannerHeight);
+
+    // Glow effect
+    ctx.shadowColor = "#FFD700";
+    ctx.shadowBlur = this.game.getScaledValue(30);
+    ctx.strokeRect(0, bannerY, canvasWidth, bannerHeight);
+
+    // Title
+    ctx.shadowBlur = this.game.getScaledValue(10);
+    ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+    ctx.fillStyle = "#FFD700";
+    ctx.font = `bold ${this.game.getScaledValue(48)}px Courier New`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("NEW GAME+ UNLOCKED!", canvasWidth / 2, bannerY + this.game.getScaledValue(20));
+
+    // Description
+    ctx.shadowBlur = this.game.getScaledValue(5);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.font = `${this.game.getScaledValue(18)}px Courier New`;
+    ctx.fillText("You've completed all levels!", canvasWidth / 2, bannerY + this.game.getScaledValue(80));
+
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
+    ctx.fillText("Replay any level with increased difficulty", canvasWidth / 2, bannerY + this.game.getScaledValue(110));
+    ctx.fillText("for higher speeds and tighter time limits!", canvasWidth / 2, bannerY + this.game.getScaledValue(135));
+
+    // Stars decoration
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "#FFD700";
+    ctx.font = `${this.game.getScaledValue(32)}px Courier New`;
+    ctx.fillText("★", canvasWidth / 2 - this.game.getScaledValue(250), bannerY + this.game.getScaledValue(40));
+    ctx.fillText("★", canvasWidth / 2 + this.game.getScaledValue(250), bannerY + this.game.getScaledValue(40));
+
     ctx.restore();
   }
 }

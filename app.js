@@ -42,6 +42,13 @@ class SockGame {
     this.difficultyCompletions = {};
     this.highestUnlockedDifficulty = 0; // 0-4 for base through +4
 
+    // NEW GAME+ notification
+    this.showNewGamePlusNotification = false;
+
+    // Story panel unlocks (one per level completed)
+    this.unlockedStoryPanels = Array(9).fill(false);
+    this.newStoryPanelUnlocked = -1; // Index of newly unlocked panel to animate
+
     // Initialize audio manager
     this.audioManager = new AudioManager();
 
@@ -509,6 +516,9 @@ class SockGame {
       this.difficultyCompletions = data.difficultyCompletions || {};
       this.highestUnlockedDifficulty = data.highestUnlockedDifficulty || 0;
 
+      // Story panels
+      this.unlockedStoryPanels = data.unlockedStoryPanels || Array(9).fill(false);
+
       // Load achievements (merge with defaults for new achievements)
       if (data.achievements) {
         this.achievements = this.initializeAchievements();
@@ -539,6 +549,9 @@ class SockGame {
       // Phase 3.3 - Save difficulty completions
       difficultyCompletions: this.difficultyCompletions,
       highestUnlockedDifficulty: this.highestUnlockedDifficulty,
+
+      // Story panels
+      unlockedStoryPanels: this.unlockedStoryPanels,
     };
     localStorage.setItem("sockGameData", JSON.stringify(data));
   }
@@ -553,6 +566,13 @@ class SockGame {
       this.difficultyCompletions[levelIndex].push(difficulty);
     }
 
+    // Unlock story panel on first completion (base difficulty only)
+    if (difficulty === 0 && !this.unlockedStoryPanels[levelIndex]) {
+      this.unlockedStoryPanels[levelIndex] = true;
+      this.newStoryPanelUnlocked = levelIndex; // Flag for animation on level select
+      console.log(`📖 Story Panel ${levelIndex + 1} unlocked!`);
+    }
+
     // Check if all levels completed at this difficulty
     const allLevelsCompleted = GameConfig.LEVELS.every((_, index) => {
       return (
@@ -562,11 +582,17 @@ class SockGame {
     });
 
     // Unlock next difficulty if all levels completed
+    const previousDifficulty = this.highestUnlockedDifficulty;
     if (allLevelsCompleted && difficulty === this.highestUnlockedDifficulty) {
       this.highestUnlockedDifficulty = Math.min(
         difficulty + 1,
         4 // Max difficulty is +4
       );
+
+      // NEW GAME+: Show explanation if just unlocked first difficulty
+      if (previousDifficulty === 0 && this.highestUnlockedDifficulty === 1) {
+        this.showNewGamePlusNotification = true;
+      }
     }
 
     this.saveGameData();
