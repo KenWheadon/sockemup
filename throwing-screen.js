@@ -319,6 +319,13 @@ class ThrowingScreen extends Screen {
     const deltaX = targetX - this.launchPosition.x;
     const deltaY = targetY - this.launchPosition.y;
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    // Prevent division by zero if click position equals launch position
+    if (distance === 0) {
+      console.warn("Cannot throw sockball: distance is zero");
+      return;
+    }
+
     const normalizedVelocity = GameConfig.SOCKBALL_THROW_SPEED / distance;
 
     // Create sockball projectile with the tracked type

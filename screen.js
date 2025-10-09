@@ -45,6 +45,8 @@ class Screen {
   cleanup() {
     this.resetAnimationTimers();
     this.clearUIElements();
+    // Reset pause state to prevent screens starting in paused state
+    this.isPaused = false;
   }
 
   // Animation timer management

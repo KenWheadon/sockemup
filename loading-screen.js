@@ -43,9 +43,23 @@ class LoadingScreen {
   }
 
   startProgressAnimation() {
+    // Clear any existing interval first
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+    }
+
+    // Set maximum timeout to prevent infinite interval (30 seconds)
+    const maxLoadingTime = 30000;
+    const startTime = Date.now();
+
     this.progressInterval = setInterval(() => {
       this.updateLoadingProgress();
       if (this.loadingComplete) {
+        this.cleanup();
+      }
+      // Failsafe: cleanup if loading takes too long
+      if (Date.now() - startTime > maxLoadingTime) {
+        console.warn("Loading timeout reached, forcing cleanup");
         this.cleanup();
       }
     }, 50);

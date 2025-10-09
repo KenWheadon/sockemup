@@ -49,7 +49,10 @@ class DifficultyModal {
 
     this.buttons = [];
 
-    for (let i = 0; i <= this.game.currentDifficulty; i++) {
+    // Validate currentDifficulty to prevent invalid loop bounds
+    const maxDifficulty = Math.max(0, Math.min(this.game.currentDifficulty || 0, GameConfig.MAX_DIFFICULTY || 10));
+
+    for (let i = 0; i <= maxDifficulty; i++) {
       this.buttons.push({
         difficulty: i,
         x: canvasWidth / 2 - this.game.getScaledValue(250),

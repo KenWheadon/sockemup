@@ -16,8 +16,8 @@ class SockGame {
     this.playerPoints = 0;
     this.sockBalls = 0;
     this.matchingTime = 60;
-    // Fix Bug #19-20: Despite the name, this actually tracks ELAPSED time (counts up from 0)
-    this.timeRemaining = 60; // NOTE: This will be reset to 0 in match screen setup
+    // Tracks elapsed time during matching phase (counts up from 0)
+    this.timeElapsed = 0;
 
     this.images = {};
     this.loadedImages = 0;
@@ -657,8 +657,8 @@ class SockGame {
     };
 
     this.matchingTime = level.matchingTime;
-    // Fix Bug #19-20: This will be reset to 0 in match screen (tracks elapsed, not remaining)
-    this.timeRemaining = level.matchingTime;
+    // Will be reset to 0 in match screen (tracks elapsed time)
+    this.timeElapsed = 0;
     this.sockBalls = 0;
 
     // Initialize sockball queue for new level

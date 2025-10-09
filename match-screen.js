@@ -113,8 +113,8 @@ class MatchScreen extends Screen {
     this.pulseTimer = 0;
     this.dragHistory = [];
 
-    // Fix Bug #19-20: Reset to 0 (timeRemaining actually tracks ELAPSED time)
-    this.game.timeRemaining = 0;
+    // Reset elapsed time counter
+    this.game.timeElapsed = 0;
 
     // Track achievements for this level
     this.firstMatchMade = false;
@@ -760,7 +760,7 @@ class MatchScreen extends Screen {
     // Fix Bug #19-20: Count UP (elapsed time) - only if pile has been clicked and not paused
     if (this.sockPileClicked && !this.isPaused) {
       const timeIncrement = deltaTime / 1000; // Convert milliseconds to seconds
-      this.game.timeRemaining += timeIncrement; // Note: Despite name, this tracks elapsed time
+      this.game.timeElapsed += timeIncrement;
     }
 
     this.sockManager.socks.forEach((sock) => {
@@ -792,7 +792,7 @@ class MatchScreen extends Screen {
     ) {
       // Fix Bug #19-20: Check if player finished within the time limit for bonus points
       const timeLimit = level.matchingTime;
-      const timeElapsed = Math.floor(this.game.timeRemaining); // Despite name, this is elapsed time
+      const timeElapsed = Math.floor(this.game.timeElapsed);
       const timeRemaining = timeLimit - timeElapsed;
 
       if (timeElapsed <= timeLimit) {
@@ -977,7 +977,7 @@ class MatchScreen extends Screen {
     ctx.restore();
 
     // Fix Bug #19-20: Time at top center - counting UP (elapsed) with time limit shown
-    const timeElapsed = Math.max(0, Math.floor(this.game.timeRemaining)); // Despite name, this is elapsed
+    const timeElapsed = Math.max(0, Math.floor(this.game.timeElapsed));
     const timeLimit = GameConfig.LEVELS[this.game.currentLevel].matchingTime;
     const isOverTime = timeElapsed > timeLimit;
 
