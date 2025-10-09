@@ -2005,9 +2005,10 @@ class LevelSelect extends Screen {
 
     const tailSize = this.game.getScaledValue(15);
     ctx.beginPath();
-    ctx.moveTo(bubbleX, bubbleY - bubbleHeight / 2);
-    ctx.lineTo(bubbleX - tailSize / 2, bubbleY - bubbleHeight / 2 + tailSize);
-    ctx.lineTo(bubbleX + tailSize / 2, bubbleY - bubbleHeight / 2 + tailSize);
+    // Move tail point up by tailSize so it extends above the bubble
+    ctx.moveTo(bubbleX, bubbleY - bubbleHeight / 2 - tailSize);
+    ctx.lineTo(bubbleX - tailSize / 2, bubbleY - bubbleHeight / 2);
+    ctx.lineTo(bubbleX + tailSize / 2, bubbleY - bubbleHeight / 2);
     ctx.closePath();
     ctx.fill();
     ctx.stroke();

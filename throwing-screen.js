@@ -343,6 +343,10 @@ class ThrowingScreen extends Screen {
       gravity: GameConfig.GRAVITY,
       bounced: false,
       active: true,
+      // Track distance to Martha for catch zone detection
+      previousDistanceToMartha: Infinity,
+      enteredCatchZone: false,
+      bestZoneEntered: null, // Track the best quality zone entered
     };
 
     this.sockballProjectiles.push(sockball);
@@ -424,40 +428,87 @@ class ThrowingScreen extends Screen {
         return false;
       }
 
-      // Check collision with Martha
-      if (this.marthaManager.checkCollision(sockball)) {
-        const catchQuality = this.marthaManager.hitBySockball(sockball);
-        if (catchQuality) {
-          // Play particle burst sound when sockball hits Martha
-          this.game.audioManager.playSound("particle-burst", false, 0.4);
+      // Check collision with Martha using zone-based catching
+      // Ball must enter a zone and then start moving away before being caught
+      const marthaCenterX = this.marthaManager.x + this.marthaManager.width / 2;
+      const marthaCenterY = this.marthaManager.y + this.marthaManager.height / 2;
+      const dx = sockball.x - marthaCenterX;
+      const dy = sockball.y - marthaCenterY;
+      const currentDistance = Math.sqrt(dx * dx + dy * dy);
 
-          // Play points gained sound
-          this.game.audioManager.playSound("points-gained", false, 0.3);
+      // Check if in catch zone
+      const catchRadius = (this.marthaManager.width / 2) * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+      const sockballRadius = GameConfig.SOCKBALL_SIZE / 2;
+      const inCatchZone = currentDistance <= catchRadius + sockballRadius;
 
-          // Track consecutive hits for Deadeye achievement
-          this.consecutiveHits++;
+      if (inCatchZone) {
+        sockball.enteredCatchZone = true;
 
-          // Phase 2.2 - Notify feedback manager of catch quality
-          if (catchQuality === "PERFECT") {
-            this.game.feedbackManager.onPerfectCatch();
-            this.perfectThrowsThisLevel++;
+        // Determine current zone quality
+        const maxDistance = this.marthaManager.width / 2;
+        const normalizedDistance = currentDistance / maxDistance;
+        let currentZone = null;
 
-            // Achievement: PERFECT_THROW
-            this.game.unlockAchievement("perfect_throw");
-          } else if (catchQuality === "GOOD") {
-            this.game.feedbackManager.onGoodCatch();
-          } else {
-            this.game.feedbackManager.onRegularCatch();
-          }
-
-          // Achievement: DEADEYE (10 hits in a row)
-          if (this.consecutiveHits >= 10) {
-            this.game.unlockAchievement("deadeye");
-          }
-
-          sockball.active = false;
-          return false;
+        if (normalizedDistance <= GameConfig.CATCH_MECHANICS.PERFECT_CATCH_THRESHOLD) {
+          currentZone = "PERFECT";
+        } else if (normalizedDistance <= GameConfig.CATCH_MECHANICS.GOOD_CATCH_THRESHOLD) {
+          currentZone = "GOOD";
+        } else {
+          currentZone = "REGULAR";
         }
+
+        // Track the best zone entered (PERFECT > GOOD > REGULAR)
+        if (!sockball.bestZoneEntered ||
+            (currentZone === "PERFECT") ||
+            (currentZone === "GOOD" && sockball.bestZoneEntered === "REGULAR")) {
+          sockball.bestZoneEntered = currentZone;
+        }
+
+        // Check if ball is moving away from center (distance increasing)
+        const movingAway = currentDistance > sockball.previousDistanceToMartha;
+
+        // Catch the ball if it's moving away and has entered a zone
+        if (movingAway && sockball.bestZoneEntered) {
+          const catchQuality = this.marthaManager.hitBySockball(sockball, sockball.bestZoneEntered);
+          if (catchQuality) {
+            // Play particle burst sound when sockball hits Martha
+            this.game.audioManager.playSound("particle-burst", false, 0.4);
+
+            // Play points gained sound
+            this.game.audioManager.playSound("points-gained", false, 0.3);
+
+            // Track consecutive hits for Deadeye achievement
+            this.consecutiveHits++;
+
+            // Phase 2.2 - Notify feedback manager of catch quality
+            if (catchQuality === "PERFECT") {
+              this.game.feedbackManager.onPerfectCatch();
+              this.perfectThrowsThisLevel++;
+
+              // Achievement: PERFECT_THROW
+              this.game.unlockAchievement("perfect_throw");
+            } else if (catchQuality === "GOOD") {
+              this.game.feedbackManager.onGoodCatch();
+            } else {
+              this.game.feedbackManager.onRegularCatch();
+            }
+
+            // Achievement: DEADEYE (10 hits in a row)
+            if (this.consecutiveHits >= 10) {
+              this.game.unlockAchievement("deadeye");
+            }
+
+            sockball.active = false;
+            return false;
+          }
+        }
+
+        sockball.previousDistanceToMartha = currentDistance;
+      } else if (sockball.enteredCatchZone) {
+        // Ball left catch zone without being caught - it's a miss
+        this.missedThrows++;
+        this.consecutiveHits = 0;
+        return false;
       }
 
       return true;

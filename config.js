@@ -479,21 +479,21 @@ const GameConfig = {
     PERFECT_THROW: {
       id: "perfect_throw",
       name: "Perfect Throw",
-      description: "Hit Martha in the center (perfect catch)",
+      description: "Hit Martha in the center",
       icon: "🎯",
       unlocked: false,
     },
     SPEEDY_MATCHER: {
       id: "speedy_matcher",
       name: "Speedy Matcher",
-      description: "Complete matching phase with 30+ seconds remaining",
+      description: "30+ seconds remaining",
       icon: "⚡",
       unlocked: false,
     },
     MARTHAS_FAVORITE: {
       id: "marthas_favorite",
       name: "Martha's Favorite",
-      description: "Complete a level without missing any throws",
+      description: "Don't miss any throws",
       icon: "❤️",
       unlocked: false,
     },
@@ -689,7 +689,7 @@ const GameConfig = {
     {
       id: "panel_4",
       title: "The Property Scheme",
-      text: "With her tiny inheritance, Martha bought this building - the cheapest property in town (it was haunted, but she scared the ghosts away by being scarier). She became a landlord to fund her ultimate plan: collecting enough sockballs to recreate the explosion and return to normal size.",
+      text: "With her tiny inheritance, Martha bought this building - the cheapest property in town (it was haunted, but she scared the ghosts away by being scarier). She became a landlord to fund her ultimate plan: collecting enough sockballs to recreate the explosion and return her to normal size.",
       image: "martha-rentdue.png",
     },
     {

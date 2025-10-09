@@ -458,8 +458,8 @@ class MarthaManager {
     // Calculate max distance for catch (using Martha's width as reference)
     const maxDistance = this.width / 2;
 
-    // Normalized distance (0 = center, 1 = edge)
-    const normalizedDistance = Math.min(distance / maxDistance, 1);
+    // Normalized distance (0 = center, 1 = edge of Martha, >1 = beyond edge)
+    const normalizedDistance = distance / maxDistance;
 
     // Determine catch quality
     if (normalizedDistance <= GameConfig.CATCH_MECHANICS.PERFECT_CATCH_THRESHOLD) {
@@ -482,7 +482,7 @@ class MarthaManager {
     }
   }
 
-  hitBySockball(sockball) {
+  hitBySockball(sockball, forcedQuality = null) {
     if (this.hitEffect.active) return false; // Already hit recently
 
     this.collectedSockballs++;
@@ -490,8 +490,18 @@ class MarthaManager {
     // Update rent due meter
     this.rentDueMeter.current = this.collectedSockballs;
 
-    // Phase 2.1 - Calculate catch quality
-    const catchQuality = this.calculateCatchQuality(sockball);
+    // Phase 2.1 - Use forced quality (from zone tracking) or calculate it
+    let catchQuality;
+    if (forcedQuality) {
+      // Use the best zone entered as the catch quality
+      catchQuality = {
+        quality: forcedQuality,
+        data: GameConfig.CATCH_QUALITY[forcedQuality],
+      };
+    } else {
+      // Fallback to old calculation method
+      catchQuality = this.calculateCatchQuality(sockball);
+    }
     const points = catchQuality.data.points;
 
     // Track perfect catches in game stats
