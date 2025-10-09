@@ -627,10 +627,10 @@ class MatchScreen extends Screen {
             this.game.unlockAchievement("first_match");
           }
 
-          // Achievement: QUICK_HANDS (5 pairs in under 10 seconds)
+          // Achievement: QUICK_HANDS (5 pairs in 15 seconds)
           if (this.matchCount === 5) {
             const timeElapsed = (currentTime - this.matchStartTime) / 1000;
-            if (timeElapsed < 10) {
+            if (timeElapsed <= 15) {
               this.game.unlockAchievement("quick_hands");
             }
           }

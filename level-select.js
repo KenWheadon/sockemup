@@ -68,17 +68,17 @@ class LevelSelect extends Screen {
       "I could really up my rates if you just leave...",
       "I want to evict you, so you better not pay rent!",
       "Your lease is up for renewal... at TRIPLE the price!",
-      "I'm thinking of turning this into a parking lot.",
-      "You know what? I need this place for my sock collection!",
+      "You should go camping, I won't change the locks on your or anything....",
+      "You know what? Your socks STINK!",
       "I've got 10 other tenants ready to pay more!",
       "Ever thought about moving? Like, today?",
-      "This place would make a great storage unit!",
+      "I wish I wasn't so tiny...",
       "I'm quadrupling rent next month!",
       "Pack your socks, we're done here!",
-      "I need this space for my pet rock collection.",
+      "I need your room for my pet rock collection.",
       "Your neighbors complained about your sock sorting!",
       "Time to pay up or ship out!",
-      "I'm converting this to a juice bar!",
+      "I'm thinking about converting this place to a juice bar!",
     ];
     this.currentQuote = "";
     this.quoteTimer = 0;
@@ -196,7 +196,7 @@ class LevelSelect extends Screen {
   calculateMarthaImageSize() {
     const marthaImage = this.game.images["martha-demand.png"];
     if (!marthaImage) {
-      console.warn('Martha image not found: martha-demand.png'); // Fix Bug #12: Add error logging
+      console.warn("Martha image not found: martha-demand.png"); // Fix Bug #12: Add error logging
       this.marthaImageSize = { width: 0, height: 0 };
       return;
     }
@@ -391,7 +391,9 @@ class LevelSelect extends Screen {
   }
 
   getRandomQuote() {
-    return this.marthaQuotes[Math.floor(Math.random() * this.marthaQuotes.length)];
+    return this.marthaQuotes[
+      Math.floor(Math.random() * this.marthaQuotes.length)
+    ];
   }
 
   cleanup() {
@@ -506,16 +508,25 @@ class LevelSelect extends Screen {
         if (this.creditsOpen && e.code === "Escape") {
           this.hideCredits();
         }
-      }
+      },
     };
 
     if (closeCredits) {
-      closeCredits.addEventListener("click", this.creditsEventHandlers.closeClick);
-      closeCredits.addEventListener("mouseenter", this.creditsEventHandlers.closeHover);
+      closeCredits.addEventListener(
+        "click",
+        this.creditsEventHandlers.closeClick
+      );
+      closeCredits.addEventListener(
+        "mouseenter",
+        this.creditsEventHandlers.closeHover
+      );
     }
 
     if (this.creditsModal) {
-      this.creditsModal.addEventListener("click", this.creditsEventHandlers.modalClick);
+      this.creditsModal.addEventListener(
+        "click",
+        this.creditsEventHandlers.modalClick
+      );
     }
 
     document.addEventListener("keydown", this.creditsEventHandlers.escapeKey);
@@ -526,15 +537,27 @@ class LevelSelect extends Screen {
 
     const closeCredits = document.getElementById("closeCredits");
     if (closeCredits) {
-      closeCredits.removeEventListener("click", this.creditsEventHandlers.closeClick);
-      closeCredits.removeEventListener("mouseenter", this.creditsEventHandlers.closeHover);
+      closeCredits.removeEventListener(
+        "click",
+        this.creditsEventHandlers.closeClick
+      );
+      closeCredits.removeEventListener(
+        "mouseenter",
+        this.creditsEventHandlers.closeHover
+      );
     }
 
     if (this.creditsModal) {
-      this.creditsModal.removeEventListener("click", this.creditsEventHandlers.modalClick);
+      this.creditsModal.removeEventListener(
+        "click",
+        this.creditsEventHandlers.modalClick
+      );
     }
 
-    document.removeEventListener("keydown", this.creditsEventHandlers.escapeKey);
+    document.removeEventListener(
+      "keydown",
+      this.creditsEventHandlers.escapeKey
+    );
     this.creditsEventHandlers = null;
   }
 
@@ -1058,15 +1081,24 @@ class LevelSelect extends Screen {
 
         // Clamp velocity to prevent excessive speeds
         const maxVelocity = 20;
-        const clampedVx = Math.max(-maxVelocity, Math.min(maxVelocity, this.mouseVelocityX * momentumMultiplier));
-        const clampedVy = Math.max(-maxVelocity, Math.min(maxVelocity, this.mouseVelocityY * momentumMultiplier));
+        const clampedVx = Math.max(
+          -maxVelocity,
+          Math.min(maxVelocity, this.mouseVelocityX * momentumMultiplier)
+        );
+        const clampedVy = Math.max(
+          -maxVelocity,
+          Math.min(maxVelocity, this.mouseVelocityY * momentumMultiplier)
+        );
 
         sock.vx = clampedVx;
         sock.vy = clampedVy;
 
         // Add subtle rotation based on velocity
-        const velocityMagnitude = Math.sqrt(sock.vx * sock.vx + sock.vy * sock.vy);
-        sock.rotationSpeed = (velocityMagnitude / 100) * (Math.random() > 0.5 ? 1 : -1);
+        const velocityMagnitude = Math.sqrt(
+          sock.vx * sock.vx + sock.vy * sock.vy
+        );
+        sock.rotationSpeed =
+          (velocityMagnitude / 100) * (Math.random() > 0.5 ? 1 : -1);
       }
 
       this.isDragging = false;
@@ -1173,7 +1205,10 @@ class LevelSelect extends Screen {
         }
         break;
       case "ArrowRight":
-        if (newSelection % columns < columns - 1 && newSelection < totalLevels - 1) {
+        if (
+          newSelection % columns < columns - 1 &&
+          newSelection < totalLevels - 1
+        ) {
           newSelection++;
         }
         break;
@@ -1201,7 +1236,10 @@ class LevelSelect extends Screen {
       this.game.audioManager.playSound("button-click", false, 0.5);
 
       // NEW GAME+: Show difficulty selection if completed
-      if (this.game.completedLevels[levelIndex] && this.game.highestUnlockedDifficulty > 0) {
+      if (
+        this.game.completedLevels[levelIndex] &&
+        this.game.highestUnlockedDifficulty > 0
+      ) {
         this.difficultyModal.open(levelIndex);
       } else {
         this.game.startLevel(levelIndex, 0); // Start at base difficulty
@@ -1926,7 +1964,8 @@ class LevelSelect extends Screen {
 
     // Position quote bubble below Martha
     const bubbleX = layout.marthaX;
-    const bubbleY = layout.marthaY + layout.marthaHeight / 2 + this.game.getScaledValue(60);
+    const bubbleY =
+      layout.marthaY + layout.marthaHeight / 2 + this.game.getScaledValue(60);
 
     const padding = this.game.getScaledValue(15);
     const fontSize = this.game.getScaledValue(16);
@@ -1934,12 +1973,12 @@ class LevelSelect extends Screen {
 
     // Measure text
     ctx.font = `bold ${fontSize}px Courier New`;
-    const words = this.currentQuote.split(' ');
+    const words = this.currentQuote.split(" ");
     const lines = [];
     let currentLine = words[0];
 
     for (let i = 1; i < words.length; i++) {
-      const testLine = currentLine + ' ' + words[i];
+      const testLine = currentLine + " " + words[i];
       const metrics = ctx.measureText(testLine);
       if (metrics.width > maxWidth - padding * 2) {
         lines.push(currentLine);
@@ -1951,7 +1990,11 @@ class LevelSelect extends Screen {
     lines.push(currentLine);
 
     const lineHeight = fontSize * 1.3;
-    const bubbleWidth = Math.min(maxWidth, Math.max(...lines.map(line => ctx.measureText(line).width)) + padding * 2);
+    const bubbleWidth = Math.min(
+      maxWidth,
+      Math.max(...lines.map((line) => ctx.measureText(line).width)) +
+        padding * 2
+    );
     const bubbleHeight = lines.length * lineHeight + padding * 2;
 
     // Draw speech bubble tail pointing upward
@@ -1977,11 +2020,29 @@ class LevelSelect extends Screen {
     ctx.beginPath();
     ctx.moveTo(bubbleLeft + radius, bubbleTop);
     ctx.lineTo(bubbleLeft + bubbleWidth - radius, bubbleTop);
-    ctx.arcTo(bubbleLeft + bubbleWidth, bubbleTop, bubbleLeft + bubbleWidth, bubbleTop + radius, radius);
+    ctx.arcTo(
+      bubbleLeft + bubbleWidth,
+      bubbleTop,
+      bubbleLeft + bubbleWidth,
+      bubbleTop + radius,
+      radius
+    );
     ctx.lineTo(bubbleLeft + bubbleWidth, bubbleTop + bubbleHeight - radius);
-    ctx.arcTo(bubbleLeft + bubbleWidth, bubbleTop + bubbleHeight, bubbleLeft + bubbleWidth - radius, bubbleTop + bubbleHeight, radius);
+    ctx.arcTo(
+      bubbleLeft + bubbleWidth,
+      bubbleTop + bubbleHeight,
+      bubbleLeft + bubbleWidth - radius,
+      bubbleTop + bubbleHeight,
+      radius
+    );
     ctx.lineTo(bubbleLeft + radius, bubbleTop + bubbleHeight);
-    ctx.arcTo(bubbleLeft, bubbleTop + bubbleHeight, bubbleLeft, bubbleTop + bubbleHeight - radius, radius);
+    ctx.arcTo(
+      bubbleLeft,
+      bubbleTop + bubbleHeight,
+      bubbleLeft,
+      bubbleTop + bubbleHeight - radius,
+      radius
+    );
     ctx.lineTo(bubbleLeft, bubbleTop + radius);
     ctx.arcTo(bubbleLeft, bubbleTop, bubbleLeft + radius, bubbleTop, radius);
     ctx.closePath();
@@ -1993,7 +2054,7 @@ class LevelSelect extends Screen {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    const textStartY = bubbleY - (lines.length - 1) * lineHeight / 2;
+    const textStartY = bubbleY - ((lines.length - 1) * lineHeight) / 2;
     lines.forEach((line, index) => {
       ctx.fillText(line, bubbleX, textStartY + index * lineHeight);
     });
@@ -2197,7 +2258,7 @@ class LevelSelect extends Screen {
     const button = this.storyViewer.button;
 
     // Check how many panels are unlocked
-    const unlockedCount = this.game.unlockedStoryPanels.filter(u => u).length;
+    const unlockedCount = this.game.unlockedStoryPanels.filter((u) => u).length;
     if (unlockedCount === 0) return; // Don't show button if no panels unlocked
 
     ctx.save();
@@ -2712,7 +2773,8 @@ class LevelSelect extends Screen {
     const boxWidth = this.game.getScaledValue(400);
     const boxHeight = this.game.getScaledValue(60);
     const x = canvasWidth / 2 - boxWidth / 2;
-    const slideOffset = (1 - Math.min(progress / fadeInDuration, 1)) * -boxHeight;
+    const slideOffset =
+      (1 - Math.min(progress / fadeInDuration, 1)) * -boxHeight;
     const y = this.game.getScaledValue(70) + slideOffset;
     const radius = this.game.getScaledValue(8);
 
@@ -2740,7 +2802,11 @@ class LevelSelect extends Screen {
     const textX = iconX + this.game.getScaledValue(45);
     ctx.font = `bold ${this.game.getScaledValue(14)}px Courier New`;
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.fillText("Story Panel Unlocked:", textX, iconY - this.game.getScaledValue(10));
+    ctx.fillText(
+      "Story Panel Unlocked:",
+      textX,
+      iconY - this.game.getScaledValue(10)
+    );
 
     ctx.font = `bold ${this.game.getScaledValue(16)}px Courier New`;
     ctx.fillStyle = "#BA55D3";
@@ -2860,18 +2926,12 @@ class LevelSelect extends Screen {
 
     // Panel title - positioned below image
     const titleY = imageY + imageSize + this.game.getScaledValue(20);
-    this.renderText(
-      ctx,
-      panel.title,
-      canvasWidth / 2,
-      titleY,
-      {
-        fontSize: this.game.getScaledValue(20),
-        color: "#FFD700",
-        weight: "bold",
-        align: "center",
-      }
-    );
+    this.renderText(ctx, panel.title, canvasWidth / 2, titleY, {
+      fontSize: this.game.getScaledValue(20),
+      color: "#FFD700",
+      weight: "bold",
+      align: "center",
+    });
 
     // Panel text (word-wrapped) - starts below title
     const textY = titleY + this.game.getScaledValue(35);
@@ -2922,18 +2982,42 @@ class LevelSelect extends Screen {
     // Previous button (only if not first panel)
     if (this.storyViewer.currentPanel > 0) {
       const prevX = canvasWidth / 2 - buttonSpacing;
-      this.renderNavigationButton(ctx, prevX, buttonY, buttonWidth, buttonHeight, "← Prev", false);
+      this.renderNavigationButton(
+        ctx,
+        prevX,
+        buttonY,
+        buttonWidth,
+        buttonHeight,
+        "← Prev",
+        false
+      );
     }
 
     // Next button (only if not last panel)
     if (this.storyViewer.currentPanel < unlockedPanels.length - 1) {
       const nextX = canvasWidth / 2 + buttonSpacing;
-      this.renderNavigationButton(ctx, nextX, buttonY, buttonWidth, buttonHeight, "Next →", false);
+      this.renderNavigationButton(
+        ctx,
+        nextX,
+        buttonY,
+        buttonWidth,
+        buttonHeight,
+        "Next →",
+        false
+      );
     }
 
     // Close button
     const closeX = canvasWidth / 2;
-    this.renderNavigationButton(ctx, closeX, buttonY, buttonWidth, buttonHeight, "Close", true);
+    this.renderNavigationButton(
+      ctx,
+      closeX,
+      buttonY,
+      buttonWidth,
+      buttonHeight,
+      "Close",
+      true
+    );
 
     // Navigation info - render below buttons
     this.renderText(
@@ -2958,7 +3042,12 @@ class LevelSelect extends Screen {
 
     ctx.save();
 
-    const gradient = ctx.createLinearGradient(buttonX, buttonY, buttonX, buttonY + height);
+    const gradient = ctx.createLinearGradient(
+      buttonX,
+      buttonY,
+      buttonX,
+      buttonY + height
+    );
     if (isClose) {
       gradient.addColorStop(0, "rgba(200, 50, 50, 0.8)");
       gradient.addColorStop(1, "rgba(150, 30, 30, 0.8)");
@@ -2970,7 +3059,9 @@ class LevelSelect extends Screen {
     this.drawRoundedRect(ctx, buttonX, buttonY, width, height, radius);
     ctx.fill();
 
-    ctx.strokeStyle = isClose ? "rgba(255, 100, 100, 0.6)" : "rgba(150, 200, 255, 0.6)";
+    ctx.strokeStyle = isClose
+      ? "rgba(255, 100, 100, 0.6)"
+      : "rgba(150, 200, 255, 0.6)";
     ctx.lineWidth = this.game.getScaledValue(2);
     this.drawRoundedRect(ctx, buttonX, buttonY, width, height, radius);
     ctx.stroke();
@@ -3547,7 +3638,12 @@ class LevelSelect extends Screen {
     ctx.translate(-canvasWidth / 2, -canvasHeight / 2);
 
     // Modal panel
-    const gradient = ctx.createLinearGradient(modalX, modalY, modalX + modalWidth, modalY + modalHeight);
+    const gradient = ctx.createLinearGradient(
+      modalX,
+      modalY,
+      modalX + modalWidth,
+      modalY + modalHeight
+    );
     gradient.addColorStop(0, "rgba(30, 30, 60, 0.95)");
     gradient.addColorStop(1, "rgba(20, 20, 40, 0.95)");
     ctx.fillStyle = gradient;
@@ -3573,7 +3669,11 @@ class LevelSelect extends Screen {
     ctx.font = `bold ${this.game.getScaledValue(36)}px Courier New`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillText("SELECT DIFFICULTY", canvasWidth / 2, modalY + this.game.getScaledValue(30));
+    ctx.fillText(
+      "SELECT DIFFICULTY",
+      canvasWidth / 2,
+      modalY + this.game.getScaledValue(30)
+    );
     ctx.restore();
 
     // Level info
@@ -3582,7 +3682,11 @@ class LevelSelect extends Screen {
     ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
     ctx.font = `${this.game.getScaledValue(20)}px Courier New`;
     ctx.textAlign = "center";
-    ctx.fillText(`Level ${levelNum}`, canvasWidth / 2, modalY + this.game.getScaledValue(80));
+    ctx.fillText(
+      `Level ${levelNum}`,
+      canvasWidth / 2,
+      modalY + this.game.getScaledValue(80)
+    );
     ctx.restore();
 
     // Difficulty buttons
@@ -3595,7 +3699,11 @@ class LevelSelect extends Screen {
     ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
     ctx.font = `${this.game.getScaledValue(14)}px Courier New`;
     ctx.textAlign = "center";
-    ctx.fillText("Click outside to cancel", canvasWidth / 2, modalY + modalHeight - this.game.getScaledValue(30));
+    ctx.fillText(
+      "Click outside to cancel",
+      canvasWidth / 2,
+      modalY + modalHeight - this.game.getScaledValue(30)
+    );
     ctx.restore();
 
     ctx.restore();
@@ -3603,14 +3711,23 @@ class LevelSelect extends Screen {
 
   renderDifficultyButton(ctx, button) {
     const difficultyMode = GameConfig.getDifficultyMode(button.difficulty);
-    const isHovered = this.difficultyModal.hoveredDifficulty === button.difficulty;
-    const isCompleted = this.game.difficultyCompletions[this.difficultyModal.selectedLevel] &&
-                       this.game.difficultyCompletions[this.difficultyModal.selectedLevel].includes(button.difficulty);
+    const isHovered =
+      this.difficultyModal.hoveredDifficulty === button.difficulty;
+    const isCompleted =
+      this.game.difficultyCompletions[this.difficultyModal.selectedLevel] &&
+      this.game.difficultyCompletions[
+        this.difficultyModal.selectedLevel
+      ].includes(button.difficulty);
 
     ctx.save();
 
     // Button background
-    const gradient = ctx.createLinearGradient(button.x, button.y, button.x + button.width, button.y + button.height);
+    const gradient = ctx.createLinearGradient(
+      button.x,
+      button.y,
+      button.x + button.width,
+      button.y + button.height
+    );
     if (isHovered) {
       gradient.addColorStop(0, "rgba(100, 150, 255, 0.4)");
       gradient.addColorStop(1, "rgba(75, 125, 230, 0.4)");
@@ -3643,23 +3760,41 @@ class LevelSelect extends Screen {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    const difficultyText = button.difficulty === 0 ? "NORMAL" : `NEW GAME ${difficultyMode.displayName}`;
-    ctx.fillText(difficultyText, button.x + button.width / 2, button.y + this.game.getScaledValue(20));
+    const difficultyText =
+      button.difficulty === 0
+        ? "NORMAL"
+        : `NEW GAME ${difficultyMode.displayName}`;
+    ctx.fillText(
+      difficultyText,
+      button.x + button.width / 2,
+      button.y + this.game.getScaledValue(20)
+    );
 
     // Stats info
     ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
     ctx.font = `${this.game.getScaledValue(14)}px Courier New`;
 
-    const statsText = button.difficulty === 0
-      ? "Standard difficulty"
-      : `Speed: ${(difficultyMode.speedMultiplier * 100).toFixed(0)}% | Time: ${(difficultyMode.timeMultiplier * 100).toFixed(0)}%`;
-    ctx.fillText(statsText, button.x + button.width / 2, button.y + button.height - this.game.getScaledValue(15));
+    const statsText =
+      button.difficulty === 0
+        ? "Standard difficulty"
+        : `Speed: ${(difficultyMode.speedMultiplier * 100).toFixed(
+            0
+          )}% | Time: ${(difficultyMode.timeMultiplier * 100).toFixed(0)}%`;
+    ctx.fillText(
+      statsText,
+      button.x + button.width / 2,
+      button.y + button.height - this.game.getScaledValue(15)
+    );
 
     // Completion checkmark
     if (isCompleted) {
       ctx.fillStyle = "#FFD700";
       ctx.font = `${this.game.getScaledValue(20)}px Courier New`;
-      ctx.fillText("✓", button.x + this.game.getScaledValue(30), button.y + button.height / 2);
+      ctx.fillText(
+        "✓",
+        button.x + this.game.getScaledValue(30),
+        button.y + button.height / 2
+      );
     }
 
     ctx.restore();
@@ -3682,7 +3817,7 @@ class LevelSelect extends Screen {
 
   // Story Panel Viewer - Add to level-select
   openStoryViewer() {
-    const unlockedCount = this.game.unlockedStoryPanels.filter(u => u).length;
+    const unlockedCount = this.game.unlockedStoryPanels.filter((u) => u).length;
     if (unlockedCount === 0) return;
     this.storyViewer.isOpen = true;
     this.storyViewer.currentPanel = 0;
@@ -3718,12 +3853,14 @@ class LevelSelect extends Screen {
 
     // Check close button
     const closeX = canvasWidth / 2;
-    if (this.isPointInRect(x, y, {
-      x: closeX - buttonWidth / 2,
-      y: buttonY - buttonHeight / 2,
-      width: buttonWidth,
-      height: buttonHeight
-    })) {
+    if (
+      this.isPointInRect(x, y, {
+        x: closeX - buttonWidth / 2,
+        y: buttonY - buttonHeight / 2,
+        width: buttonWidth,
+        height: buttonHeight,
+      })
+    ) {
       this.closeStoryViewer();
       return true;
     }
@@ -3731,12 +3868,14 @@ class LevelSelect extends Screen {
     // Check previous button
     if (this.storyViewer.currentPanel > 0) {
       const prevX = canvasWidth / 2 - buttonSpacing;
-      if (this.isPointInRect(x, y, {
-        x: prevX - buttonWidth / 2,
-        y: buttonY - buttonHeight / 2,
-        width: buttonWidth,
-        height: buttonHeight
-      })) {
+      if (
+        this.isPointInRect(x, y, {
+          x: prevX - buttonWidth / 2,
+          y: buttonY - buttonHeight / 2,
+          width: buttonWidth,
+          height: buttonHeight,
+        })
+      ) {
         this.storyViewer.currentPanel--;
         this.game.audioManager.playSound("button-click", false, 0.5);
         return true;
@@ -3746,12 +3885,14 @@ class LevelSelect extends Screen {
     // Check next button
     if (this.storyViewer.currentPanel < unlockedPanels.length - 1) {
       const nextX = canvasWidth / 2 + buttonSpacing;
-      if (this.isPointInRect(x, y, {
-        x: nextX - buttonWidth / 2,
-        y: buttonY - buttonHeight / 2,
-        width: buttonWidth,
-        height: buttonHeight
-      })) {
+      if (
+        this.isPointInRect(x, y, {
+          x: nextX - buttonWidth / 2,
+          y: buttonY - buttonHeight / 2,
+          width: buttonWidth,
+          height: buttonHeight,
+        })
+      ) {
         this.storyViewer.currentPanel++;
         this.game.audioManager.playSound("button-click", false, 0.5);
         return true;

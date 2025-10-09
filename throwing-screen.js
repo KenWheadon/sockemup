@@ -55,6 +55,7 @@ class ThrowingScreen extends Screen {
     // Achievement tracking
     this.perfectThrowsThisLevel = 0;
     this.missedThrows = 0;
+    this.consecutiveHits = 0; // Track consecutive hits on Martha
 
     // Exit button
     this.exitButton = {
@@ -92,6 +93,7 @@ class ThrowingScreen extends Screen {
     // Reset achievement tracking
     this.perfectThrowsThisLevel = 0;
     this.missedThrows = 0;
+    this.consecutiveHits = 0;
 
     // Setup Martha for current level
     const level = GameConfig.LEVELS[this.game.currentLevel];
@@ -418,6 +420,7 @@ class ThrowingScreen extends Screen {
       // Remove if falls off bottom (counts as a miss)
       if (sockball.y > canvasHeight + sockball.size) {
         this.missedThrows++;
+        this.consecutiveHits = 0; // Reset consecutive hits on miss
         return false;
       }
 
@@ -431,6 +434,9 @@ class ThrowingScreen extends Screen {
           // Play points gained sound
           this.game.audioManager.playSound("points-gained", false, 0.3);
 
+          // Track consecutive hits for Deadeye achievement
+          this.consecutiveHits++;
+
           // Phase 2.2 - Notify feedback manager of catch quality
           if (catchQuality === "PERFECT") {
             this.game.feedbackManager.onPerfectCatch();
@@ -438,15 +444,15 @@ class ThrowingScreen extends Screen {
 
             // Achievement: PERFECT_THROW
             this.game.unlockAchievement("perfect_throw");
-
-            // Achievement: PERFECTIONIST (10 perfect throws in one level)
-            if (this.perfectThrowsThisLevel >= 10) {
-              this.game.unlockAchievement("perfectionist");
-            }
           } else if (catchQuality === "GOOD") {
             this.game.feedbackManager.onGoodCatch();
           } else {
             this.game.feedbackManager.onRegularCatch();
+          }
+
+          // Achievement: DEADEYE (10 hits in a row)
+          if (this.consecutiveHits >= 10) {
+            this.game.unlockAchievement("deadeye");
           }
 
           sockball.active = false;

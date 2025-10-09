@@ -504,17 +504,17 @@ const GameConfig = {
       icon: "👑",
       unlocked: false,
     },
-    PERFECTIONIST: {
-      id: "perfectionist",
-      name: "Perfectionist",
-      description: "Get 10 perfect throws in one level",
-      icon: "💎",
+    DEADEYE: {
+      id: "deadeye",
+      name: "Deadeye",
+      description: "Hit Martha 10 times in a row",
+      icon: "🎯",
       unlocked: false,
     },
     QUICK_HANDS: {
       id: "quick_hands",
       name: "Quick Hands",
-      description: "Match 5 pairs in under 10 seconds",
+      description: "Match 5 pairs in 15 seconds",
       icon: "👐",
       unlocked: false,
     },

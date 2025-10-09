@@ -539,6 +539,15 @@ class SockGame {
             };
           }
         }
+
+        // Migrate old "perfectionist" achievement to new "deadeye" achievement
+        if (data.achievements.perfectionist && data.achievements.perfectionist.unlocked) {
+          this.achievements.deadeye = {
+            ...this.achievements.deadeye,
+            unlocked: true,
+            unlockedAt: data.achievements.perfectionist.unlockedAt,
+          };
+        }
       }
     }
   }
