@@ -18,6 +18,8 @@ class SockGame {
     this.matchingTime = 60;
     // Tracks elapsed time during matching phase (counts up from 0)
     this.timeElapsed = 0;
+    // Track if time bonus was earned (finished before time limit)
+    this.timeBonusEarned = false;
 
     this.images = {};
     this.loadedImages = 0;
@@ -859,12 +861,19 @@ class SockGame {
 
   startGameLoop() {
     const gameLoop = (currentTime) => {
+      // Initialize lastFrameTime on first frame
+      if (this.lastFrameTime === 0) {
+        this.lastFrameTime = currentTime;
+      }
+
       this.deltaTime = currentTime - this.lastFrameTime;
 
       if (this.deltaTime >= this.frameInterval) {
-        this.lastFrameTime =
-          currentTime - (this.deltaTime % this.frameInterval);
-        this.update(this.deltaTime);
+        this.lastFrameTime = currentTime;
+
+        // Cap deltaTime to prevent timer speedup on lag
+        const cappedDeltaTime = Math.min(this.deltaTime, this.frameInterval * 3);
+        this.update(cappedDeltaTime);
         this.render();
       }
 

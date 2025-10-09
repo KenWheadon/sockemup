@@ -16,12 +16,13 @@ class LevelEndScreen extends Screen {
     this.sockballsPaidDisplay = 0;
     this.sockballsLeftoverDisplay = 0;
     this.rentPenaltyDisplay = 0;
+    this.timeBonusDisplay = 0;
     this.totalScoreDisplay = 0;
     this.scoreAnimationTimer = 0;
     this.currentStageIndex = 0;
     this.scoreStages = [];
-    this.scoreLineAnimations = [0, 0, 0, 0]; // Animation timers for each line
-    this.scoreLineVisible = [false, false, false, false];
+    this.scoreLineAnimations = [0, 0, 0, 0, 0]; // Animation timers for each line (added one for time bonus)
+    this.scoreLineVisible = [false, false, false, false, false];
   }
 
   initializeButton() {
@@ -114,11 +115,20 @@ class LevelEndScreen extends Screen {
     );
     this.rentPenalty = Math.max(0, marthaWanted - marthaGot);
 
+    // Base points
     this.sockballsPaidPoints = this.sockballsPaid * 5;
+
+    // Time bonus: double the rent payment points if earned
+    this.timeBonusPoints = 0;
+    if (this.game.timeBonusEarned && this.sockballsPaid > 0) {
+      this.timeBonusPoints = this.sockballsPaidPoints; // Same as sockballsPaid * 5
+    }
+
     this.sockballsLeftoverPoints = this.sockballsLeftover * 10;
     this.rentPenaltyPoints = this.rentPenalty * -10;
     this.totalScore =
       this.sockballsPaidPoints +
+      this.timeBonusPoints +
       this.sockballsLeftoverPoints +
       this.rentPenaltyPoints;
 
@@ -135,6 +145,12 @@ class LevelEndScreen extends Screen {
         label: "sockballsPaidDisplay",
         start: 0,
         end: this.sockballsPaid,
+        rate: 80,
+      },
+      {
+        label: "timeBonusDisplay",
+        start: 0,
+        end: this.game.timeBonusEarned ? this.sockballsPaid : 0,
         rate: 80,
       },
       {
@@ -638,6 +654,12 @@ class LevelEndScreen extends Screen {
         color: "#4ECDC4",
       },
       {
+        label: `TIME BONUS (2x RENT):`,
+        value: this.timeBonusDisplay * 5,
+        color: "#FFD700",
+        show: this.game.timeBonusEarned,
+      },
+      {
         label: `SOCKBALLS LEFTOVER:`,
         value: this.sockballsLeftoverDisplay * 10,
         color: "#95E1D3",
@@ -654,9 +676,12 @@ class LevelEndScreen extends Screen {
       },
     ];
 
-    // Draw decorative separator line before total
+    // Filter out lines that shouldn't be shown
+    const visibleLines = scoreLines.filter(line => line.show !== false);
+
+    // Draw decorative separator line before total (adjusted for visible lines)
     ctx.save();
-    const separatorY = layout.scoreStartY + 2.5 * layout.scoreLineHeight;
+    const separatorY = layout.scoreStartY + (visibleLines.length - 1.5) * layout.scoreLineHeight;
     const separatorWidth = this.game.getScaledValue(400);
     const gradient = ctx.createLinearGradient(
       layout.centerX - separatorWidth / 2,
@@ -678,8 +703,12 @@ class LevelEndScreen extends Screen {
     ctx.stroke();
     ctx.restore();
 
-    scoreLines.forEach((line, index) => {
-      const y = layout.scoreStartY + index * layout.scoreLineHeight;
+    // Render only visible lines
+    let displayIndex = 0;
+    scoreLines.forEach((line, originalIndex) => {
+      if (line.show === false) return; // Skip hidden lines
+
+      const y = layout.scoreStartY + displayIndex * layout.scoreLineHeight;
       this.renderScoreLine(
         ctx,
         line.label,
@@ -687,8 +716,9 @@ class LevelEndScreen extends Screen {
         layout.centerX,
         y,
         line.color,
-        index
+        originalIndex // Use original index for animation timing
       );
+      displayIndex++;
     });
   }
 

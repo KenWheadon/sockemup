@@ -113,8 +113,9 @@ class MatchScreen extends Screen {
     this.pulseTimer = 0;
     this.dragHistory = [];
 
-    // Reset elapsed time counter
+    // Reset elapsed time counter and time bonus flag
     this.game.timeElapsed = 0;
+    this.game.timeBonusEarned = false;
 
     // Track achievements for this level
     this.firstMatchMade = false;
@@ -790,15 +791,15 @@ class MatchScreen extends Screen {
       this.sockManager.getSockListLength() === 0 &&
       this.game.sockBalls >= level.sockPairs
     ) {
-      // Fix Bug #19-20: Check if player finished within the time limit for bonus points
+      // Check if player finished within the time limit for time bonus
       const timeLimit = level.matchingTime;
       const timeElapsed = Math.floor(this.game.timeElapsed);
       const timeRemaining = timeLimit - timeElapsed;
 
       if (timeElapsed <= timeLimit) {
-        // Award 25 bonus points for finishing within time
-        this.game.playerPoints += 25;
-        console.log(`⏱️ Time bonus! Finished in ${timeElapsed}s (limit: ${timeLimit}s) - +25 points`);
+        // Set time bonus flag - this will double rent payment points on level end screen
+        this.game.timeBonusEarned = true;
+        console.log(`⏱️ Time bonus earned! Finished in ${timeElapsed}s (limit: ${timeLimit}s)`);
       }
 
       // Achievement: SPEEDY_MATCHER (complete with 30+ seconds remaining)
