@@ -134,10 +134,10 @@ const GameConfig = {
 
   // Sock pile image thresholds
   SOCK_PILE_THRESHOLDS: {
-    IMAGE_1: 80, // Full pile
-    IMAGE_2: 50, // 3/4 pile
-    IMAGE_3: 30, // 1/2 pile
-    IMAGE_4: 10, // Almost empty
+    IMAGE_1: 40, // Full pile
+    IMAGE_2: 28, // 3/4 pile
+    IMAGE_3: 16, // 1/2 pile
+    IMAGE_4: 4, // Almost empty
   },
 
   // Animation settings
@@ -154,16 +154,16 @@ const GameConfig = {
       marthaSpeed: 0.5,
       sockPairs: 3,
       typesAvailable: [1],
-      matchingTime: 60,
+      matchingTime: 20,
       marthaWantsSockballs: 1,
       marthaPatterns: ["horizontal", "vertical"],
       marthaPatternSpeed: 0.5,
     },
     {
       marthaSpeed: 0.75,
-      sockPairs: 6,
+      sockPairs: 4,
       typesAvailable: [1, 2],
-      matchingTime: 60,
+      matchingTime: 25,
       marthaWantsSockballs: 3,
       marthaPatterns: ["horizontal", "vertical", "diagonal"],
       marthaPatternSpeed: 0.8,
@@ -172,7 +172,7 @@ const GameConfig = {
       marthaSpeed: 1,
       sockPairs: 9,
       typesAvailable: [1, 2, 3],
-      matchingTime: 60,
+      matchingTime: 30,
       marthaWantsSockballs: 4,
       marthaPatterns: ["horizontal", "vertical", "diagonal", "circular"],
       marthaPatternSpeed: 1,
@@ -181,7 +181,7 @@ const GameConfig = {
       marthaSpeed: 1.15,
       sockPairs: 12,
       typesAvailable: [1, 2, 3, 4],
-      matchingTime: 50,
+      matchingTime: 45,
       marthaWantsSockballs: 6,
       marthaPatterns: ["horizontal", "vertical", "diagonal", "circular"],
       marthaPatternSpeed: 1,
@@ -190,17 +190,17 @@ const GameConfig = {
       marthaSpeed: 1.25,
       sockPairs: 15,
       typesAvailable: [1, 2, 3, 4, 5],
-      matchingTime: 55,
+      matchingTime: 50,
       marthaWantsSockballs: 8,
       marthaPatterns: ["diagonal", "circular", "random"],
       marthaPatternSpeed: 1.15,
     },
     {
       marthaSpeed: 1.35,
-      sockPairs: 24,
+      sockPairs: 18,
       typesAvailable: [1, 2, 3, 4, 5, 6],
-      matchingTime: 80,
-      marthaWantsSockballs: 12,
+      matchingTime: 65,
+      marthaWantsSockballs: 10,
       marthaPatterns: [
         "horizontal",
         "vertical",
@@ -213,19 +213,19 @@ const GameConfig = {
     // NEW LEVELS - Phase 3.1
     {
       marthaSpeed: 1.45,
-      sockPairs: 28,
-      typesAvailable: [1, 2, 3, 4],
-      matchingTime: 90,
-      marthaWantsSockballs: 15,
+      sockPairs: 16,
+      typesAvailable: [2, 3, 4, 5],
+      matchingTime: 45,
+      marthaWantsSockballs: 12,
       marthaPatterns: ["diagonal", "circular"],
       marthaPatternSpeed: 1.3,
     },
     {
       marthaSpeed: 1.55,
-      sockPairs: 30,
+      sockPairs: 20,
       typesAvailable: [1, 2, 3, 4, 5],
-      matchingTime: 90,
-      marthaWantsSockballs: 18,
+      matchingTime: 60,
+      marthaWantsSockballs: 16,
       marthaPatterns: [
         "horizontal",
         "vertical",
@@ -237,10 +237,10 @@ const GameConfig = {
     },
     {
       marthaSpeed: 1.7,
-      sockPairs: 36,
+      sockPairs: 24,
       typesAvailable: [1, 2, 3, 4, 5, 6],
-      matchingTime: 90,
-      marthaWantsSockballs: 22,
+      matchingTime: 60,
+      marthaWantsSockballs: 20,
       marthaPatterns: ["random", "circular"],
       marthaPatternSpeed: 1.4,
     },
