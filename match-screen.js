@@ -552,6 +552,10 @@ class MatchScreen extends Screen {
       // Not near a drop zone, throw the sock with calculated velocity
       const throwVelocity = this.calculateThrowVelocity();
       this.physics.applySockThrow(sock, throwVelocity);
+
+      // Break streak when dropping a sock without placing it
+      this.matchStreak = 0;
+      this.lastMatchTime = 0;
     }
 
     this.draggedSock = null;
@@ -589,7 +593,6 @@ class MatchScreen extends Screen {
 
   checkForMatches() {
     const currentTime = Date.now();
-    let matchFound = false;
 
     for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
       const pairZones = this.dropZones.filter((zone) => zone.pairId === pairId);
@@ -635,12 +638,8 @@ class MatchScreen extends Screen {
             }
           }
 
-          // Update streak
-          if (currentTime - this.lastMatchTime < 3000) {
-            this.matchStreak++;
-          } else {
-            this.matchStreak = 1;
-          }
+          // Update streak (increment on each successful match)
+          this.matchStreak++;
           this.lastMatchTime = currentTime;
 
           // Achievement: STREAK_KING (5x match streak)
@@ -661,10 +660,6 @@ class MatchScreen extends Screen {
           this.lastMatchTime = 0;
         }
       }
-    }
-
-    if (!matchFound && currentTime - this.lastMatchTime > 5000) {
-      this.matchStreak = 0;
     }
   }
 
