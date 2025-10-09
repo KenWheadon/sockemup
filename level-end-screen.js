@@ -140,32 +140,52 @@ class LevelEndScreen extends Screen {
   }
 
   setupScoreAnimation() {
+    // Calculate animation duration to always take 3 seconds total
+    const totalAnimationTime = 3000; // 3 seconds in milliseconds
+
+    // Calculate total steps needed across all stages
+    const totalSteps =
+      this.sockballsPaid +
+      (this.game.timeBonusEarned ? this.sockballsPaid : 0) +
+      this.sockballsLeftover +
+      this.rentPenalty +
+      Math.abs(this.totalScore);
+
+    // Calculate rate (ms per step) to complete in 3 seconds
+    // If totalSteps is 0, use a default rate
+    const calculatedRate = totalSteps > 0 ? totalAnimationTime / totalSteps : 50;
+
     this.scoreStages = [
       {
         label: "sockballsPaidDisplay",
         start: 0,
         end: this.sockballsPaid,
-        rate: 80,
+        rate: calculatedRate,
       },
       {
         label: "timeBonusDisplay",
         start: 0,
         end: this.game.timeBonusEarned ? this.sockballsPaid : 0,
-        rate: 80,
+        rate: calculatedRate,
       },
       {
         label: "sockballsLeftoverDisplay",
         start: 0,
         end: this.sockballsLeftover,
-        rate: 80,
+        rate: calculatedRate,
       },
       {
         label: "rentPenaltyDisplay",
         start: 0,
         end: this.rentPenalty,
-        rate: 80,
+        rate: calculatedRate,
       },
-      { label: "totalScoreDisplay", start: 0, end: this.totalScore, rate: 60 },
+      {
+        label: "totalScoreDisplay",
+        start: 0,
+        end: this.totalScore,
+        rate: calculatedRate
+      },
     ];
 
     this.currentStageIndex = 0;
@@ -668,6 +688,7 @@ class LevelEndScreen extends Screen {
         label: `RENT PENALTY:`,
         value: this.rentPenaltyDisplay * -10,
         color: "#FF6B6B",
+        show: this.rentPenalty > 0, // Only show if there's a penalty
       },
       {
         label: `TOTAL SCORE:`,
@@ -747,8 +768,9 @@ class LevelEndScreen extends Screen {
     ctx.fillStyle = valueColor;
     ctx.textAlign = "left";
 
-    // Scale up for total score
-    if (lineIndex === 3) {
+    // Scale up and pulse for total score only
+    const isTotalScore = label.includes("TOTAL SCORE");
+    if (isTotalScore) {
       ctx.font = `bold ${fontSize * 1.2}px Courier New`;
       const pulseScale = 1 + Math.sin(this.pulseTimer * 2) * 0.05;
       ctx.save();
