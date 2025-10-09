@@ -121,6 +121,7 @@ class MatchScreen extends Screen {
     this.firstMatchMade = false;
     this.matchCount = 0;
     this.matchStartTime = Date.now();
+    this.levelCompleted = false; // Track if level is completed to stop timer
 
     // Start match music
     console.log("🎵 Match screen setup - starting match music");
@@ -619,7 +620,6 @@ class MatchScreen extends Screen {
           this.startMatchAnimation(pairZones[0].sock, pairZones[1].sock);
           pairZones[0].sock = null;
           pairZones[1].sock = null;
-          matchFound = true;
 
           // Track match count for achievements
           this.matchCount++;
@@ -753,8 +753,8 @@ class MatchScreen extends Screen {
       this.pulseTimer += deltaTime * 0.005; // Slow pulse
     }
 
-    // Fix Bug #19-20: Count UP (elapsed time) - only if pile has been clicked and not paused
-    if (this.sockPileClicked && !this.isPaused) {
+    // Count UP (elapsed time) - only if pile has been clicked, not paused, and level not completed
+    if (this.sockPileClicked && !this.isPaused && !this.levelCompleted) {
       const timeIncrement = deltaTime / 1000; // Convert milliseconds to seconds
       this.game.timeElapsed += timeIncrement;
     }
@@ -786,6 +786,9 @@ class MatchScreen extends Screen {
       this.sockManager.getSockListLength() === 0 &&
       this.game.sockBalls >= level.sockPairs
     ) {
+      // Mark level as completed to stop the timer
+      this.levelCompleted = true;
+
       // Check if player finished within the time limit for time bonus
       const timeLimit = level.matchingTime;
       const timeElapsed = Math.floor(this.game.timeElapsed);
