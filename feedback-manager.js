@@ -15,6 +15,7 @@ class FeedbackManager {
     this.marthaX = 0;
     this.marthaY = 0;
     this.marthaWidth = 0;
+    this.marthaOnScreen = true;
 
     // Celebration state
     this.celebrationActive = false;
@@ -126,10 +127,11 @@ class FeedbackManager {
   }
 
   // Update Martha's position (called by throwing screen)
-  updateMarthaPosition(x, y, width) {
+  updateMarthaPosition(x, y, width, onScreen = true) {
     this.marthaX = x;
     this.marthaY = y;
     this.marthaWidth = width;
+    this.marthaOnScreen = onScreen;
   }
 
   // Called when a sockball hits Martha
@@ -286,8 +288,8 @@ class FeedbackManager {
   }
 
   render(ctx) {
-    // Render dialogue bubble
-    if (this.currentDialogue && this.marthaX > 0) {
+    // Render dialogue bubble only if Martha is on screen
+    if (this.currentDialogue && this.marthaX > 0 && this.marthaOnScreen) {
       this.renderDialogueBubble(ctx);
     }
 

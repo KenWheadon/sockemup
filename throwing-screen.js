@@ -558,7 +558,8 @@ class ThrowingScreen extends Screen {
     this.game.feedbackManager.updateMarthaPosition(
       this.marthaManager.x,
       this.marthaManager.y,
-      this.marthaManager.width
+      this.marthaManager.width,
+      this.marthaManager.onScreen
     );
 
     if (this.showingMessage) {
