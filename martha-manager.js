@@ -379,6 +379,27 @@ class MarthaManager {
 
     // Simple bounds checking with direction reversal
     if (!this.isExiting && !this.isEntering) {
+      // Restricted zone: lower left corner (where sockballs are launched from)
+      const restrictedZoneSize = 200; // Size of restricted area
+      const launchX = GameConfig.SOCKBALL_LAUNCH_POSITION.x;
+      const launchY = GameConfig.SOCKBALL_LAUNCH_POSITION.y;
+
+      if (this.x < launchX + restrictedZoneSize &&
+          this.y > launchY - restrictedZoneSize) {
+        // Push Martha away from the lower left corner
+        this.velocity.x = Math.abs(this.velocity.x) + 2; // Force right
+        this.velocity.y = -Math.abs(this.velocity.y) - 2; // Force up
+        this.x = launchX + restrictedZoneSize;
+        this.y = Math.min(this.y, launchY - restrictedZoneSize);
+
+        if (this.currentPattern === "horizontal") {
+          this.direction = 1; // Move right
+        } else if (this.patternData.diagonalDirection) {
+          this.patternData.diagonalDirection.x = 1;
+          this.patternData.diagonalDirection.y = -1;
+        }
+      }
+
       // Left boundary
       if (this.x < this.bounds.left) {
         this.x = this.bounds.left;
@@ -421,6 +442,15 @@ class MarthaManager {
         } else if (this.patternData.diagonalDirection) {
           this.patternData.diagonalDirection.y = -1;
         }
+      }
+
+      // Ensure Martha is always moving (minimum velocity)
+      const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+      const minSpeed = 1.0;
+      if (currentSpeed < minSpeed) {
+        // If moving too slowly, give a small push in current direction or default right
+        const defaultDirection = this.direction || 1;
+        this.velocity.x = defaultDirection * minSpeed;
       }
 
       // Update facing direction based on velocity
@@ -716,8 +746,8 @@ class MarthaManager {
     if (marthaImage) {
       ctx.save();
 
-      // Flip horizontally if facing left
-      if (!this.facingRight) {
+      // Flip horizontally if facing right (sprite faces left by default)
+      if (this.facingRight) {
         ctx.translate(this.x + this.width, this.y);
         ctx.scale(-1, 1);
         ctx.drawImage(marthaImage, 0, 0, this.width, this.height);

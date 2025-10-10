@@ -90,7 +90,7 @@ const GameConfig = {
 
   // Sockball throwing settings
   SOCKBALL_THROW_SPEED: 20,
-  SOCKBALL_THROW_COOLDOWN: 2000, // milliseconds
+  SOCKBALL_THROW_COOLDOWN: 1000, // milliseconds (reduced by 50% from 2000)
   SOCKBALL_LAUNCH_POSITION: { x: 50, y: 750 }, // bottom left corner
 
   // Martha movement patterns
