@@ -60,6 +60,9 @@ class SockGame {
     // Phase 4.1 - Initialize story manager
     this.storyManager = new StoryManager(this);
 
+    // Initialize controller manager
+    this.controllerManager = new ControllerManager(this);
+
     // Initialize sockball queue
     this.sockballQueue = [];
 
@@ -814,6 +817,11 @@ class SockGame {
       this.levelEndScreen.update(deltaTime);
     }
 
+    // Update controller manager
+    if (this.controllerManager) {
+      this.controllerManager.update(deltaTime);
+    }
+
     // Update FPS counter
     this.frameCount++;
     this.fpsTimer += deltaTime;
@@ -846,6 +854,11 @@ class SockGame {
       this.throwingScreen.render(this.ctx);
     } else if (this.gameState === "gameOver") {
       this.levelEndScreen.render(this.ctx);
+    }
+
+    // Render controller indicator
+    if (this.controllerManager) {
+      this.controllerManager.render(this.ctx);
     }
 
     // Debug info
@@ -913,6 +926,7 @@ class SockGame {
     // Cleanup managers
     if (this.audioManager) this.audioManager.cleanup();
     if (this.feedbackManager) this.feedbackManager.reset();
+    if (this.controllerManager) this.controllerManager.cleanup();
   }
 }
 
