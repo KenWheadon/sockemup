@@ -231,13 +231,18 @@ class LevelSelect extends Screen {
     this.calculateMarthaImageSize();
     const youWinImageSize = this.calculateYouWinImageSize();
 
+    // Top bar configuration
+    const barHeight = this.game.getScaledValue(GameConfig.UI_BAR.height);
+    const barY = 0; // Top of screen
+    const barPadding = this.game.getScaledValue(GameConfig.UI_BAR.padding);
+
     return {
       ...baseLayout,
       logoX: canvasWidth / 2,
-      logoY: this.game.getScaledValue(80),
+      logoY: barHeight + this.game.getScaledValue(60), // Below top bar
       logoWidth: this.game.getScaledValue(200),
       logoHeight: this.game.getScaledValue(100),
-      instructionsY: this.game.getScaledValue(150),
+      instructionsY: barHeight + this.game.getScaledValue(140), // Below logo
       levelButtonSize: this.game.getScaledValue(
         this.levelConfig.baseButtonSize
       ),
@@ -252,9 +257,9 @@ class LevelSelect extends Screen {
         ((this.levelConfig.columns - 1) *
           this.game.getScaledValue(this.levelConfig.horizontalSpacing)) /
           2,
-      levelGridStartY: canvasHeight / 2 - this.game.getScaledValue(30),
+      levelGridStartY: canvasHeight / 2 + this.game.getScaledValue(10), // Slightly lower
       marthaX: this.game.getScaledValue(this.MARTHA_CONFIG.offsetX),
-      marthaY: this.game.getScaledValue(this.MARTHA_CONFIG.offsetY),
+      marthaY: barHeight + this.game.getScaledValue(this.MARTHA_CONFIG.offsetY), // Below top bar
       marthaWidth: this.marthaImageSize.width,
       marthaHeight: this.marthaImageSize.height,
       dropZoneSize: this.game.getScaledValue(this.DROP_ZONE_CONFIG.size),
@@ -262,22 +267,37 @@ class LevelSelect extends Screen {
       dropZone1Y: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetY1),
       dropZone2X: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetX),
       dropZone2Y: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetY2),
-      statsX: this.game.getScaledValue(110),
-      statsY: canvasHeight - this.game.getScaledValue(80),
-      statsPanelWidth: this.game.getScaledValue(200),
-      statsPanelHeight: this.game.getScaledValue(40),
-      creditsButtonX: canvasWidth - this.game.getScaledValue(80),
-      creditsButtonY: this.game.getScaledValue(50),
-      creditsButtonWidth: this.game.getScaledValue(120),
-      creditsButtonHeight: this.game.getScaledValue(40),
-      storyReplayButtonX: canvasWidth - this.game.getScaledValue(80),
-      storyReplayButtonY: this.game.getScaledValue(110),
-      storyReplayButtonWidth: this.game.getScaledValue(120),
-      storyReplayButtonHeight: this.game.getScaledValue(40),
-      storyViewerButtonX: canvasWidth - this.game.getScaledValue(80),
-      storyViewerButtonY: this.game.getScaledValue(170),
-      storyViewerButtonWidth: this.game.getScaledValue(140),
-      storyViewerButtonHeight: this.game.getScaledValue(40),
+
+      // Top bar layout
+      barY: barY,
+      barHeight: barHeight,
+      barPadding: barPadding,
+
+      // Top bar elements (left to right)
+      statsX: barPadding + this.game.getScaledValue(100),
+      statsY: barY + barHeight / 2,
+
+      // Buttons in top bar (right side)
+      achievementsButtonX: canvasWidth - this.game.getScaledValue(510),
+      achievementsButtonY: barY + barHeight / 2,
+      achievementsButtonWidth: this.game.getScaledValue(120),
+      achievementsButtonHeight: this.game.getScaledValue(50),
+
+      storyReplayButtonX: canvasWidth - this.game.getScaledValue(380),
+      storyReplayButtonY: barY + barHeight / 2,
+      storyReplayButtonWidth: this.game.getScaledValue(110),
+      storyReplayButtonHeight: this.game.getScaledValue(50),
+
+      storyViewerButtonX: canvasWidth - this.game.getScaledValue(250),
+      storyViewerButtonY: barY + barHeight / 2,
+      storyViewerButtonWidth: this.game.getScaledValue(110),
+      storyViewerButtonHeight: this.game.getScaledValue(50),
+
+      creditsButtonX: canvasWidth - this.game.getScaledValue(120),
+      creditsButtonY: barY + barHeight / 2,
+      creditsButtonWidth: this.game.getScaledValue(100),
+      creditsButtonHeight: this.game.getScaledValue(50),
+
       achievementsDrawerWidth: this.game.getScaledValue(500),
       achievementsDrawerButtonX: this.game.getScaledValue(35),
       achievementsDrawerButtonY: this.game.getScaledValue(50),
@@ -288,6 +308,10 @@ class LevelSelect extends Screen {
         this.game.getScaledValue(this.YOU_WIN_CONFIG.offsetY),
       youWinWidth: youWinImageSize.width,
       youWinHeight: youWinImageSize.height,
+
+      // Legacy panel values (no longer used)
+      statsPanelWidth: this.game.getScaledValue(200),
+      statsPanelHeight: this.game.getScaledValue(40),
     };
   }
 
@@ -884,18 +908,12 @@ class LevelSelect extends Screen {
     // Update story viewer button hover
     this.storyViewer.updateButtonHover(x, y, layout);
 
-    const drawerButtonX =
-      layout.achievementsDrawerButtonX -
-      layout.achievementsDrawerButtonSize / 2;
-    const drawerButtonY =
-      layout.achievementsDrawerButtonY -
-      layout.achievementsDrawerButtonSize / 2;
-
+    // Check achievements button in top bar
     this.achievementsDrawer.button.hovered = this.isPointInRect(x, y, {
-      x: drawerButtonX,
-      y: drawerButtonY,
-      width: layout.achievementsDrawerButtonSize,
-      height: layout.achievementsDrawerButtonSize,
+      x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
+      y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
+      width: layout.achievementsButtonWidth,
+      height: layout.achievementsButtonHeight,
     });
 
     if (
@@ -1799,10 +1817,7 @@ class LevelSelect extends Screen {
       this.renderYouWinGraphic(ctx);
     }
 
-    this.renderPlayerStats(ctx);
-    this.renderCreditsButton(ctx);
-    this.renderStoryReplayButton(ctx);
-    this.storyViewer.renderButton(ctx, this.layoutCache);
+    this.renderTopBar(ctx);
     this.renderAchievementsDrawer(ctx);
 
     // NEW GAME+: Render difficulty modal if open
@@ -2061,6 +2076,146 @@ class LevelSelect extends Screen {
     });
 
     ctx.restore();
+  }
+
+  renderTopBar(ctx) {
+    const layout = this.layoutCache;
+    const canvasWidth = this.game.getCanvasWidth();
+
+    // Draw top bar background
+    ctx.save();
+    ctx.fillStyle = GameConfig.UI_BAR.backgroundColor;
+    ctx.fillRect(0, layout.barY, canvasWidth, layout.barHeight);
+
+    // Draw bottom border
+    ctx.strokeStyle = GameConfig.UI_BAR.borderColor;
+    ctx.lineWidth = this.game.getScaledValue(GameConfig.UI_BAR.borderWidth);
+    ctx.beginPath();
+    ctx.moveTo(0, layout.barY + layout.barHeight);
+    ctx.lineTo(canvasWidth, layout.barY + layout.barHeight);
+    ctx.stroke();
+    ctx.restore();
+
+    // Player stats (left side)
+    this.renderText(ctx, "💰", layout.statsX - this.game.getScaledValue(50), layout.statsY, {
+      fontSize: layout.headerFontSize,
+      align: "center",
+      baseline: "middle",
+    });
+
+    this.renderText(ctx, `${this.game.playerPoints}`, layout.statsX, layout.statsY, {
+      fontSize: layout.headerFontSize,
+      align: "left",
+      baseline: "middle",
+      color: "rgba(255, 215, 0, 0.9)",
+      weight: "bold",
+    });
+
+    this.renderText(ctx, "🧦", layout.statsX + this.game.getScaledValue(120), layout.statsY, {
+      fontSize: layout.headerFontSize,
+      align: "center",
+      baseline: "middle",
+    });
+
+    this.renderText(ctx, `${this.game.sockBalls}`, layout.statsX + this.game.getScaledValue(155), layout.statsY, {
+      fontSize: layout.headerFontSize,
+      align: "left",
+      baseline: "middle",
+      color: "rgba(255, 215, 0, 0.9)",
+      weight: "bold",
+    });
+
+    // Buttons (right side)
+    this.renderTopBarButton(
+      ctx,
+      layout.achievementsButtonX,
+      layout.achievementsButtonY,
+      layout.achievementsButtonWidth,
+      layout.achievementsButtonHeight,
+      "🏆 Wins",
+      this.achievementsDrawer.button.hovered,
+      "rgba(218, 165, 32, 0.8)"
+    );
+
+    this.renderTopBarButton(
+      ctx,
+      layout.storyReplayButtonX,
+      layout.storyReplayButtonY,
+      layout.storyReplayButtonWidth,
+      layout.storyReplayButtonHeight,
+      "Story",
+      this.storyReplayButton.hovered,
+      "rgba(70, 130, 180, 0.8)"
+    );
+
+    this.renderTopBarButton(
+      ctx,
+      layout.storyViewerButtonX,
+      layout.storyViewerButtonY,
+      layout.storyViewerButtonWidth,
+      layout.storyViewerButtonHeight,
+      "Lore",
+      this.storyViewer.button.hovered,
+      "rgba(138, 43, 226, 0.8)"
+    );
+
+    this.renderTopBarButton(
+      ctx,
+      layout.creditsButtonX,
+      layout.creditsButtonY,
+      layout.creditsButtonWidth,
+      layout.creditsButtonHeight,
+      "Credits",
+      this.creditsButton.hovered,
+      "rgba(100, 100, 100, 0.8)"
+    );
+  }
+
+  renderTopBarButton(ctx, x, y, width, height, text, isHovered, baseColor) {
+    ctx.save();
+
+    const buttonLeft = x - width / 2;
+    const buttonTop = y - height / 2;
+    const radius = this.game.getScaledValue(6);
+
+    // Button background
+    ctx.fillStyle = isHovered ? this.lightenColor(baseColor) : baseColor;
+    ctx.strokeStyle = isHovered ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 0.4)";
+    ctx.lineWidth = 2;
+
+    // Rounded rectangle
+    ctx.beginPath();
+    ctx.moveTo(buttonLeft + radius, buttonTop);
+    ctx.lineTo(buttonLeft + width - radius, buttonTop);
+    ctx.arcTo(buttonLeft + width, buttonTop, buttonLeft + width, buttonTop + radius, radius);
+    ctx.lineTo(buttonLeft + width, buttonTop + height - radius);
+    ctx.arcTo(buttonLeft + width, buttonTop + height, buttonLeft + width - radius, buttonTop + height, radius);
+    ctx.lineTo(buttonLeft + radius, buttonTop + height);
+    ctx.arcTo(buttonLeft, buttonTop + height, buttonLeft, buttonTop + height - radius, radius);
+    ctx.lineTo(buttonLeft, buttonTop + radius);
+    ctx.arcTo(buttonLeft, buttonTop, buttonLeft + radius, buttonTop, radius);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Button text
+    this.renderText(ctx, text, x, y, {
+      fontSize: this.layoutCache.smallFontSize,
+      align: "center",
+      baseline: "middle",
+      color: "rgba(255, 255, 255, 0.9)",
+      weight: "bold",
+    });
+
+    ctx.restore();
+  }
+
+  lightenColor(color) {
+    // Simple color lightening - increase opacity or brightness
+    return color.replace(/[\d.]+\)$/, (match) => {
+      const opacity = parseFloat(match);
+      return (Math.min(opacity + 0.1, 1.0)) + ")";
+    });
   }
 
   renderCreditsButton(ctx) {
@@ -2345,69 +2500,7 @@ class LevelSelect extends Screen {
     const layout = this.layoutCache;
     const progress = this.achievementsDrawer.animationProgress;
 
-    const buttonX = layout.achievementsDrawerButtonX;
-    const buttonY = layout.achievementsDrawerButtonY;
-    const buttonSize = layout.achievementsDrawerButtonSize;
-
-    ctx.save();
-
-    const gradient = ctx.createLinearGradient(
-      buttonX - buttonSize / 2,
-      buttonY - buttonSize / 2,
-      buttonX - buttonSize / 2,
-      buttonY + buttonSize / 2
-    );
-    if (this.achievementsDrawer.button.hovered) {
-      gradient.addColorStop(0, "rgba(255, 215, 0, 0.95)");
-      gradient.addColorStop(1, "rgba(255, 165, 0, 0.95)");
-    } else {
-      gradient.addColorStop(0, "rgba(220, 180, 0, 0.85)");
-      gradient.addColorStop(1, "rgba(200, 140, 0, 0.85)");
-    }
-    ctx.fillStyle = gradient;
-
-    if (this.achievementsDrawer.button.hovered) {
-      ctx.shadowColor = "rgba(255, 215, 0, 0.6)";
-      ctx.shadowBlur = this.game.getScaledValue(12);
-    }
-
-    ctx.strokeStyle = this.achievementsDrawer.button.hovered
-      ? "rgba(255, 230, 100, 0.9)"
-      : "rgba(220, 180, 0, 0.6)";
-    ctx.lineWidth = this.game.getScaledValue(3);
-
-    const radius = this.game.getScaledValue(8);
-    const x = buttonX - buttonSize / 2;
-    const y = buttonY - buttonSize / 2;
-
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + buttonSize - radius, y);
-    ctx.quadraticCurveTo(x + buttonSize, y, x + buttonSize, y + radius);
-    ctx.lineTo(x + buttonSize, y + buttonSize - radius);
-    ctx.quadraticCurveTo(
-      x + buttonSize,
-      y + buttonSize,
-      x + buttonSize - radius,
-      y + buttonSize
-    );
-    ctx.lineTo(x + radius, y + buttonSize);
-    ctx.quadraticCurveTo(x, y + buttonSize, x, y + buttonSize - radius);
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
-
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.restore();
-
-    this.renderText(ctx, "🏆", buttonX, buttonY, {
-      fontSize: this.game.getScaledValue(28),
-      align: "center",
-      baseline: "middle",
-    });
-
+    // Button is now rendered in the top bar, so only render the drawer
     if (progress > 0) {
       const drawerWidth = layout.achievementsDrawerWidth;
       const drawerX = -drawerWidth + drawerWidth * progress;

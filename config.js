@@ -129,6 +129,18 @@ const GameConfig = {
     POINT_POP_DURATION: 1000,
   },
 
+  // Bottom UI Bar Configuration
+  UI_BAR: {
+    height: 80,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderWidth: 2,
+    padding: 10,
+    itemSpacing: 20,
+    panelPadding: 12,
+    panelSpacing: 15,
+  },
+
   // UI positions - Updated for full-width drawer and 3 pairs of drop zones
   SOCK_PILE_POS: { x: 600, y: 700 }, // Will be calculated dynamically for full width
 
