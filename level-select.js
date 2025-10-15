@@ -65,10 +65,10 @@ class LevelSelect extends Screen {
     // Martha quote system - rotating speech bubbles
     this.marthaQuotes = [
       "Rent's due, kiddo!",
-      "I could really up my rates if you just leave...",
+      "I could triple my rates if you just leave...",
       "I want to evict you, so you better not pay rent!",
       "Your lease is up for renewal... at TRIPLE the price!",
-      "You should go camping, I won't change the locks on your or anything....",
+      "You should go camping, I won't change the locks on you or anything....",
       "You know what? Your socks STINK!",
       "I've got 10 other tenants ready to pay more!",
       "Ever thought about moving? Like, today?",
@@ -83,7 +83,7 @@ class LevelSelect extends Screen {
     this.currentQuoteIndex = 0;
     this.currentQuote = this.marthaQuotes[0]; // Always show first quote on load
     this.quoteTimer = 0;
-    this.quoteRotationInterval = 5000; // Auto-rotate every 5 seconds
+    this.quoteRotationInterval = 7500; // Auto-rotate every 5 seconds
     this.quoteDisplayTime = 0;
     this.showingQuote = true; // Always showing a quote
 
@@ -413,7 +413,8 @@ class LevelSelect extends Screen {
 
   // Cycle to the next quote in the rotation
   cycleToNextQuote() {
-    this.currentQuoteIndex = (this.currentQuoteIndex + 1) % this.marthaQuotes.length;
+    this.currentQuoteIndex =
+      (this.currentQuoteIndex + 1) % this.marthaQuotes.length;
     this.currentQuote = this.marthaQuotes[this.currentQuoteIndex];
     this.quoteTimer = 0; // Reset the timer
     this.quoteDisplayTime = 0;
@@ -430,7 +431,9 @@ class LevelSelect extends Screen {
     const marthaTop = layout.marthaY - layout.marthaHeight / 2;
     const marthaBottom = layout.marthaY + layout.marthaHeight / 2;
 
-    return x >= marthaLeft && x <= marthaRight && y >= marthaTop && y <= marthaBottom;
+    return (
+      x >= marthaLeft && x <= marthaRight && y >= marthaTop && y <= marthaBottom
+    );
   }
 
   cleanup() {
