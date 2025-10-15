@@ -595,13 +595,13 @@ const GameConfig = {
     {
       id: "meet_martha",
       title: "Meet Martha",
-      text: "This is Martha, your landlord. She loves three things: socks, rent, and being right. Unfortunately, only one of those things is paid on time.",
+      text: "This is Martha, your landlord. She loves three things: raising rent, collecting rent, and socks. Unfortunately, you're the one paying.",
       image: "martha.png",
     },
     {
       id: "rent_problem",
       title: "The Rent Problem",
-      text: "Bad news: your rent is due. Worse news: Martha doesn’t want cash anymore—she wants sockballs. Magic-infused bundles of socks that she swears are ‘the only valid currency left.’",
+      text: "Bad news: your rent is due. Worse news: Martha doesn’t want cash anymore—she wants sockballs. Bundles of two matching socks that she swears are ‘the only valid currency left.’",
       image: "martha-rentdue.png",
     },
     {
@@ -613,13 +613,13 @@ const GameConfig = {
     {
       id: "how_to_play",
       title: "How to Play",
-      text: "Shoot socks from the pile, match pairs to create sockballs, then toss them at Martha before she loses patience. Hit her center mass for bonus points—face shots still count!",
+      text: "Select the pile to reveal socks, match pairs to create sockballs, then toss them at Martha before she loses patience. Hit her center mass for bonus points — face shots still count!",
       image: "martha-demand.png",
     },
     {
       id: "good_luck",
       title: "Good Luck",
-      text: "Keep up the good throws, pay your rent in sockballs, and maybe—just maybe—Martha won’t raise it again next week. Or she will. She usually does.",
+      text: "Keep up the good throws, pay your rent in sockballs, and maybe — just maybe — Martha won’t raise rent again next week. Or she will. She usually does.",
       image: "martha-win.png",
     },
   ],
