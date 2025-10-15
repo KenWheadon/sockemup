@@ -62,7 +62,7 @@ class LevelSelect extends Screen {
     this.marthaWiggling = false;
     this.marthaImageSize = { width: 0, height: 0 };
 
-    // Martha quote system
+    // Martha quote system - rotating speech bubbles
     this.marthaQuotes = [
       "Rent's due, kiddo!",
       "I could really up my rates if you just leave...",
@@ -80,12 +80,12 @@ class LevelSelect extends Screen {
       "Time to pay up or ship out!",
       "I'm thinking about converting this place to a juice bar!",
     ];
-    this.currentQuote = "";
+    this.currentQuoteIndex = 0;
+    this.currentQuote = this.marthaQuotes[0]; // Always show first quote on load
     this.quoteTimer = 0;
-    this.quoteInterval = this.getRandomQuoteInterval();
+    this.quoteRotationInterval = 5000; // Auto-rotate every 5 seconds
     this.quoteDisplayTime = 0;
-    this.quoteMaxDisplayTime = 4000; // Show quote for 4 seconds
-    this.showingQuote = false;
+    this.showingQuote = true; // Always showing a quote
 
     // Easter egg drop zones
     this.easterDropZones = [];
@@ -194,9 +194,9 @@ class LevelSelect extends Screen {
   }
 
   calculateMarthaImageSize() {
-    const marthaImage = this.game.images["martha-demand.png"];
+    const marthaImage = this.game.images["martha-demand-level-select.png"];
     if (!marthaImage) {
-      console.warn("Martha image not found: martha-demand.png"); // Fix Bug #12: Add error logging
+      console.warn("Martha image not found: martha-demand-level-select.png"); // Fix Bug #12: Add error logging
       this.marthaImageSize = { width: 0, height: 0 };
       return;
     }
@@ -399,25 +399,38 @@ class LevelSelect extends Screen {
     this.setupEasterDropZones();
     this.setupCreditsModal();
 
-    // Initialize quote system
+    // Initialize quote system - always show first quote on load
+    this.currentQuoteIndex = 0;
+    this.currentQuote = this.marthaQuotes[0];
     this.quoteTimer = 0;
-    this.quoteInterval = this.getRandomQuoteInterval();
-    this.showingQuote = false;
+    this.quoteDisplayTime = 0;
+    this.showingQuote = true;
 
     if (this.game.storyManager.shouldShowStory()) {
       this.game.storyManager.show();
     }
   }
 
-  getRandomQuoteInterval() {
-    // Random interval between 10-20 seconds (10000-20000 ms)
-    return 10000 + Math.random() * 10000;
+  // Cycle to the next quote in the rotation
+  cycleToNextQuote() {
+    this.currentQuoteIndex = (this.currentQuoteIndex + 1) % this.marthaQuotes.length;
+    this.currentQuote = this.marthaQuotes[this.currentQuoteIndex];
+    this.quoteTimer = 0; // Reset the timer
+    this.quoteDisplayTime = 0;
   }
 
-  getRandomQuote() {
-    return this.marthaQuotes[
-      Math.floor(Math.random() * this.marthaQuotes.length)
-    ];
+  // Check if Martha was clicked
+  isMarthaClicked(x, y) {
+    const layout = this.layoutCache;
+    if (!layout.marthaX || !layout.marthaY) return false;
+
+    // Calculate click bounds (Martha is centered at marthaX, marthaY)
+    const marthaLeft = layout.marthaX - layout.marthaWidth / 2;
+    const marthaRight = layout.marthaX + layout.marthaWidth / 2;
+    const marthaTop = layout.marthaY - layout.marthaHeight / 2;
+    const marthaBottom = layout.marthaY + layout.marthaHeight / 2;
+
+    return x >= marthaLeft && x <= marthaRight && y >= marthaTop && y <= marthaBottom;
   }
 
   cleanup() {
@@ -702,24 +715,11 @@ class LevelSelect extends Screen {
       }
     }
 
-    // Update Martha quote system
-    if (this.showingQuote) {
-      this.quoteDisplayTime += deltaTime;
-      if (this.quoteDisplayTime >= this.quoteMaxDisplayTime) {
-        // Hide quote and reset timer
-        this.showingQuote = false;
-        this.quoteDisplayTime = 0;
-        this.quoteTimer = 0;
-        this.quoteInterval = this.getRandomQuoteInterval();
-      }
-    } else {
-      this.quoteTimer += deltaTime;
-      if (this.quoteTimer >= this.quoteInterval) {
-        // Show new quote
-        this.currentQuote = this.getRandomQuote();
-        this.showingQuote = true;
-        this.quoteDisplayTime = 0;
-      }
+    // Update Martha quote system - auto-rotate every 5 seconds
+    this.quoteTimer += deltaTime;
+    if (this.quoteTimer >= this.quoteRotationInterval) {
+      // Auto-rotate to next quote
+      this.cycleToNextQuote();
     }
 
     this.easterDropZones.forEach((zone) => {
@@ -1365,6 +1365,15 @@ class LevelSelect extends Screen {
       return;
     }
 
+    // Check if Martha was clicked to cycle quotes
+    if (this.isMarthaClicked(x, y)) {
+      this.cycleToNextQuote();
+      // Optional: play a sound effect or wiggle Martha
+      this.marthaWiggling = true;
+      this.marthaWiggleTimer = 0;
+      return true;
+    }
+
     // Check close button FIRST and only if drawer is open
     if (
       this.achievementsDrawer.closeButton.hovered &&
@@ -1938,7 +1947,7 @@ class LevelSelect extends Screen {
   renderMarthaImage(ctx) {
     const layout = this.layoutCache;
 
-    if (this.game.images["martha-demand.png"]) {
+    if (this.game.images["martha-demand-level-select.png"]) {
       ctx.save();
 
       if (this.marthaWiggling) {
@@ -1949,7 +1958,7 @@ class LevelSelect extends Screen {
       }
 
       ctx.drawImage(
-        this.game.images["martha-demand.png"],
+        this.game.images["martha-demand-level-select.png"],
         -layout.marthaWidth / 2,
         -layout.marthaHeight / 2,
         layout.marthaWidth,
@@ -1968,14 +1977,8 @@ class LevelSelect extends Screen {
   renderMarthaQuote(ctx, layout) {
     ctx.save();
 
-    // Calculate fade in/out alpha
-    const fadeTime = 500; // 500ms fade
-    let alpha = 1;
-    if (this.quoteDisplayTime < fadeTime) {
-      alpha = this.quoteDisplayTime / fadeTime;
-    } else if (this.quoteDisplayTime > this.quoteMaxDisplayTime - fadeTime) {
-      alpha = (this.quoteMaxDisplayTime - this.quoteDisplayTime) / fadeTime;
-    }
+    // No fade animations - quote is always fully visible
+    const alpha = 1;
 
     // Position quote bubble below Martha
     const bubbleX = layout.marthaX;
