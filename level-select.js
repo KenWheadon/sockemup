@@ -2148,6 +2148,9 @@ class LevelSelect extends Screen {
       "rgba(70, 130, 180, 0.8)"
     );
 
+    // Calculate unlocked lore count
+    const unlockedLoreCount = this.game.unlockedStoryPanels.filter((u) => u).length;
+
     this.renderTopBarButton(
       ctx,
       layout.storyViewerButtonX,
@@ -2156,7 +2159,8 @@ class LevelSelect extends Screen {
       layout.storyViewerButtonHeight,
       "Lore",
       this.storyViewer.button.hovered,
-      "rgba(138, 43, 226, 0.8)"
+      "rgba(138, 43, 226, 0.8)",
+      `${unlockedLoreCount}/9`
     );
 
     this.renderTopBarButton(
@@ -2171,7 +2175,7 @@ class LevelSelect extends Screen {
     );
   }
 
-  renderTopBarButton(ctx, x, y, width, height, text, isHovered, baseColor) {
+  renderTopBarButton(ctx, x, y, width, height, text, isHovered, baseColor, countBadge = null) {
     ctx.save();
 
     const buttonLeft = x - width / 2;
@@ -2199,13 +2203,24 @@ class LevelSelect extends Screen {
     ctx.stroke();
 
     // Button text
-    this.renderText(ctx, text, x, y, {
+    this.renderText(ctx, text, x, y - (countBadge ? this.game.getScaledValue(6) : 0), {
       fontSize: this.layoutCache.smallFontSize,
       align: "center",
       baseline: "middle",
       color: "rgba(255, 255, 255, 0.9)",
       weight: "bold",
     });
+
+    // Count badge below text
+    if (countBadge) {
+      this.renderText(ctx, countBadge, x, y + this.game.getScaledValue(12), {
+        fontSize: this.game.getScaledValue(12),
+        align: "center",
+        baseline: "middle",
+        color: "rgba(255, 215, 0, 0.9)",
+        weight: "bold",
+      });
+    }
 
     ctx.restore();
   }

@@ -500,6 +500,7 @@ class SockGame {
     if (savedData) {
       const data = JSON.parse(savedData);
       this.playerPoints = data.playerPoints || 0;
+      this.sockBalls = data.sockBalls || 0;
       this.unlockedLevels = data.unlockedLevels || [
         ...GameConfig.INITIAL_UNLOCKED_LEVELS,
       ];
@@ -558,6 +559,7 @@ class SockGame {
   saveGameData() {
     const data = {
       playerPoints: this.playerPoints,
+      sockBalls: this.sockBalls,
       unlockedLevels: this.unlockedLevels,
       completedLevels: this.completedLevels,
       // Phase 1.2 - Save enhanced data
@@ -674,6 +676,13 @@ class SockGame {
     // Will be reset to 0 in match screen (tracks elapsed time)
     this.timeElapsed = 0;
     this.sockBalls = 0;
+
+    // Track catch quality for current level
+    this.catchQualityCounts = {
+      PERFECT: 0,
+      GOOD: 0,
+      REGULAR: 0
+    };
 
     // Initialize sockball queue for new level
     this.initializeSockballQueue();

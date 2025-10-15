@@ -18,11 +18,14 @@ class LevelEndScreen extends Screen {
     this.rentPenaltyDisplay = 0;
     this.timeBonusDisplay = 0;
     this.totalScoreDisplay = 0;
+    this.perfectCatchesDisplay = 0;
+    this.goodCatchesDisplay = 0;
+    this.regularCatchesDisplay = 0;
     this.scoreAnimationTimer = 0;
     this.currentStageIndex = 0;
     this.scoreStages = [];
-    this.scoreLineAnimations = [0, 0, 0, 0, 0]; // Animation timers for each line (added one for time bonus)
-    this.scoreLineVisible = [false, false, false, false, false];
+    this.scoreLineAnimations = [0, 0, 0, 0, 0, 0, 0, 0]; // Animation timers for each line
+    this.scoreLineVisible = [false, false, false, false, false, false, false, false];
   }
 
   initializeButton() {
@@ -108,6 +111,11 @@ class LevelEndScreen extends Screen {
     );
     this.rentPenalty = Math.max(0, marthaWanted - marthaGot);
 
+    // Catch quality counts
+    this.perfectCatches = this.game.catchQualityCounts?.PERFECT || 0;
+    this.goodCatches = this.game.catchQualityCounts?.GOOD || 0;
+    this.regularCatches = this.game.catchQualityCounts?.REGULAR || 0;
+
     // Base points
     this.sockballsPaidPoints = this.sockballsPaid * 5;
 
@@ -139,6 +147,9 @@ class LevelEndScreen extends Screen {
     // Calculate total steps needed across all stages
     const totalSteps =
       this.sockballsPaid +
+      this.perfectCatches +
+      this.goodCatches +
+      this.regularCatches +
       (this.game.timeBonusEarned ? this.sockballsPaid : 0) +
       this.sockballsLeftover +
       this.rentPenalty +
@@ -153,6 +164,24 @@ class LevelEndScreen extends Screen {
         label: "sockballsPaidDisplay",
         start: 0,
         end: this.sockballsPaid,
+        rate: calculatedRate,
+      },
+      {
+        label: "perfectCatchesDisplay",
+        start: 0,
+        end: this.perfectCatches,
+        rate: calculatedRate,
+      },
+      {
+        label: "goodCatchesDisplay",
+        start: 0,
+        end: this.goodCatches,
+        rate: calculatedRate,
+      },
+      {
+        label: "regularCatchesDisplay",
+        start: 0,
+        end: this.regularCatches,
         rate: calculatedRate,
       },
       {
@@ -656,6 +685,27 @@ class LevelEndScreen extends Screen {
         color: "#4ECDC4",
       },
       {
+        label: `  ${this.perfectCatchesDisplay}x PERFECT CATCHES:`,
+        value: this.perfectCatchesDisplay * 15,
+        color: "#FFD700",
+        show: this.perfectCatches > 0,
+        indent: true,
+      },
+      {
+        label: `  ${this.goodCatchesDisplay}x GOOD CATCHES:`,
+        value: this.goodCatchesDisplay * 10,
+        color: "#00FF00",
+        show: this.goodCatches > 0,
+        indent: true,
+      },
+      {
+        label: `  ${this.regularCatchesDisplay}x NICE CATCHES:`,
+        value: this.regularCatchesDisplay * 5,
+        color: "#FFFFFF",
+        show: this.regularCatches > 0,
+        indent: true,
+      },
+      {
         label: `TIME BONUS (2x RENT):`,
         value: this.timeBonusDisplay * 5,
         color: "#FFD700",
@@ -719,14 +769,15 @@ class LevelEndScreen extends Screen {
         layout.centerX,
         y,
         line.color,
-        originalIndex // Use original index for animation timing
+        originalIndex, // Use original index for animation timing
+        line.indent || false
       );
       displayIndex++;
     });
   }
 
-  renderScoreLine(ctx, label, value, centerX, y, valueColor = "#FFD700", lineIndex = 0) {
-    const fontSize = this.game.getScaledValue(20);
+  renderScoreLine(ctx, label, value, centerX, y, valueColor = "#FFD700", lineIndex = 0, isIndented = false) {
+    const fontSize = isIndented ? this.game.getScaledValue(16) : this.game.getScaledValue(20);
     const animProgress = this.scoreLineAnimations[lineIndex] || 0;
 
     // Slide in from left

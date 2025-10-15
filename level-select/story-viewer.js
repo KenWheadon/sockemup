@@ -460,6 +460,21 @@ class StoryViewer {
         align: "center",
       }
     );
+
+    // Unlock progress message
+    const totalStoryPanels = this.game.unlockedStoryPanels.length;
+    const unlockedCount = this.getUnlockedPanels().length;
+    this.ui.renderText(
+      ctx,
+      `Unlock the full story by beating every level (${unlockedCount}/${totalStoryPanels})`,
+      canvasWidth / 2,
+      buttonY + this.game.getScaledValue(55),
+      {
+        fontSize: this.game.getScaledValue(12),
+        color: unlockedCount === totalStoryPanels ? "rgba(255, 215, 0, 0.9)" : "rgba(180, 100, 255, 0.7)",
+        align: "center",
+      }
+    );
   }
 
   /**

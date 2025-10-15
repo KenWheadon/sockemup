@@ -664,6 +664,31 @@ class MatchScreen extends Screen {
 
           // Screen shake effect
           this.createScreenShake();
+
+          // Check if we've completed the required number of matches (stop timer immediately)
+          const level = GameConfig.LEVELS[this.game.currentLevel];
+          if (level && this.game.sockBalls >= level.sockPairs) {
+            // Mark level as completed to stop the timer
+            if (!this.levelCompleted) {
+              this.levelCompleted = true;
+
+              // Check if player finished within the time limit for time bonus
+              const timeLimit = level.matchingTime;
+              const timeElapsed = Math.floor(this.game.timeElapsed);
+              const timeRemaining = timeLimit - timeElapsed;
+
+              if (timeElapsed <= timeLimit) {
+                // Set time bonus flag - this will double rent payment points on level end screen
+                this.game.timeBonusEarned = true;
+                console.log(`⏱️ Time bonus earned! Finished in ${timeElapsed}s (limit: ${timeLimit}s)`);
+              }
+
+              // Achievement: SPEEDY_MATCHER (complete with 30+ seconds remaining)
+              if (timeRemaining >= 30) {
+                this.game.unlockAchievement("speedy_matcher");
+              }
+            }
+          }
         } else {
           // MISMATCH - new behavior
           this.handleMismatch(pairZones[0].sock, pairZones[1].sock);

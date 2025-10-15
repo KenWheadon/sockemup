@@ -477,6 +477,11 @@ class ThrowingScreen extends Screen {
         if (movingAway && sockball.bestZoneEntered) {
           const catchQuality = this.marthaManager.hitBySockball(sockball, sockball.bestZoneEntered);
           if (catchQuality) {
+            // Track catch quality counts for score screen
+            if (this.game.catchQualityCounts && this.game.catchQualityCounts[catchQuality] !== undefined) {
+              this.game.catchQualityCounts[catchQuality]++;
+            }
+
             // Play particle burst sound when sockball hits Martha
             this.game.audioManager.playSound("particle-burst", false, 0.4);
 
