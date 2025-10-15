@@ -2097,33 +2097,57 @@ class LevelSelect extends Screen {
     ctx.restore();
 
     // Player stats (left side)
-    this.renderText(ctx, "💰", layout.statsX - this.game.getScaledValue(50), layout.statsY, {
-      fontSize: layout.headerFontSize,
-      align: "center",
-      baseline: "middle",
-    });
+    this.renderText(
+      ctx,
+      "💰",
+      layout.statsX - this.game.getScaledValue(50),
+      layout.statsY,
+      {
+        fontSize: layout.headerFontSize,
+        align: "center",
+        baseline: "middle",
+      }
+    );
 
-    this.renderText(ctx, `${this.game.playerPoints}`, layout.statsX, layout.statsY, {
-      fontSize: layout.headerFontSize,
-      align: "left",
-      baseline: "middle",
-      color: "rgba(255, 215, 0, 0.9)",
-      weight: "bold",
-    });
+    this.renderText(
+      ctx,
+      `${this.game.playerPoints}`,
+      layout.statsX,
+      layout.statsY,
+      {
+        fontSize: layout.headerFontSize,
+        align: "left",
+        baseline: "middle",
+        color: "rgba(255, 215, 0, 0.9)",
+        weight: "bold",
+      }
+    );
 
-    this.renderText(ctx, "🧦", layout.statsX + this.game.getScaledValue(120), layout.statsY, {
-      fontSize: layout.headerFontSize,
-      align: "center",
-      baseline: "middle",
-    });
+    this.renderText(
+      ctx,
+      "🧦",
+      layout.statsX + this.game.getScaledValue(120),
+      layout.statsY,
+      {
+        fontSize: layout.headerFontSize,
+        align: "center",
+        baseline: "middle",
+      }
+    );
 
-    this.renderText(ctx, `${this.game.sockBalls}`, layout.statsX + this.game.getScaledValue(155), layout.statsY, {
-      fontSize: layout.headerFontSize,
-      align: "left",
-      baseline: "middle",
-      color: "rgba(255, 215, 0, 0.9)",
-      weight: "bold",
-    });
+    this.renderText(
+      ctx,
+      `${this.game.sockBalls}`,
+      layout.statsX + this.game.getScaledValue(155),
+      layout.statsY,
+      {
+        fontSize: layout.headerFontSize,
+        align: "left",
+        baseline: "middle",
+        color: "rgba(255, 215, 0, 0.9)",
+        weight: "bold",
+      }
+    );
 
     // Buttons (right side)
     this.renderTopBarButton(
@@ -2132,7 +2156,7 @@ class LevelSelect extends Screen {
       layout.achievementsButtonY,
       layout.achievementsButtonWidth,
       layout.achievementsButtonHeight,
-      "🏆 Wins",
+      "Trophies",
       this.achievementsDrawer.button.hovered,
       "rgba(218, 165, 32, 0.8)"
     );
@@ -2143,13 +2167,15 @@ class LevelSelect extends Screen {
       layout.storyReplayButtonY,
       layout.storyReplayButtonWidth,
       layout.storyReplayButtonHeight,
-      "Story",
+      "How to Play",
       this.storyReplayButton.hovered,
       "rgba(70, 130, 180, 0.8)"
     );
 
     // Calculate unlocked lore count
-    const unlockedLoreCount = this.game.unlockedStoryPanels.filter((u) => u).length;
+    const unlockedLoreCount = this.game.unlockedStoryPanels.filter(
+      (u) => u
+    ).length;
 
     this.renderTopBarButton(
       ctx,
@@ -2157,7 +2183,7 @@ class LevelSelect extends Screen {
       layout.storyViewerButtonY,
       layout.storyViewerButtonWidth,
       layout.storyViewerButtonHeight,
-      "Lore",
+      "Story",
       this.storyViewer.button.hovered,
       "rgba(138, 43, 226, 0.8)",
       `${unlockedLoreCount}/9`
@@ -2175,7 +2201,17 @@ class LevelSelect extends Screen {
     );
   }
 
-  renderTopBarButton(ctx, x, y, width, height, text, isHovered, baseColor, countBadge = null) {
+  renderTopBarButton(
+    ctx,
+    x,
+    y,
+    width,
+    height,
+    text,
+    isHovered,
+    baseColor,
+    countBadge = null
+  ) {
     ctx.save();
 
     const buttonLeft = x - width / 2;
@@ -2184,18 +2220,38 @@ class LevelSelect extends Screen {
 
     // Button background
     ctx.fillStyle = isHovered ? this.lightenColor(baseColor) : baseColor;
-    ctx.strokeStyle = isHovered ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 0.4)";
+    ctx.strokeStyle = isHovered
+      ? "rgba(255, 255, 255, 0.8)"
+      : "rgba(255, 255, 255, 0.4)";
     ctx.lineWidth = 2;
 
     // Rounded rectangle
     ctx.beginPath();
     ctx.moveTo(buttonLeft + radius, buttonTop);
     ctx.lineTo(buttonLeft + width - radius, buttonTop);
-    ctx.arcTo(buttonLeft + width, buttonTop, buttonLeft + width, buttonTop + radius, radius);
+    ctx.arcTo(
+      buttonLeft + width,
+      buttonTop,
+      buttonLeft + width,
+      buttonTop + radius,
+      radius
+    );
     ctx.lineTo(buttonLeft + width, buttonTop + height - radius);
-    ctx.arcTo(buttonLeft + width, buttonTop + height, buttonLeft + width - radius, buttonTop + height, radius);
+    ctx.arcTo(
+      buttonLeft + width,
+      buttonTop + height,
+      buttonLeft + width - radius,
+      buttonTop + height,
+      radius
+    );
     ctx.lineTo(buttonLeft + radius, buttonTop + height);
-    ctx.arcTo(buttonLeft, buttonTop + height, buttonLeft, buttonTop + height - radius, radius);
+    ctx.arcTo(
+      buttonLeft,
+      buttonTop + height,
+      buttonLeft,
+      buttonTop + height - radius,
+      radius
+    );
     ctx.lineTo(buttonLeft, buttonTop + radius);
     ctx.arcTo(buttonLeft, buttonTop, buttonLeft + radius, buttonTop, radius);
     ctx.closePath();
@@ -2203,13 +2259,19 @@ class LevelSelect extends Screen {
     ctx.stroke();
 
     // Button text
-    this.renderText(ctx, text, x, y - (countBadge ? this.game.getScaledValue(6) : 0), {
-      fontSize: this.layoutCache.smallFontSize,
-      align: "center",
-      baseline: "middle",
-      color: "rgba(255, 255, 255, 0.9)",
-      weight: "bold",
-    });
+    this.renderText(
+      ctx,
+      text,
+      x,
+      y - (countBadge ? this.game.getScaledValue(6) : 0),
+      {
+        fontSize: this.layoutCache.smallFontSize,
+        align: "center",
+        baseline: "middle",
+        color: "rgba(255, 255, 255, 0.9)",
+        weight: "bold",
+      }
+    );
 
     // Count badge below text
     if (countBadge) {
@@ -2229,7 +2291,7 @@ class LevelSelect extends Screen {
     // Simple color lightening - increase opacity or brightness
     return color.replace(/[\d.]+\)$/, (match) => {
       const opacity = parseFloat(match);
-      return (Math.min(opacity + 0.1, 1.0)) + ")";
+      return Math.min(opacity + 0.1, 1.0) + ")";
     });
   }
 
@@ -2413,7 +2475,7 @@ class LevelSelect extends Screen {
 
     this.renderText(
       ctx,
-      "📖 Story",
+      "📖 How to Play",
       layout.storyReplayButtonX,
       layout.storyReplayButtonY,
       {
@@ -2500,7 +2562,7 @@ class LevelSelect extends Screen {
 
     this.renderText(
       ctx,
-      `📚 Panels (${unlockedCount}/9)`,
+      "📚 Story",
       layout.storyViewerButtonX,
       layout.storyViewerButtonY,
       {

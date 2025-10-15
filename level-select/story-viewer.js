@@ -151,7 +151,7 @@ class StoryViewer {
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
     const modalWidth = this.game.getScaledValue(700);
-    const modalHeight = this.game.getScaledValue(600);
+    const modalHeight = this.game.getScaledValue(480); // Reduced from 600 by 20%
     const modalX = (canvasWidth - modalWidth) / 2;
     const modalY = (canvasHeight - modalHeight) / 2;
     const buttonY = modalY + modalHeight - this.game.getScaledValue(50);
@@ -279,7 +279,7 @@ class StoryViewer {
 
     // Modal dimensions
     const modalWidth = this.game.getScaledValue(700);
-    const modalHeight = this.game.getScaledValue(600);
+    const modalHeight = this.game.getScaledValue(480); // Reduced from 600 by 20%
     const modalX = (canvasWidth - modalWidth) / 2;
     const modalY = (canvasHeight - modalHeight) / 2;
     const radius = this.game.getScaledValue(12);
