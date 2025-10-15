@@ -257,7 +257,7 @@ class LevelSelect extends Screen {
         ((this.levelConfig.columns - 1) *
           this.game.getScaledValue(this.levelConfig.horizontalSpacing)) /
           2,
-      levelGridStartY: canvasHeight / 2 + this.game.getScaledValue(10), // Slightly lower
+      levelGridStartY: canvasHeight / 2 + this.game.getScaledValue(0), // Centered vertically
       marthaX: this.game.getScaledValue(this.MARTHA_CONFIG.offsetX),
       marthaY: barHeight + this.game.getScaledValue(this.MARTHA_CONFIG.offsetY), // Below top bar
       marthaWidth: this.marthaImageSize.width,
