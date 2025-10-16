@@ -98,7 +98,8 @@ class StoryManager {
     };
 
     // Position buttons in a row at the bottom
-    const buttonY = this.slideContainer.y + containerHeight - this.game.getScaledValue(50);
+    const buttonY =
+      this.slideContainer.y + containerHeight - this.game.getScaledValue(50);
     const buttonWidth = this.game.getScaledValue(85);
     const buttonHeight = this.game.getScaledValue(35);
     const buttonSpacing = this.game.getScaledValue(15);
@@ -380,7 +381,7 @@ class StoryManager {
 
   renderSlide(ctx, slide) {
     const container = this.slideContainer;
-    const contentY = container.y + container.padding * 1.5;
+    const contentY = container.y + container.padding;
 
     // Apply transition animation with slide effect
     let alpha = 1;
@@ -388,10 +389,14 @@ class StoryManager {
     if (this.isTransitioning) {
       // Ease in-out cubic for smooth transition
       const t = this.transitionProgress;
-      const easedProgress = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      const easedProgress =
+        t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
       alpha = Math.abs(Math.cos(easedProgress * Math.PI));
-      slideOffset = Math.sin(easedProgress * Math.PI) * this.transitionDirection * this.game.getScaledValue(50);
+      slideOffset =
+        Math.sin(easedProgress * Math.PI) *
+        this.transitionDirection *
+        this.game.getScaledValue(50);
     }
 
     ctx.save();
@@ -412,7 +417,7 @@ class StoryManager {
     // Image (if available) with scale animation
     const image = this.game.images[slide.image];
     if (image) {
-      const maxImageSize = this.game.getScaledValue(140);
+      const maxImageSize = this.game.getScaledValue(180);
 
       // Calculate aspect ratio preserving dimensions
       const aspectRatio = image.width / image.height;
@@ -448,7 +453,7 @@ class StoryManager {
     }
 
     // Text with better spacing and styling
-    const textY = contentY + this.game.getScaledValue(230);
+    const textY = contentY + this.game.getScaledValue(250);
 
     ctx.save();
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";

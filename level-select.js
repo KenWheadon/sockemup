@@ -65,9 +65,9 @@ class LevelSelect extends Screen {
     // Martha quote system - rotating speech bubbles
     this.marthaQuotes = [
       "Rent's due, kiddo!",
-      "I could triple my rates if you just leave...",
+      "I could 10x my rates if you just leave...",
       "I want to evict you, so you better not pay rent!",
-      "Your lease is up for renewal... at TRIPLE the price!",
+      "Your lease is up for renewal... at 2x the price!",
       "You should go camping, I won't change the locks on you or anything....",
       "You know what? Your socks STINK!",
       "I've got 10 other tenants ready to pay more!",
