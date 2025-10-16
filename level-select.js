@@ -183,6 +183,7 @@ class LevelSelect extends Screen {
     this.uiHelpers = new UIHelpers(this.game);
     this.storyViewer = new StoryViewer(this.game, this.uiHelpers);
     this.difficultyModal = new DifficultyModal(this.game, this.uiHelpers);
+    this.difficultySelector = new DifficultySelector(this.game, this.uiHelpers);
 
     // Story unlock animation
     this.storyUnlockAnimation = {
@@ -236,7 +237,7 @@ class LevelSelect extends Screen {
     const barY = 0; // Top of screen
     const barPadding = this.game.getScaledValue(GameConfig.UI_BAR.padding);
 
-    return {
+    this.layoutCache = {
       ...baseLayout,
       logoX: canvasWidth / 2,
       logoY: barHeight + this.game.getScaledValue(60), // Below top bar
@@ -311,6 +312,12 @@ class LevelSelect extends Screen {
       statsPanelWidth: this.game.getScaledValue(200),
       statsPanelHeight: this.game.getScaledValue(40),
     };
+
+    // Update difficulty selector layout BEFORE returning
+    console.log("📐 About to update difficulty selector layout", this.layoutCache);
+    this.difficultySelector.updateLayout(this.layoutCache);
+
+    return this.layoutCache;
   }
 
   onResize() {
@@ -644,6 +651,7 @@ class LevelSelect extends Screen {
     }
 
     this.difficultyModal.update(deltaTime);
+    this.difficultySelector.update(deltaTime);
 
     for (let i = 0; i < this.levelHoverAnimations.length; i++) {
       const isHovered = this.hoveredLevel === i;
@@ -899,6 +907,8 @@ class LevelSelect extends Screen {
     });
 
     this.storyViewer.updateButtonHover(x, y, layout);
+    this.difficultySelector.updateButtonHover(x, y);
+    this.difficultySelector.updateDropdownHover(x, y);
 
     this.achievementsDrawer.button.hovered = this.isPointInRect(x, y, {
       x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
@@ -1346,6 +1356,13 @@ class LevelSelect extends Screen {
 
     // Handle story viewer modal clicks
     if (this.storyViewer.handleClick(x, y)) {
+      return;
+    }
+
+    // NEW GAME+: Handle difficulty selector clicks
+    if (this.difficultySelector.handleClick(x, y)) {
+      // Recalculate layout after difficulty change to update level display
+      this.calculateLayout();
       return;
     }
 
@@ -1817,6 +1834,9 @@ class LevelSelect extends Screen {
 
     this.renderTopBar(ctx);
     this.renderAchievementsDrawer(ctx);
+
+    // NEW GAME+: Render difficulty selector
+    this.difficultySelector.render(ctx, this.layoutCache);
 
     // NEW GAME+: Render difficulty modal if open
     this.difficultyModal.render(ctx, this.layoutCache);
