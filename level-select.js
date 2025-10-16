@@ -74,7 +74,7 @@ class LevelSelect extends Screen {
       "Ever thought about moving? Like, today?",
       "I wish I wasn't so tiny...",
       "I'm quadrupling rent next month!",
-      "Pack your socks, we're done here!",
+      "If you leave, don't take your socks!",
       "I need your room for my pet rock collection.",
       "Your neighbors complained about your sock sorting!",
       "Time to pay up or ship out!",
@@ -303,7 +303,8 @@ class LevelSelect extends Screen {
       achievementsDrawerButtonX: this.game.getScaledValue(35),
       achievementsDrawerButtonY: this.game.getScaledValue(50),
       achievementsDrawerButtonSize: this.game.getScaledValue(50),
-      youWinX: canvasWidth - youWinImageSize.width / 2 - this.game.getScaledValue(50),
+      youWinX:
+        canvasWidth - youWinImageSize.width / 2 - this.game.getScaledValue(50),
       youWinY: canvasHeight / 2,
       youWinWidth: youWinImageSize.width,
       youWinHeight: youWinImageSize.height,
@@ -3650,7 +3651,7 @@ class LevelSelect extends Screen {
       ctx.shadowBlur = this.game.getScaledValue(4);
       this.renderText(
         ctx,
-        `💎 ${GameConfig.LEVEL_COSTS[levelIndex]}`,
+        `💰 ${GameConfig.LEVEL_COSTS[levelIndex]}`,
         x,
         y - this.game.getScaledValue(55),
         {

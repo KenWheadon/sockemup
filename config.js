@@ -403,6 +403,15 @@ const GameConfig = {
       "htp-3.png",
       "htp-4.png",
       "htp-5.png",
+      "story-1.png",
+      "story-2.png",
+      "story-3.png",
+      "story-4.png",
+      "story-5.png",
+      "story-6.png",
+      "story-7.png",
+      "story-8.png",
+      "story-9.png",
     ],
     UI: [
       "background.png",
@@ -423,7 +432,6 @@ const GameConfig = {
   },
 
   // Sockball queue management utilities
-  // These methods will be added to the main game object
   SOCKBALL_QUEUE_METHODS: {
     // Initialize the sockball queue
     initializeSockballQueue: function () {
@@ -467,9 +475,9 @@ const GameConfig = {
 
   // Martha catch mechanics settings
   CATCH_MECHANICS: {
-    CATCH_RADIUS_MULTIPLIER: 2.6, // 2.6x Martha's actual size (2x expansion from 1.3x)
-    PERFECT_CATCH_THRESHOLD: 0.6, // Center 60% of Martha = perfect (2x from 0.3)
-    GOOD_CATCH_THRESHOLD: 1.2, // Center 120% of Martha = good (2x from 0.6)
+    CATCH_RADIUS_MULTIPLIER: 2.6,
+    PERFECT_CATCH_THRESHOLD: 0.6,
+    GOOD_CATCH_THRESHOLD: 1.2,
     PERFECT_CATCH_BONUS: 15,
     GOOD_CATCH_BONUS: 10,
     REGULAR_CATCH_BONUS: 5,
@@ -640,44 +648,6 @@ const GameConfig = {
     },
   },
 
-  // Tutorial step definitions
-  TUTORIAL_STEPS: {
-    MATCH_PHASE: [
-      {
-        id: "shoot_socks",
-        message: "Click the sock pile to shoot socks!",
-        highlightElement: "sockPile",
-        arrowDirection: "down",
-      },
-      {
-        id: "drag_socks",
-        message: "Drag socks to matching drop zones",
-        highlightElement: "dropZones",
-        arrowDirection: "down",
-      },
-      {
-        id: "create_sockball",
-        message: "Match 2 same socks to create a sockball!",
-        highlightElement: "dropZones",
-        arrowDirection: "down",
-      },
-    ],
-    THROW_PHASE: [
-      {
-        id: "aim_throw",
-        message: "Click to aim and throw at Martha!",
-        highlightElement: "martha",
-        arrowDirection: "up",
-      },
-      {
-        id: "hit_martha",
-        message: "Hit Martha to give her sockballs!",
-        highlightElement: "martha",
-        arrowDirection: "up",
-      },
-    ],
-  },
-
   STORY_SLIDES: [
     {
       id: "meet_martha",
@@ -770,55 +740,55 @@ const GameConfig = {
       id: "panel_1",
       title: "The Collection",
       text: "Before she was your landlord, she was Marthilda Socksworth III, heiress to the Socksworth Sockball fortune—a glittering empire of luxury stress-toys for stressed-out fantasy executives. But she always dreamed of something bigger… literally.",
-      image: "martha.png",
+      image: "story-1.png",
     },
     {
       id: "panel_2",
       title: "The Incident",
       text: "It all unraveled when a prototype sockball exploded at the factory. The enchanted fibers compressed Marthilda’s entire body down to half size. Her family said, ‘Well, she’s easier to store.’ She said, ‘You’ll regret folding me away.’",
-      image: "martha2.png",
+      image: "story-2.png",
     },
     {
       id: "panel_3",
       title: "The Betrayal",
       text: "Her cousin Reginald seized the company, rebranded it Reginald’s Remarkable Sockballs, and kicked Martha out for being ‘too small to manage big business.’ She swore revenge—not on him directly, but on every sockball that reminded her of him.",
-      image: "martha3.png",
+      image: "story-3.png",
     },
     {
       id: "panel_4",
       title: "The Property Scheme",
       text: "With her shrunken inheritance, Martha bought the cheapest building in town—haunted, leaning, and allegedly cursed. She evicted the ghosts within a day (they left politely). Her plan: rebuild her sockball empire, one rent payment at a time.",
-      image: "martha-rentdue.png",
+      image: "story-4.png",
     },
     {
       id: "panel_5",
       title: "The Science",
       text: "Late at night, she experimented with sockball physics. If thrown with exact velocity and perfect spin, they released something she called ‘size essence.’ Hence the rent policy: every sockball you throw helps fund her… personal expansion project.",
-      image: "martha-demand.png",
+      image: "story-5.png",
     },
     {
       id: "panel_6",
       title: "The Secret Lab",
       text: "Hidden behind the drywall of your apartment is a labyrinth of pipes, beakers, and laundry chutes—Martha’s Sockball Research Facility. Those ‘maintenance visits’? She’s collecting data on your matching speed. And possibly your detergent choices.",
-      image: "martha.png",
+      image: "story-6.png",
     },
     {
       id: "panel_7",
       title: "The Competition",
       text: "Martha claims Reginald is building a sockball factory right across town. She says his socks smell of betrayal and cheap fabric softener. No one’s seen him yet—but every time a new sock pattern shows up, she glares at the ceiling and whispers, ‘Nice try, Reggie.’",
-      image: "martha2.png",
+      image: "story-7.png",
     },
     {
       id: "panel_8",
       title: "The Truth",
       text: "Martha doesn’t dodge your throws—she’s trying to catch them. Her arms are just tragically short. When a sockball hits her square in the chest, she beams with pride. When it hits her face, she just laughs and mutters, ‘Reggie could never aim like that.’ Turns out, every throw—face shot included—helps her absorb more sockball magic.",
-      image: "martha3.png",
+      image: "story-8.png",
     },
     {
       id: "panel_9",
       title: "The Transformation",
       text: "At last, her collection is complete. Thousands of sockballs whirl around her in a glowing cyclone. Then—FLASH!—she grows half an inch taller. ‘HALF AN INCH?!’ she roars. She raises your rent by 50%. Congratulations, you’ve unlocked New Game+ and eternal tenancy.",
-      image: "martha-win.png",
+      image: "story-9.png",
     },
   ],
 };
