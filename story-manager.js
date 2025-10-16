@@ -417,7 +417,7 @@ class StoryManager {
     // Image (if available) with scale animation
     const image = this.game.images[slide.image];
     if (image) {
-      const maxImageSize = this.game.getScaledValue(180);
+      const maxImageSize = this.game.getScaledValue(168);
 
       // Calculate aspect ratio preserving dimensions
       const aspectRatio = image.width / image.height;
@@ -434,7 +434,9 @@ class StoryManager {
       }
 
       const imageX = container.x + container.width / 2 - imageWidth / 2;
-      const imageY = contentY + this.game.getScaledValue(70);
+      // Center all images vertically in the same space
+      const imageAreaY = contentY + this.game.getScaledValue(70);
+      const imageY = imageAreaY + (maxImageSize - imageHeight) / 2;
 
       // Subtle pulse for image
       const imageScale = this.isTransitioning ? alpha : 1;
