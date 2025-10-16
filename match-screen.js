@@ -666,8 +666,10 @@ class MatchScreen extends Screen {
           this.createScreenShake();
 
           // Check if we've completed the required number of matches (stop timer immediately)
+          // Count BOTH animated sockballs AND queued sockballs
           const level = GameConfig.LEVELS[this.game.currentLevel];
-          if (level && this.game.sockBalls >= level.sockPairs) {
+          const totalSockballs = this.game.sockBalls + this.game.getSockballQueueLength();
+          if (level && totalSockballs >= level.sockPairs) {
             // Mark level as completed to stop the timer
             if (!this.levelCompleted) {
               this.levelCompleted = true;

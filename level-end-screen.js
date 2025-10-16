@@ -10,6 +10,9 @@ class LevelEndScreen extends Screen {
     this.titleBounceTimer = 0;
     this.marthaScaleTimer = 0;
     this.showStars = false;
+    this.showVideoButton = false;
+    this.videoPlayerActive = false;
+    this.videoElement = null;
   }
 
   resetScores() {
@@ -30,6 +33,14 @@ class LevelEndScreen extends Screen {
 
   initializeButton() {
     this.continueButton = {
+      x: 0,
+      y: 0,
+      width: 200,
+      height: 50,
+      hovered: false,
+      pressed: false,
+    };
+    this.videoButton = {
       x: 0,
       y: 0,
       width: 200,
@@ -66,6 +77,7 @@ class LevelEndScreen extends Screen {
       buttonWidth: this.game.getScaledValue(200),
       buttonHeight: this.game.getScaledValue(50),
       buttonY: canvasHeight / 2 + this.game.getScaledValue(240),
+      videoButtonY: canvasHeight / 2 + this.game.getScaledValue(305),
     };
   }
 
@@ -85,6 +97,12 @@ class LevelEndScreen extends Screen {
       this.game.showNewGamePlusNotification = false; // Reset flag
     }
 
+    // Show video button only if all 9 base levels have been completed
+    const allBaseLevelsCompleted = this.game.completedLevelsByDifficulty[0] &&
+                                   this.game.completedLevelsByDifficulty[0].every(completed => completed);
+    this.showVideoButton = allBaseLevelsCompleted;
+    this.videoPlayerActive = false;
+
     console.log(
       "🎵 Level end screen setup - no music started here (handled by throwing screen)"
     );
@@ -92,6 +110,9 @@ class LevelEndScreen extends Screen {
 
   cleanup() {
     super.cleanup();
+
+    // Close video player if active
+    this.closeVideoPlayer();
 
     // Level end screen doesn't start its own music, so no cleanup needed
     // The throwing screen handles the victory/defeat music
@@ -298,6 +319,11 @@ class LevelEndScreen extends Screen {
     this.continueButton.height = layout.buttonHeight;
     this.continueButton.x = layout.centerX - layout.buttonWidth / 2;
     this.continueButton.y = layout.buttonY;
+
+    this.videoButton.width = layout.buttonWidth;
+    this.videoButton.height = layout.buttonHeight;
+    this.videoButton.x = layout.centerX - layout.buttonWidth / 2;
+    this.videoButton.y = layout.videoButtonY;
   }
 
   onUpdate(deltaTime) {
@@ -334,22 +360,50 @@ class LevelEndScreen extends Screen {
   }
 
   onMouseMove(x, y) {
+    if (this.videoPlayerActive) return;
+
     const b = this.continueButton;
     b.hovered =
       x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height;
+
+    if (this.showVideoButton) {
+      const v = this.videoButton;
+      v.hovered =
+        x >= v.x && x <= v.x + v.width && y >= v.y && y <= v.y + v.height;
+    }
   }
 
   onMouseDown(x, y) {
+    if (this.videoPlayerActive) return;
+
     if (this.continueButton.hovered) {
       this.continueButton.pressed = true;
+    }
+    if (this.showVideoButton && this.videoButton.hovered) {
+      this.videoButton.pressed = true;
     }
   }
 
   onMouseUp() {
+    if (this.videoPlayerActive) return;
+
     this.continueButton.pressed = false;
+    if (this.showVideoButton) {
+      this.videoButton.pressed = false;
+    }
   }
 
   handleKeyDown(e) {
+    // Close video player with Escape
+    if (this.videoPlayerActive && e.key === "Escape") {
+      this.closeVideoPlayer();
+      e.preventDefault();
+      return;
+    }
+
+    // Don't handle other keys if video is active
+    if (this.videoPlayerActive) return;
+
     // Enter or Space to continue
     if (e.key === "Enter" || e.key === " ") {
       this.handleContinue();
@@ -420,8 +474,27 @@ class LevelEndScreen extends Screen {
   }
 
   onClick(x, y) {
+    if (this.videoPlayerActive) {
+      // Check if click is outside video player
+      const videoWidth = this.game.getScaledValue(640);
+      const videoHeight = this.game.getScaledValue(360);
+      const videoX = (this.game.getCanvasWidth() - videoWidth) / 2;
+      const videoY = (this.game.getCanvasHeight() - videoHeight) / 2;
+
+      const clickedOutside = x < videoX - 10 || x > videoX + videoWidth + 10 ||
+                             y < videoY - 10 || y > videoY + videoHeight + 10;
+
+      if (clickedOutside) {
+        this.closeVideoPlayer();
+      }
+      return;
+    }
+
     if (this.continueButton.hovered) {
       this.handleContinue();
+    }
+    if (this.showVideoButton && this.videoButton.hovered) {
+      this.openVideoPlayer();
     }
   }
 
@@ -430,6 +503,16 @@ class LevelEndScreen extends Screen {
     this.renderMainContainer(ctx);
     this.renderContent(ctx);
     this.renderContinueButton(ctx);
+
+    // Render video button if shown
+    if (this.showVideoButton) {
+      this.renderVideoButton(ctx);
+    }
+
+    // Render video player modal if active
+    if (this.videoPlayerActive) {
+      this.renderVideoPlayer(ctx);
+    }
 
     // NEW GAME+: Render unlock notification if just unlocked
     if (this.showingNewGamePlusUnlock) {
@@ -890,10 +973,160 @@ class LevelEndScreen extends Screen {
   }
 
 
+  renderVideoButton(ctx) {
+    const button = this.videoButton;
+
+    ctx.save();
+
+    // Enhanced gradient background
+    const gradient = ctx.createLinearGradient(
+      button.x,
+      button.y,
+      button.x,
+      button.y + button.height
+    );
+
+    let color1, color2;
+    if (button.pressed) {
+      color1 = "#9B59B6";
+      color2 = "#7D3C98";
+    } else if (button.hovered) {
+      color1 = "#BB8FCE";
+      color2 = "#A569BD";
+    } else {
+      color1 = "#A569BD";
+      color2 = "#8E44AD";
+    }
+
+    gradient.addColorStop(0, color1);
+    gradient.addColorStop(1, color2);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(button.x, button.y, button.width, button.height);
+
+    // Enhanced border
+    ctx.strokeStyle = button.hovered ? "#D7BDE2" : "#8E44AD";
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.strokeRect(button.x, button.y, button.width, button.height);
+
+    // Glow effect when hovered
+    if (button.hovered) {
+      ctx.shadowColor = "#BB8FCE";
+      ctx.shadowBlur = this.game.getScaledValue(20) * this.getGlowIntensity(0.7, 1.0);
+      ctx.strokeRect(button.x, button.y, button.width, button.height);
+
+      // Inner highlight
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.lineWidth = this.game.getScaledValue(1);
+      ctx.strokeRect(
+        button.x + 2,
+        button.y + 2,
+        button.width - 4,
+        button.height - 4
+      );
+    }
+
+    // Button text with shadow
+    ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+    ctx.shadowBlur = this.game.getScaledValue(5);
+    ctx.shadowOffsetX = button.pressed ? 0 : this.game.getScaledValue(2);
+    ctx.shadowOffsetY = button.pressed ? 0 : this.game.getScaledValue(2);
+
+    ctx.fillStyle = "#ffffff";
+    ctx.font = `bold ${this.game.getScaledValue(18)}px Courier New`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const textY = button.y + button.height / 2;
+    const textX = button.x + button.width / 2;
+    ctx.fillText("WATCH VIDEO", textX, textY);
+
+    ctx.restore();
+  }
+
+  openVideoPlayer() {
+    this.game.audioManager.playSound("click", false, 0.5);
+    this.videoPlayerActive = true;
+
+    // Create video element
+    this.videoElement = document.createElement('video');
+    this.videoElement.src = 'videos/video-1.mp4';
+    this.videoElement.loop = true;
+    this.videoElement.autoplay = true;
+    this.videoElement.controls = false;
+    this.videoElement.style.display = 'none';
+    document.body.appendChild(this.videoElement);
+
+    console.log("🎥 Video player opened");
+  }
+
+  closeVideoPlayer() {
+    this.videoPlayerActive = false;
+
+    // Clean up video element
+    if (this.videoElement) {
+      this.videoElement.pause();
+      this.videoElement.remove();
+      this.videoElement = null;
+    }
+
+    console.log("🎥 Video player closed");
+  }
+
+  renderVideoPlayer(ctx) {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
+    ctx.save();
+
+    // Dark overlay
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    // Video container
+    const videoWidth = this.game.getScaledValue(640);
+    const videoHeight = this.game.getScaledValue(360);
+    const videoX = (canvasWidth - videoWidth) / 2;
+    const videoY = (canvasHeight - videoHeight) / 2;
+
+    // Container background
+    ctx.fillStyle = "rgba(20, 20, 20, 0.95)";
+    ctx.fillRect(videoX - 10, videoY - 10, videoWidth + 20, videoHeight + 20);
+
+    // Border with glow
+    ctx.strokeStyle = "#BB8FCE";
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.shadowColor = "#BB8FCE";
+    ctx.shadowBlur = this.game.getScaledValue(15);
+    ctx.strokeRect(videoX - 10, videoY - 10, videoWidth + 20, videoHeight + 20);
+
+    // Draw video frame if available
+    if (this.videoElement && this.videoElement.readyState >= 2) {
+      ctx.drawImage(this.videoElement, videoX, videoY, videoWidth, videoHeight);
+    } else {
+      // Loading text
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = `${this.game.getScaledValue(24)}px Courier New`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Loading video...", canvasWidth / 2, canvasHeight / 2);
+    }
+
+    // Close button hint
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("Press ESC or click outside to close", canvasWidth / 2, videoY + videoHeight + 30);
+
+    ctx.restore();
+  }
+
   // NEW GAME+ Unlock Notification
   renderNewGamePlusUnlock(ctx) {
     const canvasWidth = this.game.getCanvasWidth();
-    const canvasHeight = this.game.getCanvasHeight();
     const bannerHeight = this.game.getScaledValue(200);
     const bannerY = this.game.getScaledValue(50);
 
