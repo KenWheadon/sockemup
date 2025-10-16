@@ -2202,7 +2202,8 @@ class LevelSelect extends Screen {
       "Story",
       this.storyViewer.button.hovered,
       "rgba(138, 43, 226, 0.8)",
-      `${unlockedLoreCount}/9`
+      `${unlockedLoreCount}/9`,
+      unlockedLoreCount === 0 // isDisabled when no panels unlocked
     );
 
     this.renderTopBarButton(
@@ -2226,7 +2227,8 @@ class LevelSelect extends Screen {
     text,
     isHovered,
     baseColor,
-    countBadge = null
+    countBadge = null,
+    isDisabled = false
   ) {
     ctx.save();
 
@@ -2235,8 +2237,15 @@ class LevelSelect extends Screen {
     const radius = this.game.getScaledValue(6);
 
     // Button background
-    ctx.fillStyle = isHovered ? this.lightenColor(baseColor) : baseColor;
-    ctx.strokeStyle = isHovered
+    if (isDisabled) {
+      ctx.fillStyle = "rgba(80, 80, 80, 0.5)";
+    } else {
+      ctx.fillStyle = isHovered ? this.lightenColor(baseColor) : baseColor;
+    }
+
+    ctx.strokeStyle = isDisabled
+      ? "rgba(100, 100, 100, 0.3)"
+      : isHovered
       ? "rgba(255, 255, 255, 0.8)"
       : "rgba(255, 255, 255, 0.4)";
     ctx.lineWidth = 2;
@@ -2284,7 +2293,7 @@ class LevelSelect extends Screen {
         fontSize: this.layoutCache.smallFontSize,
         align: "center",
         baseline: "middle",
-        color: "rgba(255, 255, 255, 0.9)",
+        color: isDisabled ? "rgba(150, 150, 150, 0.6)" : "rgba(255, 255, 255, 0.9)",
         weight: "bold",
       }
     );
@@ -2295,7 +2304,7 @@ class LevelSelect extends Screen {
         fontSize: this.game.getScaledValue(12),
         align: "center",
         baseline: "middle",
-        color: "rgba(255, 215, 0, 0.9)",
+        color: isDisabled ? "rgba(150, 150, 150, 0.6)" : "rgba(255, 215, 0, 0.9)",
         weight: "bold",
       });
     }

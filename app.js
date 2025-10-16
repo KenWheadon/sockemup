@@ -95,6 +95,9 @@ class SockGame {
     this.fpsTimer = 0;
     this.animationFrameId = null;
 
+    // Track game state at mousedown to prevent cross-screen clicks
+    this.mouseDownState = null;
+
     // Initialize screens - now using the base Screen class
     this.levelSelect = new LevelSelect(this);
     this.levelSelect.setup();
@@ -762,6 +765,9 @@ class SockGame {
 
   handleMouseDown(e) {
     try {
+      // Track the game state when mouse down occurs
+      this.mouseDownState = this.gameState;
+
       // Fix Bug #17: Add error handling for coordinate conversion
       const coords = this.screenToCanvas(e.clientX, e.clientY);
       const x = coords.x;
@@ -828,6 +834,13 @@ class SockGame {
 
   handleClick(e) {
     try {
+      // Prevent cross-screen clicks: only process if game state hasn't changed since mousedown
+      if (this.mouseDownState !== null && this.mouseDownState !== this.gameState) {
+        console.log(`🚫 Ignoring click - state changed from ${this.mouseDownState} to ${this.gameState}`);
+        this.mouseDownState = null;
+        return;
+      }
+
       // Fix Bug #17: Add error handling for coordinate conversion
       const coords = this.screenToCanvas(e.clientX, e.clientY);
       const x = coords.x;
@@ -841,6 +854,9 @@ class SockGame {
       } else if (this.gameState === "gameOver") {
         this.levelEndScreen.handleClick(x, y);
       }
+
+      // Reset mousedown state after processing click
+      this.mouseDownState = null;
     } catch (error) {
       console.error('Error handling click:', error);
     }

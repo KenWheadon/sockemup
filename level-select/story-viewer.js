@@ -81,6 +81,15 @@ class StoryViewer {
    * Update button hover state
    */
   updateButtonHover(x, y, layout) {
+    const unlockedCount = this.game.unlockedStoryPanels.filter(u => u).length;
+    const isDisabled = unlockedCount === 0;
+
+    // Don't allow hover on disabled button
+    if (isDisabled) {
+      this.button.hovered = false;
+      return;
+    }
+
     const buttonX = layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2;
     const buttonY = layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2;
 
@@ -208,7 +217,7 @@ class StoryViewer {
    */
   renderButton(ctx, layout) {
     const unlockedCount = this.game.unlockedStoryPanels.filter(u => u).length;
-    if (unlockedCount === 0) return; // Don't show button if no panels unlocked
+    const isDisabled = unlockedCount === 0;
 
     ctx.save();
 
@@ -222,7 +231,12 @@ class StoryViewer {
       x,
       y + layout.storyViewerButtonHeight
     );
-    if (this.button.hovered) {
+
+    if (isDisabled) {
+      // Disabled state - gray gradient
+      gradient.addColorStop(0, "rgba(80, 80, 80, 0.6)");
+      gradient.addColorStop(1, "rgba(60, 60, 60, 0.6)");
+    } else if (this.button.hovered) {
       gradient.addColorStop(0, "rgba(180, 100, 255, 0.95)");
       gradient.addColorStop(1, "rgba(130, 65, 225, 0.95)");
     } else {
@@ -231,12 +245,14 @@ class StoryViewer {
     }
     ctx.fillStyle = gradient;
 
-    if (this.button.hovered) {
+    if (this.button.hovered && !isDisabled) {
       ctx.shadowColor = "rgba(180, 100, 255, 0.6)";
       ctx.shadowBlur = this.game.getScaledValue(12);
     }
 
-    ctx.strokeStyle = this.button.hovered
+    ctx.strokeStyle = isDisabled
+      ? "rgba(100, 100, 100, 0.4)"
+      : this.button.hovered
       ? "rgba(200, 150, 255, 0.9)"
       : "rgba(150, 100, 237, 0.6)";
     ctx.lineWidth = this.game.getScaledValue(3);
@@ -254,7 +270,7 @@ class StoryViewer {
       layout.storyViewerButtonY,
       {
         fontSize: layout.smallFontSize,
-        color: "white",
+        color: isDisabled ? "rgba(150, 150, 150, 0.7)" : "white",
         weight: "bold",
         align: "center",
         baseline: "middle",
