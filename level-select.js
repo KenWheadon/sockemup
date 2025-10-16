@@ -302,10 +302,8 @@ class LevelSelect extends Screen {
       achievementsDrawerButtonX: this.game.getScaledValue(35),
       achievementsDrawerButtonY: this.game.getScaledValue(50),
       achievementsDrawerButtonSize: this.game.getScaledValue(50),
-      youWinX: canvasWidth / 2,
-      youWinY:
-        canvasHeight / 2 +
-        this.game.getScaledValue(this.YOU_WIN_CONFIG.offsetY),
+      youWinX: canvasWidth - youWinImageSize.width / 2 - this.game.getScaledValue(50),
+      youWinY: canvasHeight / 2,
       youWinWidth: youWinImageSize.width,
       youWinHeight: youWinImageSize.height,
 
@@ -645,8 +643,6 @@ class LevelSelect extends Screen {
       }
     }
 
-    // NEW GAME+: Animate difficulty modal
-    // Update difficulty modal animations
     this.difficultyModal.update(deltaTime);
 
     for (let i = 0; i < this.levelHoverAnimations.length; i++) {
@@ -671,7 +667,6 @@ class LevelSelect extends Screen {
       }
     }
 
-    // Update story viewer animations
     this.storyViewer.update(deltaTime);
 
     this.storyReplayButton.hoverProgress =
@@ -718,10 +713,8 @@ class LevelSelect extends Screen {
       }
     }
 
-    // Update Martha quote system - auto-rotate every 5 seconds
     this.quoteTimer += deltaTime;
     if (this.quoteTimer >= this.quoteRotationInterval) {
-      // Auto-rotate to next quote
       this.cycleToNextQuote();
     }
 
@@ -779,7 +772,6 @@ class LevelSelect extends Screen {
   updateMenuSocks(deltaTime) {
     const timeMultiplier = deltaTime / 16.67;
 
-    // Fix Bug #21: Use filter instead of splice during iteration to avoid index issues
     this.menuSocks = this.menuSocks.filter((sock) => {
       if (sock === this.dragSock || this.isSockInDropZone(sock)) return true;
 
@@ -856,7 +848,6 @@ class LevelSelect extends Screen {
   }
 
   onMouseMove(x, y) {
-    // Fix: Track mouse velocity for drag momentum
     this.mouseVelocityX = x - this.lastMouseX;
     this.mouseVelocityY = y - this.lastMouseY;
     this.lastMouseX = x;
@@ -867,7 +858,6 @@ class LevelSelect extends Screen {
       return;
     }
 
-    // NEW GAME+: Handle difficulty modal hover
     if (this.difficultyModal.isOpen) {
       this.difficultyModal.updateHover(x, y);
       return;
@@ -908,10 +898,8 @@ class LevelSelect extends Screen {
       height: layout.creditsButtonHeight,
     });
 
-    // Update story viewer button hover
     this.storyViewer.updateButtonHover(x, y, layout);
 
-    // Check achievements button in top bar
     this.achievementsDrawer.button.hovered = this.isPointInRect(x, y, {
       x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
       y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
@@ -952,7 +940,6 @@ class LevelSelect extends Screen {
           scrollPercentage * this.achievementsDrawer.maxScroll;
       }
 
-      // Close button hover detection
       const closeButtonSize = this.game.getScaledValue(30);
       const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
       const closeButtonY = this.game.getScaledValue(20);
@@ -1017,7 +1004,6 @@ class LevelSelect extends Screen {
   }
 
   onMouseDown(x, y) {
-    // Check if close button was clicked (must be before scrollbar check)
     if (
       this.achievementsDrawer.closeButton.hovered &&
       this.achievementsDrawer.isOpen
