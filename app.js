@@ -515,7 +515,8 @@ class SockGame {
       this.sockBalls = data.sockBalls || 0;
 
       // NEW GAME+: Load per-difficulty progress
-      this.selectedDifficulty = data.selectedDifficulty || 0;
+      // Always default to Base Game (difficulty 0) on page load
+      this.selectedDifficulty = 0;
       this.highestUnlockedDifficulty = data.highestUnlockedDifficulty || 0;
 
       // Load per-difficulty unlocks and completions
@@ -536,9 +537,9 @@ class SockGame {
         }
       }
 
-      // Set legacy arrays to point to selected difficulty
-      this.unlockedLevels = this.unlockedLevelsByDifficulty[this.selectedDifficulty];
-      this.completedLevels = this.completedLevelsByDifficulty[this.selectedDifficulty];
+      // Set legacy arrays to point to Base Game (difficulty 0) on load
+      this.unlockedLevels = this.unlockedLevelsByDifficulty[0];
+      this.completedLevels = this.completedLevelsByDifficulty[0];
 
       // Phase 1.2 - Load enhanced save data
       this.currentDifficulty = data.currentDifficulty || 0;

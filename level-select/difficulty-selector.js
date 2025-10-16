@@ -1,13 +1,10 @@
 /**
- * Difficulty Selector - UPDATED VERSION 2
+ * Difficulty Selector
  * Dropdown component for selecting NEW GAME+ difficulty levels
- * Located CENTERED in the top bar, opens DOWNWARD
+ * Located in the top bar, opens downward
  */
-console.log("🔄 DifficultySelector class loading - VERSION 2");
-
 class DifficultySelector {
   constructor(game, uiHelpers) {
-    console.log("🎮 DifficultySelector constructor called");
     this.game = game;
     this.ui = uiHelpers;
 
@@ -48,10 +45,15 @@ class DifficultySelector {
    */
   isDifficultyCompleted(difficulty) {
     const levels = this.game.completedLevelsByDifficulty[difficulty];
-    if (!levels) return false;
+    if (!levels) {
+      console.log(`❌ No levels data for difficulty ${difficulty}`);
+      return false;
+    }
 
     // Check if all 9 levels are completed
-    return levels.every(completed => completed === true);
+    const allCompleted = levels.every(completed => completed === true);
+    console.log(`⭐ Difficulty ${difficulty} completion check:`, levels, 'All completed:', allCompleted);
+    return allCompleted;
   }
 
   /**
@@ -74,14 +76,6 @@ class DifficultySelector {
     this.dropdown.optionHeight = this.game.getScaledValue(50);
     this.dropdown.x = this.button.x;
     this.dropdown.y = layout.barY + layout.barHeight + this.game.getScaledValue(5);
-
-    console.log("DIFFICULTY SELECTOR POSITION:", {
-      buttonX: this.button.x,
-      buttonY: this.button.y,
-      dropdownY: this.dropdown.y,
-      barHeight: layout.barHeight,
-      canvasWidth: canvasWidth
-    });
 
     // Build options list based on unlocked difficulties
     this.dropdown.options = [];
@@ -117,6 +111,7 @@ class DifficultySelector {
    */
   selectDifficulty(difficulty) {
     if (difficulty <= this.game.highestUnlockedDifficulty) {
+      console.log(`🎮 Switching from difficulty ${this.game.selectedDifficulty} to ${difficulty}`);
       this.game.selectedDifficulty = difficulty;
 
       // Update legacy pointers to point to the selected difficulty's arrays
@@ -125,13 +120,16 @@ class DifficultySelector {
       this.game.completedLevels = this.game.completedLevelsByDifficulty[difficulty] ||
         [false, false, false, false, false, false, false, false, false];
 
+      console.log(`📊 Updated levels - Unlocked:`, this.game.unlockedLevels);
+      console.log(`📊 Updated levels - Completed:`, this.game.completedLevels);
+
       this.game.audioManager.playSound("button-click", false, 0.6);
       this.close();
 
       // Save the selected difficulty
       this.game.saveGameData();
 
-      console.log(`🎮 Switched to difficulty: ${this.getDifficultyName(difficulty)}`);
+      console.log(`✅ Switched to difficulty: ${this.getDifficultyName(difficulty)}`);
     }
   }
 

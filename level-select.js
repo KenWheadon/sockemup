@@ -314,7 +314,6 @@ class LevelSelect extends Screen {
     };
 
     // Update difficulty selector layout BEFORE returning
-    console.log("📐 About to update difficulty selector layout", this.layoutCache);
     this.difficultySelector.updateLayout(this.layoutCache);
 
     return this.layoutCache;
@@ -1361,7 +1360,8 @@ class LevelSelect extends Screen {
 
     // NEW GAME+: Handle difficulty selector clicks
     if (this.difficultySelector.handleClick(x, y)) {
-      // Recalculate layout after difficulty change to update level display
+      // Clear cache and recalculate layout after difficulty change to update level display
+      this.clearLayoutCache();
       this.calculateLayout();
       return;
     }
