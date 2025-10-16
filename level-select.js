@@ -1359,6 +1359,23 @@ class LevelSelect extends Screen {
       return;
     }
 
+    // Handle achievements drawer clicks FIRST (since it renders on top)
+    // Check close button first and only if drawer is open
+    if (
+      this.achievementsDrawer.closeButton.hovered &&
+      this.achievementsDrawer.isOpen
+    ) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.toggleAchievementsDrawer();
+      return true;
+    }
+
+    if (this.achievementsDrawer.button.hovered) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.toggleAchievementsDrawer();
+      return true;
+    }
+
     // NEW GAME+: Handle difficulty selector clicks
     if (this.difficultySelector.handleClick(x, y)) {
       // Clear cache and recalculate layout after difficulty change to update level display
@@ -1378,22 +1395,6 @@ class LevelSelect extends Screen {
       // Optional: play a sound effect or wiggle Martha
       this.marthaWiggling = true;
       this.marthaWiggleTimer = 0;
-      return true;
-    }
-
-    // Check close button FIRST and only if drawer is open
-    if (
-      this.achievementsDrawer.closeButton.hovered &&
-      this.achievementsDrawer.isOpen
-    ) {
-      this.game.audioManager.playSound("button-click", false, 0.5);
-      this.toggleAchievementsDrawer();
-      return true;
-    }
-
-    if (this.achievementsDrawer.button.hovered) {
-      this.game.audioManager.playSound("button-click", false, 0.5);
-      this.toggleAchievementsDrawer();
       return true;
     }
 
@@ -1834,13 +1835,15 @@ class LevelSelect extends Screen {
     }
 
     this.renderTopBar(ctx);
-    this.renderAchievementsDrawer(ctx);
 
     // NEW GAME+: Render difficulty selector
     this.difficultySelector.render(ctx, this.layoutCache);
 
     // NEW GAME+: Render difficulty modal if open
     this.difficultyModal.render(ctx, this.layoutCache);
+
+    // Render achievements drawer after difficulty modal so it appears on top
+    this.renderAchievementsDrawer(ctx);
 
     if (this.easterEggActive) {
       this.renderEasterDropZones(ctx);
