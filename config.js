@@ -517,7 +517,7 @@ const GameConfig = {
     },
     PLUS_1: {
       name: "NEW GAME+1",
-      speedMultiplier: 1.1,
+      speedMultiplier: 1.15,
       timeMultiplier: 0.98,
       throwCooldownMultiplier: 0.95,
       displayName: "★",
@@ -525,7 +525,7 @@ const GameConfig = {
     },
     PLUS_2: {
       name: "NEW GAME+2",
-      speedMultiplier: 1.25,
+      speedMultiplier: 1.30,
       timeMultiplier: 0.95,
       throwCooldownMultiplier: 0.9,
       displayName: "★★",
@@ -533,7 +533,7 @@ const GameConfig = {
     },
     PLUS_3: {
       name: "NEW GAME+3",
-      speedMultiplier: 1.4,
+      speedMultiplier: 1.45,
       timeMultiplier: 0.92,
       throwCooldownMultiplier: 0.85,
       displayName: "★★★",
@@ -541,7 +541,7 @@ const GameConfig = {
     },
     PLUS_4: {
       name: "NEW GAME+4",
-      speedMultiplier: 1.5,
+      speedMultiplier: 1.60,
       timeMultiplier: 0.9,
       throwCooldownMultiplier: 0.8,
       displayName: "★★★★",
@@ -559,6 +559,14 @@ const GameConfig = {
       this.DIFFICULTY_MODES.PLUS_4,
     ];
     return modes[Math.min(difficultyLevel, modes.length - 1)];
+  },
+
+  // Calculate level cost adjusted for difficulty
+  // Cost increases by 15% per difficulty level (+1 = 15%, +2 = 30%, etc)
+  getLevelCost: function (levelIndex, difficulty = 0) {
+    const baseCost = this.LEVEL_COSTS[levelIndex];
+    const costMultiplier = 1 + (difficulty * 0.15);
+    return Math.ceil(baseCost * costMultiplier);
   },
 
   // Level background mappings

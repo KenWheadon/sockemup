@@ -1266,16 +1266,21 @@ class LevelSelect extends Screen {
       ) {
         this.difficultyModal.open(levelIndex);
       } else {
-        this.game.startLevel(levelIndex, 0); // Start at base difficulty
+        this.game.startLevel(levelIndex, this.game.selectedDifficulty);
       }
-    } else if (this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex]) {
-      this.game.audioManager.playSound("level-unlock", false, 0.6);
-      this.game.playerPoints -= GameConfig.LEVEL_COSTS[levelIndex];
-      this.game.unlockedLevels[levelIndex] = true;
-      this.game.saveGameData();
-      this.game.startLevel(levelIndex, 0); // Start at base difficulty
     } else {
-      this.game.audioManager.playSound("button-click", false, 0.2);
+      // Calculate cost based on current difficulty
+      const levelCost = GameConfig.getLevelCost(levelIndex, this.game.selectedDifficulty);
+
+      if (this.game.playerPoints >= levelCost) {
+        this.game.audioManager.playSound("level-unlock", false, 0.6);
+        this.game.playerPoints -= levelCost;
+        this.game.unlockedLevels[levelIndex] = true;
+        this.game.saveGameData();
+        this.game.startLevel(levelIndex, this.game.selectedDifficulty);
+      } else {
+        this.game.audioManager.playSound("button-click", false, 0.2);
+      }
     }
   }
 
@@ -3465,8 +3470,8 @@ class LevelSelect extends Screen {
     const isUnlocked = this.game.unlockedLevels[levelIndex];
     const isCompleted = this.game.completedLevels[levelIndex];
     const isHovered = this.hoveredLevel === levelIndex;
-    const isAffordable =
-      this.game.playerPoints >= GameConfig.LEVEL_COSTS[levelIndex];
+    const levelCost = GameConfig.getLevelCost(levelIndex, this.game.selectedDifficulty);
+    const isAffordable = this.game.playerPoints >= levelCost;
 
     const hoverProgress = this.levelHoverAnimations[levelIndex] || 0;
     const pulseTimer = this.levelPulseTimers[levelIndex] || 0;
@@ -3674,7 +3679,7 @@ class LevelSelect extends Screen {
       ctx.shadowBlur = this.game.getScaledValue(4);
       this.renderText(
         ctx,
-        `💰 ${GameConfig.LEVEL_COSTS[levelIndex]}`,
+        `💰 ${levelCost}`,
         x,
         y + this.game.getScaledValue(15),
         {

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(find:*)",
       "Bash(start index.html)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(node -e:*)"
     ],
     "deny": [],
     "ask": []
