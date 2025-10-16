@@ -616,13 +616,13 @@ class SockGame {
 
   // Phase 3.3 - Mark level as completed at current difficulty
   markLevelCompleted(levelIndex, difficulty) {
-    if (!this.difficultyCompletions[levelIndex]) {
-      this.difficultyCompletions[levelIndex] = [];
+    // Initialize difficulty array if it doesn't exist
+    if (!this.completedLevelsByDifficulty[difficulty]) {
+      this.completedLevelsByDifficulty[difficulty] = Array(GameConfig.LEVELS.length).fill(false);
     }
 
-    if (!this.difficultyCompletions[levelIndex].includes(difficulty)) {
-      this.difficultyCompletions[levelIndex].push(difficulty);
-    }
+    // Mark this level as completed at this difficulty
+    this.completedLevelsByDifficulty[difficulty][levelIndex] = true;
 
     // Unlock story panel on first completion (base difficulty only)
     if (difficulty === 0 && !this.unlockedStoryPanels[levelIndex]) {
@@ -634,14 +634,14 @@ class SockGame {
     // Check if all levels completed at this difficulty
     const allLevelsCompleted = GameConfig.LEVELS.every((_, index) => {
       return (
-        this.difficultyCompletions[index] &&
-        this.difficultyCompletions[index].includes(difficulty)
+        this.completedLevelsByDifficulty[difficulty] &&
+        this.completedLevelsByDifficulty[difficulty][index]
       );
     });
 
     console.log(`🎮 Difficulty check: All levels at difficulty ${difficulty} completed? ${allLevelsCompleted}`);
     console.log(`🎮 Current highest unlocked difficulty: ${this.highestUnlockedDifficulty}`);
-    console.log(`🎮 Difficulty completions:`, this.difficultyCompletions);
+    console.log(`🎮 Difficulty completions:`, this.completedLevelsByDifficulty);
 
     // Unlock next difficulty if all levels completed
     const previousDifficulty = this.highestUnlockedDifficulty;

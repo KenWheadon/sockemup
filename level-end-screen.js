@@ -402,8 +402,8 @@ class LevelEndScreen extends Screen {
         const allLevelsCompletedOnPlus4 = GameConfig.LEVELS.every(
           (_, index) => {
             return (
-              this.game.difficultyCompletions[index] &&
-              this.game.difficultyCompletions[index].includes(4)
+              this.game.completedLevelsByDifficulty[4] &&
+              this.game.completedLevelsByDifficulty[4][index]
             );
           }
         );

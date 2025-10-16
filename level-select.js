@@ -3898,10 +3898,8 @@ class LevelSelect extends Screen {
     const isHovered =
       this.difficultyModal.hoveredDifficulty === button.difficulty;
     const isCompleted =
-      this.game.difficultyCompletions[this.difficultyModal.selectedLevel] &&
-      this.game.difficultyCompletions[
-        this.difficultyModal.selectedLevel
-      ].includes(button.difficulty);
+      this.game.completedLevelsByDifficulty[button.difficulty] &&
+      this.game.completedLevelsByDifficulty[button.difficulty][this.difficultyModal.selectedLevel];
 
     ctx.save();
 
