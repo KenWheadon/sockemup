@@ -650,8 +650,11 @@ class LevelSelect extends Screen {
       }
     }
 
-    this.difficultyModal.update(deltaTime);
-    this.difficultySelector.update(deltaTime);
+    // Only update difficulty UI if New Game+ is unlocked
+    if (this.game.highestUnlockedDifficulty > 0) {
+      this.difficultyModal.update(deltaTime);
+      this.difficultySelector.update(deltaTime);
+    }
 
     for (let i = 0; i < this.levelHoverAnimations.length; i++) {
       const isHovered = this.hoveredLevel === i;
@@ -866,7 +869,7 @@ class LevelSelect extends Screen {
       return;
     }
 
-    if (this.difficultyModal.isOpen) {
+    if (this.game.highestUnlockedDifficulty > 0 && this.difficultyModal.isOpen) {
       this.difficultyModal.updateHover(x, y);
       return;
     }
@@ -907,8 +910,12 @@ class LevelSelect extends Screen {
     });
 
     this.storyViewer.updateButtonHover(x, y, layout);
-    this.difficultySelector.updateButtonHover(x, y);
-    this.difficultySelector.updateDropdownHover(x, y);
+
+    // Only update difficulty selector hover if New Game+ is unlocked
+    if (this.game.highestUnlockedDifficulty > 0) {
+      this.difficultySelector.updateButtonHover(x, y);
+      this.difficultySelector.updateDropdownHover(x, y);
+    }
 
     this.achievementsDrawer.button.hovered = this.isPointInRect(x, y, {
       x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
@@ -1376,16 +1383,16 @@ class LevelSelect extends Screen {
       return true;
     }
 
-    // NEW GAME+: Handle difficulty selector clicks
-    if (this.difficultySelector.handleClick(x, y)) {
+    // NEW GAME+: Handle difficulty selector clicks (only if New Game+ unlocked)
+    if (this.game.highestUnlockedDifficulty > 0 && this.difficultySelector.handleClick(x, y)) {
       // Clear cache and recalculate layout after difficulty change to update level display
       this.clearLayoutCache();
       this.calculateLayout();
       return;
     }
 
-    // NEW GAME+: Handle difficulty modal clicks
-    if (this.difficultyModal.handleClick(x, y)) {
+    // NEW GAME+: Handle difficulty modal clicks (only if New Game+ unlocked)
+    if (this.game.highestUnlockedDifficulty > 0 && this.difficultyModal.handleClick(x, y)) {
       return;
     }
 
@@ -1836,11 +1843,15 @@ class LevelSelect extends Screen {
 
     this.renderTopBar(ctx);
 
-    // NEW GAME+: Render difficulty selector
-    this.difficultySelector.render(ctx, this.layoutCache);
+    // NEW GAME+: Render difficulty selector (only if New Game+ unlocked)
+    if (this.game.highestUnlockedDifficulty > 0) {
+      this.difficultySelector.render(ctx, this.layoutCache);
+    }
 
-    // NEW GAME+: Render difficulty modal if open
-    this.difficultyModal.render(ctx, this.layoutCache);
+    // NEW GAME+: Render difficulty modal if open (only if New Game+ unlocked)
+    if (this.game.highestUnlockedDifficulty > 0) {
+      this.difficultyModal.render(ctx, this.layoutCache);
+    }
 
     // Render achievements drawer after difficulty modal so it appears on top
     this.renderAchievementsDrawer(ctx);
@@ -2153,7 +2164,7 @@ class LevelSelect extends Screen {
 
     this.renderText(
       ctx,
-      `${this.game.sockBalls}`,
+      `${this.game.totalSockMatches}`,
       layout.statsX + this.game.getScaledValue(155),
       layout.statsY,
       {
@@ -3655,7 +3666,7 @@ class LevelSelect extends Screen {
       ctx.textBaseline = "middle";
       ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
       ctx.shadowBlur = this.game.getScaledValue(4);
-      ctx.fillText("🔒", x, y);
+      ctx.fillText("🔒", x, y - this.game.getScaledValue(15));
       ctx.restore();
 
       ctx.save();
@@ -3665,7 +3676,7 @@ class LevelSelect extends Screen {
         ctx,
         `💰 ${GameConfig.LEVEL_COSTS[levelIndex]}`,
         x,
-        y - this.game.getScaledValue(55),
+        y + this.game.getScaledValue(15),
         {
           fontSize: layout.smallFontSize + 2,
           color: isAffordable ? "#90EE90" : "#FFB6C1",

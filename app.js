@@ -15,6 +15,7 @@ class SockGame {
     this.currentLevel = 0;
     this.playerPoints = 0;
     this.sockBalls = 0;
+    this.totalSockMatches = 0; // Lifetime total sock matches across all levels
     this.matchingTime = 60;
     // Tracks elapsed time during matching phase (counts up from 0)
     this.timeElapsed = 0;
@@ -516,6 +517,7 @@ class SockGame {
       const data = JSON.parse(savedData);
       this.playerPoints = data.playerPoints || 0;
       this.sockBalls = data.sockBalls || 0;
+      this.totalSockMatches = data.totalSockMatches || 0;
 
       // NEW GAME+: Load per-difficulty progress
       // Always default to Base Game (difficulty 0) on page load
@@ -595,6 +597,7 @@ class SockGame {
     const data = {
       playerPoints: this.playerPoints,
       sockBalls: this.sockBalls,
+      totalSockMatches: this.totalSockMatches,
       // NEW GAME+: Save per-difficulty progress
       selectedDifficulty: this.selectedDifficulty,
       highestUnlockedDifficulty: this.highestUnlockedDifficulty,

@@ -170,22 +170,22 @@ class ThrowingScreen extends Screen {
     cache.barHeight = barHeight;
     cache.barPadding = barPadding;
 
-    // Top bar elements (left to right)
-    cache.sockballCounterX = barPadding + this.game.getScaledValue(80);
+    // Top bar elements (left to right) - spaced to avoid overlapping
+    cache.sockballCounterX = barPadding + this.game.getScaledValue(60);
     cache.sockballCounterY = barY + barHeight / 2;
 
-    cache.marthaStatusX = barPadding + this.game.getScaledValue(240);
+    cache.marthaStatusX = barPadding + this.game.getScaledValue(200);
     cache.marthaStatusY = barY + barHeight / 2;
 
-    cache.cooldownBarX = barPadding + this.game.getScaledValue(420);
+    cache.cooldownBarX = barPadding + this.game.getScaledValue(360);
     cache.cooldownBarY = barY + barHeight / 2;
-    cache.cooldownBarWidth = this.game.getScaledValue(200);
+    cache.cooldownBarWidth = this.game.getScaledValue(160);
     cache.cooldownBarHeight = this.game.getScaledValue(30);
 
     // Exit button on right side of top bar
-    cache.exitButtonX = canvasWidth - this.game.getScaledValue(80);
+    cache.exitButtonX = canvasWidth - this.game.getScaledValue(70);
     cache.exitButtonY = barY + barHeight / 2;
-    cache.exitButtonWidth = this.game.getScaledValue(100);
+    cache.exitButtonWidth = this.game.getScaledValue(90);
     cache.exitButtonHeight = this.game.getScaledValue(50);
 
     return cache;
@@ -850,7 +850,7 @@ class ThrowingScreen extends Screen {
     });
 
     // Martha status
-    this.renderText(ctx, "Martha:", layout.marthaStatusX - this.game.getScaledValue(40), layout.marthaStatusY, {
+    this.renderText(ctx, "Martha:", layout.marthaStatusX - this.game.getScaledValue(60), layout.marthaStatusY, {
       fontSize: layout.bodyFontSize,
       align: "left",
       baseline: "middle",
@@ -858,7 +858,7 @@ class ThrowingScreen extends Screen {
     });
 
     const marthaText = `${this.marthaManager.collectedSockballs}/${this.marthaManager.sockballsWanted}`;
-    this.renderText(ctx, marthaText, layout.marthaStatusX + this.game.getScaledValue(15), layout.marthaStatusY, {
+    this.renderText(ctx, marthaText, layout.marthaStatusX + this.game.getScaledValue(35), layout.marthaStatusY, {
       fontSize: layout.headerFontSize,
       align: "left",
       baseline: "middle",
