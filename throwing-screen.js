@@ -373,6 +373,12 @@ class ThrowingScreen extends Screen {
     const deltaX = targetX - x;
     const deltaY = targetY - y;
     const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    // Prevent division by zero if target position equals launch position
+    if (distance === 0) {
+      return;
+    }
+
     const normalizedVelocity = GameConfig.SOCKBALL_THROW_SPEED / distance;
 
     let vx = deltaX * normalizedVelocity;
@@ -549,15 +555,15 @@ class ThrowingScreen extends Screen {
         this.levelComplete = true;
         this.gamePhase = "complete";
 
-        // Play victory music and level complete sound
+        // Fix Bug #5: Set flag BEFORE scheduling timeout to prevent race condition
         if (!this.levelCompleteAudioPlayed) {
+          this.levelCompleteAudioPlayed = true; // Set flag first
           this.game.audioManager.fadeOutMusic(1000);
           const audioTimeoutId = setTimeout(() => {
             this.game.audioManager.playMusic("victory-music", false, 0.4);
             this.game.audioManager.playSound("level-complete", false, 0.6);
           }, 1000);
           this.activeTimeouts.push(audioTimeoutId);
-          this.levelCompleteAudioPlayed = true;
         }
 
         const completeLevelTimeoutId = setTimeout(() => this.game.completeLevel(), 1000);
@@ -578,15 +584,15 @@ class ThrowingScreen extends Screen {
         this.levelComplete = true;
         this.gamePhase = "complete";
 
-        // Play defeat music and game over sound
+        // Fix Bug #5: Set flag BEFORE scheduling timeout to prevent race condition
         if (!this.gameOverAudioPlayed) {
+          this.gameOverAudioPlayed = true; // Set flag first
           this.game.audioManager.fadeOutMusic(1000);
           const audioTimeoutId = setTimeout(() => {
             this.game.audioManager.playMusic("defeat-music", false, 0.4);
             this.game.audioManager.playSound("game-over", false, 0.6);
           }, 1000);
           this.activeTimeouts.push(audioTimeoutId);
-          this.gameOverAudioPlayed = true;
         }
 
         const completeLevelTimeoutId = setTimeout(() => this.game.completeLevel(), 1000);
@@ -617,6 +623,9 @@ class ThrowingScreen extends Screen {
   }
 
   onUpdate(deltaTime) {
+    // Fix Bug #6: Update parent class timers
+    this.updateAnimationTimers(deltaTime);
+
     this.marthaManager.update(deltaTime);
     this.updateSockballs(deltaTime);
     this.checkGameEnd();

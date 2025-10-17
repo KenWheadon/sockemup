@@ -528,15 +528,17 @@ class MatchScreen extends Screen {
     if (this.draggedSock) {
       const snapDistance = this.game.getScaledValue(80);
 
-      this.dropZones.forEach((zone) => {
+      // Fix Bug #7: Find the closest zone and break after finding first match
+      for (const zone of this.dropZones) {
         const distance = this.physics.getDropZoneDistance(
           this.draggedSock,
           zone
         );
         if (distance < snapDistance) {
           this.dropZoneHover = zone.id;
+          break; // Only highlight the first matching zone
         }
-      });
+      }
     }
   }
 
@@ -790,6 +792,9 @@ class MatchScreen extends Screen {
   }
 
   onUpdate(deltaTime) {
+    // Fix Bug #6: Update parent class timers
+    this.updateAnimationTimers(deltaTime);
+
     // Update pulse timer for sock pile animation
     if (!this.sockPileClicked) {
       this.pulseTimer += deltaTime * 0.005; // Slow pulse
@@ -1051,7 +1056,9 @@ class MatchScreen extends Screen {
 
     // Time display
     const timeElapsed = Math.max(0, Math.floor(this.game.timeElapsed));
-    const timeLimit = GameConfig.LEVELS[this.game.currentLevel].matchingTime;
+    // Fix Bug #1: Add bounds checking for level access
+    const level = GameConfig.LEVELS[this.game.currentLevel];
+    const timeLimit = level ? level.matchingTime : 60; // Default to 60s if level not found
     const isOverTime = timeElapsed > timeLimit;
 
     const timeColor = isOverTime

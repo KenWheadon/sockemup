@@ -475,14 +475,15 @@ class LevelEndScreen extends Screen {
 
   onClick(x, y) {
     if (this.videoPlayerActive) {
-      // Check if click is outside video player
+      // Fix Bug #8: Use scaled value instead of magic number
       const videoWidth = this.game.getScaledValue(640);
       const videoHeight = this.game.getScaledValue(360);
       const videoX = (this.game.getCanvasWidth() - videoWidth) / 2;
       const videoY = (this.game.getCanvasHeight() - videoHeight) / 2;
+      const clickMargin = this.game.getScaledValue(10);
 
-      const clickedOutside = x < videoX - 10 || x > videoX + videoWidth + 10 ||
-                             y < videoY - 10 || y > videoY + videoHeight + 10;
+      const clickedOutside = x < videoX - clickMargin || x > videoX + videoWidth + clickMargin ||
+                             y < videoY - clickMargin || y > videoY + videoHeight + clickMargin;
 
       if (clickedOutside) {
         this.closeVideoPlayer();
@@ -1048,16 +1049,32 @@ class LevelEndScreen extends Screen {
     this.game.audioManager.playSound("click", false, 0.5);
     this.videoPlayerActive = true;
 
-    // Create video element
-    this.videoElement = document.createElement('video');
-    this.videoElement.src = 'videos/video-1.mp4';
-    this.videoElement.loop = true;
-    this.videoElement.autoplay = true;
-    this.videoElement.controls = false;
-    this.videoElement.style.display = 'none';
-    document.body.appendChild(this.videoElement);
+    // Fix Bug #3: Add error handling for video element
+    try {
+      // Create video element
+      this.videoElement = document.createElement('video');
+      this.videoElement.src = 'videos/video-1.mp4';
+      this.videoElement.loop = true;
+      this.videoElement.autoplay = true;
+      this.videoElement.controls = false;
+      this.videoElement.style.display = 'none';
 
-    console.log("🎥 Video player opened");
+      // Add error handlers
+      this.videoElement.addEventListener('error', () => {
+        console.error("🎥 Video failed to load");
+        this.closeVideoPlayer(); // Clean up on error
+      });
+
+      this.videoElement.addEventListener('loadeddata', () => {
+        console.log("🎥 Video loaded successfully");
+      });
+
+      document.body.appendChild(this.videoElement);
+      console.log("🎥 Video player opened");
+    } catch (error) {
+      console.error("🎥 Error creating video element:", error);
+      this.closeVideoPlayer(); // Clean up on exception
+    }
   }
 
   closeVideoPlayer() {
@@ -1100,9 +1117,20 @@ class LevelEndScreen extends Screen {
     ctx.shadowBlur = this.game.getScaledValue(15);
     ctx.strokeRect(videoX - 10, videoY - 10, videoWidth + 20, videoHeight + 20);
 
-    // Draw video frame if available
+    // Fix Bug #9: Add error handling for video rendering
     if (this.videoElement && this.videoElement.readyState >= 2) {
-      ctx.drawImage(this.videoElement, videoX, videoY, videoWidth, videoHeight);
+      try {
+        ctx.drawImage(this.videoElement, videoX, videoY, videoWidth, videoHeight);
+      } catch (error) {
+        console.error("🎥 Error drawing video frame:", error);
+        // Show error message instead of crashing
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#FF6B6B";
+        ctx.font = `${this.game.getScaledValue(24)}px Courier New`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Error loading video", canvasWidth / 2, canvasHeight / 2);
+      }
     } else {
       // Loading text
       ctx.shadowBlur = 0;
