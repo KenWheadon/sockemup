@@ -1311,15 +1311,8 @@ class LevelSelect extends Screen {
     if (this.game.unlockedLevels[levelIndex]) {
       this.game.audioManager.playSound("button-click", false, 0.5);
 
-      // NEW GAME+: Show difficulty selection if completed
-      if (
-        this.game.completedLevels[levelIndex] &&
-        this.game.highestUnlockedDifficulty > 0
-      ) {
-        this.difficultyModal.open(levelIndex);
-      } else {
-        this.game.startLevel(levelIndex, this.game.selectedDifficulty);
-      }
+      // Always start the level with the currently selected difficulty from dropdown
+      this.game.startLevel(levelIndex, this.game.selectedDifficulty);
     } else {
       // Calculate cost based on current difficulty
       const levelCost = GameConfig.getLevelCost(
@@ -3707,19 +3700,6 @@ class LevelSelect extends Screen {
           starSize
         );
         ctx.restore();
-
-        // NEW GAME+: Show difficulty indicator if unlocked
-        if (this.game.highestUnlockedDifficulty > 0) {
-          ctx.save();
-          ctx.fillStyle = "rgba(100, 150, 255, 0.9)";
-          ctx.font = `bold ${this.game.getScaledValue(12)}px Courier New`;
-          ctx.textAlign = "center";
-          ctx.textBaseline = "middle";
-          ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-          ctx.shadowBlur = this.game.getScaledValue(2);
-          ctx.fillText("NEW GAME+", x, y + this.game.getScaledValue(45));
-          ctx.restore();
-        }
       }
 
       ctx.save();
