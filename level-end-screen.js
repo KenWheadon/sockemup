@@ -102,9 +102,6 @@ class LevelEndScreen extends Screen {
   cleanup() {
     super.cleanup();
 
-    // Close video player if active
-    this.closeVideoPlayer();
-
     // Level end screen doesn't start its own music, so no cleanup needed
     // The throwing screen handles the victory/defeat music
     console.log("🎵 Level end screen cleanup - no music cleanup needed");
@@ -139,11 +136,17 @@ class LevelEndScreen extends Screen {
 
     this.sockballsLeftoverPoints = this.sockballsLeftover * 10;
     this.rentPenaltyPoints = this.rentPenalty * -10;
-    this.totalScore =
+
+    // Calculate the raw total (can be negative)
+    const rawTotal =
       this.sockballsPaidPoints +
       this.timeBonusPoints +
       this.sockballsLeftoverPoints +
       this.rentPenaltyPoints;
+
+    // Store both the raw total for display and the capped total for points
+    this.totalScoreRaw = rawTotal;
+    this.totalScore = Math.max(0, rawTotal);
 
     this.showRentDue = this.rentPenalty > 0;
     this.showStars = !this.showRentDue; // Show stars only on success
@@ -165,7 +168,7 @@ class LevelEndScreen extends Screen {
       (this.game.timeBonusEarned ? this.sockballsPaid : 0) +
       this.sockballsLeftover +
       this.rentPenalty +
-      Math.abs(this.totalScore);
+      Math.abs(this.totalScoreRaw);
 
     // Calculate rate (ms per step) to complete in 3 seconds
     // If totalSteps is 0, use a default rate
@@ -218,7 +221,7 @@ class LevelEndScreen extends Screen {
       {
         label: "totalScoreDisplay",
         start: 0,
-        end: this.totalScore,
+        end: this.totalScoreRaw,
         rate: calculatedRate,
       },
     ];
@@ -624,7 +627,8 @@ class LevelEndScreen extends Screen {
       Math.sin(this.titleBounceTimer) * this.game.getScaledValue(5);
     const titleY = layout.titleY + bounceOffset;
 
-    // Determine colors based on success/failure
+    // Determine title text and colors based on success/failure
+    const titleText = this.showRentDue ? "LEVEL FAILED!" : "LEVEL COMPLETE!";
     const titleColor = this.showRentDue ? "#FF6B6B" : "#FFD700";
     const shadowColor = this.showRentDue ? "#8B0000" : "#FFA500";
     const glowColor = this.showRentDue ? "#FF0000" : "#FFFF00";
@@ -640,7 +644,7 @@ class LevelEndScreen extends Screen {
     ctx.font = `bold ${this.game.getScaledValue(48)}px Courier New`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("LEVEL COMPLETE!", layout.centerX + 4, titleY + 4);
+    ctx.fillText(titleText, layout.centerX + 4, titleY + 4);
 
     // Glowing outline
     ctx.shadowBlur = this.game.getScaledValue(20);
@@ -652,13 +656,13 @@ class LevelEndScreen extends Screen {
     ctx.globalAlpha = glowIntensity;
     ctx.strokeStyle = titleColor;
     ctx.lineWidth = this.game.getScaledValue(3);
-    ctx.strokeText("LEVEL COMPLETE!", layout.centerX, titleY);
+    ctx.strokeText(titleText, layout.centerX, titleY);
 
     // Main text
     ctx.globalAlpha = 1;
     ctx.shadowBlur = this.game.getScaledValue(10);
     ctx.fillStyle = titleColor;
-    ctx.fillText("LEVEL COMPLETE!", layout.centerX, titleY);
+    ctx.fillText(titleText, layout.centerX, titleY);
 
     ctx.restore();
   }
@@ -746,7 +750,7 @@ class LevelEndScreen extends Screen {
       },
       {
         label: `TOTAL SCORE:`,
-        value: this.totalScoreDisplay,
+        value: Math.max(0, this.totalScoreDisplay),
         color: "#FFD700",
       },
     ];

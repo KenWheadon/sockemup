@@ -3690,7 +3690,7 @@ class LevelSelect extends Screen {
         const starSize = this.game.getScaledValue(45);
         const starRotation = Math.sin(this.animationFrame * 0.002) * 0.1;
 
-        ctx.translate(x, y - this.game.getScaledValue(55));
+        ctx.translate(x, y);
         ctx.rotate(starRotation);
         ctx.drawImage(
           this.game.images["star.png"],
@@ -3709,7 +3709,7 @@ class LevelSelect extends Screen {
         ctx,
         `Level ${levelIndex + 1}`,
         x,
-        y + this.game.getScaledValue(65),
+        y - this.game.getScaledValue(65),
         {
           fontSize: layout.bodyFontSize,
           weight: "bold",
@@ -3777,7 +3777,7 @@ class LevelSelect extends Screen {
         ctx,
         `Level ${levelIndex + 1}`,
         x,
-        y + this.game.getScaledValue(65),
+        y - this.game.getScaledValue(65),
         {
           fontSize: layout.bodyFontSize,
           color: "rgba(255, 255, 255, 0.6)",
@@ -3796,7 +3796,7 @@ class LevelSelect extends Screen {
           ctx,
           "Click to unlock!",
           x,
-          y + this.game.getScaledValue(85),
+          y + this.game.getScaledValue(65),
           {
             fontSize: layout.smallFontSize,
             color: "#90EE90",
