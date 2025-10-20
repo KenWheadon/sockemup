@@ -28,7 +28,16 @@ class LevelEndScreen extends Screen {
     this.currentStageIndex = 0;
     this.scoreStages = [];
     this.scoreLineAnimations = [0, 0, 0, 0, 0, 0, 0, 0]; // Animation timers for each line
-    this.scoreLineVisible = [false, false, false, false, false, false, false, false];
+    this.scoreLineVisible = [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ];
   }
 
   initializeButton() {
@@ -98,8 +107,9 @@ class LevelEndScreen extends Screen {
     }
 
     // Show video button only if all 9 base levels have been completed
-    const allBaseLevelsCompleted = this.game.completedLevelsByDifficulty[0] &&
-                                   this.game.completedLevelsByDifficulty[0].every(completed => completed);
+    const allBaseLevelsCompleted =
+      this.game.completedLevelsByDifficulty[0] &&
+      this.game.completedLevelsByDifficulty[0].every((completed) => completed);
     this.showVideoButton = allBaseLevelsCompleted;
     this.videoPlayerActive = false;
 
@@ -178,7 +188,8 @@ class LevelEndScreen extends Screen {
 
     // Calculate rate (ms per step) to complete in 3 seconds
     // If totalSteps is 0, use a default rate
-    const calculatedRate = totalSteps > 0 ? totalAnimationTime / totalSteps : 50;
+    const calculatedRate =
+      totalSteps > 0 ? totalAnimationTime / totalSteps : 50;
 
     this.scoreStages = [
       {
@@ -227,7 +238,7 @@ class LevelEndScreen extends Screen {
         label: "totalScoreDisplay",
         start: 0,
         end: this.totalScore,
-        rate: calculatedRate
+        rate: calculatedRate,
       },
     ];
 
@@ -308,7 +319,10 @@ class LevelEndScreen extends Screen {
     // Update score line animations
     for (let i = 0; i < this.scoreLineAnimations.length; i++) {
       if (i <= this.currentStageIndex) {
-        this.scoreLineAnimations[i] = Math.min(1, this.scoreLineAnimations[i] + deltaTime / 300);
+        this.scoreLineAnimations[i] = Math.min(
+          1,
+          this.scoreLineAnimations[i] + deltaTime / 300
+        );
       }
     }
   }
@@ -439,9 +453,9 @@ class LevelEndScreen extends Screen {
       );
 
       // Fix Bug #23: Achievement: SOCK_MASTER (complete all 9 levels) - with defensive checks
-      const allLevelsCompleted = this.game.completedLevels && this.game.completedLevels.every(
-        (completed) => completed
-      );
+      const allLevelsCompleted =
+        this.game.completedLevels &&
+        this.game.completedLevels.every((completed) => completed);
       if (allLevelsCompleted) {
         this.game.unlockAchievement("sock_master");
       }
@@ -482,8 +496,11 @@ class LevelEndScreen extends Screen {
       const videoY = (this.game.getCanvasHeight() - videoHeight) / 2;
       const clickMargin = this.game.getScaledValue(10);
 
-      const clickedOutside = x < videoX - clickMargin || x > videoX + videoWidth + clickMargin ||
-                             y < videoY - clickMargin || y > videoY + videoHeight + clickMargin;
+      const clickedOutside =
+        x < videoX - clickMargin ||
+        x > videoX + videoWidth + clickMargin ||
+        y < videoY - clickMargin ||
+        y > videoY + videoHeight + clickMargin;
 
       if (clickedOutside) {
         this.closeVideoPlayer();
@@ -550,7 +567,9 @@ class LevelEndScreen extends Screen {
 
     // Enhanced shadow with glow
     ctx.save();
-    ctx.shadowColor = this.showRentDue ? "rgba(0,0,0,0.6)" : "rgba(100,100,255,0.3)";
+    ctx.shadowColor = this.showRentDue
+      ? "rgba(0,0,0,0.6)"
+      : "rgba(100,100,255,0.3)";
     ctx.shadowBlur = this.game.getScaledValue(20);
     ctx.fillStyle = "rgba(0,0,0,0.3)";
     ctx.fillRect(
@@ -647,7 +666,8 @@ class LevelEndScreen extends Screen {
       const x = layout.centerX + Math.cos(star.angle) * star.distance;
       const y = layout.titleY + Math.sin(star.angle) * star.distance * 0.5;
 
-      ctx.globalAlpha = star.alpha * (0.6 + Math.sin(this.glowTimer + star.pulseOffset) * 0.4);
+      ctx.globalAlpha =
+        star.alpha * (0.6 + Math.sin(this.glowTimer + star.pulseOffset) * 0.4);
 
       // Draw star
       this.drawStar(ctx, x, y, 5, star.size, star.size / 2, "#FFD700");
@@ -685,7 +705,8 @@ class LevelEndScreen extends Screen {
     ctx.save();
 
     // Animated bounce effect
-    const bounceOffset = Math.sin(this.titleBounceTimer) * this.game.getScaledValue(5);
+    const bounceOffset =
+      Math.sin(this.titleBounceTimer) * this.game.getScaledValue(5);
     const titleY = layout.titleY + bounceOffset;
 
     // Determine colors based on success/failure
@@ -736,7 +757,8 @@ class LevelEndScreen extends Screen {
     const desiredWidth = desiredHeight * aspectRatio;
 
     // Gentle floating animation
-    const floatOffset = Math.sin(this.marthaScaleTimer) * this.game.getScaledValue(3);
+    const floatOffset =
+      Math.sin(this.marthaScaleTimer) * this.game.getScaledValue(3);
     const scale = 1 + Math.sin(this.marthaScaleTimer * 0.8) * 0.03;
 
     const imageX = layout.centerX - (desiredWidth * scale) / 2;
@@ -747,7 +769,8 @@ class LevelEndScreen extends Screen {
     // Add glow around Martha
     if (!this.showRentDue) {
       ctx.shadowColor = "#4ECDC4";
-      ctx.shadowBlur = this.game.getScaledValue(20) * this.getGlowIntensity(0.5, 1.0);
+      ctx.shadowBlur =
+        this.game.getScaledValue(20) * this.getGlowIntensity(0.5, 1.0);
     }
 
     ctx.drawImage(
@@ -814,11 +837,12 @@ class LevelEndScreen extends Screen {
     ];
 
     // Filter out lines that shouldn't be shown
-    const visibleLines = scoreLines.filter(line => line.show !== false);
+    const visibleLines = scoreLines.filter((line) => line.show !== false);
 
     // Draw decorative separator line before total (adjusted for visible lines)
     ctx.save();
-    const separatorY = layout.scoreStartY + (visibleLines.length - 1.5) * layout.scoreLineHeight;
+    const separatorY =
+      layout.scoreStartY + (visibleLines.length - 1.5) * layout.scoreLineHeight;
     const separatorWidth = this.game.getScaledValue(400);
     const gradient = ctx.createLinearGradient(
       layout.centerX - separatorWidth / 2,
@@ -860,8 +884,19 @@ class LevelEndScreen extends Screen {
     });
   }
 
-  renderScoreLine(ctx, label, value, centerX, y, valueColor = "#FFD700", lineIndex = 0, isIndented = false) {
-    const fontSize = isIndented ? this.game.getScaledValue(16) : this.game.getScaledValue(20);
+  renderScoreLine(
+    ctx,
+    label,
+    value,
+    centerX,
+    y,
+    valueColor = "#FFD700",
+    lineIndex = 0,
+    isIndented = false
+  ) {
+    const fontSize = isIndented
+      ? this.game.getScaledValue(16)
+      : this.game.getScaledValue(20);
     const animProgress = this.scoreLineAnimations[lineIndex] || 0;
 
     // Slide in from left
@@ -940,7 +975,8 @@ class LevelEndScreen extends Screen {
     // Glow effect when hovered
     if (button.hovered) {
       ctx.shadowColor = "#4ECDC4";
-      ctx.shadowBlur = this.game.getScaledValue(20) * this.getGlowIntensity(0.7, 1.0);
+      ctx.shadowBlur =
+        this.game.getScaledValue(20) * this.getGlowIntensity(0.7, 1.0);
       ctx.strokeRect(button.x, button.y, button.width, button.height);
 
       // Inner highlight
@@ -972,7 +1008,6 @@ class LevelEndScreen extends Screen {
 
     ctx.restore();
   }
-
 
   renderVideoButton(ctx) {
     const button = this.videoButton;
@@ -1012,7 +1047,8 @@ class LevelEndScreen extends Screen {
     // Glow effect when hovered
     if (button.hovered) {
       ctx.shadowColor = "#BB8FCE";
-      ctx.shadowBlur = this.game.getScaledValue(20) * this.getGlowIntensity(0.7, 1.0);
+      ctx.shadowBlur =
+        this.game.getScaledValue(20) * this.getGlowIntensity(0.7, 1.0);
       ctx.strokeRect(button.x, button.y, button.width, button.height);
 
       // Inner highlight
@@ -1052,20 +1088,20 @@ class LevelEndScreen extends Screen {
     // Fix Bug #3: Add error handling for video element
     try {
       // Create video element
-      this.videoElement = document.createElement('video');
-      this.videoElement.src = 'videos/video-1.mp4';
+      this.videoElement = document.createElement("video");
+      this.videoElement.src = "videos/video-end.mp4";
       this.videoElement.loop = true;
       this.videoElement.autoplay = true;
       this.videoElement.controls = false;
-      this.videoElement.style.display = 'none';
+      this.videoElement.style.display = "none";
 
       // Add error handlers
-      this.videoElement.addEventListener('error', () => {
+      this.videoElement.addEventListener("error", () => {
         console.error("🎥 Video failed to load");
         this.closeVideoPlayer(); // Clean up on error
       });
 
-      this.videoElement.addEventListener('loadeddata', () => {
+      this.videoElement.addEventListener("loadeddata", () => {
         console.log("🎥 Video loaded successfully");
       });
 
@@ -1120,7 +1156,13 @@ class LevelEndScreen extends Screen {
     // Fix Bug #9: Add error handling for video rendering
     if (this.videoElement && this.videoElement.readyState >= 2) {
       try {
-        ctx.drawImage(this.videoElement, videoX, videoY, videoWidth, videoHeight);
+        ctx.drawImage(
+          this.videoElement,
+          videoX,
+          videoY,
+          videoWidth,
+          videoHeight
+        );
       } catch (error) {
         console.error("🎥 Error drawing video frame:", error);
         // Show error message instead of crashing
@@ -1147,7 +1189,11 @@ class LevelEndScreen extends Screen {
     ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillText("Press ESC or click outside to close", canvasWidth / 2, videoY + videoHeight + 30);
+    ctx.fillText(
+      "Press ESC or click outside to close",
+      canvasWidth / 2,
+      videoY + videoHeight + 30
+    );
 
     ctx.restore();
   }
@@ -1162,10 +1208,20 @@ class LevelEndScreen extends Screen {
 
     // Semi-transparent background overlay
     ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.fillRect(0, bannerY - this.game.getScaledValue(20), canvasWidth, bannerHeight + this.game.getScaledValue(40));
+    ctx.fillRect(
+      0,
+      bannerY - this.game.getScaledValue(20),
+      canvasWidth,
+      bannerHeight + this.game.getScaledValue(40)
+    );
 
     // Banner background
-    const gradient = ctx.createLinearGradient(0, bannerY, 0, bannerY + bannerHeight);
+    const gradient = ctx.createLinearGradient(
+      0,
+      bannerY,
+      0,
+      bannerY + bannerHeight
+    );
     gradient.addColorStop(0, "rgba(100, 150, 255, 0.9)");
     gradient.addColorStop(1, "rgba(75, 125, 230, 0.9)");
     ctx.fillStyle = gradient;
@@ -1188,25 +1244,49 @@ class LevelEndScreen extends Screen {
     ctx.font = `bold ${this.game.getScaledValue(48)}px Courier New`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    ctx.fillText("NEW GAME+ UNLOCKED!", canvasWidth / 2, bannerY + this.game.getScaledValue(20));
+    ctx.fillText(
+      "NEW GAME+ UNLOCKED!",
+      canvasWidth / 2,
+      bannerY + this.game.getScaledValue(20)
+    );
 
     // Description
     ctx.shadowBlur = this.game.getScaledValue(5);
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
     ctx.font = `${this.game.getScaledValue(18)}px Courier New`;
-    ctx.fillText("You've completed all levels!", canvasWidth / 2, bannerY + this.game.getScaledValue(80));
+    ctx.fillText(
+      "You've completed all levels!",
+      canvasWidth / 2,
+      bannerY + this.game.getScaledValue(80)
+    );
 
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
     ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
-    ctx.fillText("Replay any level with increased difficulty", canvasWidth / 2, bannerY + this.game.getScaledValue(110));
-    ctx.fillText("for higher speeds and tighter time limits!", canvasWidth / 2, bannerY + this.game.getScaledValue(135));
+    ctx.fillText(
+      "Replay any level with increased difficulty",
+      canvasWidth / 2,
+      bannerY + this.game.getScaledValue(110)
+    );
+    ctx.fillText(
+      "for higher speeds and tighter time limits!",
+      canvasWidth / 2,
+      bannerY + this.game.getScaledValue(135)
+    );
 
     // Stars decoration
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#FFD700";
     ctx.font = `${this.game.getScaledValue(32)}px Courier New`;
-    ctx.fillText("★", canvasWidth / 2 - this.game.getScaledValue(250), bannerY + this.game.getScaledValue(40));
-    ctx.fillText("★", canvasWidth / 2 + this.game.getScaledValue(250), bannerY + this.game.getScaledValue(40));
+    ctx.fillText(
+      "★",
+      canvasWidth / 2 - this.game.getScaledValue(250),
+      bannerY + this.game.getScaledValue(40)
+    );
+    ctx.fillText(
+      "★",
+      canvasWidth / 2 + this.game.getScaledValue(250),
+      bannerY + this.game.getScaledValue(40)
+    );
 
     ctx.restore();
   }
