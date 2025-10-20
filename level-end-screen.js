@@ -125,13 +125,24 @@ class LevelEndScreen extends Screen {
     this.goodCatches = this.game.catchQualityCounts?.GOOD || 0;
     this.regularCatches = this.game.catchQualityCounts?.REGULAR || 0;
 
-    // Base points
-    this.sockballsPaidPoints = this.sockballsPaid * 5;
+    // Catch quality bonuses (these replace the base 5 points per sockball)
+    this.perfectCatchesPoints = this.perfectCatches * 15;
+    this.goodCatchesPoints = this.goodCatches * 10;
+    this.regularCatchesPoints = this.regularCatches * 5;
 
-    // Time bonus: double the rent payment points if earned
+    // Calculate base points for sockballs that were caught
+    // Total caught sockballs = sum of all catch qualities
+    const totalCaughtSockballs = this.perfectCatches + this.goodCatches + this.regularCatches;
+    const totalCatchQualityPoints = this.perfectCatchesPoints + this.goodCatchesPoints + this.regularCatchesPoints;
+
+    // For sockballs paid but not caught (missed/failed), give base 5 points each
+    const uncaughtPaidSockballs = Math.max(0, this.sockballsPaid - totalCaughtSockballs);
+    this.sockballsPaidPoints = uncaughtPaidSockballs * 5;
+
+    // Time bonus: double the total rent payment points (catch quality + base) if earned
     this.timeBonusPoints = 0;
     if (this.game.timeBonusEarned && this.sockballsPaid > 0) {
-      this.timeBonusPoints = this.sockballsPaidPoints; // Same as sockballsPaid * 5
+      this.timeBonusPoints = totalCatchQualityPoints + this.sockballsPaidPoints;
     }
 
     this.sockballsLeftoverPoints = this.sockballsLeftover * 10;
@@ -140,6 +151,9 @@ class LevelEndScreen extends Screen {
     // Calculate the raw total (can be negative)
     const rawTotal =
       this.sockballsPaidPoints +
+      this.perfectCatchesPoints +
+      this.goodCatchesPoints +
+      this.regularCatchesPoints +
       this.timeBonusPoints +
       this.sockballsLeftoverPoints +
       this.rentPenaltyPoints;
@@ -159,13 +173,17 @@ class LevelEndScreen extends Screen {
     // Calculate animation duration to always take 3 seconds total
     const totalAnimationTime = 3000; // 3 seconds in milliseconds
 
+    // Time bonus display value (in points, not sockballs)
+    const timeBonusDisplayValue = this.game.timeBonusEarned
+      ? Math.floor(this.timeBonusPoints / 5)
+      : 0;
+
     // Calculate total steps needed across all stages
     const totalSteps =
-      this.sockballsPaid +
       this.perfectCatches +
       this.goodCatches +
       this.regularCatches +
-      (this.game.timeBonusEarned ? this.sockballsPaid : 0) +
+      timeBonusDisplayValue +
       this.sockballsLeftover +
       this.rentPenalty +
       Math.abs(this.totalScoreRaw);
@@ -176,12 +194,6 @@ class LevelEndScreen extends Screen {
       totalSteps > 0 ? totalAnimationTime / totalSteps : 50;
 
     this.scoreStages = [
-      {
-        label: "sockballsPaidDisplay",
-        start: 0,
-        end: this.sockballsPaid,
-        rate: calculatedRate,
-      },
       {
         label: "perfectCatchesDisplay",
         start: 0,
@@ -203,7 +215,7 @@ class LevelEndScreen extends Screen {
       {
         label: "timeBonusDisplay",
         start: 0,
-        end: this.game.timeBonusEarned ? this.sockballsPaid : 0,
+        end: timeBonusDisplayValue,
         rate: calculatedRate,
       },
       {
@@ -706,30 +718,22 @@ class LevelEndScreen extends Screen {
   renderScoreLines(ctx, layout) {
     const scoreLines = [
       {
-        label: `${this.sockballsPaidDisplay}x SOCKBALLS PAID:`,
-        value: this.sockballsPaidDisplay * 5,
-        color: "#4ECDC4",
-      },
-      {
-        label: `  ${this.perfectCatchesDisplay}x PERFECT CATCHES:`,
+        label: `${this.perfectCatchesDisplay}x PERFECT CATCHES:`,
         value: this.perfectCatchesDisplay * 15,
         color: "#FFD700",
         show: this.perfectCatches > 0,
-        indent: true,
       },
       {
-        label: `  ${this.goodCatchesDisplay}x GOOD CATCHES:`,
+        label: `${this.goodCatchesDisplay}x GOOD CATCHES:`,
         value: this.goodCatchesDisplay * 10,
         color: "#00FF00",
         show: this.goodCatches > 0,
-        indent: true,
       },
       {
-        label: `  ${this.regularCatchesDisplay}x NICE CATCHES:`,
+        label: `${this.regularCatchesDisplay}x NICE CATCHES:`,
         value: this.regularCatchesDisplay * 5,
         color: "#FFFFFF",
         show: this.regularCatches > 0,
-        indent: true,
       },
       {
         label: `TIME BONUS (2x RENT):`,
