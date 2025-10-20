@@ -154,6 +154,19 @@ class LevelSelect extends Screen {
       hovered: false,
     };
 
+    // Video button (shows after completing all 9 base levels)
+    this.videoButton = {
+      x: 0,
+      y: 0,
+      width: 120,
+      height: 40,
+      hovered: false,
+    };
+
+    // Video player state
+    this.videoPlayerActive = false;
+    this.videoElement = null;
+
     // Achievements drawer
     this.achievementsDrawer = {
       isOpen: false,
@@ -309,6 +322,16 @@ class LevelSelect extends Screen {
       youWinWidth: youWinImageSize.width,
       youWinHeight: youWinImageSize.height,
 
+      // Video button (appears below You Win graphic)
+      videoButtonX:
+        canvasWidth - youWinImageSize.width / 2 - this.game.getScaledValue(50),
+      videoButtonY:
+        canvasHeight / 2 +
+        youWinImageSize.height / 2 +
+        this.game.getScaledValue(80),
+      videoButtonWidth: this.game.getScaledValue(200),
+      videoButtonHeight: this.game.getScaledValue(50),
+
       // Legacy panel values (no longer used)
       statsPanelWidth: this.game.getScaledValue(200),
       statsPanelHeight: this.game.getScaledValue(40),
@@ -446,6 +469,9 @@ class LevelSelect extends Screen {
 
     console.log("🎵 Level select cleanup - stopping menu music");
     this.game.audioManager.stopMusic();
+
+    // Close video player if active
+    this.closeVideoPlayer();
 
     // Remove event listeners before hiding credits
     this.removeCreditsEventListeners();
@@ -869,7 +895,10 @@ class LevelSelect extends Screen {
       return;
     }
 
-    if (this.game.highestUnlockedDifficulty > 0 && this.difficultyModal.isOpen) {
+    if (
+      this.game.highestUnlockedDifficulty > 0 &&
+      this.difficultyModal.isOpen
+    ) {
       this.difficultyModal.updateHover(x, y);
       return;
     }
@@ -908,6 +937,20 @@ class LevelSelect extends Screen {
       width: layout.creditsButtonWidth,
       height: layout.creditsButtonHeight,
     });
+
+    // Video button hover (only if all levels completed)
+    if (this.areAllLevelsCompleted()) {
+      const videoButtonX = layout.videoButtonX - layout.videoButtonWidth / 2;
+      const videoButtonY = layout.videoButtonY - layout.videoButtonHeight / 2;
+      this.videoButton.hovered = this.isPointInRect(x, y, {
+        x: videoButtonX,
+        y: videoButtonY,
+        width: layout.videoButtonWidth,
+        height: layout.videoButtonHeight,
+      });
+    } else {
+      this.videoButton.hovered = false;
+    }
 
     this.storyViewer.updateButtonHover(x, y, layout);
 
@@ -1133,6 +1176,15 @@ class LevelSelect extends Screen {
   }
 
   handleKeyDown(e) {
+    // If video player is active, close with Escape
+    if (this.videoPlayerActive) {
+      if (e.key === "Escape") {
+        this.closeVideoPlayer();
+        e.preventDefault();
+      }
+      return;
+    }
+
     // If story is showing, let it handle keyboard
     if (this.game.storyManager.showingStory) {
       return; // Story manager will handle its own keys
@@ -1270,7 +1322,10 @@ class LevelSelect extends Screen {
       }
     } else {
       // Calculate cost based on current difficulty
-      const levelCost = GameConfig.getLevelCost(levelIndex, this.game.selectedDifficulty);
+      const levelCost = GameConfig.getLevelCost(
+        levelIndex,
+        this.game.selectedDifficulty
+      );
 
       if (this.game.playerPoints >= levelCost) {
         this.game.audioManager.playSound("level-unlock", false, 0.6);
@@ -1361,6 +1416,26 @@ class LevelSelect extends Screen {
   }
 
   onClick(x, y) {
+    // Handle video player modal clicks
+    if (this.videoPlayerActive) {
+      const videoWidth = this.game.getScaledValue(640);
+      const videoHeight = this.game.getScaledValue(360);
+      const videoX = (this.game.getCanvasWidth() - videoWidth) / 2;
+      const videoY = (this.game.getCanvasHeight() - videoHeight) / 2;
+      const clickMargin = this.game.getScaledValue(10);
+
+      const clickedOutside =
+        x < videoX - clickMargin ||
+        x > videoX + videoWidth + clickMargin ||
+        y < videoY - clickMargin ||
+        y > videoY + videoHeight + clickMargin;
+
+      if (clickedOutside) {
+        this.closeVideoPlayer();
+      }
+      return;
+    }
+
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.handleClick(x, y);
       return;
@@ -1389,7 +1464,10 @@ class LevelSelect extends Screen {
     }
 
     // NEW GAME+: Handle difficulty selector clicks (only if New Game+ unlocked)
-    if (this.game.highestUnlockedDifficulty > 0 && this.difficultySelector.handleClick(x, y)) {
+    if (
+      this.game.highestUnlockedDifficulty > 0 &&
+      this.difficultySelector.handleClick(x, y)
+    ) {
       // Clear cache and recalculate layout after difficulty change to update level display
       this.clearLayoutCache();
       this.calculateLayout();
@@ -1397,7 +1475,10 @@ class LevelSelect extends Screen {
     }
 
     // NEW GAME+: Handle difficulty modal clicks (only if New Game+ unlocked)
-    if (this.game.highestUnlockedDifficulty > 0 && this.difficultyModal.handleClick(x, y)) {
+    if (
+      this.game.highestUnlockedDifficulty > 0 &&
+      this.difficultyModal.handleClick(x, y)
+    ) {
       return;
     }
 
@@ -1418,6 +1499,12 @@ class LevelSelect extends Screen {
 
     if (this.storyViewer.button.hovered) {
       this.storyViewer.open();
+      return true;
+    }
+
+    if (this.videoButton.hovered && this.areAllLevelsCompleted()) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.openVideoPlayer();
       return true;
     }
 
@@ -1844,6 +1931,7 @@ class LevelSelect extends Screen {
 
     if (this.areAllLevelsCompleted()) {
       this.renderYouWinGraphic(ctx);
+      this.renderVideoButton(ctx);
     }
 
     this.renderTopBar(ctx);
@@ -1880,6 +1968,11 @@ class LevelSelect extends Screen {
 
     // Render story viewer modal
     this.storyViewer.renderModal(ctx, this.layoutCache);
+
+    // Render video player modal if active
+    if (this.videoPlayerActive) {
+      this.renderVideoPlayer(ctx);
+    }
 
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.render(ctx);
@@ -2309,7 +2402,9 @@ class LevelSelect extends Screen {
         fontSize: this.layoutCache.smallFontSize,
         align: "center",
         baseline: "middle",
-        color: isDisabled ? "rgba(150, 150, 150, 0.6)" : "rgba(255, 255, 255, 0.9)",
+        color: isDisabled
+          ? "rgba(150, 150, 150, 0.6)"
+          : "rgba(255, 255, 255, 0.9)",
         weight: "bold",
       }
     );
@@ -2320,7 +2415,9 @@ class LevelSelect extends Screen {
         fontSize: this.game.getScaledValue(12),
         align: "center",
         baseline: "middle",
-        color: isDisabled ? "rgba(150, 150, 150, 0.6)" : "rgba(255, 215, 0, 0.9)",
+        color: isDisabled
+          ? "rgba(150, 150, 150, 0.6)"
+          : "rgba(255, 215, 0, 0.9)",
         weight: "bold",
       });
     }
@@ -3470,7 +3567,10 @@ class LevelSelect extends Screen {
     const isUnlocked = this.game.unlockedLevels[levelIndex];
     const isCompleted = this.game.completedLevels[levelIndex];
     const isHovered = this.hoveredLevel === levelIndex;
-    const levelCost = GameConfig.getLevelCost(levelIndex, this.game.selectedDifficulty);
+    const levelCost = GameConfig.getLevelCost(
+      levelIndex,
+      this.game.selectedDifficulty
+    );
     const isAffordable = this.game.playerPoints >= levelCost;
 
     const hoverProgress = this.levelHoverAnimations[levelIndex] || 0;
@@ -3927,7 +4027,9 @@ class LevelSelect extends Screen {
       this.difficultyModal.hoveredDifficulty === button.difficulty;
     const isCompleted =
       this.game.completedLevelsByDifficulty[button.difficulty] &&
-      this.game.completedLevelsByDifficulty[button.difficulty][this.difficultyModal.selectedLevel];
+      this.game.completedLevelsByDifficulty[button.difficulty][
+        this.difficultyModal.selectedLevel
+      ];
 
     ctx.save();
 
@@ -4110,5 +4212,215 @@ class LevelSelect extends Screen {
     }
 
     return true; // Consume click to prevent background interaction
+  }
+
+  renderVideoButton(ctx) {
+    const layout = this.layoutCache;
+    const button = this.videoButton;
+
+    ctx.save();
+
+    const x = layout.videoButtonX - layout.videoButtonWidth / 2;
+    const y = layout.videoButtonY - layout.videoButtonHeight / 2;
+    const radius = this.game.getScaledValue(8);
+
+    // Enhanced gradient background
+    const gradient = ctx.createLinearGradient(
+      x,
+      y,
+      x,
+      y + layout.videoButtonHeight
+    );
+
+    let color1, color2;
+    if (button.hovered) {
+      color1 = "#BB8FCE";
+      color2 = "#A569BD";
+    } else {
+      color1 = "#A569BD";
+      color2 = "#8E44AD";
+    }
+
+    gradient.addColorStop(0, color1);
+    gradient.addColorStop(1, color2);
+    ctx.fillStyle = gradient;
+
+    if (button.hovered) {
+      ctx.shadowColor = "#BB8FCE";
+      ctx.shadowBlur = this.game.getScaledValue(12);
+    }
+
+    ctx.strokeStyle = button.hovered ? "#D7BDE2" : "#8E44AD";
+    ctx.lineWidth = this.game.getScaledValue(3);
+
+    // Draw rounded rectangle
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + layout.videoButtonWidth - radius, y);
+    ctx.quadraticCurveTo(
+      x + layout.videoButtonWidth,
+      y,
+      x + layout.videoButtonWidth,
+      y + radius
+    );
+    ctx.lineTo(
+      x + layout.videoButtonWidth,
+      y + layout.videoButtonHeight - radius
+    );
+    ctx.quadraticCurveTo(
+      x + layout.videoButtonWidth,
+      y + layout.videoButtonHeight,
+      x + layout.videoButtonWidth - radius,
+      y + layout.videoButtonHeight
+    );
+    ctx.lineTo(x + radius, y + layout.videoButtonHeight);
+    ctx.quadraticCurveTo(
+      x,
+      y + layout.videoButtonHeight,
+      x,
+      y + layout.videoButtonHeight - radius
+    );
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+
+    ctx.fill();
+    ctx.stroke();
+
+    if (button.hovered) {
+      ctx.shadowColor = "#BB8FCE";
+      ctx.shadowBlur = this.game.getScaledValue(10);
+      ctx.stroke();
+    }
+
+    ctx.restore();
+
+    // Button text
+    this.renderText(
+      ctx,
+      "SECRET BONUS VIDEO",
+      layout.videoButtonX,
+      layout.videoButtonY,
+      {
+        fontSize: this.game.getScaledValue(18),
+        color: "white",
+        weight: "bold",
+      }
+    );
+  }
+
+  openVideoPlayer() {
+    this.videoPlayerActive = true;
+
+    try {
+      // Create video element
+      this.videoElement = document.createElement("video");
+      this.videoElement.src = "videos/video-end.mp4";
+      this.videoElement.loop = true;
+      this.videoElement.autoplay = true;
+      this.videoElement.controls = false;
+      this.videoElement.style.display = "none";
+
+      // Add error handlers
+      this.videoElement.addEventListener("error", () => {
+        console.error("🎥 Video failed to load");
+        this.closeVideoPlayer();
+      });
+
+      this.videoElement.addEventListener("loadeddata", () => {
+        console.log("🎥 Video loaded successfully");
+      });
+
+      document.body.appendChild(this.videoElement);
+      console.log("🎥 Video player opened");
+    } catch (error) {
+      console.error("🎥 Error creating video element:", error);
+      this.closeVideoPlayer();
+    }
+  }
+
+  closeVideoPlayer() {
+    this.videoPlayerActive = false;
+
+    // Clean up video element
+    if (this.videoElement) {
+      this.videoElement.pause();
+      this.videoElement.remove();
+      this.videoElement = null;
+    }
+
+    console.log("🎥 Video player closed");
+  }
+
+  renderVideoPlayer(ctx) {
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+
+    ctx.save();
+
+    // Dark overlay
+    ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    // Video container
+    const videoWidth = this.game.getScaledValue(640);
+    const videoHeight = this.game.getScaledValue(360);
+    const videoX = (canvasWidth - videoWidth) / 2;
+    const videoY = (canvasHeight - videoHeight) / 2;
+
+    // Container background
+    ctx.fillStyle = "rgba(20, 20, 20, 0.95)";
+    ctx.fillRect(videoX - 10, videoY - 10, videoWidth + 20, videoHeight + 20);
+
+    // Border with glow
+    ctx.strokeStyle = "#BB8FCE";
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.shadowColor = "#BB8FCE";
+    ctx.shadowBlur = this.game.getScaledValue(15);
+    ctx.strokeRect(videoX - 10, videoY - 10, videoWidth + 20, videoHeight + 20);
+
+    // Draw video frame if ready
+    if (this.videoElement && this.videoElement.readyState >= 2) {
+      try {
+        ctx.drawImage(
+          this.videoElement,
+          videoX,
+          videoY,
+          videoWidth,
+          videoHeight
+        );
+      } catch (error) {
+        console.error("🎥 Error drawing video frame:", error);
+        // Show error message
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#FF6B6B";
+        ctx.font = `${this.game.getScaledValue(24)}px Courier New`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Error loading video", canvasWidth / 2, canvasHeight / 2);
+      }
+    } else {
+      // Loading text
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = `${this.game.getScaledValue(24)}px Courier New`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("Loading video...", canvasWidth / 2, canvasHeight / 2);
+    }
+
+    // Close button hint
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+    ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText(
+      "Press ESC or click outside to close",
+      canvasWidth / 2,
+      videoY + videoHeight + 30
+    );
+
+    ctx.restore();
   }
 }

@@ -4,7 +4,8 @@
       "Bash(find:*)",
       "Bash(start index.html)",
       "Bash(cat:*)",
-      "Bash(node -e:*)"
+      "Bash(node -e:*)",
+      "Bash(node -c:*)"
     ],
     "deny": [],
     "ask": []

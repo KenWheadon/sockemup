@@ -1076,7 +1076,7 @@ class LevelEndScreen extends Screen {
 
     const textY = button.y + button.height / 2;
     const textX = button.x + button.width / 2;
-    ctx.fillText("WATCH VIDEO", textX, textY);
+    ctx.fillText("SECRET BONUS VIDEO", textX, textY);
 
     ctx.restore();
   }
