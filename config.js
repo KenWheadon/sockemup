@@ -589,14 +589,14 @@ const GameConfig = {
       id: "first_match",
       name: "First Match",
       description: "Match your first pair of socks",
-      icon: "⚡",
+      icon: "🥇",
       unlocked: false,
     },
     PERFECT_THROW: {
       id: "perfect_throw",
       name: "Perfect Throw",
       description: "Hit Martha in the center",
-      icon: "🎯",
+      icon: "✨",
       unlocked: false,
     },
     SPEEDY_MATCHER: {
