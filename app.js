@@ -635,6 +635,12 @@ class SockGame {
       this.unlockedStoryPanels[levelIndex] = true;
       this.newStoryPanelUnlocked = levelIndex; // Flag for animation on level select
       console.log(`📖 Story Panel ${levelIndex + 1} unlocked!`);
+
+      // Trigger visual notification through feedback manager
+      const storyPanel = GameConfig.STORY_PANELS[levelIndex];
+      if (storyPanel && this.feedbackManager) {
+        this.feedbackManager.showStoryUnlocked(storyPanel);
+      }
     }
 
     // Check if all levels completed at this difficulty

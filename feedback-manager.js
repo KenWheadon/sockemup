@@ -225,6 +225,22 @@ class FeedbackManager {
       velocity: 0,
       timer: 3000, // 3 seconds total
       duration: 3000,
+      type: 'achievement', // Mark as achievement type
+    });
+  }
+
+  // Show story panel unlocked notification
+  showStoryUnlocked(storyPanel) {
+    this.achievementNotifications.push({
+      storyPanel: storyPanel,
+      x: this.game.getCanvasWidth() / 2,
+      y: this.game.getScaledValue(60), // Near top of screen
+      alpha: 0,
+      slideIn: 0, // Animation progress 0-1
+      velocity: 0,
+      timer: 3000, // 3 seconds total
+      duration: 3000,
+      type: 'story', // Mark as story type
     });
   }
 
@@ -265,9 +281,9 @@ class FeedbackManager {
     this.celebrationActive = true;
     this.celebrationTimer = this.celebrationDuration;
 
-    // Create celebration particles
-    const centerX = this.game.getCanvasWidth() / 2;
-    const centerY = this.game.getCanvasHeight() / 2;
+    // Create celebration particles centered on Martha
+    const centerX = this.marthaX + this.marthaWidth / 2;
+    const centerY = this.marthaY + this.marthaWidth / 2; // Use marthaWidth for approximate height
     const colors = ["#FFD700", "#FF6B6B", "#4ECDC4", "#45B7D1", "#FFA07A"];
 
     for (let i = 0; i < 30; i++) {
@@ -403,7 +419,10 @@ class FeedbackManager {
   renderAchievementNotification(ctx, notif) {
     ctx.save();
 
+    // Determine if this is an achievement or story notification
+    const isStory = notif.type === 'story';
     const achievement = notif.achievement;
+    const storyPanel = notif.storyPanel;
 
     // Smaller, more compact design
     const boxWidth = this.game.getScaledValue(320);
@@ -423,8 +442,8 @@ class FeedbackManager {
     this.drawRoundedRect(ctx, x, y, boxWidth, boxHeight, radius);
     ctx.fill();
 
-    // Subtle gold border
-    ctx.strokeStyle = "rgba(255, 215, 0, 0.7)";
+    // Subtle gold border (purple for story, gold for achievement)
+    ctx.strokeStyle = isStory ? "rgba(147, 112, 219, 0.7)" : "rgba(255, 215, 0, 0.7)";
     ctx.lineWidth = this.game.getScaledValue(2);
     this.drawRoundedRect(ctx, x, y, boxWidth, boxHeight, radius);
     ctx.stroke();
@@ -434,24 +453,39 @@ class FeedbackManager {
     ctx.shadowBlur = 0;
     ctx.globalAlpha = notif.alpha;
 
-    // Achievement icon (smaller)
+    // Icon (smaller)
     const iconX = x + this.game.getScaledValue(20);
     const iconY = y + boxHeight / 2;
     ctx.font = `${this.game.getScaledValue(24)}px Arial`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#FFD700";
-    ctx.fillText(achievement.icon, iconX, iconY);
 
-    // Simple text: "Achievement Unlocked: Name"
+    if (isStory) {
+      // Story icon
+      ctx.fillStyle = "#9370DB";
+      ctx.fillText("📖", iconX, iconY);
+    } else {
+      // Achievement icon
+      ctx.fillStyle = "#FFD700";
+      ctx.fillText(achievement.icon, iconX, iconY);
+    }
+
+    // Simple text
     const textX = iconX + this.game.getScaledValue(35);
     ctx.font = `bold ${this.game.getScaledValue(14)}px Courier New`;
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.fillText("Achievement Unlocked:", textX, iconY - this.game.getScaledValue(8));
 
-    ctx.font = `bold ${this.game.getScaledValue(16)}px Courier New`;
-    ctx.fillStyle = "#FFD700";
-    ctx.fillText(achievement.name, textX, iconY + this.game.getScaledValue(10));
+    if (isStory) {
+      ctx.fillText("Story Panel Unlocked:", textX, iconY - this.game.getScaledValue(8));
+      ctx.font = `bold ${this.game.getScaledValue(16)}px Courier New`;
+      ctx.fillStyle = "#9370DB";
+      ctx.fillText(storyPanel.title, textX, iconY + this.game.getScaledValue(10));
+    } else {
+      ctx.fillText("Achievement Unlocked:", textX, iconY - this.game.getScaledValue(8));
+      ctx.font = `bold ${this.game.getScaledValue(16)}px Courier New`;
+      ctx.fillStyle = "#FFD700";
+      ctx.fillText(achievement.name, textX, iconY + this.game.getScaledValue(10));
+    }
 
     ctx.restore();
   }

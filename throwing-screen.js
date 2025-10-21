@@ -442,6 +442,11 @@ class ThrowingScreen extends Screen {
 
       // Check collision with Martha using zone-based catching
       // Ball must enter a zone and then start moving away before being caught
+      // Skip collision detection if Martha is exiting or entering
+      if (this.marthaManager.isExiting || this.marthaManager.isEntering) {
+        return true; // Keep sockball active but don't process collision
+      }
+
       const marthaCenterX = this.marthaManager.x + this.marthaManager.width / 2;
       const marthaCenterY = this.marthaManager.y + this.marthaManager.height / 2;
       const dx = sockball.x - marthaCenterX;

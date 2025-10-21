@@ -337,6 +337,9 @@ class LevelEndScreen extends Screen {
     this.updateParticles(deltaTime);
     this.titleBounceTimer += deltaTime * 0.003;
     this.marthaScaleTimer += deltaTime * 0.002;
+
+    // Update feedback manager to keep achievement/story notifications visible
+    this.game.feedbackManager.update(deltaTime);
   }
 
   updateParticles(deltaTime) {
@@ -480,6 +483,9 @@ class LevelEndScreen extends Screen {
     }
 
     ctx.restore();
+
+    // Render feedback manager (achievement/story notifications) on top of everything
+    this.game.feedbackManager.render(ctx);
   }
 
   renderMainContainer(ctx) {

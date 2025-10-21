@@ -197,14 +197,6 @@ class LevelSelect extends Screen {
     this.storyViewer = new StoryViewer(this.game, this.uiHelpers);
     this.difficultyModal = new DifficultyModal(this.game, this.uiHelpers);
     this.difficultySelector = new DifficultySelector(this.game, this.uiHelpers);
-
-    // Story unlock animation
-    this.storyUnlockAnimation = {
-      isPlaying: false,
-      panelIndex: -1,
-      animationProgress: 0,
-      duration: 2000, // 2 seconds
-    };
   }
 
   calculateMarthaImageSize() {
@@ -398,11 +390,8 @@ class LevelSelect extends Screen {
     console.log("🎵 Level select setup - starting menu music");
     this.game.audioManager.playMusic("menu-music", true);
 
-    // Check for newly unlocked story panel
+    // Reset the story panel unlock flag (notification now handled by feedbackManager)
     if (this.game.newStoryPanelUnlocked >= 0) {
-      this.storyUnlockAnimation.isPlaying = true;
-      this.storyUnlockAnimation.panelIndex = this.game.newStoryPanelUnlocked;
-      this.storyUnlockAnimation.animationProgress = 0;
       this.game.newStoryPanelUnlocked = -1; // Reset flag
     }
 
@@ -667,20 +656,14 @@ class LevelSelect extends Screen {
       return;
     }
 
-    // Update story unlock animation
-    if (this.storyUnlockAnimation.isPlaying) {
-      this.storyUnlockAnimation.animationProgress += deltaTime * 0.0008;
-      if (this.storyUnlockAnimation.animationProgress >= 1) {
-        this.storyUnlockAnimation.isPlaying = false;
-        this.storyUnlockAnimation.animationProgress = 0;
-      }
-    }
-
     // Only update difficulty UI if New Game+ is unlocked
     if (this.game.highestUnlockedDifficulty > 0) {
       this.difficultyModal.update(deltaTime);
       this.difficultySelector.update(deltaTime);
     }
+
+    // Update feedback manager to keep achievement/story notifications visible
+    this.game.feedbackManager.update(deltaTime);
 
     for (let i = 0; i < this.levelHoverAnimations.length; i++) {
       const isHovered = this.hoveredLevel === i;
@@ -1954,11 +1937,6 @@ class LevelSelect extends Screen {
       this.renderMenuSocks(ctx);
     }
 
-    // Render story unlock notification
-    if (this.storyUnlockAnimation.isPlaying) {
-      this.renderStoryUnlockNotification(ctx);
-    }
-
     // Render story viewer modal
     this.storyViewer.renderModal(ctx, this.layoutCache);
 
@@ -1970,6 +1948,9 @@ class LevelSelect extends Screen {
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.render(ctx);
     }
+
+    // Render feedback manager (achievement/story notifications) on top of everything
+    this.game.feedbackManager.render(ctx);
   }
 
   renderBackground(ctx) {
@@ -3044,77 +3025,6 @@ class LevelSelect extends Screen {
 
       ctx.restore();
     }
-  }
-
-  renderStoryUnlockNotification(ctx) {
-    const panelIndex = this.storyUnlockAnimation.panelIndex;
-    const progress = this.storyUnlockAnimation.animationProgress;
-    const panel = GameConfig.STORY_PANELS[panelIndex];
-
-    if (!panel) return;
-
-    const canvasWidth = this.game.getCanvasWidth();
-    const canvasHeight = this.game.getCanvasHeight();
-
-    // Animation phases
-    const fadeInDuration = 0.15;
-    const stayDuration = 0.7;
-    const fadeOutDuration = 0.15;
-
-    let alpha = 1;
-    if (progress < fadeInDuration) {
-      alpha = progress / fadeInDuration;
-    } else if (progress > stayDuration) {
-      alpha = 1 - (progress - stayDuration) / fadeOutDuration;
-    }
-
-    ctx.save();
-    ctx.globalAlpha = alpha;
-
-    // Toast notification at top center
-    const boxWidth = this.game.getScaledValue(400);
-    const boxHeight = this.game.getScaledValue(60);
-    const x = canvasWidth / 2 - boxWidth / 2;
-    const slideOffset =
-      (1 - Math.min(progress / fadeInDuration, 1)) * -boxHeight;
-    const y = this.game.getScaledValue(70) + slideOffset;
-    const radius = this.game.getScaledValue(8);
-
-    // Dark background with purple accent
-    ctx.fillStyle = "rgba(40, 40, 40, 0.95)";
-    this.drawRoundedRect(ctx, x, y, boxWidth, boxHeight, radius);
-    ctx.fill();
-
-    // Purple border for story content
-    ctx.strokeStyle = "rgba(138, 43, 226, 0.8)";
-    ctx.lineWidth = this.game.getScaledValue(2);
-    this.drawRoundedRect(ctx, x, y, boxWidth, boxHeight, radius);
-    ctx.stroke();
-
-    // Book icon
-    const iconX = x + this.game.getScaledValue(25);
-    const iconY = y + boxHeight / 2;
-    ctx.font = `${this.game.getScaledValue(28)}px Arial`;
-    ctx.textAlign = "left";
-    ctx.textBaseline = "middle";
-    ctx.fillStyle = "#BA55D3";
-    ctx.fillText("📖", iconX, iconY);
-
-    // Text
-    const textX = iconX + this.game.getScaledValue(45);
-    ctx.font = `bold ${this.game.getScaledValue(14)}px Courier New`;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.fillText(
-      "Story Panel Unlocked:",
-      textX,
-      iconY - this.game.getScaledValue(10)
-    );
-
-    ctx.font = `bold ${this.game.getScaledValue(16)}px Courier New`;
-    ctx.fillStyle = "#BA55D3";
-    ctx.fillText(panel.title, textX, iconY + this.game.getScaledValue(12));
-
-    ctx.restore();
   }
 
   renderStoryViewerModal(ctx) {
