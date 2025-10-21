@@ -452,9 +452,31 @@ class MarthaManager {
       const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
       const minSpeed = 1.0;
       if (currentSpeed < minSpeed) {
-        // If moving too slowly, give a small push in current direction or default right
-        const defaultDirection = this.direction || 1;
-        this.velocity.x = defaultDirection * minSpeed;
+        // If moving too slowly, give a small push
+        // Check if stuck at edges and push away from them
+        const edgeThreshold = 5; // Pixels from edge to consider "at edge"
+
+        if (this.x <= this.bounds.left + edgeThreshold) {
+          // Stuck at left edge - push right
+          this.velocity.x = minSpeed;
+          this.velocity.y = 0;
+        } else if (this.x >= this.bounds.right - this.width - edgeThreshold) {
+          // Stuck at right edge - push left
+          this.velocity.x = -minSpeed;
+          this.velocity.y = 0;
+        } else if (this.y <= this.bounds.top + edgeThreshold) {
+          // Stuck at top edge - push down
+          this.velocity.x = 0;
+          this.velocity.y = minSpeed;
+        } else if (this.y >= this.bounds.bottom - this.height - edgeThreshold) {
+          // Stuck at bottom edge - push up
+          this.velocity.x = 0;
+          this.velocity.y = -minSpeed;
+        } else {
+          // Not at edge, use current direction or default right
+          const defaultDirection = this.direction || 1;
+          this.velocity.x = defaultDirection * minSpeed;
+        }
       }
 
       // Update facing direction based on velocity

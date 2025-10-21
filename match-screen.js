@@ -113,6 +113,7 @@ class MatchScreen extends Screen {
     this.sockManager.setSockList(this.game.sockList);
     this.setupDropZones();
     this.setupSockPilePosition();
+    this.setSockballAnimationTarget();
     this.draggedSock = null;
     this.isDragging = false;
     this.dropZoneHover = null;
@@ -167,6 +168,14 @@ class MatchScreen extends Screen {
   onResize() {
     this.setupDropZones();
     this.setupSockPilePosition();
+    this.setSockballAnimationTarget();
+  }
+
+  setSockballAnimationTarget() {
+    const layout = this.layoutCache;
+    // Set the target position for sockball animations to the sockball counter icon
+    this.sockManager.sockballTargetX = layout.sockBallsX - this.game.getScaledValue(25);
+    this.sockManager.sockballTargetY = layout.sockBallsY;
   }
 
   setupDropZones() {

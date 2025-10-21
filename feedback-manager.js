@@ -39,6 +39,7 @@ class FeedbackManager {
 
     // Achievement notifications
     this.achievementNotifications = [];
+    this.notificationQueue = []; // Queue for pending notifications
   }
 
   update(deltaTime) {
@@ -119,6 +120,12 @@ class FeedbackManager {
 
       return notif.timer > 0;
     });
+
+    // Show next queued notification if current one is finished
+    if (this.achievementNotifications.length === 0 && this.notificationQueue.length > 0) {
+      const nextNotification = this.notificationQueue.shift();
+      this.achievementNotifications.push(nextNotification);
+    }
 
     // Check streak timeout
     if (now - this.lastMatchTime > this.streakTimeout && this.currentStreak > 0) {
@@ -216,7 +223,7 @@ class FeedbackManager {
 
   // Show achievement unlocked notification
   showAchievementUnlocked(achievement) {
-    this.achievementNotifications.push({
+    const notification = {
       achievement: achievement,
       x: this.game.getCanvasWidth() / 2,
       y: this.game.getScaledValue(60), // Near top of screen
@@ -226,12 +233,20 @@ class FeedbackManager {
       timer: 3000, // 3 seconds total
       duration: 3000,
       type: 'achievement', // Mark as achievement type
-    });
+    };
+
+    // If no notification is currently showing, show immediately
+    if (this.achievementNotifications.length === 0) {
+      this.achievementNotifications.push(notification);
+    } else {
+      // Otherwise, add to queue
+      this.notificationQueue.push(notification);
+    }
   }
 
   // Show story panel unlocked notification
   showStoryUnlocked(storyPanel) {
-    this.achievementNotifications.push({
+    const notification = {
       storyPanel: storyPanel,
       x: this.game.getCanvasWidth() / 2,
       y: this.game.getScaledValue(60), // Near top of screen
@@ -241,7 +256,15 @@ class FeedbackManager {
       timer: 3000, // 3 seconds total
       duration: 3000,
       type: 'story', // Mark as story type
-    });
+    };
+
+    // If no notification is currently showing, show immediately
+    if (this.achievementNotifications.length === 0) {
+      this.achievementNotifications.push(notification);
+    } else {
+      // Otherwise, add to queue
+      this.notificationQueue.push(notification);
+    }
   }
 
   // Queue a dialogue message
@@ -516,6 +539,6 @@ class FeedbackManager {
     this.lastActionTime = Date.now();
     this.lastEncouragementTime = 0;
     this.feedbackAnimations = [];
-    // Don't reset achievement notifications - they should persist across screens
+    // Don't reset achievement notifications or queue - they should persist across screens
   }
 }

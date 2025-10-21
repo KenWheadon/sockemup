@@ -292,8 +292,10 @@ class SockManager {
 
   createSockballAnimation(animation) {
     const sockballImage = GameConfig.IMAGES.SOCK_BALLS[animation.sockType - 1];
-    const targetX = this.game.getCanvasWidth() - this.game.getScaledValue(525);
-    const targetY = this.game.getCanvasHeight() - this.game.getScaledValue(125);
+
+    // Target the sockball counter on the top bar
+    const targetX = this.sockballTargetX || (this.game.getCanvasWidth() - this.game.getScaledValue(525));
+    const targetY = this.sockballTargetY || (this.game.getCanvasHeight() - this.game.getScaledValue(125));
 
     const sockballAnim = {
       image: sockballImage,
