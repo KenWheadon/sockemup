@@ -388,8 +388,10 @@ class MarthaManager {
       const launchX = GameConfig.SOCKBALL_LAUNCH_POSITION.x;
       const launchY = GameConfig.SOCKBALL_LAUNCH_POSITION.y;
 
-      if (this.x < launchX + restrictedZoneSize &&
-          this.y > launchY - restrictedZoneSize) {
+      if (
+        this.x < launchX + restrictedZoneSize &&
+        this.y > launchY - restrictedZoneSize
+      ) {
         // Push Martha away from the lower left corner
         this.velocity.x = Math.abs(this.velocity.x) + 2; // Force right
         this.velocity.y = -Math.abs(this.velocity.y) - 2; // Force up
@@ -449,7 +451,9 @@ class MarthaManager {
       }
 
       // Ensure Martha is always moving (minimum velocity)
-      const currentSpeed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+      const currentSpeed = Math.sqrt(
+        this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y
+      );
       const minSpeed = 1.0;
       if (currentSpeed < minSpeed) {
         // If moving too slowly, give a small push
@@ -518,7 +522,9 @@ class MarthaManager {
     const normalizedDistance = distance / maxDistance;
 
     // Determine catch quality
-    if (normalizedDistance <= GameConfig.CATCH_MECHANICS.PERFECT_CATCH_THRESHOLD) {
+    if (
+      normalizedDistance <= GameConfig.CATCH_MECHANICS.PERFECT_CATCH_THRESHOLD
+    ) {
       return {
         quality: "PERFECT",
         data: GameConfig.CATCH_QUALITY.PERFECT,
@@ -687,13 +693,6 @@ class MarthaManager {
       ctx.fillStyle = fillColor;
       ctx.fillRect(meterX, meterY, fillWidth, meter.height);
     }
-
-    // Draw text label
-    ctx.fillStyle = "#ffffff";
-    ctx.font = `${this.game.getScaledValue(10)}px Arial`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.fillText("RENT DUE", meterX + meter.width / 2, meterY - 2);
   }
 
   renderCatchZones(ctx) {
@@ -703,11 +702,14 @@ class MarthaManager {
     const baseRadius = this.width / 2;
 
     // Get the catch radius with multiplier
-    const catchRadius = baseRadius * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+    const catchRadius =
+      baseRadius * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
 
     // Calculate zone radii based on thresholds
-    const perfectRadius = baseRadius * GameConfig.CATCH_MECHANICS.PERFECT_CATCH_THRESHOLD;
-    const goodRadius = baseRadius * GameConfig.CATCH_MECHANICS.GOOD_CATCH_THRESHOLD;
+    const perfectRadius =
+      baseRadius * GameConfig.CATCH_MECHANICS.PERFECT_CATCH_THRESHOLD;
+    const goodRadius =
+      baseRadius * GameConfig.CATCH_MECHANICS.GOOD_CATCH_THRESHOLD;
     const regularRadius = catchRadius;
 
     ctx.save();
