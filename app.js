@@ -120,6 +120,7 @@ class SockGame {
     this.handleTouchStart = this.handleTouchStart.bind(this);
     this.handleTouchMove = this.handleTouchMove.bind(this);
     this.handleTouchEnd = this.handleTouchEnd.bind(this);
+    this.handleTouchCancel = this.handleTouchCancel.bind(this);
   }
 
   initializeCanvas() {
@@ -374,6 +375,9 @@ class SockGame {
     this.canvas.addEventListener("touchend", this.handleTouchEnd, {
       passive: false,
     });
+    this.canvas.addEventListener("touchcancel", this.handleTouchCancel, {
+      passive: false,
+    });
   }
 
   removeEventListeners() {
@@ -386,6 +390,7 @@ class SockGame {
     this.canvas.removeEventListener("touchstart", this.handleTouchStart);
     this.canvas.removeEventListener("touchmove", this.handleTouchMove);
     this.canvas.removeEventListener("touchend", this.handleTouchEnd);
+    this.canvas.removeEventListener("touchcancel", this.handleTouchCancel);
   }
 
   // Phase 2.3 - Touch event handlers
@@ -394,7 +399,11 @@ class SockGame {
 
     if (e.touches.length > 0) {
       const touch = e.touches[0];
-      const coords = this.screenToCanvas(touch.clientX, touch.clientY);
+
+      // Track the game state when touch down occurs
+      this.mouseDownState = this.gameState;
+
+      // Pass touch coordinates directly - handleMouseDown will convert them
       this.handleMouseDown({ clientX: touch.clientX, clientY: touch.clientY });
     }
   }
@@ -404,7 +413,8 @@ class SockGame {
 
     if (e.touches.length > 0) {
       const touch = e.touches[0];
-      const coords = this.screenToCanvas(touch.clientX, touch.clientY);
+
+      // Pass touch coordinates directly - handleMouseMove will convert them
       this.handleMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
     }
   }
@@ -415,12 +425,27 @@ class SockGame {
     // Get the last touch position from changedTouches
     if (e.changedTouches.length > 0) {
       const touch = e.changedTouches[0];
-      const coords = this.screenToCanvas(touch.clientX, touch.clientY);
 
-      // Call both mouseup and click to simulate full click behavior
+      // Pass touch coordinates directly - handlers will convert them
+      // Only call mouseup and click - handleClick now has cross-screen protection
       this.handleMouseUp({ clientX: touch.clientX, clientY: touch.clientY });
       this.handleClick({ clientX: touch.clientX, clientY: touch.clientY });
     }
+  }
+
+  handleTouchCancel(e) {
+    e.preventDefault();
+
+    // Reset any dragging state when touch is cancelled
+    if (this.gameState === "matching" && this.matchScreen) {
+      this.matchScreen.isDragging = false;
+      this.matchScreen.draggedSock = null;
+    }
+
+    // Reset mousedown state
+    this.mouseDownState = null;
+
+    console.log('🚫 Touch cancelled - resetting drag state');
   }
 
   // Phase 1.3 - Handle keyboard input

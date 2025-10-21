@@ -214,6 +214,11 @@ class MatchScreen extends Screen {
   }
 
   setupSockPilePosition() {
+    // Guard against resize before screen is set up
+    if (!this.sockManager.sockPile) {
+      return;
+    }
+
     const layout = this.layoutCache;
     const sockPile = this.sockManager.sockPile;
     sockPile.x = layout.sockPileX;

@@ -47,6 +47,12 @@ class StoryManager {
     this.isClosing = false;
     this.openProgress = 0;
     this.closeProgress = 0;
+
+    // Reset button hover states to prevent touch event persistence
+    this.buttons.skip.hovered = false;
+    this.buttons.next.hovered = false;
+    this.buttons.previous.hovered = false;
+
     this.calculateLayout();
   }
 
@@ -203,20 +209,23 @@ class StoryManager {
   handleClick(x, y) {
     if (!this.showingStory) return false;
 
+    // Check buttons using direct hit detection instead of hover states
+    // This ensures touch events work properly even without touchmove events
+
     // Skip button
-    if (this.buttons.skip.hovered) {
+    if (this.isPointInRect(x, y, this.buttons.skip)) {
       this.hide();
       return true;
     }
 
-    // Previous button
-    if (this.buttons.previous.hovered && this.currentSlideIndex > 0) {
+    // Previous button (only if not on first slide)
+    if (this.currentSlideIndex > 0 && this.isPointInRect(x, y, this.buttons.previous)) {
       this.previousSlide();
       return true;
     }
 
     // Next button
-    if (this.buttons.next.hovered) {
+    if (this.isPointInRect(x, y, this.buttons.next)) {
       if (this.currentSlideIndex < this.slides.length - 1) {
         this.nextSlide();
       } else {
