@@ -424,7 +424,19 @@ class LevelEndScreen extends Screen {
       }
 
       // Achievement: NEW_GAME_PLUS_HERO (complete any level on +1 difficulty)
-      if (this.game.currentDifficulty >= 1) {
+      // Check if any level has been completed at difficulty >= 1
+      const hasCompletedNewGamePlus = Object.keys(
+        this.game.completedLevelsByDifficulty
+      ).some((difficulty) => {
+        const diff = parseInt(difficulty);
+        if (diff >= 1 && this.game.completedLevelsByDifficulty[diff]) {
+          return this.game.completedLevelsByDifficulty[diff].some(
+            (completed) => completed
+          );
+        }
+        return false;
+      });
+      if (hasCompletedNewGamePlus) {
         this.game.unlockAchievement("new_game_plus_hero");
       }
 
