@@ -516,13 +516,15 @@ class MarthaManager {
     }
   }
 
-  hitBySockball(sockball, forcedQuality = null) {
+  hitBySockball(sockball, forcedQuality = null, isBonusHit = false) {
     if (this.hitEffect.active) return false; // Already hit recently
 
-    this.collectedSockballs++;
-
-    // Update rent due meter
-    this.rentDueMeter.current = this.collectedSockballs;
+    // Bonus hits don't count toward Martha's collection (they're extra!)
+    if (!isBonusHit) {
+      this.collectedSockballs++;
+      // Update rent due meter
+      this.rentDueMeter.current = this.collectedSockballs;
+    }
 
     // Phase 2.1 - Use forced quality (from zone tracking) or calculate it
     let catchQuality;
@@ -687,6 +689,25 @@ class MarthaManager {
     const regularRadius = catchRadius;
 
     ctx.save();
+
+    // If Martha is exiting/entering, show BONUS zone indicator!
+    if (this.isExiting || this.isEntering) {
+      // Pulsing bonus indicator
+      const pulseIntensity = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
+
+      // Outer bonus glow
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, regularRadius * 1.3, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(255, 105, 180, ${0.6 * pulseIntensity})`; // Hot pink
+      ctx.lineWidth = 4;
+      ctx.setLineDash([4, 4]);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(255, 105, 180, ${0.15 * pulseIntensity})`;
+      ctx.fill();
+
+      // Reset line dash for regular zones
+      ctx.setLineDash([]);
+    }
 
     // Draw Regular catch zone (outermost) - Blue
     ctx.beginPath();

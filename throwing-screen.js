@@ -442,10 +442,8 @@ class ThrowingScreen extends Screen {
 
       // Check collision with Martha using zone-based catching
       // Ball must enter a zone and then start moving away before being caught
-      // Skip collision detection if Martha is exiting or entering
-      if (this.marthaManager.isExiting || this.marthaManager.isEntering) {
-        return true; // Keep sockball active but don't process collision
-      }
+      // Allow bonus hits when Martha is exiting/entering - these give bonus points!
+      const isBonusHit = this.marthaManager.isExiting || this.marthaManager.isEntering;
 
       const marthaCenterX = this.marthaManager.x + this.marthaManager.width / 2;
       const marthaCenterY = this.marthaManager.y + this.marthaManager.height / 2;
@@ -486,7 +484,8 @@ class ThrowingScreen extends Screen {
 
         // Catch the ball if it's moving away and has entered a zone
         if (movingAway && sockball.bestZoneEntered) {
-          const catchQuality = this.marthaManager.hitBySockball(sockball, sockball.bestZoneEntered);
+          // Pass bonus flag to Martha manager if she's exiting/entering
+          const catchQuality = this.marthaManager.hitBySockball(sockball, sockball.bestZoneEntered, isBonusHit);
           if (catchQuality) {
             // Track catch quality counts for score screen
             if (this.game.catchQualityCounts && this.game.catchQualityCounts[catchQuality] !== undefined) {
@@ -499,11 +498,21 @@ class ThrowingScreen extends Screen {
             // Play points gained sound
             this.game.audioManager.playSound("points-gained", false, 0.3);
 
-            // Track consecutive hits for Deadeye achievement
+            // Track consecutive hits for Deadeye achievement (even bonus hits count!)
             this.consecutiveHits++;
 
             // Phase 2.2 - Notify feedback manager of catch quality
-            if (catchQuality === "PERFECT") {
+            if (isBonusHit) {
+              // Bonus hits get special message but use normal quality feedback
+              this.showMessage("BONUS CATCH!", "success", 1500);
+              if (catchQuality === "PERFECT") {
+                this.game.feedbackManager.onPerfectCatch();
+              } else if (catchQuality === "GOOD") {
+                this.game.feedbackManager.onGoodCatch();
+              } else {
+                this.game.feedbackManager.onRegularCatch();
+              }
+            } else if (catchQuality === "PERFECT") {
               this.game.feedbackManager.onPerfectCatch();
               this.perfectThrowsThisLevel++;
 
