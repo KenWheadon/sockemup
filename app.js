@@ -594,6 +594,14 @@ class SockGame {
       }
 
       console.log(`💾 Loaded game data - Selected difficulty: ${this.selectedDifficulty}, Highest unlocked: ${this.highestUnlockedDifficulty}`);
+    } else {
+      // No saved data - unlock story panels for any initially completed levels
+      const baseLevels = this.completedLevelsByDifficulty[0] || [];
+      for (let i = 0; i < baseLevels.length; i++) {
+        if (baseLevels[i] && !this.unlockedStoryPanels[i]) {
+          this.unlockedStoryPanels[i] = true;
+        }
+      }
     }
   }
 
