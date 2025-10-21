@@ -59,6 +59,7 @@ class SockGame {
 
     // NEW GAME+ notification
     this.showNewGamePlusNotification = false;
+    this.hasShownNewGamePlusBanner = false; // Persistent flag to track if banner has been shown
 
     // Story panel unlocks (one per level completed)
     this.unlockedStoryPanels = Array(9).fill(false);
@@ -559,6 +560,9 @@ class SockGame {
       // Story panels
       this.unlockedStoryPanels = data.unlockedStoryPanels || Array(9).fill(false);
 
+      // NEW GAME+ banner tracking
+      this.hasShownNewGamePlusBanner = data.hasShownNewGamePlusBanner || false;
+
       // Unlock story panels for already-completed levels on base difficulty
       const baseLevels = this.completedLevelsByDifficulty[0] || [];
       for (let i = 0; i < baseLevels.length; i++) {
@@ -603,6 +607,7 @@ class SockGame {
       highestUnlockedDifficulty: this.highestUnlockedDifficulty,
       unlockedLevelsByDifficulty: this.unlockedLevelsByDifficulty,
       completedLevelsByDifficulty: this.completedLevelsByDifficulty,
+      hasShownNewGamePlusBanner: this.hasShownNewGamePlusBanner,
       // Legacy fields for backwards compatibility
       unlockedLevels: this.unlockedLevels,
       completedLevels: this.completedLevels,
@@ -665,8 +670,8 @@ class SockGame {
 
       console.log(`🎮 ✨ NEW GAME+ UNLOCKED! Difficulty ${previousDifficulty} → ${this.highestUnlockedDifficulty}`);
 
-      // NEW GAME+: Show explanation if just unlocked first difficulty
-      if (previousDifficulty === 0 && this.highestUnlockedDifficulty === 1) {
+      // NEW GAME+: Show explanation if just unlocked first difficulty AND haven't shown banner before
+      if (previousDifficulty === 0 && this.highestUnlockedDifficulty === 1 && !this.hasShownNewGamePlusBanner) {
         this.showNewGamePlusNotification = true;
         console.log(`🎮 📢 Showing NEW GAME+ notification banner!`);
       }
