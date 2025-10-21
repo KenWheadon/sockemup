@@ -466,20 +466,22 @@ class StoryViewer {
     const buttonHeight = this.game.getScaledValue(35);
     const buttonSpacing = this.game.getScaledValue(15);
 
-    // Unlock progress message - above the buttons
+    // Unlock progress message - above the buttons (only show if not all unlocked)
     const totalStoryPanels = this.game.unlockedStoryPanels.length;
     const unlockedCount = this.getUnlockedPanels().length;
-    this.ui.renderText(
-      ctx,
-      `Unlock the full story by beating every level (${unlockedCount}/${totalStoryPanels})`,
-      canvasWidth / 2,
-      buttonY - this.game.getScaledValue(25),
-      {
-        fontSize: this.game.getScaledValue(12),
-        color: unlockedCount === totalStoryPanels ? "rgba(255, 215, 0, 0.9)" : "rgba(180, 100, 255, 0.7)",
-        align: "center",
-      }
-    );
+    if (unlockedCount < totalStoryPanels) {
+      this.ui.renderText(
+        ctx,
+        `Unlock the full story by beating every level (${unlockedCount}/${totalStoryPanels})`,
+        canvasWidth / 2,
+        buttonY - this.game.getScaledValue(25),
+        {
+          fontSize: this.game.getScaledValue(12),
+          color: "rgba(180, 100, 255, 0.7)",
+          align: "center",
+        }
+      );
+    }
 
     // Close button - far left
     this.renderNavigationButton(
