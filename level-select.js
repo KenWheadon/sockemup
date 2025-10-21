@@ -3428,7 +3428,7 @@ class LevelSelect extends Screen {
       ctx,
       "Select Level",
       layout.centerX,
-      layout.levelGridStartY - this.game.getScaledValue(120),
+      layout.levelGridStartY - this.game.getScaledValue(100),
       {
         fontSize: layout.titleFontSize,
         weight: "bold",
