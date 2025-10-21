@@ -983,7 +983,7 @@ class LevelSelect extends Screen {
           scrollPercentage * this.achievementsDrawer.maxScroll;
       }
 
-      const closeButtonSize = this.game.getScaledValue(30);
+      const closeButtonSize = this.game.getScaledValue(40);
       const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
       const closeButtonY = this.game.getScaledValue(20);
 
@@ -1047,11 +1047,23 @@ class LevelSelect extends Screen {
   }
 
   onMouseDown(x, y) {
-    if (
-      this.achievementsDrawer.closeButton.hovered &&
-      this.achievementsDrawer.isOpen
-    ) {
-      return false; // Let onClick handle it
+    // Check achievements drawer close button using direct hit detection
+    if (this.achievementsDrawer.isOpen) {
+      const layout = this.layoutCache;
+      const drawerWidth = layout.achievementsDrawerWidth;
+      const progress = this.achievementsDrawer.animationProgress;
+      const drawerX = -drawerWidth + drawerWidth * progress;
+      const closeButtonSize = this.game.getScaledValue(40);
+      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
+      const closeButtonY = this.game.getScaledValue(20);
+
+      const dx = x - closeButtonX;
+      const dy = y - closeButtonY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance <= closeButtonSize / 2) {
+        return false; // Let onClick handle it
+      }
     }
 
     if (
@@ -1424,16 +1436,34 @@ class LevelSelect extends Screen {
 
     // Handle achievements drawer clicks FIRST (since it renders on top)
     // Check close button first and only if drawer is open
-    if (
-      this.achievementsDrawer.closeButton.hovered &&
-      this.achievementsDrawer.isOpen
-    ) {
-      this.game.audioManager.playSound("button-click", false, 0.5);
-      this.toggleAchievementsDrawer();
-      return true;
+    if (this.achievementsDrawer.isOpen) {
+      const layout = this.layoutCache;
+      const drawerWidth = layout.achievementsDrawerWidth;
+      const progress = this.achievementsDrawer.animationProgress;
+      const drawerX = -drawerWidth + drawerWidth * progress;
+      const closeButtonSize = this.game.getScaledValue(40);
+      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
+      const closeButtonY = this.game.getScaledValue(20);
+
+      const dx = x - closeButtonX;
+      const dy = y - closeButtonY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance <= closeButtonSize / 2) {
+        this.game.audioManager.playSound("button-click", false, 0.5);
+        this.toggleAchievementsDrawer();
+        return true;
+      }
     }
 
-    if (this.achievementsDrawer.button.hovered) {
+    // Check achievements button using direct hit detection
+    const layout = this.layoutCache;
+    if (this.isPointInRect(x, y, {
+      x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
+      y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
+      width: layout.achievementsButtonWidth,
+      height: layout.achievementsButtonHeight,
+    })) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.toggleAchievementsDrawer();
       return true;
@@ -1467,18 +1497,36 @@ class LevelSelect extends Screen {
       return true;
     }
 
-    if (this.storyReplayButton.hovered) {
+    // Check story replay button using direct hit detection
+    if (this.isPointInRect(x, y, {
+      x: layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2,
+      y: layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2,
+      width: layout.storyReplayButtonWidth,
+      height: layout.storyReplayButtonHeight,
+    })) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.game.storyManager.show();
       return true;
     }
 
-    if (this.storyViewer.button.hovered) {
+    // Check story viewer button using direct hit detection
+    if (this.isPointInRect(x, y, {
+      x: layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2,
+      y: layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2,
+      width: layout.storyViewerButtonWidth,
+      height: layout.storyViewerButtonHeight,
+    })) {
       this.storyViewer.open();
       return true;
     }
 
-    if (this.videoButton.hovered && this.areAllLevelsCompleted()) {
+    // Check video button using direct hit detection (only if all levels completed)
+    if (this.areAllLevelsCompleted() && this.isPointInRect(x, y, {
+      x: layout.videoButtonX - layout.videoButtonWidth / 2,
+      y: layout.videoButtonY - layout.videoButtonHeight / 2,
+      width: layout.videoButtonWidth,
+      height: layout.videoButtonHeight,
+    })) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.openVideoPlayer();
       return true;
@@ -2750,60 +2798,46 @@ class LevelSelect extends Screen {
       );
       ctx.stroke();
 
-      // Render close button
-      const closeButtonSize = this.game.getScaledValue(30);
+      // Render close button (styled to match credits popup)
+      const closeButtonSize = this.game.getScaledValue(40);
       const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
       const closeButtonY = this.game.getScaledValue(20);
 
       ctx.save();
 
-      // Close button background
-      const closeGradient = ctx.createRadialGradient(
-        closeButtonX,
-        closeButtonY,
-        0,
-        closeButtonX,
-        closeButtonY,
-        closeButtonSize / 2
-      );
+      // Close button background - matching credits style
       if (this.achievementsDrawer.closeButton.hovered) {
-        closeGradient.addColorStop(0, "rgba(255, 100, 100, 0.8)");
-        closeGradient.addColorStop(1, "rgba(200, 50, 50, 0.8)");
-        ctx.shadowColor = "rgba(255, 100, 100, 0.6)";
+        ctx.fillStyle = "rgba(212, 175, 55, 0.2)";
+        ctx.shadowColor = "rgba(212, 175, 55, 0.4)";
         ctx.shadowBlur = this.game.getScaledValue(10);
       } else {
-        closeGradient.addColorStop(0, "rgba(180, 180, 180, 0.6)");
-        closeGradient.addColorStop(1, "rgba(120, 120, 120, 0.6)");
+        ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
       }
-      ctx.fillStyle = closeGradient;
 
       ctx.beginPath();
       ctx.arc(closeButtonX, closeButtonY, closeButtonSize / 2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Close button border
-      ctx.strokeStyle = this.achievementsDrawer.closeButton.hovered
-        ? "rgba(255, 150, 150, 0.9)"
-        : "rgba(200, 200, 200, 0.5)";
+      // Close button border - matching credits gold theme
+      if (this.achievementsDrawer.closeButton.hovered) {
+        ctx.strokeStyle = "rgba(212, 175, 55, 0.5)";
+      } else {
+        ctx.strokeStyle = "rgba(212, 175, 55, 0.3)";
+      }
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(closeButtonX, closeButtonY, closeButtonSize / 2, 0, Math.PI * 2);
       ctx.stroke();
 
-      // X symbol
-      ctx.strokeStyle = this.achievementsDrawer.closeButton.hovered
-        ? "#FFFFFF"
-        : "rgba(255, 255, 255, 0.8)";
-      ctx.lineWidth = this.game.getScaledValue(3);
-      ctx.lineCap = "round";
+      ctx.shadowColor = "transparent";
+      ctx.shadowBlur = 0;
 
-      const xSize = closeButtonSize * 0.35;
-      ctx.beginPath();
-      ctx.moveTo(closeButtonX - xSize, closeButtonY - xSize);
-      ctx.lineTo(closeButtonX + xSize, closeButtonY + xSize);
-      ctx.moveTo(closeButtonX + xSize, closeButtonY - xSize);
-      ctx.lineTo(closeButtonX - xSize, closeButtonY + xSize);
-      ctx.stroke();
+      // X symbol - using × character like credits
+      ctx.fillStyle = "#e0e0e0";
+      ctx.font = `bold ${this.game.getScaledValue(28)}px Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("×", closeButtonX, closeButtonY);
 
       ctx.restore();
 

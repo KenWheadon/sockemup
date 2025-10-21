@@ -473,7 +473,9 @@ class LevelEndScreen extends Screen {
   }
 
   onClick(x, y) {
-    if (this.continueButton.hovered) {
+    // Use direct hit detection instead of hover state for touch compatibility
+    const b = this.continueButton;
+    if (x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height) {
       this.handleContinue();
     }
   }
