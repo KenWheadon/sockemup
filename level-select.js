@@ -23,7 +23,7 @@ class LevelSelect extends Screen {
     this.MARTHA_CONFIG = {
       offsetX: 150,
       offsetY: 250,
-      maxSize: 200, // Increased from 120 to make Martha bigger
+      maxSize: 200,
       maintainAspectRatio: true,
     };
 
@@ -86,11 +86,11 @@ class LevelSelect extends Screen {
       "I'm thinking about converting this place to a juice bar!",
     ];
     this.currentQuoteIndex = 0;
-    this.currentQuote = this.marthaQuotes[0]; // Always show first quote on load
+    this.currentQuote = this.marthaQuotes[0];
     this.quoteTimer = 0;
-    this.quoteRotationInterval = 7500; // Auto-rotate every 5 seconds
+    this.quoteRotationInterval = 7500;
     this.quoteDisplayTime = 0;
-    this.showingQuote = true; // Always showing a quote
+    this.showingQuote = true;
 
     // Easter egg drop zones
     this.easterDropZones = [];
@@ -159,7 +159,6 @@ class LevelSelect extends Screen {
       hovered: false,
     };
 
-    // Video button (shows after completing all 9 base levels)
     this.videoButton = {
       x: 0,
       y: 0,
@@ -168,7 +167,6 @@ class LevelSelect extends Screen {
       hovered: false,
     };
 
-    // Video player state
     this.videoPlayerActive = false;
     this.videoElement = null;
 
@@ -207,7 +205,7 @@ class LevelSelect extends Screen {
   calculateMarthaImageSize() {
     const marthaImage = this.game.images["martha-demand-level-select.png"];
     if (!marthaImage) {
-      console.warn("Martha image not found: martha-demand-level-select.png"); // Fix Bug #12: Add error logging
+      console.warn("Martha image not found: martha-demand-level-select.png");
       this.marthaImageSize = { width: 0, height: 0 };
       return;
     }
@@ -250,10 +248,10 @@ class LevelSelect extends Screen {
     this.layoutCache = {
       ...baseLayout,
       logoX: canvasWidth / 2,
-      logoY: barHeight + this.game.getScaledValue(60), // Below top bar
+      logoY: barHeight + this.game.getScaledValue(60),
       logoWidth: this.game.getScaledValue(200),
       logoHeight: this.game.getScaledValue(100),
-      instructionsY: barHeight + this.game.getScaledValue(140), // Below logo
+      instructionsY: barHeight + this.game.getScaledValue(140),
       levelButtonSize: this.game.getScaledValue(
         this.levelConfig.baseButtonSize
       ),
@@ -268,9 +266,9 @@ class LevelSelect extends Screen {
         ((this.levelConfig.columns - 1) *
           this.game.getScaledValue(this.levelConfig.horizontalSpacing)) /
           2,
-      levelGridStartY: canvasHeight / 2 + this.game.getScaledValue(0), // Centered vertically
+      levelGridStartY: canvasHeight / 2 + this.game.getScaledValue(0),
       marthaX: this.game.getScaledValue(this.MARTHA_CONFIG.offsetX),
-      marthaY: barHeight + this.game.getScaledValue(this.MARTHA_CONFIG.offsetY), // Below top bar
+      marthaY: barHeight + this.game.getScaledValue(this.MARTHA_CONFIG.offsetY),
       marthaWidth: this.marthaImageSize.width,
       marthaHeight: this.marthaImageSize.height,
       dropZoneSize: this.game.getScaledValue(this.DROP_ZONE_CONFIG.size),
@@ -319,7 +317,6 @@ class LevelSelect extends Screen {
       youWinWidth: youWinImageSize.width,
       youWinHeight: youWinImageSize.height,
 
-      // Video button (appears below You Win graphic)
       videoButtonX:
         canvasWidth - youWinImageSize.width / 2 - this.game.getScaledValue(50),
       videoButtonY:
@@ -329,12 +326,10 @@ class LevelSelect extends Screen {
       videoButtonWidth: this.game.getScaledValue(200),
       videoButtonHeight: this.game.getScaledValue(50),
 
-      // Legacy panel values (no longer used)
       statsPanelWidth: this.game.getScaledValue(200),
       statsPanelHeight: this.game.getScaledValue(40),
     };
 
-    // Update difficulty selector layout BEFORE returning
     this.difficultySelector.updateLayout(this.layoutCache);
 
     return this.layoutCache;
@@ -395,9 +390,8 @@ class LevelSelect extends Screen {
     console.log("🎵 Level select setup - starting menu music");
     this.game.audioManager.playMusic("menu-music", true);
 
-    // Reset the story panel unlock flag (notification now handled by feedbackManager)
     if (this.game.newStoryPanelUnlocked >= 0) {
-      this.game.newStoryPanelUnlocked = -1; // Reset flag
+      this.game.newStoryPanelUnlocked = -1;
     }
 
     const canvasWidth = this.game.getCanvasWidth();
@@ -421,7 +415,6 @@ class LevelSelect extends Screen {
     this.setupEasterDropZones();
     this.setupCreditsModal();
 
-    // Initialize quote system - always show first quote on load
     this.currentQuoteIndex = 0;
     this.currentQuote = this.marthaQuotes[0];
     this.quoteTimer = 0;
@@ -447,7 +440,6 @@ class LevelSelect extends Screen {
     const layout = this.layoutCache;
     if (!layout.marthaX || !layout.marthaY) return false;
 
-    // Calculate click bounds (Martha is centered at marthaX, marthaY)
     const marthaLeft = layout.marthaX - layout.marthaWidth / 2;
     const marthaRight = layout.marthaX + layout.marthaWidth / 2;
     const marthaTop = layout.marthaY - layout.marthaHeight / 2;
@@ -464,10 +456,8 @@ class LevelSelect extends Screen {
     console.log("🎵 Level select cleanup - stopping menu music");
     this.game.audioManager.stopMusic();
 
-    // Close video player if active
     this.closeVideoPlayer();
 
-    // Remove event listeners before hiding credits
     this.removeCreditsEventListeners();
 
     if (this.creditsOpen) {
@@ -548,14 +538,12 @@ class LevelSelect extends Screen {
   }
 
   setupCreditsEventListeners() {
-    // Fix Bug #5: Remove old listeners before adding new ones to prevent duplication
     if (this.creditsEventHandlers) {
       this.removeCreditsEventListeners();
     }
 
     const closeCredits = document.getElementById("closeCredits");
 
-    // Store bound handlers for cleanup
     this.creditsEventHandlers = {
       closeClick: () => {
         this.game.audioManager.playSound("button-click", false, 0.5);
@@ -742,7 +730,7 @@ class LevelSelect extends Screen {
     if (this.marthaLaughing) {
       this.marthaLaughAnimationTimer += deltaTime;
       const spritesheet = GameConfig.MARTHA_LAUGHING_SPRITESHEET;
-      const frameTime = 1000 / spritesheet.fps; // Time per frame in ms
+      const frameTime = 1000 / spritesheet.fps;
 
       if (this.marthaLaughAnimationTimer >= frameTime) {
         this.marthaLaughFrameIndex++;
@@ -839,7 +827,7 @@ class LevelSelect extends Screen {
           this.isDragging = false;
           this.dragSock = null;
         }
-        return false; // Remove from array
+        return false;
       }
 
       if (
@@ -853,7 +841,7 @@ class LevelSelect extends Screen {
         }
       }
 
-      return true; // Keep in array
+      return true;
     });
   }
 
@@ -1070,7 +1058,6 @@ class LevelSelect extends Screen {
   }
 
   onMouseDown(x, y) {
-    // Check achievements drawer close button using direct hit detection
     if (this.achievementsDrawer.isOpen) {
       const layout = this.layoutCache;
       const drawerWidth = layout.achievementsDrawerWidth;
@@ -1085,7 +1072,7 @@ class LevelSelect extends Screen {
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       if (distance <= closeButtonSize / 2) {
-        return false; // Let onClick handle it
+        return false;
       }
     }
 
@@ -1124,7 +1111,6 @@ class LevelSelect extends Screen {
         sock.vx = 0;
         sock.vy = 0;
 
-        // Initialize mouse position to prevent velocity spike
         this.lastMouseX = x;
         this.lastMouseY = y;
         this.mouseVelocityX = 0;
@@ -1161,10 +1147,8 @@ class LevelSelect extends Screen {
       });
 
       if (!snapped) {
-        // FIX: Apply drag momentum instead of random velocity
         const momentumMultiplier = 0.8; // Adjust for feel
 
-        // Clamp velocity to prevent excessive speeds
         const maxVelocity = 20;
         const clampedVx = Math.max(
           -maxVelocity,
@@ -1178,7 +1162,6 @@ class LevelSelect extends Screen {
         sock.vx = clampedVx;
         sock.vy = clampedVy;
 
-        // Add subtle rotation based on velocity
         const velocityMagnitude = Math.sqrt(
           sock.vx * sock.vx + sock.vy * sock.vy
         );
@@ -1452,13 +1435,10 @@ class LevelSelect extends Screen {
       return;
     }
 
-    // Handle story viewer modal clicks
     if (this.storyViewer.handleClick(x, y)) {
       return;
     }
 
-    // Handle achievements drawer clicks FIRST (since it renders on top)
-    // Check close button first and only if drawer is open
     if (this.achievementsDrawer.isOpen) {
       const layout = this.layoutCache;
       const drawerWidth = layout.achievementsDrawerWidth;
