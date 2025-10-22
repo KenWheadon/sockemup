@@ -517,7 +517,11 @@ class LevelSelect extends Screen {
                   </div>
                   <div class="credit-role">
                     <span class="role">Lead Programmer</span>
-                    <span class="name">Claude Sonnet 4</span>
+                    <span class="name">Claude Sonnet 4.5</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Animations</span>
+                    <span class="name">Ludo</span>
                   </div>
                 </div>
                 
