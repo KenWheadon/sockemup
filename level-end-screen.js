@@ -10,6 +10,11 @@ class LevelEndScreen extends Screen {
     this.titleBounceTimer = 0;
     this.marthaScaleTimer = 0;
     this.showStars = false;
+
+    // Animation state for sockballs spritesheet
+    this.marthaAnimationFrame = 0;
+    this.marthaAnimationTimer = 0;
+    this.useSpritesheet = false;
   }
 
   resetScores() {
@@ -52,7 +57,7 @@ class LevelEndScreen extends Screen {
     const baseLayout = super.createLayoutCache();
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
-    const marthaImageSize = this.game.getScaledValue(100);
+    const marthaImageSize = this.game.getScaledValue(150); // Increased for better visibility
     const marthaToStatsMargin = this.game.getScaledValue(30);
 
     return {
@@ -225,9 +230,17 @@ class LevelEndScreen extends Screen {
 
     this.showRentDue = this.rentPenalty > 0;
     this.showStars = !this.showRentDue; // Show stars only on success
-    this.marthaImage = this.showRentDue
-      ? this.game.images["martha-rentdue.png"]
-      : this.game.images["martha-win.png"];
+
+    // Use spritesheet for win state, static image for rent due
+    if (this.showRentDue) {
+      this.useSpritesheet = false;
+      this.marthaImage = this.game.images["martha-rentdue.png"];
+    } else {
+      this.useSpritesheet = true;
+      this.marthaImage = this.game.images["martha-sockballs-spritesheet.png"];
+      this.marthaAnimationFrame = 0;
+      this.marthaAnimationTimer = 0;
+    }
   }
 
   setupScoreAnimation() {
@@ -398,6 +411,19 @@ class LevelEndScreen extends Screen {
     this.updateParticles(deltaTime);
     this.titleBounceTimer += deltaTime * 0.003;
     this.marthaScaleTimer += deltaTime * 0.002;
+
+    // Update spritesheet animation
+    if (this.useSpritesheet) {
+      const config = GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;
+      const msPerFrame = 1000 / config.fps;
+      this.marthaAnimationTimer += deltaTime;
+
+      if (this.marthaAnimationTimer >= msPerFrame) {
+        this.marthaAnimationTimer -= msPerFrame;
+        this.marthaAnimationFrame =
+          (this.marthaAnimationFrame + 1) % config.animationFrames.length;
+      }
+    }
 
     // Update feedback manager to keep achievement/story notifications visible
     this.game.feedbackManager.update(deltaTime);
@@ -711,16 +737,11 @@ class LevelEndScreen extends Screen {
 
     const image = this.marthaImage;
     const desiredHeight = layout.marthaImageSize;
-    const aspectRatio = image.width / image.height;
-    const desiredWidth = desiredHeight * aspectRatio;
 
     // Gentle floating animation
     const floatOffset =
       Math.sin(this.marthaScaleTimer) * this.game.getScaledValue(3);
     const scale = 1 + Math.sin(this.marthaScaleTimer * 0.8) * 0.03;
-
-    const imageX = layout.centerX - (desiredWidth * scale) / 2;
-    const imageY = layout.marthaImageY + floatOffset;
 
     ctx.save();
 
@@ -731,13 +752,49 @@ class LevelEndScreen extends Screen {
         this.game.getScaledValue(20) * this.getGlowIntensity(0.5, 1.0);
     }
 
-    ctx.drawImage(
-      image,
-      imageX,
-      imageY,
-      desiredWidth * scale,
-      desiredHeight * scale
-    );
+    if (this.useSpritesheet) {
+      // Render spritesheet frame
+      const config = GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;
+      const frameIndex = config.animationFrames[this.marthaAnimationFrame];
+      const col = frameIndex % config.columns;
+      const row = Math.floor(frameIndex / config.columns);
+
+      const sourceX = col * config.frameWidth;
+      const sourceY = row * config.frameHeight;
+
+      // Calculate desired width based on frame aspect ratio
+      const frameAspectRatio = config.frameWidth / config.frameHeight;
+      const desiredWidth = desiredHeight * frameAspectRatio;
+
+      const imageX = layout.centerX - (desiredWidth * scale) / 2;
+      const imageY = layout.marthaImageY + floatOffset;
+
+      ctx.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        config.frameWidth,
+        config.frameHeight,
+        imageX,
+        imageY,
+        desiredWidth * scale,
+        desiredHeight * scale
+      );
+    } else {
+      // Render static image
+      const aspectRatio = image.width / image.height;
+      const desiredWidth = desiredHeight * aspectRatio;
+      const imageX = layout.centerX - (desiredWidth * scale) / 2;
+      const imageY = layout.marthaImageY + floatOffset;
+
+      ctx.drawImage(
+        image,
+        imageX,
+        imageY,
+        desiredWidth * scale,
+        desiredHeight * scale
+      );
+    }
 
     ctx.restore();
   }

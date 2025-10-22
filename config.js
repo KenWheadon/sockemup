@@ -103,6 +103,20 @@ const GameConfig = {
     fps: 24, // 24 frames per second
   },
 
+  MARTHA_SOCKBALLS_SPRITESHEET: {
+    filename: "martha-sockballs-spritesheet.png",
+    frameWidth: 215, // Width of each frame in the spritesheet (1290 / 6)
+    frameHeight: 321, // Height of each frame in the spritesheet (1926 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 12, // 12 frames per second for juggling animation
+  },
+
   // Throwing screen settings
   THROWING_BOUNDS: {
     LEFT: 0,
@@ -439,6 +453,7 @@ const GameConfig = {
       "story-9.png",
       "martha-running-spritesheet.png",
       "martha-laughing-spritesheet.png",
+      "martha-sockballs-spritesheet.png",
     ],
     UI: [
       "background.png",
