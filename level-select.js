@@ -62,6 +62,11 @@ class LevelSelect extends Screen {
     this.marthaWiggling = false;
     this.marthaImageSize = { width: 0, height: 0 };
 
+    // Martha laughing animation state
+    this.marthaLaughing = false;
+    this.marthaLaughFrameIndex = 0;
+    this.marthaLaughAnimationTimer = 0;
+
     // Martha quote system - rotating speech bubbles
     this.marthaQuotes = [
       "Rent's due, kiddo!",
@@ -730,6 +735,24 @@ class LevelSelect extends Screen {
       if (this.marthaWiggleTimer >= 1000) {
         this.marthaWiggling = false;
         this.marthaWiggleTimer = 0;
+      }
+    }
+
+    // Update Martha laughing animation
+    if (this.marthaLaughing) {
+      this.marthaLaughAnimationTimer += deltaTime;
+      const spritesheet = GameConfig.MARTHA_LAUGHING_SPRITESHEET;
+      const frameTime = 1000 / spritesheet.fps; // Time per frame in ms
+
+      if (this.marthaLaughAnimationTimer >= frameTime) {
+        this.marthaLaughFrameIndex++;
+        this.marthaLaughAnimationTimer = 0;
+
+        // Check if animation is complete
+        if (this.marthaLaughFrameIndex >= spritesheet.animationFrames.length) {
+          this.marthaLaughing = false;
+          this.marthaLaughFrameIndex = 0;
+        }
       }
     }
 
@@ -1458,12 +1481,14 @@ class LevelSelect extends Screen {
 
     // Check achievements button using direct hit detection
     const layout = this.layoutCache;
-    if (this.isPointInRect(x, y, {
-      x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
-      y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
-      width: layout.achievementsButtonWidth,
-      height: layout.achievementsButtonHeight,
-    })) {
+    if (
+      this.isPointInRect(x, y, {
+        x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
+        y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
+        width: layout.achievementsButtonWidth,
+        height: layout.achievementsButtonHeight,
+      })
+    ) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.toggleAchievementsDrawer();
       return true;
@@ -1488,45 +1513,59 @@ class LevelSelect extends Screen {
       return;
     }
 
-    // Check if Martha was clicked to cycle quotes
+    // Check if Martha was clicked to cycle quotes and trigger laugh animation
     if (this.isMarthaClicked(x, y)) {
       this.cycleToNextQuote();
-      // Optional: play a sound effect or wiggle Martha
-      this.marthaWiggling = true;
-      this.marthaWiggleTimer = 0;
+
+      // Only start animation if not already playing
+      if (!this.marthaLaughing) {
+        this.marthaLaughing = true;
+        this.marthaLaughFrameIndex = 0;
+        this.marthaLaughAnimationTimer = 0;
+        // Play Martha laugh sound
+        this.game.audioManager.playSound("martha-laugh", false, 0.7);
+      }
+
       return true;
     }
 
     // Check story replay button using direct hit detection
-    if (this.isPointInRect(x, y, {
-      x: layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2,
-      y: layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2,
-      width: layout.storyReplayButtonWidth,
-      height: layout.storyReplayButtonHeight,
-    })) {
+    if (
+      this.isPointInRect(x, y, {
+        x: layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2,
+        y: layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2,
+        width: layout.storyReplayButtonWidth,
+        height: layout.storyReplayButtonHeight,
+      })
+    ) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.game.storyManager.show();
       return true;
     }
 
     // Check story viewer button using direct hit detection
-    if (this.isPointInRect(x, y, {
-      x: layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2,
-      y: layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2,
-      width: layout.storyViewerButtonWidth,
-      height: layout.storyViewerButtonHeight,
-    })) {
+    if (
+      this.isPointInRect(x, y, {
+        x: layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2,
+        y: layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2,
+        width: layout.storyViewerButtonWidth,
+        height: layout.storyViewerButtonHeight,
+      })
+    ) {
       this.storyViewer.open();
       return true;
     }
 
     // Check video button using direct hit detection (only if all levels completed)
-    if (this.areAllLevelsCompleted() && this.isPointInRect(x, y, {
-      x: layout.videoButtonX - layout.videoButtonWidth / 2,
-      y: layout.videoButtonY - layout.videoButtonHeight / 2,
-      width: layout.videoButtonWidth,
-      height: layout.videoButtonHeight,
-    })) {
+    if (
+      this.areAllLevelsCompleted() &&
+      this.isPointInRect(x, y, {
+        x: layout.videoButtonX - layout.videoButtonWidth / 2,
+        y: layout.videoButtonY - layout.videoButtonHeight / 2,
+        width: layout.videoButtonWidth,
+        height: layout.videoButtonHeight,
+      })
+    ) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.openVideoPlayer();
       return true;
@@ -2091,30 +2130,67 @@ class LevelSelect extends Screen {
   renderMarthaImage(ctx) {
     const layout = this.layoutCache;
 
-    if (this.game.images["martha-demand-level-select.png"]) {
-      ctx.save();
+    ctx.save();
 
-      if (this.marthaWiggling) {
-        const wiggleAmount = Math.sin(this.marthaWiggleTimer * 0.02) * 5;
-        ctx.translate(layout.marthaX + wiggleAmount, layout.marthaY);
-      } else {
-        ctx.translate(layout.marthaX, layout.marthaY);
+    // Apply wiggle if active
+    if (this.marthaWiggling) {
+      const wiggleAmount = Math.sin(this.marthaWiggleTimer * 0.02) * 5;
+      ctx.translate(layout.marthaX + wiggleAmount, layout.marthaY);
+    } else {
+      ctx.translate(layout.marthaX, layout.marthaY);
+    }
+
+    // Render either the spritesheet animation or the static image
+    if (this.marthaLaughing) {
+      // Draw spritesheet animation with correct aspect ratio
+      const spritesheet = GameConfig.MARTHA_LAUGHING_SPRITESHEET;
+      const marthaImage = this.game.images[spritesheet.filename];
+
+      if (marthaImage && marthaImage.complete && marthaImage.naturalWidth > 0) {
+        const frameNumber =
+          spritesheet.animationFrames[this.marthaLaughFrameIndex];
+        const col = frameNumber % spritesheet.columns;
+        const row = Math.floor(frameNumber / spritesheet.columns);
+        const sx = col * spritesheet.frameWidth;
+        const sy = row * spritesheet.frameHeight;
+
+        // Calculate correct dimensions maintaining spritesheet aspect ratio
+        // Match the width to the static image and calculate height proportionally, then scale up by 20%
+        const spritesheetAspectRatio =
+          spritesheet.frameWidth / spritesheet.frameHeight;
+        const drawWidth = layout.marthaWidth * 1.3;
+        const drawHeight = (layout.marthaWidth / spritesheetAspectRatio) * 1.3;
+
+        ctx.drawImage(
+          marthaImage,
+          sx,
+          sy,
+          spritesheet.frameWidth,
+          spritesheet.frameHeight,
+          -drawWidth / 2,
+          -drawHeight / 2,
+          drawWidth,
+          drawHeight
+        );
       }
-
-      ctx.drawImage(
-        this.game.images["martha-demand-level-select.png"],
-        -layout.marthaWidth / 2,
-        -layout.marthaHeight / 2,
-        layout.marthaWidth,
-        layout.marthaHeight
-      );
-
-      ctx.restore();
-
-      // Render quote bubble if showing
-      if (this.showingQuote && this.currentQuote) {
-        this.renderMarthaQuote(ctx, layout);
+    } else {
+      // Draw static image
+      if (this.game.images["martha-demand-level-select.png"]) {
+        ctx.drawImage(
+          this.game.images["martha-demand-level-select.png"],
+          -layout.marthaWidth / 2,
+          -layout.marthaHeight / 2,
+          layout.marthaWidth,
+          layout.marthaHeight
+        );
       }
+    }
+
+    ctx.restore();
+
+    // Render quote bubble if showing
+    if (this.showingQuote && this.currentQuote) {
+      this.renderMarthaQuote(ctx, layout);
     }
   }
 
