@@ -3627,19 +3627,7 @@ class LevelSelect extends Screen {
     ctx.fill();
 
     if (isUnlocked) {
-      ctx.strokeStyle = isCompleted
-        ? "rgba(255, 215, 0, 0.6)"
-        : "rgba(100, 150, 255, 0.6)";
-      ctx.lineWidth = this.game.getScaledValue(3);
-
-      if (hoverProgress > 0) {
-        ctx.shadowColor = isCompleted ? "#FFD700" : "#6496FF";
-        ctx.shadowBlur = this.game.getScaledValue(15) * hoverProgress;
-      }
-
-      ctx.beginPath();
-      ctx.arc(x, y, bgRadius, 0, Math.PI * 2);
-      ctx.stroke();
+      // Circle removed - no outline for unlocked/completed levels
     } else if (isAffordable) {
       const affordablePulse = Math.sin(pulseTimer * 2) * 0.3 + 0.7;
       ctx.strokeStyle = `rgba(255, 215, 0, ${affordablePulse})`;
