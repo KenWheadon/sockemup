@@ -35,6 +35,11 @@ class StoryManager {
       next: { x: 0, y: 0, width: 100, height: 40, hovered: false },
       previous: { x: 0, y: 0, width: 100, height: 40, hovered: false },
     };
+
+    // Spritesheet animation state
+    this.currentFrame = 0;
+    this.frameTimer = 0;
+    this.lastUpdateTime = Date.now();
   }
 
   // Start showing the story intro
@@ -158,6 +163,22 @@ class StoryManager {
         this.isTransitioning = false;
       }
     }
+
+    // Update spritesheet animation
+    const currentSlide = this.slides[this.currentSlideIndex];
+    if (currentSlide && currentSlide.spritesheet) {
+      const spritesheetConfig = GameConfig[currentSlide.spritesheet];
+      if (spritesheetConfig) {
+        const msPerFrame = 1000 / spritesheetConfig.fps;
+        this.frameTimer += deltaTime;
+
+        if (this.frameTimer >= msPerFrame) {
+          this.currentFrame =
+            (this.currentFrame + 1) % spritesheetConfig.animationFrames.length;
+          this.frameTimer = 0;
+        }
+      }
+    }
   }
 
   handleMouseMove(x, y) {
@@ -246,6 +267,7 @@ class StoryManager {
       this.transitionDirection = 1;
       this.currentSlideIndex++;
       this.startTransition();
+      this.resetSpriteAnimation();
     }
   }
 
@@ -254,12 +276,18 @@ class StoryManager {
       this.transitionDirection = -1;
       this.currentSlideIndex--;
       this.startTransition();
+      this.resetSpriteAnimation();
     }
   }
 
   startTransition() {
     this.isTransitioning = true;
     this.transitionProgress = 0;
+  }
+
+  resetSpriteAnimation() {
+    this.currentFrame = 0;
+    this.frameTimer = 0;
   }
 
   isPointInRect(x, y, rect) {
@@ -427,43 +455,105 @@ class StoryManager {
     ctx.restore();
 
     // Image (if available) with scale animation
-    const image = this.game.images[slide.image];
-    if (image) {
-      const maxImageSize = this.game.getScaledValue(168);
+    // Check if this slide uses a spritesheet
+    if (slide.spritesheet) {
+      const spritesheetConfig = GameConfig[slide.spritesheet];
+      const spritesheetImage = this.game.images[spritesheetConfig.filename];
 
-      // Calculate aspect ratio preserving dimensions
-      const aspectRatio = image.width / image.height;
-      let imageWidth, imageHeight;
+      if (spritesheetImage && spritesheetConfig) {
+        const maxImageSize = this.game.getScaledValue(168);
 
-      if (aspectRatio > 1) {
-        // Landscape - constrain width
-        imageWidth = maxImageSize;
-        imageHeight = maxImageSize / aspectRatio;
-      } else {
-        // Portrait or square - constrain height
-        imageHeight = maxImageSize;
-        imageWidth = maxImageSize * aspectRatio;
+        // Calculate aspect ratio from frame dimensions
+        const aspectRatio =
+          spritesheetConfig.frameWidth / spritesheetConfig.frameHeight;
+        let imageWidth, imageHeight;
+
+        if (aspectRatio > 1) {
+          // Landscape - constrain width
+          imageWidth = maxImageSize;
+          imageHeight = maxImageSize / aspectRatio;
+        } else {
+          // Portrait or square - constrain height
+          imageHeight = maxImageSize;
+          imageWidth = maxImageSize * aspectRatio;
+        }
+
+        const imageX = container.x + container.width / 2 - imageWidth / 2;
+        const imageAreaY = contentY + this.game.getScaledValue(70);
+        const imageY = imageAreaY + (maxImageSize - imageHeight) / 2;
+
+        // Get current frame from animation sequence
+        const frameIndex =
+          spritesheetConfig.animationFrames[this.currentFrame];
+        const frameX = (frameIndex % spritesheetConfig.columns) * spritesheetConfig.frameWidth;
+        const frameY = Math.floor(frameIndex / spritesheetConfig.columns) * spritesheetConfig.frameHeight;
+
+        // Subtle pulse for image
+        const imageScale = this.isTransitioning ? alpha : 1;
+        ctx.save();
+        ctx.translate(imageX + imageWidth / 2, imageY + imageHeight / 2);
+        ctx.scale(imageScale, imageScale);
+        ctx.translate(-(imageX + imageWidth / 2), -(imageY + imageHeight / 2));
+
+        // Add subtle shadow to image
+        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+        ctx.shadowBlur = this.game.getScaledValue(10);
+        ctx.shadowOffsetY = this.game.getScaledValue(5);
+
+        // Draw the current frame from the spritesheet
+        ctx.drawImage(
+          spritesheetImage,
+          frameX,
+          frameY,
+          spritesheetConfig.frameWidth,
+          spritesheetConfig.frameHeight,
+          imageX,
+          imageY,
+          imageWidth,
+          imageHeight
+        );
+        ctx.restore();
       }
+    } else {
+      // Static image fallback
+      const image = this.game.images[slide.image];
+      if (image) {
+        const maxImageSize = this.game.getScaledValue(168);
 
-      const imageX = container.x + container.width / 2 - imageWidth / 2;
-      // Center all images vertically in the same space
-      const imageAreaY = contentY + this.game.getScaledValue(70);
-      const imageY = imageAreaY + (maxImageSize - imageHeight) / 2;
+        // Calculate aspect ratio preserving dimensions
+        const aspectRatio = image.width / image.height;
+        let imageWidth, imageHeight;
 
-      // Subtle pulse for image
-      const imageScale = this.isTransitioning ? alpha : 1;
-      ctx.save();
-      ctx.translate(imageX + imageWidth / 2, imageY + imageHeight / 2);
-      ctx.scale(imageScale, imageScale);
-      ctx.translate(-(imageX + imageWidth / 2), -(imageY + imageHeight / 2));
+        if (aspectRatio > 1) {
+          // Landscape - constrain width
+          imageWidth = maxImageSize;
+          imageHeight = maxImageSize / aspectRatio;
+        } else {
+          // Portrait or square - constrain height
+          imageHeight = maxImageSize;
+          imageWidth = maxImageSize * aspectRatio;
+        }
 
-      // Add subtle shadow to image
-      ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-      ctx.shadowBlur = this.game.getScaledValue(10);
-      ctx.shadowOffsetY = this.game.getScaledValue(5);
+        const imageX = container.x + container.width / 2 - imageWidth / 2;
+        // Center all images vertically in the same space
+        const imageAreaY = contentY + this.game.getScaledValue(70);
+        const imageY = imageAreaY + (maxImageSize - imageHeight) / 2;
 
-      ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
-      ctx.restore();
+        // Subtle pulse for image
+        const imageScale = this.isTransitioning ? alpha : 1;
+        ctx.save();
+        ctx.translate(imageX + imageWidth / 2, imageY + imageHeight / 2);
+        ctx.scale(imageScale, imageScale);
+        ctx.translate(-(imageX + imageWidth / 2), -(imageY + imageHeight / 2));
+
+        // Add subtle shadow to image
+        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
+        ctx.shadowBlur = this.game.getScaledValue(10);
+        ctx.shadowOffsetY = this.game.getScaledValue(5);
+
+        ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
+        ctx.restore();
+      }
     }
 
     // Text with better spacing and styling

@@ -145,6 +145,48 @@ const GameConfig = {
     fps: 18, // 18 frames per second for faster crawling animation
   },
 
+  MARTHA_STORY1_SPRITESHEET: {
+    filename: "martha-story1-spritesheet.png",
+    frameWidth: 260, // Width of each frame in the spritesheet (1560 / 6)
+    frameHeight: 220, // Height of each frame in the spritesheet (1320 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 12, // 12 frames per second for story animation
+  },
+
+  MARTHA_STORY3_SPRITESHEET: {
+    filename: "martha-story3-spritesheet.png",
+    frameWidth: 277, // Width of each frame in the spritesheet (1662 / 6)
+    frameHeight: 267, // Height of each frame in the spritesheet (1602 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 12, // 12 frames per second for story animation
+  },
+
+  MARTHA_STORY5_SPRITESHEET: {
+    filename: "martha-story5-spritesheet.png",
+    frameWidth: 172, // Width of each frame in the spritesheet (1032 / 6)
+    frameHeight: 259, // Height of each frame in the spritesheet (1554 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 12, // 12 frames per second for story animation
+  },
+
   // Throwing screen settings
   THROWING_BOUNDS: {
     LEFT: 0,
@@ -484,6 +526,13 @@ const GameConfig = {
       "martha-sockballs-spritesheet.png",
       "martha-losing-spritesheet.png",
       "martha-crawling-spritesheet.png",
+      "martha-story1-spritesheet.png",
+      "martha-story3-spritesheet.png",
+      "martha-story5-spritesheet.png",
+      "martha-unlock1-spritesheet.png",
+      "martha-unlock3-spritesheet.png",
+      "martha-unlock5-spritesheet.png",
+      "martha-unlock7-spritesheet.png",
     ],
     UI: [
       "background.png",
@@ -734,6 +783,7 @@ const GameConfig = {
       title: "Meet Martha",
       text: "This is Martha, your landlord. She loves three things: raising rent, collecting rent, and socks. Unfortunately, you're the one paying.",
       image: "htp-1.png",
+      spritesheet: "MARTHA_STORY1_SPRITESHEET",
     },
     {
       id: "rent_problem",
@@ -746,6 +796,7 @@ const GameConfig = {
       title: "Sock Power",
       text: "Turns out, matching two socks creates a sockball—a surprisingly potent fusion of fabric, static, and stress. Match fast, or Martha starts tapping her foot.",
       image: "htp-3.png",
+      spritesheet: "MARTHA_STORY3_SPRITESHEET",
     },
     {
       id: "how_to_play",
@@ -758,6 +809,7 @@ const GameConfig = {
       title: "Good Luck",
       text: "Keep up the good throws, pay your rent in sockballs, and maybe — just maybe — Martha won't raise rent again next week. Or she will. She usually does.",
       image: "htp-5.png",
+      spritesheet: "MARTHA_STORY5_SPRITESHEET",
     },
   ],
 
