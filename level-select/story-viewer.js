@@ -22,6 +22,13 @@ class StoryViewer {
       hoverProgress: 0,
     };
 
+    // Navigation buttons hover states
+    this.navButtons = {
+      close: { hovered: false },
+      previous: { hovered: false },
+      next: { hovered: false },
+    };
+
     // Spritesheet animation state
     this.currentFrame = 0;
     this.frameTimer = 0;
@@ -192,6 +199,62 @@ class StoryViewer {
   }
 
   /**
+   * Handle mouse movement for hover detection
+   */
+  handleMouseMove(x, y) {
+    if (!this.isOpen) return false;
+
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
+    const modalWidth = this.game.getScaledValue(900);
+    const modalHeight = this.game.getScaledValue(480);
+    const modalX = (canvasWidth - modalWidth) / 2;
+    const modalY = (canvasHeight - modalHeight) / 2;
+    const buttonY = modalY + modalHeight - this.game.getScaledValue(50);
+    const buttonWidth = this.game.getScaledValue(85);
+    const buttonHeight = this.game.getScaledValue(35);
+    const buttonSpacing = this.game.getScaledValue(15);
+
+    const unlockedPanels = this.getUnlockedPanels();
+
+    // Check close button hover
+    this.navButtons.close.hovered = this.ui.isPointInRect(x, y, {
+      x: modalX + this.game.getScaledValue(30),
+      y: buttonY,
+      width: buttonWidth,
+      height: buttonHeight,
+    });
+
+    // Check previous button hover
+    if (this.currentPanel > 0) {
+      const prevX = modalX + modalWidth - buttonWidth * 2 - buttonSpacing - this.game.getScaledValue(30);
+      this.navButtons.previous.hovered = this.ui.isPointInRect(x, y, {
+        x: prevX,
+        y: buttonY,
+        width: buttonWidth,
+        height: buttonHeight,
+      });
+    } else {
+      this.navButtons.previous.hovered = false;
+    }
+
+    // Check next button hover
+    if (this.currentPanel < unlockedPanels.length - 1) {
+      const nextX = modalX + modalWidth - buttonWidth - this.game.getScaledValue(30);
+      this.navButtons.next.hovered = this.ui.isPointInRect(x, y, {
+        x: nextX,
+        y: buttonY,
+        width: buttonWidth,
+        height: buttonHeight,
+      });
+    } else {
+      this.navButtons.next.hovered = false;
+    }
+
+    return true;
+  }
+
+  /**
    * Handle mouse clicks
    */
   handleClick(x, y) {
@@ -199,8 +262,8 @@ class StoryViewer {
 
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
-    const modalWidth = this.game.getScaledValue(700);
-    const modalHeight = this.game.getScaledValue(480); // Reduced from 600 by 20%
+    const modalWidth = this.game.getScaledValue(900);
+    const modalHeight = this.game.getScaledValue(480);
     const modalX = (canvasWidth - modalWidth) / 2;
     const modalY = (canvasHeight - modalHeight) / 2;
     const buttonY = modalY + modalHeight - this.game.getScaledValue(50);
@@ -223,9 +286,9 @@ class StoryViewer {
       return true;
     }
 
-    // Check previous button (left of center)
+    // Check previous button (right side, first button)
     if (this.currentPanel > 0) {
-      const prevX = canvasWidth / 2 - buttonWidth - buttonSpacing / 2;
+      const prevX = modalX + modalWidth - buttonWidth * 2 - buttonSpacing - this.game.getScaledValue(30);
       if (
         this.ui.isPointInRect(x, y, {
           x: prevX,
@@ -239,9 +302,9 @@ class StoryViewer {
       }
     }
 
-    // Check next button (right of center)
+    // Check next button (right side, second button)
     if (this.currentPanel < unlockedPanels.length - 1) {
-      const nextX = canvasWidth / 2 + buttonSpacing / 2;
+      const nextX = modalX + modalWidth - buttonWidth - this.game.getScaledValue(30);
       if (
         this.ui.isPointInRect(x, y, {
           x: nextX,
@@ -346,22 +409,27 @@ class StoryViewer {
     ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    // Modal dimensions
-    const modalWidth = this.game.getScaledValue(700);
-    const modalHeight = this.game.getScaledValue(480); // Reduced from 600 by 20%
+    // Modal dimensions - match How to Play
+    const modalWidth = this.game.getScaledValue(900);
+    const modalHeight = this.game.getScaledValue(480);
     const modalX = (canvasWidth - modalWidth) / 2;
     const modalY = (canvasHeight - modalHeight) / 2;
-    const radius = this.game.getScaledValue(12);
+    const radius = this.game.getScaledValue(20);
 
-    // Modal background
+    // Modal background - match How to Play style
+    ctx.save();
+    ctx.shadowColor = "rgba(100, 150, 255, 0.3)";
+    ctx.shadowBlur = this.game.getScaledValue(30);
+
     const bgGradient = ctx.createLinearGradient(
       modalX,
       modalY,
       modalX,
       modalY + modalHeight
     );
-    bgGradient.addColorStop(0, "rgba(30, 20, 45, 0.98)");
-    bgGradient.addColorStop(1, "rgba(20, 15, 35, 0.98)");
+    bgGradient.addColorStop(0, "rgba(40, 40, 80, 0.98)");
+    bgGradient.addColorStop(0.5, "rgba(30, 30, 60, 0.98)");
+    bgGradient.addColorStop(1, "rgba(20, 20, 50, 0.98)");
     ctx.fillStyle = bgGradient;
     this.ui.drawRoundedRect(
       ctx,
@@ -373,11 +441,9 @@ class StoryViewer {
     );
     ctx.fill();
 
-    // Modal border
-    ctx.strokeStyle = "rgba(180, 100, 255, 0.6)";
-    ctx.lineWidth = this.game.getScaledValue(3);
-    ctx.shadowColor = "rgba(180, 100, 255, 0.4)";
-    ctx.shadowBlur = this.game.getScaledValue(15);
+    // Simple border with glow
+    ctx.strokeStyle = "rgba(120, 170, 255, 0.7)";
+    ctx.lineWidth = this.game.getScaledValue(4);
     this.ui.drawRoundedRect(
       ctx,
       modalX,
@@ -388,22 +454,29 @@ class StoryViewer {
     );
     ctx.stroke();
 
-    ctx.shadowColor = "transparent";
-    ctx.shadowBlur = 0;
+    ctx.restore();
 
-    // Title
-    this.ui.renderText(
-      ctx,
-      "📚 Story Panels",
-      canvasWidth / 2,
-      modalY + this.game.getScaledValue(30),
-      {
-        fontSize: layout.headerFontSize,
-        color: "#BA55D3",
-        weight: "bold",
-        align: "center",
-      }
+    // Inner highlight
+    ctx.save();
+    const highlightGradient = ctx.createLinearGradient(
+      modalX,
+      modalY,
+      modalX,
+      modalY + modalHeight * 0.3
     );
+    highlightGradient.addColorStop(0, "rgba(255, 255, 255, 0.1)");
+    highlightGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+    ctx.fillStyle = highlightGradient;
+    this.ui.drawRoundedRect(
+      ctx,
+      modalX + 2,
+      modalY + 2,
+      modalWidth - 4,
+      modalHeight * 0.3,
+      this.game.getScaledValue(18)
+    );
+    ctx.fill();
+    ctx.restore();
 
     const unlockedPanels = this.getUnlockedPanels();
 
@@ -471,10 +544,83 @@ class StoryViewer {
   ) {
     const canvasWidth = this.game.getCanvasWidth();
 
+    // Full-width semi-transparent black title bar with rounded top corners
+    ctx.save();
+    const titleBarHeight = this.game.getScaledValue(55);
+    const cornerRadius = this.game.getScaledValue(20);
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+
+    // Draw rounded rectangle for title bar (only top corners rounded)
+    ctx.beginPath();
+    ctx.moveTo(modalX + cornerRadius, modalY);
+    ctx.lineTo(modalX + modalWidth - cornerRadius, modalY);
+    ctx.quadraticCurveTo(modalX + modalWidth, modalY, modalX + modalWidth, modalY + cornerRadius);
+    ctx.lineTo(modalX + modalWidth, modalY + titleBarHeight);
+    ctx.lineTo(modalX, modalY + titleBarHeight);
+    ctx.lineTo(modalX, modalY + cornerRadius);
+    ctx.quadraticCurveTo(modalX, modalY, modalX + cornerRadius, modalY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Title text with glow
+    ctx.shadowColor = "rgba(255, 215, 0, 0.6)";
+    ctx.shadowBlur = this.game.getScaledValue(15);
+    ctx.fillStyle = "#FFD700";
+    ctx.font = `bold ${this.game.getScaledValue(36)}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(panel.title, modalX + modalWidth / 2, modalY + titleBarHeight / 2);
+    ctx.restore();
+
+    // Side-by-side layout: Image on left, text on right
+    const mainContentY = modalY + this.game.getScaledValue(70);
+    const leftPanelWidth = modalWidth * 0.42;
+    const rightPanelWidth = modalWidth * 0.52;
+    const leftPanelX = modalX + this.game.getScaledValue(30);
+    const rightPanelX = leftPanelX + leftPanelWidth + this.game.getScaledValue(25);
+
+    // Left panel - Image with container
+    ctx.save();
+
+    // Image container background with subtle gradient
+    const imageContainerHeight = this.game.getScaledValue(280);
+    const frameGradient = ctx.createRadialGradient(
+      leftPanelX + leftPanelWidth / 2,
+      mainContentY + imageContainerHeight / 2,
+      this.game.getScaledValue(50),
+      leftPanelX + leftPanelWidth / 2,
+      mainContentY + imageContainerHeight / 2,
+      this.game.getScaledValue(180)
+    );
+    frameGradient.addColorStop(0, "rgba(60, 40, 100, 0.3)");
+    frameGradient.addColorStop(1, "rgba(40, 25, 80, 0.15)");
+    ctx.fillStyle = frameGradient;
+    this.ui.drawRoundedRect(
+      ctx,
+      leftPanelX,
+      mainContentY,
+      leftPanelWidth,
+      imageContainerHeight,
+      this.game.getScaledValue(15)
+    );
+    ctx.fill();
+
+    // Container border
+    ctx.strokeStyle = "rgba(120, 170, 255, 0.4)";
+    ctx.lineWidth = this.game.getScaledValue(2);
+    this.ui.drawRoundedRect(
+      ctx,
+      leftPanelX,
+      mainContentY,
+      leftPanelWidth,
+      imageContainerHeight,
+      this.game.getScaledValue(15)
+    );
+    ctx.stroke();
+
     // Panel image
-    // Panel 3 gets a larger size due to its wide aspect ratio
-    const maxImageSize = this.game.getScaledValue(panelIndex === 2 ? 240 : 180);
-    const imageY = modalY + this.game.getScaledValue(80);
+    const maxImageSize = this.game.getScaledValue(280);
     let actualImageHeight = maxImageSize; // Track actual rendered height
 
     // Check if this panel uses a spritesheet
@@ -499,7 +645,8 @@ class StoryViewer {
         }
 
         actualImageHeight = imageHeight; // Store actual height
-        const imageX = canvasWidth / 2 - imageWidth / 2;
+        const imageX = leftPanelX + leftPanelWidth / 2 - imageWidth / 2;
+        const imageY = mainContentY + imageContainerHeight / 2 - imageHeight / 2;
 
         // Get current frame from animation sequence
         const frameIndex =
@@ -548,53 +695,52 @@ class StoryViewer {
       }
 
       actualImageHeight = imageHeight; // Store actual height
-      const imageX = canvasWidth / 2 - imageWidth / 2;
+      const imageX = leftPanelX + leftPanelWidth / 2 - imageWidth / 2;
+      const imageY = mainContentY + imageContainerHeight / 2 - imageHeight / 2;
 
       ctx.save();
-      ctx.shadowColor = "rgba(180, 100, 255, 0.3)";
-      ctx.shadowBlur = this.game.getScaledValue(10);
+      ctx.shadowColor = "rgba(255, 100, 200, 0.4)";
+      ctx.shadowBlur = this.game.getScaledValue(20);
+      ctx.shadowOffsetY = this.game.getScaledValue(8);
       ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
       ctx.restore();
     }
 
-    // Panel title
-    const titleY = imageY + actualImageHeight + this.game.getScaledValue(20);
-    this.ui.renderText(ctx, panel.title, canvasWidth / 2, titleY, {
-      fontSize: this.game.getScaledValue(20),
-      color: "#FFD700",
-      weight: "bold",
-      align: "center",
-    });
+    ctx.restore();
 
-    // Panel text (word-wrapped)
-    const textY = titleY + this.game.getScaledValue(35);
-    const textMaxWidth = modalWidth - this.game.getScaledValue(100);
-    const lineHeight = this.game.getScaledValue(20);
+    // Right panel - Text content (no box, just the text)
+    ctx.save();
 
+    // Main text content - positioned to align nicely with image
+    const textStartY = mainContentY + this.game.getScaledValue(85);
+    ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+    ctx.font = `${this.game.getScaledValue(20)}px Arial`;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+
+    // Word wrap text with better line height
+    const lineHeight = this.game.getScaledValue(28);
     const lines = this.ui.wrapText(
       ctx,
       panel.text,
-      textMaxWidth,
-      layout.bodyFontSize
+      rightPanelWidth,
+      this.game.getScaledValue(20)
     );
-
-    ctx.font = `${layout.bodyFontSize}px Arial`;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "top";
 
     // Limit lines to prevent overlap
     const maxLines = 8;
     const displayLines = lines.slice(0, maxLines);
 
     displayLines.forEach((line, index) => {
-      ctx.fillText(line, canvasWidth / 2, textY + index * lineHeight);
+      ctx.fillText(line, rightPanelX, textStartY + index * lineHeight);
     });
 
     // Add ellipsis if text was truncated
     if (lines.length > maxLines) {
-      ctx.fillText("...", canvasWidth / 2, textY + maxLines * lineHeight);
+      ctx.fillText("...", rightPanelX, textStartY + maxLines * lineHeight);
     }
+
+    ctx.restore();
   }
 
   /**
@@ -614,23 +760,6 @@ class StoryViewer {
     const buttonHeight = this.game.getScaledValue(35);
     const buttonSpacing = this.game.getScaledValue(15);
 
-    // Unlock progress message - above the buttons (only show if not all unlocked)
-    const totalStoryPanels = this.game.unlockedStoryPanels.length;
-    const unlockedCount = this.getUnlockedPanels().length;
-    if (unlockedCount < totalStoryPanels) {
-      this.ui.renderText(
-        ctx,
-        `Unlock the full story by beating every level (${unlockedCount}/${totalStoryPanels})`,
-        canvasWidth / 2,
-        buttonY - this.game.getScaledValue(25),
-        {
-          fontSize: this.game.getScaledValue(12),
-          color: "rgba(180, 100, 255, 0.7)",
-          align: "center",
-        }
-      );
-    }
-
     // Close button - far left
     this.renderNavigationButton(
       ctx,
@@ -639,12 +768,13 @@ class StoryViewer {
       buttonWidth,
       buttonHeight,
       "Close",
-      true
+      true,
+      this.navButtons.close.hovered
     );
 
-    // Previous button - left of center
+    // Previous button - right side, first button
     if (this.currentPanel > 0) {
-      const prevX = canvasWidth / 2 - buttonWidth - buttonSpacing / 2;
+      const prevX = modalX + modalWidth - buttonWidth * 2 - buttonSpacing - this.game.getScaledValue(30);
       this.renderNavigationButton(
         ctx,
         prevX,
@@ -652,13 +782,14 @@ class StoryViewer {
         buttonWidth,
         buttonHeight,
         "Previous",
-        false
+        false,
+        this.navButtons.previous.hovered
       );
     }
 
-    // Next button - right of center
+    // Next button - right side, second button
     if (this.currentPanel < totalPanels - 1) {
-      const nextX = canvasWidth / 2 + buttonSpacing / 2;
+      const nextX = modalX + modalWidth - buttonWidth - this.game.getScaledValue(30);
       this.renderNavigationButton(
         ctx,
         nextX,
@@ -666,20 +797,21 @@ class StoryViewer {
         buttonWidth,
         buttonHeight,
         "Next",
-        false
+        false,
+        this.navButtons.next.hovered
       );
     }
 
-    // Page counter - far right
+    // Centered page counter
     ctx.save();
-    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.font = `${this.game.getScaledValue(14)}px Arial`;
-    ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.font = `${this.game.getScaledValue(16)}px Arial`;
+    ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(
       `${this.currentPanel + 1} / ${totalPanels}`,
-      modalX + modalWidth - this.game.getScaledValue(30),
-      buttonY + buttonHeight / 2
+      modalX + modalWidth / 2,
+      modalY + modalHeight - this.game.getScaledValue(32)
     );
     ctx.restore();
   }
@@ -687,34 +819,62 @@ class StoryViewer {
   /**
    * Render a single navigation button
    */
-  renderNavigationButton(ctx, x, y, width, height, text, isClose) {
-    const radius = this.game.getScaledValue(8);
+  renderNavigationButton(ctx, x, y, width, height, text, isClose, hovered = false) {
+    const radius = this.game.getScaledValue(10);
 
     ctx.save();
 
-    const gradient = ctx.createLinearGradient(x, y, x, y + height);
-    if (isClose) {
-      gradient.addColorStop(0, "rgba(136, 136, 136, 0.8)");
-      gradient.addColorStop(1, "rgba(100, 100, 100, 0.8)");
-    } else {
-      gradient.addColorStop(0, "rgba(74, 144, 226, 0.8)");
-      gradient.addColorStop(1, "rgba(52, 101, 158, 0.8)");
+    // Enhanced button with gradient and shadow
+    if (hovered) {
+      const color = isClose ? "#888888" : "#4A90E2";
+      ctx.shadowColor = color;
+      ctx.shadowBlur = this.game.getScaledValue(15);
     }
+
+    // Button gradient background
+    const gradient = ctx.createLinearGradient(x, y, x, y + height);
+    const color = isClose ? "#888888" : "#4A90E2";
+
+    if (hovered) {
+      // Lighter when hovered
+      const r = Math.min(255, parseInt(color.substring(1, 3), 16) + 50);
+      const g = Math.min(255, parseInt(color.substring(3, 5), 16) + 50);
+      const b = Math.min(255, parseInt(color.substring(5, 7), 16) + 50);
+      const lighterColor = "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+      gradient.addColorStop(0, lighterColor);
+      gradient.addColorStop(1, color);
+    } else {
+      gradient.addColorStop(0, color + 'DD');
+      gradient.addColorStop(1, color + 'AA');
+    }
+
     ctx.fillStyle = gradient;
     this.ui.drawRoundedRect(ctx, x, y, width, height, radius);
     ctx.fill();
 
-    ctx.strokeStyle = isClose
-      ? "rgba(255, 255, 255, 0.5)"
-      : "rgba(150, 200, 255, 0.6)";
-    ctx.lineWidth = this.game.getScaledValue(2);
+    // Button shine effect
+    const shineGradient = ctx.createLinearGradient(x, y, x, y + height * 0.5);
+    shineGradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+    shineGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+    ctx.fillStyle = shineGradient;
+    this.ui.drawRoundedRect(ctx, x, y, width, height * 0.5, radius);
+    ctx.fill();
+
+    // Button border
+    ctx.strokeStyle = hovered ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.4)";
+    ctx.lineWidth = hovered ? this.game.getScaledValue(3) : this.game.getScaledValue(2);
     this.ui.drawRoundedRect(ctx, x, y, width, height, radius);
     ctx.stroke();
+
+    // Button text with shadow
+    ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+    ctx.shadowBlur = this.game.getScaledValue(4);
+    ctx.shadowOffsetY = this.game.getScaledValue(2);
 
     ctx.restore();
 
     this.ui.renderText(ctx, text, x + width / 2, y + height / 2, {
-      fontSize: this.game.getScaledValue(18),
+      fontSize: this.game.getScaledValue(17),
       color: "white",
       weight: "bold",
       align: "center",

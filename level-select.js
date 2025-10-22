@@ -893,6 +893,11 @@ class LevelSelect extends Screen {
       return;
     }
 
+    if (this.storyViewer.isOpen) {
+      this.storyViewer.handleMouseMove(x, y);
+      return;
+    }
+
     if (
       this.game.highestUnlockedDifficulty > 0 &&
       this.difficultyModal.isOpen
