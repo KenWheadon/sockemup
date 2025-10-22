@@ -179,15 +179,12 @@ class MarthaManager {
     if (isMoving) {
       this.animationTimer += deltaTime;
 
-      // Animation speed should be proportional to movement speed
-      const movementSpeed = Math.sqrt(
-        this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y
-      );
-      const animationSpeed = Math.max(200, 400 - movementSpeed * 50); // Faster animation for faster movement
+      // 24 FPS = 1000ms / 24 = ~41.67ms per frame
+      const animationSpeed = 1000 / 24;
 
       if (this.animationTimer >= animationSpeed) {
         this.currentFrameIndex =
-          (this.currentFrameIndex + 1) % GameConfig.MARTHA_FRAMES.length;
+          (this.currentFrameIndex + 1) % GameConfig.MARTHA_SPRITESHEET.animationFrames.length;
         this.animationTimer = 0;
       }
     }
@@ -786,22 +783,45 @@ class MarthaManager {
       }%)`;
     }
 
-    // Get the current animation frame
-    const frameIndex = GameConfig.MARTHA_FRAMES[this.currentFrameIndex];
-    const marthaImage =
-      this.game.images[GameConfig.IMAGES.CHARACTERS[frameIndex]];
+    // Get the current animation frame from spritesheet
+    const spritesheet = GameConfig.MARTHA_SPRITESHEET;
+    const frameNumber = spritesheet.animationFrames[this.currentFrameIndex];
+    const marthaImage = this.game.images[spritesheet.filename];
 
-    // Draw Martha
-    if (marthaImage) {
+    // Debug logging
+    if (!marthaImage && !this._loggedImageError) {
+      console.error('Martha spritesheet not found!', {
+        filename: spritesheet.filename,
+        availableImages: Object.keys(this.game.images)
+      });
+      this._loggedImageError = true;
+    }
+
+    // Draw Martha using spritesheet
+    if (marthaImage && marthaImage.complete && marthaImage.naturalWidth > 0) {
       ctx.save();
+
+      // Calculate which frame in the spritesheet to draw
+      const col = frameNumber % spritesheet.columns;
+      const row = Math.floor(frameNumber / spritesheet.columns);
+      const sx = col * spritesheet.frameWidth;
+      const sy = row * spritesheet.frameHeight;
 
       // Flip horizontally if facing right (sprite faces left by default)
       if (this.facingRight) {
         ctx.translate(this.x + this.width, this.y);
         ctx.scale(-1, 1);
-        ctx.drawImage(marthaImage, 0, 0, this.width, this.height);
+        ctx.drawImage(
+          marthaImage,
+          sx, sy, spritesheet.frameWidth, spritesheet.frameHeight,
+          0, 0, this.width, this.height
+        );
       } else {
-        ctx.drawImage(marthaImage, this.x, this.y, this.width, this.height);
+        ctx.drawImage(
+          marthaImage,
+          sx, sy, spritesheet.frameWidth, spritesheet.frameHeight,
+          this.x, this.y, this.width, this.height
+        );
       }
 
       ctx.restore();

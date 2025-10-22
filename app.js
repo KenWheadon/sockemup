@@ -337,17 +337,27 @@ class SockGame {
       ...GameConfig.IMAGES.SOCK_PILES,
       ...GameConfig.IMAGES.CHARACTERS,
       ...GameConfig.IMAGES.UI,
+      GameConfig.MARTHA_SPRITESHEET.filename, // Add Martha's spritesheet
     ];
 
     this.totalImages = allImages.length;
+
+    console.log('Loading images:', allImages);
+    console.log('Martha spritesheet filename:', GameConfig.MARTHA_SPRITESHEET.filename);
 
     allImages.forEach((imageName) => {
       const img = new Image();
       img.onload = () => {
         this.loadedImages++;
+        if (imageName === GameConfig.MARTHA_SPRITESHEET.filename) {
+          console.log('Martha spritesheet loaded successfully!', {
+            width: img.naturalWidth,
+            height: img.naturalHeight
+          });
+        }
       };
-      img.onerror = () => {
-        console.warn(`Failed to load image: ${imageName}`);
+      img.onerror = (e) => {
+        console.error(`Failed to load image: ${imageName}`, e);
         this.loadedImages++;
       };
       img.src = `images/${imageName}`;

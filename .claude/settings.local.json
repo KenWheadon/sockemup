@@ -5,7 +5,9 @@
       "Bash(start index.html)",
       "Bash(cat:*)",
       "Bash(node -e:*)",
-      "Bash(node -c:*)"
+      "Bash(node -c:*)",
+      "Bash(python -m http.server:*)",
+      "Bash(start \"c:\\Users\\kenne\\OneDrive\\Documents\\GitHub\\sockemup\\test-sprite.html\")"
     ],
     "deny": [],
     "ask": []

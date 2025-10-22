@@ -77,8 +77,17 @@ const GameConfig = {
   DROP_TARGET_PAIRS: 5,
 
   // Martha settings
-  MARTHA_SIZE: { width: 60, height: 80 },
+  MARTHA_SIZE: { width: 84, height: 86 }, // 20% larger + matching spritesheet aspect ratio (269:275)
   MARTHA_HIT_EFFECT_DURATION: 60, // frames
+  MARTHA_SPRITESHEET: {
+    filename: "martha-running-spritesheet.png",
+    frameWidth: 269, // Width of each frame in the spritesheet (1614 / 6)
+    frameHeight: 275, // Height of each frame in the spritesheet (1650 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], // Which frames to use in the animation sequence
+  },
 
   // Throwing screen settings
   THROWING_BOUNDS: {
@@ -342,28 +351,29 @@ const GameConfig = {
   // Level costs and unlock data
   // LEVEL_COSTS: [0, 25, 75, 125, 175, 250, 325, 400, 500],
   LEVEL_COSTS: [0, 1, 2, 3, 4, 5, 6, 7, 8],
-  MARTHA_FRAMES: [0, 1, 0, 2, 0, 3, 1, 2, 3],
+  // MARTHA_FRAMES is now replaced by MARTHA_SPRITESHEET.animationFrames
+  // MARTHA_FRAMES: [0, 1, 0, 2, 0, 3, 1, 2, 3],
   INITIAL_UNLOCKED_LEVELS: [
     true,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
   ],
   INITIAL_COMPLETED_LEVELS: [
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
-    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
   ],
 
   // Image files
@@ -413,6 +423,7 @@ const GameConfig = {
       "story-7.png",
       "story-8.png",
       "story-9.png",
+      "martha-running-spritesheet.png",
     ],
     UI: [
       "background.png",
