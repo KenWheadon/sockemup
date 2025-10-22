@@ -342,17 +342,20 @@ class SockGame {
 
     this.totalImages = allImages.length;
 
-    console.log('Loading images:', allImages);
-    console.log('Martha spritesheet filename:', GameConfig.MARTHA_SPRITESHEET.filename);
+    console.log("Loading images:", allImages);
+    console.log(
+      "Martha spritesheet filename:",
+      GameConfig.MARTHA_SPRITESHEET.filename
+    );
 
     allImages.forEach((imageName) => {
       const img = new Image();
       img.onload = () => {
         this.loadedImages++;
         if (imageName === GameConfig.MARTHA_SPRITESHEET.filename) {
-          console.log('Martha spritesheet loaded successfully!', {
+          console.log("Martha spritesheet loaded successfully!", {
             width: img.naturalWidth,
-            height: img.naturalHeight
+            height: img.naturalHeight,
           });
         }
       };
@@ -455,14 +458,14 @@ class SockGame {
     // Reset mousedown state
     this.mouseDownState = null;
 
-    console.log('🚫 Touch cancelled - resetting drag state');
+    console.log("🚫 Touch cancelled - resetting drag state");
   }
 
   // Phase 1.3 - Handle keyboard input
   handleKeyDown(e) {
     // Route keyboard events to current screen if it has a handler
     const currentScreen = this.getCurrentScreen();
-    if (currentScreen && typeof currentScreen.handleKeyDown === 'function') {
+    if (currentScreen && typeof currentScreen.handleKeyDown === "function") {
       currentScreen.handleKeyDown(e);
       // If screen handled the event, return early
       if (e.defaultPrevented) {
@@ -472,12 +475,11 @@ class SockGame {
 
     // Pause/Resume with P or ESC key (for gameplay screens)
     if (e.key === "p" || e.key === "P" || e.key === "Escape") {
-      if (
-        this.gameState === "matching" ||
-        this.gameState === "throwing"
-      ) {
+      if (this.gameState === "matching" || this.gameState === "throwing") {
         const currentScreen =
-          this.gameState === "matching" ? this.matchScreen : this.throwingScreen;
+          this.gameState === "matching"
+            ? this.matchScreen
+            : this.throwingScreen;
         currentScreen.togglePause();
         e.preventDefault();
       }
@@ -571,10 +573,30 @@ class SockGame {
       // Initialize arrays for unlocked difficulties if they don't exist
       for (let diff = 1; diff <= this.highestUnlockedDifficulty; diff++) {
         if (!this.unlockedLevelsByDifficulty[diff]) {
-          this.unlockedLevelsByDifficulty[diff] = [true, false, false, false, false, false, false, false, false];
+          this.unlockedLevelsByDifficulty[diff] = [
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
         }
         if (!this.completedLevelsByDifficulty[diff]) {
-          this.completedLevelsByDifficulty[diff] = [false, false, false, false, false, false, false, false, false];
+          this.completedLevelsByDifficulty[diff] = [
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+          ];
         }
       }
 
@@ -593,7 +615,8 @@ class SockGame {
       };
 
       // Story panels
-      this.unlockedStoryPanels = data.unlockedStoryPanels || Array(9).fill(false);
+      this.unlockedStoryPanels =
+        data.unlockedStoryPanels || Array(9).fill(false);
 
       // NEW GAME+ banner tracking
       this.hasShownNewGamePlusBanner = data.hasShownNewGamePlusBanner || false;
@@ -618,8 +641,10 @@ class SockGame {
           }
         }
 
-        // Migrate old "perfectionist" achievement to new "deadeye" achievement
-        if (data.achievements.perfectionist && data.achievements.perfectionist.unlocked) {
+        if (
+          data.achievements.perfectionist &&
+          data.achievements.perfectionist.unlocked
+        ) {
           this.achievements.deadeye = {
             ...this.achievements.deadeye,
             unlocked: true,
@@ -628,7 +653,9 @@ class SockGame {
         }
       }
 
-      console.log(`💾 Loaded game data - Selected difficulty: ${this.selectedDifficulty}, Highest unlocked: ${this.highestUnlockedDifficulty}`);
+      console.log(
+        `💾 Loaded game data - Selected difficulty: ${this.selectedDifficulty}, Highest unlocked: ${this.highestUnlockedDifficulty}`
+      );
     } else {
       // No saved data - unlock story panels for any initially completed levels
       const baseLevels = this.completedLevelsByDifficulty[0] || [];
@@ -665,14 +692,18 @@ class SockGame {
       unlockedStoryPanels: this.unlockedStoryPanels,
     };
     localStorage.setItem("sockGameData", JSON.stringify(data));
-    console.log(`💾 Saved game data - Selected difficulty: ${this.selectedDifficulty}`);
+    console.log(
+      `💾 Saved game data - Selected difficulty: ${this.selectedDifficulty}`
+    );
   }
 
   // Phase 3.3 - Mark level as completed at current difficulty
   markLevelCompleted(levelIndex, difficulty) {
     // Initialize difficulty array if it doesn't exist
     if (!this.completedLevelsByDifficulty[difficulty]) {
-      this.completedLevelsByDifficulty[difficulty] = Array(GameConfig.LEVELS.length).fill(false);
+      this.completedLevelsByDifficulty[difficulty] = Array(
+        GameConfig.LEVELS.length
+      ).fill(false);
     }
 
     // Mark this level as completed at this difficulty
@@ -699,8 +730,12 @@ class SockGame {
       );
     });
 
-    console.log(`🎮 Difficulty check: All levels at difficulty ${difficulty} completed? ${allLevelsCompleted}`);
-    console.log(`🎮 Current highest unlocked difficulty: ${this.highestUnlockedDifficulty}`);
+    console.log(
+      `🎮 Difficulty check: All levels at difficulty ${difficulty} completed? ${allLevelsCompleted}`
+    );
+    console.log(
+      `🎮 Current highest unlocked difficulty: ${this.highestUnlockedDifficulty}`
+    );
     console.log(`🎮 Difficulty completions:`, this.completedLevelsByDifficulty);
 
     // Unlock next difficulty if all levels completed
@@ -711,10 +746,16 @@ class SockGame {
         4 // Max difficulty is +4
       );
 
-      console.log(`🎮 ✨ NEW GAME+ UNLOCKED! Difficulty ${previousDifficulty} → ${this.highestUnlockedDifficulty}`);
+      console.log(
+        `🎮 ✨ NEW GAME+ UNLOCKED! Difficulty ${previousDifficulty} → ${this.highestUnlockedDifficulty}`
+      );
 
       // NEW GAME+: Show explanation if just unlocked first difficulty AND haven't shown banner before
-      if (previousDifficulty === 0 && this.highestUnlockedDifficulty === 1 && !this.hasShownNewGamePlusBanner) {
+      if (
+        previousDifficulty === 0 &&
+        this.highestUnlockedDifficulty === 1 &&
+        !this.hasShownNewGamePlusBanner
+      ) {
         this.showNewGamePlusNotification = true;
         console.log(`🎮 📢 Showing NEW GAME+ notification banner!`);
       }
@@ -738,11 +779,15 @@ class SockGame {
     this.achievements[achievementId].unlocked = true;
     this.achievements[achievementId].unlockedAt = Date.now();
 
-    console.log(`🏆 Achievement unlocked: ${this.achievements[achievementId].name}`);
+    console.log(
+      `🏆 Achievement unlocked: ${this.achievements[achievementId].name}`
+    );
 
     // Trigger visual notification
     if (this.feedbackManager) {
-      this.feedbackManager.showAchievementUnlocked(this.achievements[achievementId]);
+      this.feedbackManager.showAchievementUnlocked(
+        this.achievements[achievementId]
+      );
     }
 
     // Play achievement sound
@@ -783,7 +828,7 @@ class SockGame {
     this.catchQualityCounts = {
       PERFECT: 0,
       GOOD: 0,
-      REGULAR: 0
+      REGULAR: 0,
     };
 
     // Initialize sockball queue for new level
@@ -841,7 +886,7 @@ class SockGame {
         this.levelEndScreen.handleMouseDown(x, y);
       }
     } catch (error) {
-      console.error('Error handling mouse down:', error);
+      console.error("Error handling mouse down:", error);
     }
   }
 
@@ -863,7 +908,7 @@ class SockGame {
         this.levelEndScreen.handleMouseMove(x, y);
       }
     } catch (error) {
-      console.error('Error handling mouse move:', error);
+      console.error("Error handling mouse move:", error);
     }
   }
 
@@ -885,15 +930,20 @@ class SockGame {
         this.levelEndScreen.handleMouseUp();
       }
     } catch (error) {
-      console.error('Error handling mouse up:', error);
+      console.error("Error handling mouse up:", error);
     }
   }
 
   handleClick(e) {
     try {
       // Prevent cross-screen clicks: only process if game state hasn't changed since mousedown
-      if (this.mouseDownState !== null && this.mouseDownState !== this.gameState) {
-        console.log(`🚫 Ignoring click - state changed from ${this.mouseDownState} to ${this.gameState}`);
+      if (
+        this.mouseDownState !== null &&
+        this.mouseDownState !== this.gameState
+      ) {
+        console.log(
+          `🚫 Ignoring click - state changed from ${this.mouseDownState} to ${this.gameState}`
+        );
         this.mouseDownState = null;
         return;
       }
@@ -915,7 +965,7 @@ class SockGame {
       // Reset mousedown state after processing click
       this.mouseDownState = null;
     } catch (error) {
-      console.error('Error handling click:', error);
+      console.error("Error handling click:", error);
     }
   }
 
@@ -1018,7 +1068,10 @@ class SockGame {
         this.lastFrameTime = currentTime;
 
         // Cap deltaTime to prevent timer speedup on lag
-        const cappedDeltaTime = Math.min(this.deltaTime, this.frameInterval * 3);
+        const cappedDeltaTime = Math.min(
+          this.deltaTime,
+          this.frameInterval * 3
+        );
         this.update(cappedDeltaTime);
         this.render();
       }

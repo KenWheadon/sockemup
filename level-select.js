@@ -14,8 +14,8 @@ class LevelSelect extends Screen {
       snapDistance: 40,
       size: 60,
       offsetX: 1200,
-      offsetY1: 300,
-      offsetY2: 400,
+      offsetY1: 200,
+      offsetY2: 300,
       outerBorderWidth: 10,
       glowDuration: 20,
     };

@@ -516,16 +516,12 @@ class ThrowingScreen extends Screen {
               this.game.catchQualityCounts[catchQuality]++;
             }
 
-            // Play particle burst sound when sockball hits Martha
             this.game.audioManager.playSound("particle-burst", false, 0.4);
 
-            // Play points gained sound
             this.game.audioManager.playSound("points-gained", false, 0.3);
 
-            // Track consecutive hits for Deadeye achievement (even bonus hits count!)
             this.consecutiveHits++;
 
-            // Phase 2.2 - Notify feedback manager of catch quality
             if (isBonusHit) {
               // Bonus hits get special message but use normal quality feedback
               this.showMessage("BONUS CATCH!", "success", 1500);
@@ -548,7 +544,6 @@ class ThrowingScreen extends Screen {
               this.game.feedbackManager.onRegularCatch();
             }
 
-            // Achievement: DEADEYE (10 hits in a row)
             if (this.consecutiveHits >= 10) {
               this.game.unlockAchievement("deadeye");
             }
