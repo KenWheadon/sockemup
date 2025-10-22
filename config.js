@@ -159,6 +159,20 @@ const GameConfig = {
     fps: 12, // 12 frames per second for story animation
   },
 
+  MARTHA_STORY2_SPRITESHEET: {
+    filename: "martha-story2-spritesheet.png",
+    frameWidth: 265, // Width of each frame in the spritesheet (1590 / 6)
+    frameHeight: 216, // Height of each frame in the spritesheet (1296 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 12, // 12 frames per second for story animation
+  },
+
   MARTHA_STORY3_SPRITESHEET: {
     filename: "martha-story3-spritesheet.png",
     frameWidth: 277, // Width of each frame in the spritesheet (1662 / 6)
@@ -173,9 +187,37 @@ const GameConfig = {
     fps: 12, // 12 frames per second for story animation
   },
 
+  MARTHA_STORY4_SPRITESHEET: {
+    filename: "martha-story4-spritesheet.png",
+    frameWidth: 264, // Width of each frame in the spritesheet (1584 / 6)
+    frameHeight: 299, // Height of each frame in the spritesheet (1794 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 12, // 12 frames per second for story animation
+  },
+
   MARTHA_STORY5_SPRITESHEET: {
     filename: "martha-story5-spritesheet.png",
     frameWidth: 172, // Width of each frame in the spritesheet (1032 / 6)
+    frameHeight: 259, // Height of each frame in the spritesheet (1554 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 12, // 12 frames per second for story animation
+  },
+
+  MARTHA_STORY6_SPRITESHEET: {
+    filename: "martha-story6-spritesheet.png",
+    frameWidth: 257, // Width of each frame in the spritesheet (1542 / 6)
     frameHeight: 259, // Height of each frame in the spritesheet (1554 / 6)
     columns: 6,
     rows: 6,
@@ -201,10 +243,38 @@ const GameConfig = {
     fps: 24, // Increased to match How to Play animation speed
   },
 
+  MARTHA_UNLOCK2_SPRITESHEET: {
+    filename: "martha-unlock2-spritesheet.png",
+    frameWidth: 166, // Width of each frame in the spritesheet (996 / 6)
+    frameHeight: 269, // Height of each frame in the spritesheet (1614 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 24, // Match How to Play animation speed
+  },
+
   MARTHA_UNLOCK3_SPRITESHEET: {
     filename: "martha-unlock3-spritesheet.png",
     frameWidth: 403, // Width of each frame in the spritesheet (2418 / 6)
     frameHeight: 225, // Height of each frame in the spritesheet (1350 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 24, // Match How to Play animation speed
+  },
+
+  MARTHA_UNLOCK4_SPRITESHEET: {
+    filename: "martha-unlock4-spritesheet.png",
+    frameWidth: 178, // Width of each frame in the spritesheet (1068 / 6)
+    frameHeight: 261, // Height of each frame in the spritesheet (1566 / 6)
     columns: 6,
     rows: 6,
     totalFrames: 36,
@@ -233,6 +303,20 @@ const GameConfig = {
     filename: "martha-unlock7-spritesheet.png",
     frameWidth: 433, // Width of each frame in the spritesheet (2598 / 6)
     frameHeight: 383, // Height of each frame in the spritesheet (2298 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 24, // Match How to Play animation speed
+  },
+
+  MARTHA_UNLOCK9_SPRITESHEET: {
+    filename: "martha-unlock9-spritesheet.png",
+    frameWidth: 310, // Width of each frame in the spritesheet (1860 / 6)
+    frameHeight: 345, // Height of each frame in the spritesheet (2070 / 6)
     columns: 6,
     rows: 6,
     totalFrames: 36,
@@ -583,12 +667,18 @@ const GameConfig = {
       "martha-losing-spritesheet.png",
       "martha-crawling-spritesheet.png",
       "martha-story1-spritesheet.png",
+      "martha-story2-spritesheet.png",
       "martha-story3-spritesheet.png",
+      "martha-story4-spritesheet.png",
       "martha-story5-spritesheet.png",
+      "martha-story6-spritesheet.png",
       "martha-unlock1-spritesheet.png",
+      "martha-unlock2-spritesheet.png",
       "martha-unlock3-spritesheet.png",
+      "martha-unlock4-spritesheet.png",
       "martha-unlock5-spritesheet.png",
       "martha-unlock7-spritesheet.png",
+      "martha-unlock9-spritesheet.png",
     ],
     UI: [
       "background.png",
@@ -846,6 +936,7 @@ const GameConfig = {
       title: "The Rent Problem",
       text: "Bad news: your rent is due. Worse news: Martha doesn't want cash anymore—she wants sockballs. Bundles of two matching socks that she swears are 'the only valid currency left.'",
       image: "htp-2.png",
+      spritesheet: "MARTHA_STORY2_SPRITESHEET",
     },
     {
       id: "sock_power",
@@ -859,6 +950,7 @@ const GameConfig = {
       title: "How to Play",
       text: "Select the pile to reveal socks, match pairs to create sockballs, then toss them at Martha before she loses patience. Hit her center mass for bonus points — face shots still count!",
       image: "htp-4.png",
+      spritesheet: "MARTHA_STORY4_SPRITESHEET",
     },
     {
       id: "good_luck",
@@ -934,8 +1026,9 @@ const GameConfig = {
     {
       id: "panel_2",
       title: "The Incident",
-      text: "It all unraveled when a prototype sockball exploded at the factory. The enchanted fibers compressed Marthilda’s entire body down to half size. Her family said, ‘Well, she’s easier to store.’ She said, ‘You’ll regret folding me away.’",
+      text: "It all unraveled when a prototype sockball exploded at the factory. The enchanted fibers compressed Marthilda's entire body down to half size. Her family said, 'Well, she's easier to store.' She said, 'You'll regret folding me away.'",
       image: "story-2.png",
+      spritesheet: "MARTHA_UNLOCK2_SPRITESHEET",
     },
     {
       id: "panel_3",
@@ -949,6 +1042,7 @@ const GameConfig = {
       title: "The Property Scheme",
       text: "With her shrunken inheritance, Martha bought the cheapest building in town—haunted, leaning, and allegedly cursed. She evicted the ghosts within a day (they left politely). Her plan: rebuild her sockball empire, one rent payment at a time.",
       image: "story-4.png",
+      spritesheet: "MARTHA_UNLOCK4_SPRITESHEET",
     },
     {
       id: "panel_5",
@@ -960,8 +1054,9 @@ const GameConfig = {
     {
       id: "panel_6",
       title: "The Secret Lab",
-      text: "Hidden behind the drywall of your apartment is a labyrinth of pipes, beakers, and laundry chutes—Martha’s Sockball Research Facility. Those ‘maintenance visits’? She’s collecting data on your matching speed. And possibly your detergent choices.",
+      text: "Hidden behind the drywall of your apartment is a labyrinth of pipes, beakers, and laundry chutes—Martha's Sockball Research Facility. Those 'maintenance visits'? She's collecting data on your matching speed. And possibly your detergent choices.",
       image: "story-6.png",
+      spritesheet: "MARTHA_STORY6_SPRITESHEET",
     },
     {
       id: "panel_7",
@@ -979,8 +1074,9 @@ const GameConfig = {
     {
       id: "panel_9",
       title: "The Transformation",
-      text: "At last, her collection is complete. Thousands of sockballs whirl around her in a glowing cyclone. Then—FLASH!—she grows half an inch taller. ‘HALF AN INCH?!’ she roars. She raises your rent by 50%. Congratulations, you’ve unlocked New Game+ and eternal tenancy.",
+      text: "At last, her collection is complete. Thousands of sockballs whirl around her in a glowing cyclone. Then—FLASH!—she grows half an inch taller. 'HALF AN INCH?!' she roars. She raises your rent by 50%. Congratulations, you've unlocked New Game+ and eternal tenancy.",
       image: "story-9.png",
+      spritesheet: "MARTHA_UNLOCK9_SPRITESHEET",
     },
   ],
 };
