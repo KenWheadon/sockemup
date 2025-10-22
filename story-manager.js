@@ -13,6 +13,7 @@ class StoryManager {
     this.isTransitioning = false;
     this.transitionDuration = 400; // ms
     this.transitionDirection = 1; // 1 for next, -1 for previous
+    this.previousSlideIndex = 0; // Track previous slide during transitions
 
     // Opening/closing animations
     this.openProgress = 0;
@@ -90,13 +91,13 @@ class StoryManager {
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
 
-    // Center container
+    // Optimized container size - not as tall
     const containerWidth = Math.min(
-      this.game.getScaledValue(700),
-      canvasWidth * 0.9
+      this.game.getScaledValue(900),
+      canvasWidth * 0.92
     );
     const containerHeight = Math.min(
-      this.game.getScaledValue(500),
+      this.game.getScaledValue(480),
       canvasHeight * 0.8
     );
 
@@ -105,7 +106,7 @@ class StoryManager {
       height: containerHeight,
       x: (canvasWidth - containerWidth) / 2,
       y: (canvasHeight - containerHeight) / 2,
-      padding: this.game.getScaledValue(40),
+      padding: this.game.getScaledValue(35),
     };
 
     // Position buttons in a row at the bottom
@@ -265,24 +266,25 @@ class StoryManager {
   nextSlide() {
     if (this.currentSlideIndex < this.slides.length - 1) {
       this.transitionDirection = 1;
+      this.previousSlideIndex = this.currentSlideIndex;
       this.currentSlideIndex++;
       this.startTransition();
-      this.resetSpriteAnimation();
     }
   }
 
   previousSlide() {
     if (this.currentSlideIndex > 0) {
       this.transitionDirection = -1;
+      this.previousSlideIndex = this.currentSlideIndex;
       this.currentSlideIndex--;
       this.startTransition();
-      this.resetSpriteAnimation();
     }
   }
 
   startTransition() {
     this.isTransitioning = true;
     this.transitionProgress = 0;
+    this.resetSpriteAnimation();
   }
 
   resetSpriteAnimation() {
@@ -335,10 +337,18 @@ class StoryManager {
     // Render slide container
     this.renderSlideContainer(ctx, animProgress);
 
-    // Render current slide
-    const currentSlide = this.slides[this.currentSlideIndex];
-    if (currentSlide) {
-      this.renderSlide(ctx, currentSlide);
+    // Render current slide (or previous during first half of transition)
+    let slideToRender;
+    if (this.isTransitioning && this.transitionProgress < 0.5) {
+      // First half of transition: show previous slide fading out
+      slideToRender = this.slides[this.previousSlideIndex];
+    } else {
+      // Second half or no transition: show current slide
+      slideToRender = this.slides[this.currentSlideIndex];
+    }
+
+    if (slideToRender) {
+      this.renderSlide(ctx, slideToRender);
     }
 
     // Render buttons
@@ -359,7 +369,7 @@ class StoryManager {
     ctx.shadowColor = "rgba(100, 150, 255, 0.3)";
     ctx.shadowBlur = this.game.getScaledValue(30) * animProgress;
 
-    // Container background with enhanced gradient
+    // Clean gradient background - no patterns
     const gradient = ctx.createLinearGradient(
       container.x,
       container.y,
@@ -381,7 +391,7 @@ class StoryManager {
     );
     ctx.fill();
 
-    // Container border with glow
+    // Simple border with glow
     ctx.strokeStyle = "rgba(120, 170, 255, 0.7)";
     ctx.lineWidth = this.game.getScaledValue(4);
     this.drawRoundedRect(
@@ -423,45 +433,105 @@ class StoryManager {
     const container = this.slideContainer;
     const contentY = container.y + container.padding;
 
-    // Apply transition animation with slide effect
+    // Apply simple fade transition - fade out completely, then fade in
     let alpha = 1;
-    let slideOffset = 0;
     if (this.isTransitioning) {
-      // Ease in-out cubic for smooth transition
       const t = this.transitionProgress;
-      const easedProgress =
-        t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
-      alpha = Math.abs(Math.cos(easedProgress * Math.PI));
-      slideOffset =
-        Math.sin(easedProgress * Math.PI) *
-        this.transitionDirection *
-        this.game.getScaledValue(50);
+      if (t < 0.5) {
+        // First half: fade out
+        alpha = 1 - (t * 2);
+      } else {
+        // Second half: fade in
+        alpha = (t - 0.5) * 2;
+      }
     }
 
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(slideOffset, 0);
 
-    // Title with glow
+    // Full-width semi-transparent black title bar with rounded top corners
     ctx.save();
-    ctx.shadowColor = "rgba(255, 215, 0, 0.5)";
+    const titleBarHeight = this.game.getScaledValue(55);
+    const cornerRadius = this.game.getScaledValue(20);
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.4)";
+
+    // Draw rounded rectangle for title bar (only top corners rounded)
+    ctx.beginPath();
+    ctx.moveTo(container.x + cornerRadius, container.y);
+    ctx.lineTo(container.x + container.width - cornerRadius, container.y);
+    ctx.quadraticCurveTo(container.x + container.width, container.y, container.x + container.width, container.y + cornerRadius);
+    ctx.lineTo(container.x + container.width, container.y + titleBarHeight);
+    ctx.lineTo(container.x, container.y + titleBarHeight);
+    ctx.lineTo(container.x, container.y + cornerRadius);
+    ctx.quadraticCurveTo(container.x, container.y, container.x + cornerRadius, container.y);
+    ctx.closePath();
+    ctx.fill();
+
+    // Title text with glow
+    ctx.shadowColor = "rgba(255, 215, 0, 0.6)";
     ctx.shadowBlur = this.game.getScaledValue(15);
     ctx.fillStyle = "#FFD700";
-    ctx.font = `bold ${this.game.getScaledValue(40)}px Arial`;
+    ctx.font = `bold ${this.game.getScaledValue(36)}px Arial`;
     ctx.textAlign = "center";
-    ctx.textBaseline = "top";
-    ctx.fillText(slide.title, container.x + container.width / 2, contentY);
+    ctx.textBaseline = "middle";
+    ctx.fillText(slide.title, container.x + container.width / 2, container.y + titleBarHeight / 2);
     ctx.restore();
 
-    // Image (if available) with scale animation
-    // Check if this slide uses a spritesheet
+    // Side-by-side layout: Image on left, text on right
+    const mainContentY = container.y + this.game.getScaledValue(70);
+    const leftPanelWidth = container.width * 0.42;
+    const rightPanelWidth = container.width * 0.52;
+    const leftPanelX = container.x + this.game.getScaledValue(30);
+    const rightPanelX = leftPanelX + leftPanelWidth + this.game.getScaledValue(25);
+
+    // Left panel - Image with container
+    ctx.save();
+
+    // Image container background with subtle gradient
+    const imageContainerHeight = this.game.getScaledValue(280);
+    const frameGradient = ctx.createRadialGradient(
+      leftPanelX + leftPanelWidth / 2,
+      mainContentY + imageContainerHeight / 2,
+      this.game.getScaledValue(50),
+      leftPanelX + leftPanelWidth / 2,
+      mainContentY + imageContainerHeight / 2,
+      this.game.getScaledValue(180)
+    );
+    frameGradient.addColorStop(0, "rgba(60, 40, 100, 0.3)");
+    frameGradient.addColorStop(1, "rgba(40, 25, 80, 0.15)");
+    ctx.fillStyle = frameGradient;
+    this.drawRoundedRect(
+      ctx,
+      leftPanelX,
+      mainContentY,
+      leftPanelWidth,
+      imageContainerHeight,
+      this.game.getScaledValue(15)
+    );
+    ctx.fill();
+
+    // Container border
+    ctx.strokeStyle = "rgba(120, 170, 255, 0.4)";
+    ctx.lineWidth = this.game.getScaledValue(2);
+    this.drawRoundedRect(
+      ctx,
+      leftPanelX,
+      mainContentY,
+      leftPanelWidth,
+      imageContainerHeight,
+      this.game.getScaledValue(15)
+    );
+    ctx.stroke();
+
+    // Image (larger now!)
     if (slide.spritesheet) {
       const spritesheetConfig = GameConfig[slide.spritesheet];
       const spritesheetImage = this.game.images[spritesheetConfig.filename];
 
       if (spritesheetImage && spritesheetConfig) {
-        const maxImageSize = this.game.getScaledValue(168);
+        const maxImageSize = this.game.getScaledValue(280);
 
         // Calculate aspect ratio from frame dimensions
         const aspectRatio =
@@ -469,18 +539,15 @@ class StoryManager {
         let imageWidth, imageHeight;
 
         if (aspectRatio > 1) {
-          // Landscape - constrain width
           imageWidth = maxImageSize;
           imageHeight = maxImageSize / aspectRatio;
         } else {
-          // Portrait or square - constrain height
           imageHeight = maxImageSize;
           imageWidth = maxImageSize * aspectRatio;
         }
 
-        const imageX = container.x + container.width / 2 - imageWidth / 2;
-        const imageAreaY = contentY + this.game.getScaledValue(70);
-        const imageY = imageAreaY + (maxImageSize - imageHeight) / 2;
+        const imageX = leftPanelX + leftPanelWidth / 2 - imageWidth / 2;
+        const imageY = mainContentY + imageContainerHeight / 2 - imageHeight / 2;
 
         // Get current frame from animation sequence
         const frameIndex =
@@ -488,19 +555,20 @@ class StoryManager {
         const frameX = (frameIndex % spritesheetConfig.columns) * spritesheetConfig.frameWidth;
         const frameY = Math.floor(frameIndex / spritesheetConfig.columns) * spritesheetConfig.frameHeight;
 
-        // Subtle pulse for image
-        const imageScale = this.isTransitioning ? alpha : 1;
+        // Subtle floating animation - disabled during transitions
+        const floatOffset = this.isTransitioning ? 0 : Math.sin(Date.now() / 800) * this.game.getScaledValue(3);
+        const imageScale = this.isTransitioning ? 1 : 1 + Math.sin(Date.now() / 1000) * 0.02;
+
         ctx.save();
-        ctx.translate(imageX + imageWidth / 2, imageY + imageHeight / 2);
+        ctx.translate(imageX + imageWidth / 2, imageY + imageHeight / 2 + floatOffset);
         ctx.scale(imageScale, imageScale);
         ctx.translate(-(imageX + imageWidth / 2), -(imageY + imageHeight / 2));
 
-        // Add subtle shadow to image
-        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-        ctx.shadowBlur = this.game.getScaledValue(10);
-        ctx.shadowOffsetY = this.game.getScaledValue(5);
+        // Enhanced shadow
+        ctx.shadowColor = "rgba(255, 100, 200, 0.4)";
+        ctx.shadowBlur = this.game.getScaledValue(20);
+        ctx.shadowOffsetY = this.game.getScaledValue(8);
 
-        // Draw the current frame from the spritesheet
         ctx.drawImage(
           spritesheetImage,
           frameX,
@@ -518,62 +586,63 @@ class StoryManager {
       // Static image fallback
       const image = this.game.images[slide.image];
       if (image) {
-        const maxImageSize = this.game.getScaledValue(168);
+        const maxImageSize = this.game.getScaledValue(280);
 
-        // Calculate aspect ratio preserving dimensions
         const aspectRatio = image.width / image.height;
         let imageWidth, imageHeight;
 
         if (aspectRatio > 1) {
-          // Landscape - constrain width
           imageWidth = maxImageSize;
           imageHeight = maxImageSize / aspectRatio;
         } else {
-          // Portrait or square - constrain height
           imageHeight = maxImageSize;
           imageWidth = maxImageSize * aspectRatio;
         }
 
-        const imageX = container.x + container.width / 2 - imageWidth / 2;
-        // Center all images vertically in the same space
-        const imageAreaY = contentY + this.game.getScaledValue(70);
-        const imageY = imageAreaY + (maxImageSize - imageHeight) / 2;
+        const imageX = leftPanelX + leftPanelWidth / 2 - imageWidth / 2;
+        const imageY = mainContentY + imageContainerHeight / 2 - imageHeight / 2;
 
-        // Subtle pulse for image
-        const imageScale = this.isTransitioning ? alpha : 1;
+        // Subtle floating animation - disabled during transitions
+        const floatOffset = this.isTransitioning ? 0 : Math.sin(Date.now() / 800) * this.game.getScaledValue(3);
+        const imageScale = this.isTransitioning ? 1 : 1 + Math.sin(Date.now() / 1000) * 0.02;
+
         ctx.save();
-        ctx.translate(imageX + imageWidth / 2, imageY + imageHeight / 2);
+        ctx.translate(imageX + imageWidth / 2, imageY + imageHeight / 2 + floatOffset);
         ctx.scale(imageScale, imageScale);
         ctx.translate(-(imageX + imageWidth / 2), -(imageY + imageHeight / 2));
 
-        // Add subtle shadow to image
-        ctx.shadowColor = "rgba(0, 0, 0, 0.3)";
-        ctx.shadowBlur = this.game.getScaledValue(10);
-        ctx.shadowOffsetY = this.game.getScaledValue(5);
+        // Enhanced shadow
+        ctx.shadowColor = "rgba(255, 100, 200, 0.4)";
+        ctx.shadowBlur = this.game.getScaledValue(20);
+        ctx.shadowOffsetY = this.game.getScaledValue(8);
 
         ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
         ctx.restore();
       }
     }
 
-    // Text with better spacing and styling
-    const textY = contentY + this.game.getScaledValue(250);
+    ctx.restore();
 
+    // Right panel - Text content (no box, just the text)
     ctx.save();
+
+    // Main text content - positioned to align nicely with image
+    const textStartY = mainContentY + this.game.getScaledValue(85);
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.font = `${this.game.getScaledValue(22)}px Arial`;
-    ctx.textAlign = "center";
+    ctx.font = `${this.game.getScaledValue(20)}px Arial`;
+    ctx.textAlign = "left";
     ctx.textBaseline = "top";
 
-    // Word wrap text with better line height - centered
+    // Word wrap text with better line height
     this.wrapText(
       ctx,
       slide.text,
-      container.x + container.width / 2,
-      textY,
-      container.width - container.padding * 3,
-      this.game.getScaledValue(32)
+      rightPanelX,
+      textStartY,
+      rightPanelWidth,
+      this.game.getScaledValue(28)
     );
+
     ctx.restore();
 
     ctx.restore();
@@ -601,34 +670,78 @@ class StoryManager {
   renderButton(ctx, button, text, color) {
     ctx.save();
 
-    // Button background
-    ctx.fillStyle = button.hovered ? color : `${color}CC`;
+    // Enhanced button with gradient and shadow
+    if (button.hovered) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = this.game.getScaledValue(15);
+    }
+
+    // Button gradient background
+    const buttonGradient = ctx.createLinearGradient(
+      button.x,
+      button.y,
+      button.x,
+      button.y + button.height
+    );
+
+    if (button.hovered) {
+      buttonGradient.addColorStop(0, this.lightenColor(color, 0.2));
+      buttonGradient.addColorStop(1, color);
+    } else {
+      buttonGradient.addColorStop(0, color + 'DD');
+      buttonGradient.addColorStop(1, color + 'AA');
+    }
+
+    ctx.fillStyle = buttonGradient;
     this.drawRoundedRect(
       ctx,
       button.x,
       button.y,
       button.width,
       button.height,
-      this.game.getScaledValue(8)
+      this.game.getScaledValue(10)
+    );
+    ctx.fill();
+
+    // Button shine effect
+    const shineGradient = ctx.createLinearGradient(
+      button.x,
+      button.y,
+      button.x,
+      button.y + button.height * 0.5
+    );
+    shineGradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+    shineGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+    ctx.fillStyle = shineGradient;
+    this.drawRoundedRect(
+      ctx,
+      button.x,
+      button.y,
+      button.width,
+      button.height * 0.5,
+      this.game.getScaledValue(10)
     );
     ctx.fill();
 
     // Button border
-    ctx.strokeStyle = button.hovered ? "#FFFFFF" : "rgba(255, 255, 255, 0.5)";
-    ctx.lineWidth = this.game.getScaledValue(2);
+    ctx.strokeStyle = button.hovered ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.4)";
+    ctx.lineWidth = button.hovered ? this.game.getScaledValue(3) : this.game.getScaledValue(2);
     this.drawRoundedRect(
       ctx,
       button.x,
       button.y,
       button.width,
       button.height,
-      this.game.getScaledValue(8)
+      this.game.getScaledValue(10)
     );
     ctx.stroke();
 
-    // Button text
+    // Button text with shadow
+    ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+    ctx.shadowBlur = this.game.getScaledValue(4);
+    ctx.shadowOffsetY = this.game.getScaledValue(2);
     ctx.fillStyle = "#FFFFFF";
-    ctx.font = `bold ${this.game.getScaledValue(18)}px Arial`;
+    ctx.font = `bold ${this.game.getScaledValue(17)}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(
@@ -640,10 +753,19 @@ class StoryManager {
     ctx.restore();
   }
 
+  lightenColor(color, amount) {
+    // Simple color lightening - parse hex color and lighten
+    const num = parseInt(color.replace("#", ""), 16);
+    const r = Math.min(255, ((num >> 16) & 0xff) + Math.floor(255 * amount));
+    const g = Math.min(255, ((num >> 8) & 0xff) + Math.floor(255 * amount));
+    const b = Math.min(255, (num & 0xff) + Math.floor(255 * amount));
+    return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+  }
+
   renderSlideIndicators(ctx) {
     const container = this.slideContainer;
 
-    // Render page counter text only (no dots)
+    // Simple page counter text only
     ctx.save();
     ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
     ctx.font = `${this.game.getScaledValue(14)}px Arial`;
@@ -652,7 +774,7 @@ class StoryManager {
     ctx.fillText(
       `${this.currentSlideIndex + 1} / ${this.slides.length}`,
       container.x + container.width - this.game.getScaledValue(30),
-      container.y + container.height - this.game.getScaledValue(50)
+      container.y + container.height - this.game.getScaledValue(30)
     );
     ctx.restore();
   }
