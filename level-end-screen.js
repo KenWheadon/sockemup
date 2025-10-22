@@ -231,15 +231,15 @@ class LevelEndScreen extends Screen {
     this.showRentDue = this.rentPenalty > 0;
     this.showStars = !this.showRentDue; // Show stars only on success
 
-    // Use spritesheet for win state, static image for rent due
+    // Use spritesheets for both win and lose states
+    this.useSpritesheet = true;
+    this.marthaAnimationFrame = 0;
+    this.marthaAnimationTimer = 0;
+
     if (this.showRentDue) {
-      this.useSpritesheet = false;
-      this.marthaImage = this.game.images["martha-rentdue.png"];
+      this.marthaImage = this.game.images["martha-losing-spritesheet.png"];
     } else {
-      this.useSpritesheet = true;
       this.marthaImage = this.game.images["martha-sockballs-spritesheet.png"];
-      this.marthaAnimationFrame = 0;
-      this.marthaAnimationTimer = 0;
     }
   }
 
@@ -414,7 +414,9 @@ class LevelEndScreen extends Screen {
 
     // Update spritesheet animation
     if (this.useSpritesheet) {
-      const config = GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;
+      const config = this.showRentDue
+        ? GameConfig.MARTHA_LOSING_SPRITESHEET
+        : GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;
       const msPerFrame = 1000 / config.fps;
       this.marthaAnimationTimer += deltaTime;
 
@@ -754,7 +756,9 @@ class LevelEndScreen extends Screen {
 
     if (this.useSpritesheet) {
       // Render spritesheet frame
-      const config = GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;
+      const config = this.showRentDue
+        ? GameConfig.MARTHA_LOSING_SPRITESHEET
+        : GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;
       const frameIndex = config.animationFrames[this.marthaAnimationFrame];
       const col = frameIndex % config.columns;
       const row = Math.floor(frameIndex / config.columns);
