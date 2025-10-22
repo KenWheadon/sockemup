@@ -131,6 +131,20 @@ const GameConfig = {
     fps: 12, // 12 frames per second for losing animation
   },
 
+  MARTHA_CRAWLING_SPRITESHEET: {
+    filename: "martha-crawling-spritesheet.png",
+    frameWidth: 335, // Width of each frame in the spritesheet (2010 / 6)
+    frameHeight: 238, // Height of each frame in the spritesheet (1428 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 18, // 18 frames per second for faster crawling animation
+  },
+
   // Throwing screen settings
   THROWING_BOUNDS: {
     LEFT: 0,
@@ -469,6 +483,7 @@ const GameConfig = {
       "martha-laughing-spritesheet.png",
       "martha-sockballs-spritesheet.png",
       "martha-losing-spritesheet.png",
+      "martha-crawling-spritesheet.png",
     ],
     UI: [
       "background.png",

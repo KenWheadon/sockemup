@@ -28,6 +28,7 @@ class MarthaManager {
     this.animationTimer = 0;
     this.currentFrameIndex = 0;
     this.facingRight = true;
+    this.spritesheetConfig = GameConfig.MARTHA_SPRITESHEET; // Will be updated based on difficulty
 
     // Hit effects
     this.hitEffect = {
@@ -98,6 +99,23 @@ class MarthaManager {
     this.speed = level.marthaSpeed;
     this.availablePatterns = level.marthaPatterns;
     this.patternSpeed = level.marthaPatternSpeed;
+
+    // Select spritesheet based on difficulty (New Game+ uses crawling animation)
+    if (this.game.currentDifficulty > 0) {
+      this.spritesheetConfig = GameConfig.MARTHA_CRAWLING_SPRITESHEET;
+
+      // Adjust Martha's size to maintain aspect ratio of crawling sprite
+      const frameAspectRatio = this.spritesheetConfig.frameWidth / this.spritesheetConfig.frameHeight;
+      // Keep height the same, adjust width based on aspect ratio
+      this.height = GameConfig.MARTHA_SIZE.height;
+      this.width = this.height * frameAspectRatio;
+    } else {
+      this.spritesheetConfig = GameConfig.MARTHA_SPRITESHEET;
+
+      // Use default Martha size for running animation
+      this.width = GameConfig.MARTHA_SIZE.width;
+      this.height = GameConfig.MARTHA_SIZE.height;
+    }
 
     // Setup rent due meter
     this.rentDueMeter.current = 0;
@@ -187,13 +205,13 @@ class MarthaManager {
     if (isMoving) {
       this.animationTimer += deltaTime;
 
-      // 24 FPS = 1000ms / 24 = ~41.67ms per frame
-      const animationSpeed = 1000 / 24;
+      // Use FPS from the current spritesheet config
+      const animationSpeed = 1000 / this.spritesheetConfig.fps;
 
       if (this.animationTimer >= animationSpeed) {
         this.currentFrameIndex =
           (this.currentFrameIndex + 1) %
-          GameConfig.MARTHA_SPRITESHEET.animationFrames.length;
+          this.spritesheetConfig.animationFrames.length;
         this.animationTimer = 0;
       }
     }
@@ -838,7 +856,7 @@ class MarthaManager {
     }
 
     // Get the current animation frame from spritesheet
-    const spritesheet = GameConfig.MARTHA_SPRITESHEET;
+    const spritesheet = this.spritesheetConfig;
     const frameNumber = spritesheet.animationFrames[this.currentFrameIndex];
     const marthaImage = this.game.images[spritesheet.filename];
 
