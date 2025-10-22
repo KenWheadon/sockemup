@@ -21,6 +21,10 @@ class StoryViewer {
       hovered: false,
       hoverProgress: 0,
     };
+
+    // Spritesheet animation state
+    this.currentFrame = 0;
+    this.frameTimer = 0;
   }
 
   /**
@@ -32,6 +36,7 @@ class StoryViewer {
 
     this.isOpen = true;
     this.currentPanel = 0;
+    this.resetSpriteAnimation();
     this.game.audioManager.playSound("button-click", false, 0.5);
   }
 
@@ -50,6 +55,7 @@ class StoryViewer {
     const unlockedPanels = this.getUnlockedPanels();
     if (this.currentPanel < unlockedPanels.length - 1) {
       this.currentPanel++;
+      this.resetSpriteAnimation();
       this.game.audioManager.playSound("button-click", false, 0.5);
     }
   }
@@ -60,8 +66,17 @@ class StoryViewer {
   previousPanel() {
     if (this.currentPanel > 0) {
       this.currentPanel--;
+      this.resetSpriteAnimation();
       this.game.audioManager.playSound("button-click", false, 0.5);
     }
+  }
+
+  /**
+   * Reset spritesheet animation
+   */
+  resetSpriteAnimation() {
+    this.currentFrame = 0;
+    this.frameTimer = 0;
   }
 
   /**
@@ -121,6 +136,26 @@ class StoryViewer {
         this.button.hoverProgress - buttonAnimSpeed * deltaTime,
         target
       );
+    }
+
+    // Update spritesheet animation if current panel has a spritesheet
+    if (this.isOpen) {
+      const unlockedPanels = this.getUnlockedPanels();
+      const panelIndex = unlockedPanels[this.currentPanel];
+      const panel = GameConfig.STORY_PANELS[panelIndex];
+      if (panel && panel.spritesheet) {
+        const spritesheetConfig = GameConfig[panel.spritesheet];
+        if (spritesheetConfig) {
+          const msPerFrame = 1000 / spritesheetConfig.fps;
+          this.frameTimer += deltaTime;
+
+          if (this.frameTimer >= msPerFrame) {
+            this.currentFrame =
+              (this.currentFrame + 1) % spritesheetConfig.animationFrames.length;
+            this.frameTimer = 0;
+          }
+        }
+      }
     }
   }
 
@@ -401,6 +436,7 @@ class StoryViewer {
       ctx,
       layout,
       panel,
+      panelIndex,
       modalX,
       modalY,
       modalWidth,
@@ -427,6 +463,7 @@ class StoryViewer {
     ctx,
     layout,
     panel,
+    panelIndex,
     modalX,
     modalY,
     modalWidth,
@@ -435,10 +472,65 @@ class StoryViewer {
     const canvasWidth = this.game.getCanvasWidth();
 
     // Panel image
-    const maxImageSize = this.game.getScaledValue(120);
+    // Panel 3 gets a larger size due to its wide aspect ratio
+    const maxImageSize = this.game.getScaledValue(panelIndex === 2 ? 240 : 180);
     const imageY = modalY + this.game.getScaledValue(80);
+    let actualImageHeight = maxImageSize; // Track actual rendered height
 
-    if (panel.image && this.game.images[panel.image]) {
+    // Check if this panel uses a spritesheet
+    if (panel.spritesheet) {
+      const spritesheetConfig = GameConfig[panel.spritesheet];
+      const spritesheetImage = this.game.images[spritesheetConfig.filename];
+
+      if (spritesheetImage && spritesheetConfig) {
+        // Calculate aspect ratio from frame dimensions
+        const aspectRatio =
+          spritesheetConfig.frameWidth / spritesheetConfig.frameHeight;
+        let imageWidth, imageHeight;
+
+        if (aspectRatio > 1) {
+          // Landscape - constrain width
+          imageWidth = maxImageSize;
+          imageHeight = maxImageSize / aspectRatio;
+        } else {
+          // Portrait or square - constrain height
+          imageHeight = maxImageSize;
+          imageWidth = maxImageSize * aspectRatio;
+        }
+
+        actualImageHeight = imageHeight; // Store actual height
+        const imageX = canvasWidth / 2 - imageWidth / 2;
+
+        // Get current frame from animation sequence
+        const frameIndex =
+          spritesheetConfig.animationFrames[this.currentFrame];
+        const frameX =
+          (frameIndex % spritesheetConfig.columns) *
+          spritesheetConfig.frameWidth;
+        const frameY =
+          Math.floor(frameIndex / spritesheetConfig.columns) *
+          spritesheetConfig.frameHeight;
+
+        ctx.save();
+        ctx.shadowColor = "rgba(180, 100, 255, 0.3)";
+        ctx.shadowBlur = this.game.getScaledValue(10);
+
+        // Draw the current frame from the spritesheet
+        ctx.drawImage(
+          spritesheetImage,
+          frameX,
+          frameY,
+          spritesheetConfig.frameWidth,
+          spritesheetConfig.frameHeight,
+          imageX,
+          imageY,
+          imageWidth,
+          imageHeight
+        );
+        ctx.restore();
+      }
+    } else if (panel.image && this.game.images[panel.image]) {
+      // Static image fallback
       const image = this.game.images[panel.image];
 
       // Calculate aspect ratio preserving dimensions
@@ -455,6 +547,7 @@ class StoryViewer {
         imageWidth = maxImageSize * aspectRatio;
       }
 
+      actualImageHeight = imageHeight; // Store actual height
       const imageX = canvasWidth / 2 - imageWidth / 2;
 
       ctx.save();
@@ -465,7 +558,7 @@ class StoryViewer {
     }
 
     // Panel title
-    const titleY = imageY + maxImageSize + this.game.getScaledValue(20);
+    const titleY = imageY + actualImageHeight + this.game.getScaledValue(20);
     this.ui.renderText(ctx, panel.title, canvasWidth / 2, titleY, {
       fontSize: this.game.getScaledValue(20),
       color: "#FFD700",

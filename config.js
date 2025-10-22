@@ -187,6 +187,62 @@ const GameConfig = {
     fps: 12, // 12 frames per second for story animation
   },
 
+  MARTHA_UNLOCK1_SPRITESHEET: {
+    filename: "martha-unlock1-spritesheet.png",
+    frameWidth: 268, // Width of each frame in the spritesheet (1608 / 6)
+    frameHeight: 280, // Height of each frame in the spritesheet (1680 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 24, // Increased to match How to Play animation speed
+  },
+
+  MARTHA_UNLOCK3_SPRITESHEET: {
+    filename: "martha-unlock3-spritesheet.png",
+    frameWidth: 403, // Width of each frame in the spritesheet (2418 / 6)
+    frameHeight: 225, // Height of each frame in the spritesheet (1350 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 24, // Match How to Play animation speed
+  },
+
+  MARTHA_UNLOCK5_SPRITESHEET: {
+    filename: "martha-unlock5-spritesheet.png",
+    frameWidth: 339, // Width of each frame in the spritesheet (2034 / 6)
+    frameHeight: 208, // Height of each frame in the spritesheet (1248 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 24, // Match How to Play animation speed
+  },
+
+  MARTHA_UNLOCK7_SPRITESHEET: {
+    filename: "martha-unlock7-spritesheet.png",
+    frameWidth: 433, // Width of each frame in the spritesheet (2598 / 6)
+    frameHeight: 383, // Height of each frame in the spritesheet (2298 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 24, // Match How to Play animation speed
+  },
+
   // Throwing screen settings
   THROWING_BOUNDS: {
     LEFT: 0,
@@ -873,6 +929,7 @@ const GameConfig = {
       title: "The Collection",
       text: "Before she was your landlord, she was Marthilda Socksworth III, heiress to the Socksworth Sockball fortune—a glittering empire of luxury stress-toys for stressed-out fantasy executives. But she always dreamed of something bigger… literally.",
       image: "story-1.png",
+      spritesheet: "MARTHA_UNLOCK1_SPRITESHEET",
     },
     {
       id: "panel_2",
@@ -883,8 +940,9 @@ const GameConfig = {
     {
       id: "panel_3",
       title: "The Betrayal",
-      text: "Her cousin Reginald seized the company, rebranded it Reginald’s Remarkable Sockballs, and kicked Martha out for being ‘too small to manage big business.’ She swore revenge—not on him directly, but on every sockball that reminded her of him.",
+      text: "Her cousin Reginald seized the company, rebranded it Reginald's Remarkable Sockballs, and kicked Martha out for being 'too small to manage big business.' She swore revenge—not on him directly, but on every sockball that reminded her of him.",
       image: "story-3.png",
+      spritesheet: "MARTHA_UNLOCK3_SPRITESHEET",
     },
     {
       id: "panel_4",
@@ -895,8 +953,9 @@ const GameConfig = {
     {
       id: "panel_5",
       title: "The Science",
-      text: "Late at night, she experimented with sockball physics. If thrown with exact velocity and perfect spin, they released something she called ‘size essence.’ Hence the rent policy: every sockball you throw helps fund her… personal expansion project.",
+      text: "Late at night, she experimented with sockball physics. If thrown with exact velocity and perfect spin, they released something she called 'size essence.' Hence the rent policy: every sockball you throw helps fund her… personal expansion project.",
       image: "story-5.png",
+      spritesheet: "MARTHA_UNLOCK5_SPRITESHEET",
     },
     {
       id: "panel_6",
@@ -907,8 +966,9 @@ const GameConfig = {
     {
       id: "panel_7",
       title: "The Competition",
-      text: "Martha claims Reginald is building a sockball factory right across town. She says his socks smell of betrayal and cheap fabric softener. No one’s seen him yet—but every time a new sock pattern shows up, she glares at the ceiling and whispers, ‘Nice try, Reggie.’",
+      text: "Martha claims Reginald is building a sockball factory right across town. She says his socks smell of betrayal and cheap fabric softener. No one's seen him yet—but every time a new sock pattern shows up, she glares at the ceiling and whispers, 'Nice try, Reggie.'",
       image: "story-7.png",
+      spritesheet: "MARTHA_UNLOCK7_SPRITESHEET",
     },
     {
       id: "panel_8",

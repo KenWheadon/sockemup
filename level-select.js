@@ -3212,11 +3212,67 @@ class LevelSelect extends Screen {
     const panel = GameConfig.STORY_PANELS[panelIndex];
 
     // Panel image (if available) - smaller and at top
-    const imageSize = this.game.getScaledValue(120);
-    const imageX = canvasWidth / 2 - imageSize / 2;
+    // Panel 3 gets a larger size due to its wide aspect ratio
+    const maxImageSize = this.game.getScaledValue(panelIndex === 2 ? 240 : 180);
     const imageY = modalY + this.game.getScaledValue(80);
+    let actualImageHeight = maxImageSize; // Track actual rendered height
 
-    if (panel.image && this.game.images[panel.image]) {
+    // Check if this panel uses a spritesheet
+    if (panel.spritesheet) {
+      const spritesheetConfig = GameConfig[panel.spritesheet];
+      const spritesheetImage = this.game.images[spritesheetConfig.filename];
+
+      if (spritesheetImage && spritesheetConfig) {
+        // Calculate aspect ratio from frame dimensions
+        const aspectRatio =
+          spritesheetConfig.frameWidth / spritesheetConfig.frameHeight;
+        let imageWidth, imageHeight;
+
+        if (aspectRatio > 1) {
+          // Landscape - constrain width
+          imageWidth = maxImageSize;
+          imageHeight = maxImageSize / aspectRatio;
+        } else {
+          // Portrait or square - constrain height
+          imageHeight = maxImageSize;
+          imageWidth = maxImageSize * aspectRatio;
+        }
+
+        actualImageHeight = imageHeight; // Store actual height
+        const imageX = canvasWidth / 2 - imageWidth / 2;
+
+        // Get current frame from animation sequence
+        const frameIndex =
+          spritesheetConfig.animationFrames[this.storyViewer.currentFrame];
+        const frameX =
+          (frameIndex % spritesheetConfig.columns) *
+          spritesheetConfig.frameWidth;
+        const frameY =
+          Math.floor(frameIndex / spritesheetConfig.columns) *
+          spritesheetConfig.frameHeight;
+
+        ctx.save();
+        ctx.shadowColor = "rgba(180, 100, 255, 0.3)";
+        ctx.shadowBlur = this.game.getScaledValue(10);
+
+        // Draw the current frame from the spritesheet
+        ctx.drawImage(
+          spritesheetImage,
+          frameX,
+          frameY,
+          spritesheetConfig.frameWidth,
+          spritesheetConfig.frameHeight,
+          imageX,
+          imageY,
+          imageWidth,
+          imageHeight
+        );
+        ctx.restore();
+      }
+    } else if (panel.image && this.game.images[panel.image]) {
+      // Static image fallback
+      const imageX = canvasWidth / 2 - maxImageSize / 2;
+
       ctx.save();
       ctx.shadowColor = "rgba(180, 100, 255, 0.3)";
       ctx.shadowBlur = this.game.getScaledValue(10);
@@ -3224,14 +3280,14 @@ class LevelSelect extends Screen {
         this.game.images[panel.image],
         imageX,
         imageY,
-        imageSize,
-        imageSize
+        maxImageSize,
+        maxImageSize
       );
       ctx.restore();
     }
 
     // Panel title - positioned below image
-    const titleY = imageY + imageSize + this.game.getScaledValue(20);
+    const titleY = imageY + actualImageHeight + this.game.getScaledValue(20);
     this.renderText(ctx, panel.title, canvasWidth / 2, titleY, {
       fontSize: this.game.getScaledValue(20),
       color: "#FFD700",
