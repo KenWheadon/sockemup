@@ -352,17 +352,25 @@ class MarthaManager {
         this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
       this.patternData.centerY =
         this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
-      // Larger radius for more interesting circular movement
-      this.patternData.radius = Math.min(
-        (this.bounds.right - this.bounds.left) / 2.8,
-        (this.bounds.bottom - this.bounds.top) / 2.8
-      );
 
-      // Calculate starting angle from Martha's current position
+      // Calculate starting angle AND radius from Martha's current position
       // This prevents the "jump" - Martha starts from where she is
       const dx = this.x + (this.width / 2) - this.patternData.centerX;
       const dy = this.y + (this.height / 2) - this.patternData.centerY;
       this.patternData.circularAngle = Math.atan2(dy, dx);
+
+      // Use Martha's current distance from center as the radius
+      // This ensures she's already ON the circle path at the start
+      const currentDistance = Math.sqrt(dx * dx + dy * dy);
+
+      // Use current distance, but clamp it to reasonable bounds
+      const maxRadius = Math.min(
+        (this.bounds.right - this.bounds.left) / 2.8,
+        (this.bounds.bottom - this.bounds.top) / 2.8
+      );
+      const minRadius = Math.min(maxRadius * 0.5, 150); // At least half max radius or 150px
+
+      this.patternData.radius = Math.max(minRadius, Math.min(maxRadius, currentDistance));
     }
 
     this.patternData.circularAngle +=
