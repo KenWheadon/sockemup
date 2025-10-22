@@ -109,7 +109,7 @@ class StoryManager {
       padding: this.game.getScaledValue(35),
     };
 
-    // Position buttons in a row at the bottom
+    // Position buttons at the bottom
     const buttonY =
       this.slideContainer.y + containerHeight - this.game.getScaledValue(50);
     const buttonWidth = this.game.getScaledValue(85);
@@ -122,14 +122,14 @@ class StoryManager {
     this.buttons.skip.width = buttonWidth;
     this.buttons.skip.height = buttonHeight;
 
-    // Previous button - left of center
-    this.buttons.previous.x = canvasWidth / 2 - buttonWidth - buttonSpacing / 2;
+    // Previous button - right side, first button
+    this.buttons.previous.x = this.slideContainer.x + this.slideContainer.width - buttonWidth * 2 - buttonSpacing - this.game.getScaledValue(30);
     this.buttons.previous.y = buttonY;
     this.buttons.previous.width = buttonWidth;
     this.buttons.previous.height = buttonHeight;
 
-    // Next button - right of center
-    this.buttons.next.x = canvasWidth / 2 + buttonSpacing / 2;
+    // Next button - right side, second button
+    this.buttons.next.x = this.slideContainer.x + this.slideContainer.width - buttonWidth - this.game.getScaledValue(30);
     this.buttons.next.y = buttonY;
     this.buttons.next.width = buttonWidth;
     this.buttons.next.height = buttonHeight;
@@ -765,16 +765,16 @@ class StoryManager {
   renderSlideIndicators(ctx) {
     const container = this.slideContainer;
 
-    // Simple page counter text only
+    // Centered page counter text
     ctx.save();
-    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.font = `${this.game.getScaledValue(14)}px Arial`;
-    ctx.textAlign = "right";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+    ctx.font = `${this.game.getScaledValue(16)}px Arial`;
+    ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(
       `${this.currentSlideIndex + 1} / ${this.slides.length}`,
-      container.x + container.width - this.game.getScaledValue(30),
-      container.y + container.height - this.game.getScaledValue(30)
+      container.x + container.width / 2,
+      container.y + container.height - this.game.getScaledValue(32)
     );
     ctx.restore();
   }
