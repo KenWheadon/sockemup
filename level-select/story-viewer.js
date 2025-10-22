@@ -27,7 +27,7 @@ class StoryViewer {
    * Open the story viewer modal
    */
   open() {
-    const unlockedCount = this.game.unlockedStoryPanels.filter(u => u).length;
+    const unlockedCount = this.game.unlockedStoryPanels.filter((u) => u).length;
     if (unlockedCount === 0) return;
 
     this.isOpen = true;
@@ -81,7 +81,7 @@ class StoryViewer {
    * Update button hover state
    */
   updateButtonHover(x, y, layout) {
-    const unlockedCount = this.game.unlockedStoryPanels.filter(u => u).length;
+    const unlockedCount = this.game.unlockedStoryPanels.filter((u) => u).length;
     const isDisabled = unlockedCount === 0;
 
     // Don't allow hover on disabled button
@@ -90,8 +90,10 @@ class StoryViewer {
       return;
     }
 
-    const buttonX = layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2;
-    const buttonY = layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2;
+    const buttonX =
+      layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2;
+    const buttonY =
+      layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2;
 
     this.button.hovered = this.ui.isPointInRect(x, y, {
       x: buttonX,
@@ -142,7 +144,10 @@ class StoryViewer {
       return true;
     }
 
-    if (e.key === "ArrowRight" && this.currentPanel < unlockedPanels.length - 1) {
+    if (
+      e.key === "ArrowRight" &&
+      this.currentPanel < unlockedPanels.length - 1
+    ) {
       this.nextPanel();
       e.preventDefault();
       return true;
@@ -171,12 +176,14 @@ class StoryViewer {
     const unlockedPanels = this.getUnlockedPanels();
 
     // Check close button (far left)
-    if (this.ui.isPointInRect(x, y, {
-      x: modalX + this.game.getScaledValue(30),
-      y: buttonY,
-      width: buttonWidth,
-      height: buttonHeight
-    })) {
+    if (
+      this.ui.isPointInRect(x, y, {
+        x: modalX + this.game.getScaledValue(30),
+        y: buttonY,
+        width: buttonWidth,
+        height: buttonHeight,
+      })
+    ) {
       this.close();
       return true;
     }
@@ -184,12 +191,14 @@ class StoryViewer {
     // Check previous button (left of center)
     if (this.currentPanel > 0) {
       const prevX = canvasWidth / 2 - buttonWidth - buttonSpacing / 2;
-      if (this.ui.isPointInRect(x, y, {
-        x: prevX,
-        y: buttonY,
-        width: buttonWidth,
-        height: buttonHeight
-      })) {
+      if (
+        this.ui.isPointInRect(x, y, {
+          x: prevX,
+          y: buttonY,
+          width: buttonWidth,
+          height: buttonHeight,
+        })
+      ) {
         this.previousPanel();
         return true;
       }
@@ -198,12 +207,14 @@ class StoryViewer {
     // Check next button (right of center)
     if (this.currentPanel < unlockedPanels.length - 1) {
       const nextX = canvasWidth / 2 + buttonSpacing / 2;
-      if (this.ui.isPointInRect(x, y, {
-        x: nextX,
-        y: buttonY,
-        width: buttonWidth,
-        height: buttonHeight
-      })) {
+      if (
+        this.ui.isPointInRect(x, y, {
+          x: nextX,
+          y: buttonY,
+          width: buttonWidth,
+          height: buttonHeight,
+        })
+      ) {
         this.nextPanel();
         return true;
       }
@@ -216,7 +227,7 @@ class StoryViewer {
    * Render the story viewer button
    */
   renderButton(ctx, layout) {
-    const unlockedCount = this.game.unlockedStoryPanels.filter(u => u).length;
+    const unlockedCount = this.game.unlockedStoryPanels.filter((u) => u).length;
     const isDisabled = unlockedCount === 0;
 
     ctx.save();
@@ -257,7 +268,14 @@ class StoryViewer {
       : "rgba(150, 100, 237, 0.6)";
     ctx.lineWidth = this.game.getScaledValue(3);
 
-    this.ui.drawRoundedRect(ctx, x, y, layout.storyViewerButtonWidth, layout.storyViewerButtonHeight, radius);
+    this.ui.drawRoundedRect(
+      ctx,
+      x,
+      y,
+      layout.storyViewerButtonWidth,
+      layout.storyViewerButtonHeight,
+      radius
+    );
     ctx.fill();
     ctx.stroke();
 
@@ -310,7 +328,14 @@ class StoryViewer {
     bgGradient.addColorStop(0, "rgba(30, 20, 45, 0.98)");
     bgGradient.addColorStop(1, "rgba(20, 15, 35, 0.98)");
     ctx.fillStyle = bgGradient;
-    this.ui.drawRoundedRect(ctx, modalX, modalY, modalWidth, modalHeight, radius);
+    this.ui.drawRoundedRect(
+      ctx,
+      modalX,
+      modalY,
+      modalWidth,
+      modalHeight,
+      radius
+    );
     ctx.fill();
 
     // Modal border
@@ -318,7 +343,14 @@ class StoryViewer {
     ctx.lineWidth = this.game.getScaledValue(3);
     ctx.shadowColor = "rgba(180, 100, 255, 0.4)";
     ctx.shadowBlur = this.game.getScaledValue(15);
-    this.ui.drawRoundedRect(ctx, modalX, modalY, modalWidth, modalHeight, radius);
+    this.ui.drawRoundedRect(
+      ctx,
+      modalX,
+      modalY,
+      modalWidth,
+      modalHeight,
+      radius
+    );
     ctx.stroke();
 
     ctx.shadowColor = "transparent";
@@ -365,10 +397,25 @@ class StoryViewer {
     const panel = GameConfig.STORY_PANELS[panelIndex];
 
     // Render panel content
-    this.renderPanelContent(ctx, layout, panel, modalX, modalY, modalWidth, modalHeight);
+    this.renderPanelContent(
+      ctx,
+      layout,
+      panel,
+      modalX,
+      modalY,
+      modalWidth,
+      modalHeight
+    );
 
     // Render navigation buttons
-    this.renderNavigationButtons(ctx, modalX, modalY, modalWidth, modalHeight, unlockedPanels.length);
+    this.renderNavigationButtons(
+      ctx,
+      modalX,
+      modalY,
+      modalWidth,
+      modalHeight,
+      unlockedPanels.length
+    );
 
     ctx.restore();
   }
@@ -376,7 +423,15 @@ class StoryViewer {
   /**
    * Render the content of the current panel
    */
-  renderPanelContent(ctx, layout, panel, modalX, modalY, modalWidth, modalHeight) {
+  renderPanelContent(
+    ctx,
+    layout,
+    panel,
+    modalX,
+    modalY,
+    modalWidth,
+    modalHeight
+  ) {
     const canvasWidth = this.game.getCanvasWidth();
 
     // Panel image
@@ -405,39 +460,32 @@ class StoryViewer {
       ctx.save();
       ctx.shadowColor = "rgba(180, 100, 255, 0.3)";
       ctx.shadowBlur = this.game.getScaledValue(10);
-      ctx.drawImage(
-        image,
-        imageX,
-        imageY,
-        imageWidth,
-        imageHeight
-      );
+      ctx.drawImage(image, imageX, imageY, imageWidth, imageHeight);
       ctx.restore();
     }
 
     // Panel title
     const titleY = imageY + maxImageSize + this.game.getScaledValue(20);
-    this.ui.renderText(
-      ctx,
-      panel.title,
-      canvasWidth / 2,
-      titleY,
-      {
-        fontSize: this.game.getScaledValue(20),
-        color: "#FFD700",
-        weight: "bold",
-        align: "center",
-      }
-    );
+    this.ui.renderText(ctx, panel.title, canvasWidth / 2, titleY, {
+      fontSize: this.game.getScaledValue(20),
+      color: "#FFD700",
+      weight: "bold",
+      align: "center",
+    });
 
     // Panel text (word-wrapped)
     const textY = titleY + this.game.getScaledValue(35);
     const textMaxWidth = modalWidth - this.game.getScaledValue(100);
     const lineHeight = this.game.getScaledValue(20);
 
-    const lines = this.ui.wrapText(ctx, panel.text, textMaxWidth, layout.bodyFontSize);
+    const lines = this.ui.wrapText(
+      ctx,
+      panel.text,
+      textMaxWidth,
+      layout.bodyFontSize
+    );
 
-    ctx.font = `${layout.bodyFontSize}px Courier New`;
+    ctx.font = `${layout.bodyFontSize}px Arial`;
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
@@ -459,7 +507,14 @@ class StoryViewer {
   /**
    * Render navigation buttons
    */
-  renderNavigationButtons(ctx, modalX, modalY, modalWidth, modalHeight, totalPanels) {
+  renderNavigationButtons(
+    ctx,
+    modalX,
+    modalY,
+    modalWidth,
+    modalHeight,
+    totalPanels
+  ) {
     const canvasWidth = this.game.getCanvasWidth();
     const buttonY = modalY + modalHeight - this.game.getScaledValue(50);
     const buttonWidth = this.game.getScaledValue(85);
@@ -497,13 +552,29 @@ class StoryViewer {
     // Previous button - left of center
     if (this.currentPanel > 0) {
       const prevX = canvasWidth / 2 - buttonWidth - buttonSpacing / 2;
-      this.renderNavigationButton(ctx, prevX, buttonY, buttonWidth, buttonHeight, "Previous", false);
+      this.renderNavigationButton(
+        ctx,
+        prevX,
+        buttonY,
+        buttonWidth,
+        buttonHeight,
+        "Previous",
+        false
+      );
     }
 
     // Next button - right of center
     if (this.currentPanel < totalPanels - 1) {
       const nextX = canvasWidth / 2 + buttonSpacing / 2;
-      this.renderNavigationButton(ctx, nextX, buttonY, buttonWidth, buttonHeight, "Next", false);
+      this.renderNavigationButton(
+        ctx,
+        nextX,
+        buttonY,
+        buttonWidth,
+        buttonHeight,
+        "Next",
+        false
+      );
     }
 
     // Page counter - far right
@@ -540,7 +611,9 @@ class StoryViewer {
     this.ui.drawRoundedRect(ctx, x, y, width, height, radius);
     ctx.fill();
 
-    ctx.strokeStyle = isClose ? "rgba(255, 255, 255, 0.5)" : "rgba(150, 200, 255, 0.6)";
+    ctx.strokeStyle = isClose
+      ? "rgba(255, 255, 255, 0.5)"
+      : "rgba(150, 200, 255, 0.6)";
     ctx.lineWidth = this.game.getScaledValue(2);
     this.ui.drawRoundedRect(ctx, x, y, width, height, radius);
     ctx.stroke();

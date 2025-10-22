@@ -192,7 +192,8 @@ class MarthaManager {
 
       if (this.animationTimer >= animationSpeed) {
         this.currentFrameIndex =
-          (this.currentFrameIndex + 1) % GameConfig.MARTHA_SPRITESHEET.animationFrames.length;
+          (this.currentFrameIndex + 1) %
+          GameConfig.MARTHA_SPRITESHEET.animationFrames.length;
         this.animationTimer = 0;
       }
     }
@@ -346,7 +347,10 @@ class MarthaManager {
 
   updateCircularPattern(timeMultiplier) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.CIRCULAR.baseSpeed;
-    if (!this.patternData.circularAngle && this.patternData.circularAngle !== 0) {
+    if (
+      !this.patternData.circularAngle &&
+      this.patternData.circularAngle !== 0
+    ) {
       // Set center of circular path
       this.patternData.centerX =
         this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
@@ -355,8 +359,8 @@ class MarthaManager {
 
       // Calculate starting angle AND radius from Martha's current position
       // This prevents the "jump" - Martha starts from where she is
-      const dx = this.x + (this.width / 2) - this.patternData.centerX;
-      const dy = this.y + (this.height / 2) - this.patternData.centerY;
+      const dx = this.x + this.width / 2 - this.patternData.centerX;
+      const dy = this.y + this.height / 2 - this.patternData.centerY;
       this.patternData.circularAngle = Math.atan2(dy, dx);
 
       // Use Martha's current distance from center as the radius
@@ -370,7 +374,10 @@ class MarthaManager {
       );
       const minRadius = Math.min(maxRadius * 0.5, 150); // At least half max radius or 150px
 
-      this.patternData.radius = Math.max(minRadius, Math.min(maxRadius, currentDistance));
+      this.patternData.radius = Math.max(
+        minRadius,
+        Math.min(maxRadius, currentDistance)
+      );
     }
 
     this.patternData.circularAngle +=
@@ -512,7 +519,10 @@ class MarthaManager {
             // Stuck at top edge - push down
             this.velocity.x = 0;
             this.velocity.y = minSpeed;
-          } else if (this.y >= this.bounds.bottom - this.height - edgeThreshold) {
+          } else if (
+            this.y >=
+            this.bounds.bottom - this.height - edgeThreshold
+          ) {
             // Stuck at bottom edge - push up (this should now be handled by recovery)
             this.velocity.x = 0;
             this.velocity.y = -minSpeed;
@@ -834,9 +844,9 @@ class MarthaManager {
 
     // Debug logging
     if (!marthaImage && !this._loggedImageError) {
-      console.error('Martha spritesheet not found!', {
+      console.error("Martha spritesheet not found!", {
         filename: spritesheet.filename,
-        availableImages: Object.keys(this.game.images)
+        availableImages: Object.keys(this.game.images),
       });
       this._loggedImageError = true;
     }
@@ -857,14 +867,26 @@ class MarthaManager {
         ctx.scale(-1, 1);
         ctx.drawImage(
           marthaImage,
-          sx, sy, spritesheet.frameWidth, spritesheet.frameHeight,
-          0, 0, this.width, this.height
+          sx,
+          sy,
+          spritesheet.frameWidth,
+          spritesheet.frameHeight,
+          0,
+          0,
+          this.width,
+          this.height
         );
       } else {
         ctx.drawImage(
           marthaImage,
-          sx, sy, spritesheet.frameWidth, spritesheet.frameHeight,
-          this.x, this.y, this.width, this.height
+          sx,
+          sy,
+          spritesheet.frameWidth,
+          spritesheet.frameHeight,
+          this.x,
+          this.y,
+          this.width,
+          this.height
         );
       }
 
@@ -893,7 +915,7 @@ class MarthaManager {
     // Phase 2.1 - Draw point popups with quality colors
     this.hitEffect.pointPopups.forEach((popup) => {
       ctx.fillStyle = popup.color || "#ffd700";
-      ctx.font = `bold ${this.game.getScaledValue(20)}px Courier New`;
+      ctx.font = `bold ${this.game.getScaledValue(20)}px Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
 

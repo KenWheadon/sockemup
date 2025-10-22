@@ -51,8 +51,13 @@ class DifficultySelector {
     }
 
     // Check if all 9 levels are completed
-    const allCompleted = levels.every(completed => completed === true);
-    console.log(`⭐ Difficulty ${difficulty} completion check:`, levels, 'All completed:', allCompleted);
+    const allCompleted = levels.every((completed) => completed === true);
+    console.log(
+      `⭐ Difficulty ${difficulty} completion check:`,
+      levels,
+      "All completed:",
+      allCompleted
+    );
     return allCompleted;
   }
 
@@ -68,14 +73,16 @@ class DifficultySelector {
     this.button.height = this.game.getScaledValue(45);
 
     // Center the button horizontally in the screen, offset 90px to the left, aligned vertically with other top bar buttons
-    this.button.x = canvasWidth / 2 - this.button.width / 2 - this.game.getScaledValue(90);
+    this.button.x =
+      canvasWidth / 2 - this.button.width / 2 - this.game.getScaledValue(90);
     this.button.y = layout.barY + layout.barHeight / 2 - this.button.height / 2;
 
     // Dropdown appears below the button, opens downward
     this.dropdown.width = this.game.getScaledValue(250);
     this.dropdown.optionHeight = this.game.getScaledValue(50);
     this.dropdown.x = this.button.x;
-    this.dropdown.y = layout.barY + layout.barHeight + this.game.getScaledValue(5);
+    this.dropdown.y =
+      layout.barY + layout.barHeight + this.game.getScaledValue(5);
 
     // Build options list based on unlocked difficulties
     this.dropdown.options = [];
@@ -111,14 +118,18 @@ class DifficultySelector {
    */
   selectDifficulty(difficulty) {
     if (difficulty <= this.game.highestUnlockedDifficulty) {
-      console.log(`🎮 Switching from difficulty ${this.game.selectedDifficulty} to ${difficulty}`);
+      console.log(
+        `🎮 Switching from difficulty ${this.game.selectedDifficulty} to ${difficulty}`
+      );
       this.game.selectedDifficulty = difficulty;
 
       // Update legacy pointers to point to the selected difficulty's arrays
-      this.game.unlockedLevels = this.game.unlockedLevelsByDifficulty[difficulty] ||
-        [true, false, false, false, false, false, false, false, false];
-      this.game.completedLevels = this.game.completedLevelsByDifficulty[difficulty] ||
-        [false, false, false, false, false, false, false, false, false];
+      this.game.unlockedLevels = this.game.unlockedLevelsByDifficulty[
+        difficulty
+      ] || [true, false, false, false, false, false, false, false, false];
+      this.game.completedLevels = this.game.completedLevelsByDifficulty[
+        difficulty
+      ] || [false, false, false, false, false, false, false, false, false];
 
       console.log(`📊 Updated levels - Unlocked:`, this.game.unlockedLevels);
       console.log(`📊 Updated levels - Completed:`, this.game.completedLevels);
@@ -129,7 +140,9 @@ class DifficultySelector {
       // Save the selected difficulty
       this.game.saveGameData();
 
-      console.log(`✅ Switched to difficulty: ${this.getDifficultyName(difficulty)}`);
+      console.log(
+        `✅ Switched to difficulty: ${this.getDifficultyName(difficulty)}`
+      );
     }
   }
 
@@ -160,12 +173,14 @@ class DifficultySelector {
     this.hoveredOption = -1;
     for (let i = 0; i < this.dropdown.options.length; i++) {
       const optionY = this.dropdown.y + i * this.dropdown.optionHeight;
-      if (this.ui.isPointInRect(x, y, {
-        x: this.dropdown.x,
-        y: optionY,
-        width: this.dropdown.width,
-        height: this.dropdown.optionHeight,
-      })) {
+      if (
+        this.ui.isPointInRect(x, y, {
+          x: this.dropdown.x,
+          y: optionY,
+          width: this.dropdown.width,
+          height: this.dropdown.optionHeight,
+        })
+      ) {
         this.hoveredOption = i;
         break;
       }
@@ -198,12 +213,14 @@ class DifficultySelector {
    */
   handleClick(x, y) {
     // Check if clicked on button
-    if (this.ui.isPointInRect(x, y, {
-      x: this.button.x,
-      y: this.button.y,
-      width: this.button.width,
-      height: this.button.height,
-    })) {
+    if (
+      this.ui.isPointInRect(x, y, {
+        x: this.button.x,
+        y: this.button.y,
+        width: this.button.width,
+        height: this.button.height,
+      })
+    ) {
       this.toggle();
       return true;
     }
@@ -212,12 +229,14 @@ class DifficultySelector {
     if (this.isOpen) {
       for (let i = 0; i < this.dropdown.options.length; i++) {
         const optionY = this.dropdown.y + i * this.dropdown.optionHeight;
-        if (this.ui.isPointInRect(x, y, {
-          x: this.dropdown.x,
-          y: optionY,
-          width: this.dropdown.width,
-          height: this.dropdown.optionHeight,
-        })) {
+        if (
+          this.ui.isPointInRect(x, y, {
+            x: this.dropdown.x,
+            y: optionY,
+            width: this.dropdown.width,
+            height: this.dropdown.optionHeight,
+          })
+        ) {
           this.selectDifficulty(this.dropdown.options[i].difficulty);
           return true;
         }
@@ -278,9 +297,10 @@ class DifficultySelector {
     }
 
     // Button border
-    ctx.strokeStyle = this.button.hovered || this.isOpen
-      ? "rgba(150, 200, 255, 0.9)"
-      : "rgba(100, 150, 255, 0.6)";
+    ctx.strokeStyle =
+      this.button.hovered || this.isOpen
+        ? "rgba(150, 200, 255, 0.9)"
+        : "rgba(100, 150, 255, 0.6)";
     ctx.lineWidth = this.game.getScaledValue(3);
 
     this.ui.drawRoundedRect(
@@ -297,7 +317,9 @@ class DifficultySelector {
     ctx.restore();
 
     // Button text
-    const currentDifficultyName = this.getDifficultyName(this.game.selectedDifficulty);
+    const currentDifficultyName = this.getDifficultyName(
+      this.game.selectedDifficulty
+    );
     this.ui.renderText(
       ctx,
       currentDifficultyName,
@@ -335,7 +357,8 @@ class DifficultySelector {
     ctx.save();
 
     const radius = this.game.getScaledValue(8);
-    const dropdownHeight = this.dropdown.options.length * this.dropdown.optionHeight;
+    const dropdownHeight =
+      this.dropdown.options.length * this.dropdown.optionHeight;
 
     // Dropdown background
     ctx.fillStyle = "rgba(30, 30, 60, 0.98)";
@@ -418,7 +441,7 @@ class DifficultySelector {
       ctx.fillStyle = "white";
     }
 
-    ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
+    ctx.font = `${this.game.getScaledValue(16)}px Arial`;
     ctx.textAlign = "left";
     ctx.textBaseline = "middle";
     ctx.fillText(displayText, textX, textY);
@@ -440,8 +463,14 @@ class DifficultySelector {
       ctx.strokeStyle = "rgba(100, 150, 255, 0.3)";
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(this.dropdown.x + this.game.getScaledValue(10), optionY + this.dropdown.optionHeight);
-      ctx.lineTo(this.dropdown.x + this.dropdown.width - this.game.getScaledValue(10), optionY + this.dropdown.optionHeight);
+      ctx.moveTo(
+        this.dropdown.x + this.game.getScaledValue(10),
+        optionY + this.dropdown.optionHeight
+      );
+      ctx.lineTo(
+        this.dropdown.x + this.dropdown.width - this.game.getScaledValue(10),
+        optionY + this.dropdown.optionHeight
+      );
       ctx.stroke();
     }
 

@@ -2194,7 +2194,7 @@ class LevelSelect extends Screen {
     const maxWidth = this.game.getScaledValue(280);
 
     // Measure text
-    ctx.font = `bold ${fontSize}px Courier New`;
+    ctx.font = `bold ${fontSize}px Arial`;
     const words = this.currentQuote.split(" ");
     const lines = [];
     let currentLine = words[0];
@@ -3024,7 +3024,7 @@ class LevelSelect extends Screen {
         const textX = cardX + this.game.getScaledValue(60);
         const nameY = cardY + this.game.getScaledValue(20);
 
-        ctx.font = `bold ${layout.smallFontSize}px "Courier New", monospace`;
+        ctx.font = `bold ${layout.smallFontSize}px "Arial", monospace`;
         ctx.fillStyle = unlocked ? "#FFD700" : "rgba(255, 255, 255, 0.5)";
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
@@ -3045,7 +3045,7 @@ class LevelSelect extends Screen {
 
         const descY = cardY + this.game.getScaledValue(40);
 
-        ctx.font = `${layout.smallFontSize - 2}px "Courier New", monospace`;
+        ctx.font = `${layout.smallFontSize - 2}px "Arial", monospace`;
         ctx.fillStyle = unlocked
           ? "rgba(255, 255, 255, 0.8)"
           : "rgba(255, 255, 255, 0.4)";
@@ -3244,7 +3244,7 @@ class LevelSelect extends Screen {
     const textMaxWidth = modalWidth - this.game.getScaledValue(100);
     const lineHeight = this.game.getScaledValue(20);
 
-    ctx.font = `${layout.bodyFontSize}px Courier New`;
+    ctx.font = `${layout.bodyFontSize}px Arial`;
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
@@ -3950,7 +3950,7 @@ class LevelSelect extends Screen {
     ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
     ctx.shadowBlur = this.game.getScaledValue(5);
     ctx.fillStyle = "#FFD700";
-    ctx.font = `bold ${this.game.getScaledValue(36)}px Courier New`;
+    ctx.font = `bold ${this.game.getScaledValue(36)}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillText(
@@ -3964,7 +3964,7 @@ class LevelSelect extends Screen {
     const levelNum = this.difficultyModal.selectedLevel + 1;
     ctx.save();
     ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.font = `${this.game.getScaledValue(20)}px Courier New`;
+    ctx.font = `${this.game.getScaledValue(20)}px Arial`;
     ctx.textAlign = "center";
     ctx.fillText(
       `Level ${levelNum}`,
@@ -3981,7 +3981,7 @@ class LevelSelect extends Screen {
     // Instructions
     ctx.save();
     ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.font = `${this.game.getScaledValue(14)}px Courier New`;
+    ctx.font = `${this.game.getScaledValue(14)}px Arial`;
     ctx.textAlign = "center";
     ctx.fillText(
       "Click outside to cancel",
@@ -4040,7 +4040,7 @@ class LevelSelect extends Screen {
     // Difficulty name with stars
     ctx.shadowBlur = 0;
     ctx.fillStyle = isCompleted ? "#FFD700" : "#FFFFFF";
-    ctx.font = `bold ${this.game.getScaledValue(24)}px Courier New`;
+    ctx.font = `bold ${this.game.getScaledValue(24)}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
@@ -4056,7 +4056,7 @@ class LevelSelect extends Screen {
 
     // Stats info
     ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-    ctx.font = `${this.game.getScaledValue(14)}px Courier New`;
+    ctx.font = `${this.game.getScaledValue(14)}px Arial`;
 
     const statsText =
       button.difficulty === 0
@@ -4073,7 +4073,7 @@ class LevelSelect extends Screen {
     // Completion checkmark
     if (isCompleted) {
       ctx.fillStyle = "#FFD700";
-      ctx.font = `${this.game.getScaledValue(20)}px Courier New`;
+      ctx.font = `${this.game.getScaledValue(20)}px Arial`;
       ctx.fillText(
         "✓",
         button.x + this.game.getScaledValue(30),
@@ -4366,7 +4366,7 @@ class LevelSelect extends Screen {
         // Show error message
         ctx.shadowBlur = 0;
         ctx.fillStyle = "#FF6B6B";
-        ctx.font = `${this.game.getScaledValue(24)}px Courier New`;
+        ctx.font = `${this.game.getScaledValue(24)}px Arial`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         ctx.fillText("Error loading video", canvasWidth / 2, canvasHeight / 2);
@@ -4375,7 +4375,7 @@ class LevelSelect extends Screen {
       // Loading text
       ctx.shadowBlur = 0;
       ctx.fillStyle = "#FFFFFF";
-      ctx.font = `${this.game.getScaledValue(24)}px Courier New`;
+      ctx.font = `${this.game.getScaledValue(24)}px Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("Loading video...", canvasWidth / 2, canvasHeight / 2);
@@ -4384,7 +4384,7 @@ class LevelSelect extends Screen {
     // Close button hint
     ctx.shadowBlur = 0;
     ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-    ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
+    ctx.font = `${this.game.getScaledValue(16)}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillText(

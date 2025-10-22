@@ -198,11 +198,18 @@ class LevelEndScreen extends Screen {
 
     // Calculate base points for sockballs that were caught
     // Total caught sockballs = sum of all catch qualities
-    const totalCaughtSockballs = this.perfectCatches + this.goodCatches + this.regularCatches;
-    const totalCatchQualityPoints = this.perfectCatchesPoints + this.goodCatchesPoints + this.regularCatchesPoints;
+    const totalCaughtSockballs =
+      this.perfectCatches + this.goodCatches + this.regularCatches;
+    const totalCatchQualityPoints =
+      this.perfectCatchesPoints +
+      this.goodCatchesPoints +
+      this.regularCatchesPoints;
 
     // For sockballs paid but not caught (missed/failed), give base 5 points each
-    const uncaughtPaidSockballs = Math.max(0, this.sockballsPaid - totalCaughtSockballs);
+    const uncaughtPaidSockballs = Math.max(
+      0,
+      this.sockballsPaid - totalCaughtSockballs
+    );
     this.sockballsPaidPoints = uncaughtPaidSockballs * 5;
 
     // Time bonus: double the total rent payment points (catch quality + base) if earned
@@ -708,7 +715,7 @@ class LevelEndScreen extends Screen {
 
     // Background text (for depth)
     ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-    ctx.font = `bold ${this.game.getScaledValue(48)}px Courier New`;
+    ctx.font = `bold ${this.game.getScaledValue(48)}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(titleText, layout.centerX + 4, titleY + 4);
@@ -914,7 +921,7 @@ class LevelEndScreen extends Screen {
     const slideOffset = (1 - this.easeOutBack(animProgress)) * -100;
 
     ctx.save();
-    ctx.font = `${fontSize}px Courier New`;
+    ctx.font = `${fontSize}px Arial`;
     ctx.textBaseline = "middle";
     ctx.globalAlpha = animProgress;
 
@@ -934,7 +941,7 @@ class LevelEndScreen extends Screen {
     // Scale up and pulse for total score only
     const isTotalScore = label.includes("TOTAL SCORE");
     if (isTotalScore) {
-      ctx.font = `bold ${fontSize * 1.2}px Courier New`;
+      ctx.font = `bold ${fontSize * 1.2}px Arial`;
       const pulseScale = 1 + Math.sin(this.pulseTimer * 2) * 0.05;
       ctx.save();
       ctx.translate(centerX + 20 + slideOffset, y);
@@ -1009,7 +1016,7 @@ class LevelEndScreen extends Screen {
     ctx.shadowOffsetY = button.pressed ? 0 : this.game.getScaledValue(2);
 
     ctx.fillStyle = "#ffffff";
-    ctx.font = `bold ${this.game.getScaledValue(18)}px Courier New`;
+    ctx.font = `bold ${this.game.getScaledValue(18)}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
@@ -1063,7 +1070,7 @@ class LevelEndScreen extends Screen {
     ctx.shadowBlur = this.game.getScaledValue(10);
     ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
     ctx.fillStyle = "#FFD700";
-    ctx.font = `bold ${this.game.getScaledValue(48)}px Courier New`;
+    ctx.font = `bold ${this.game.getScaledValue(48)}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillText(
@@ -1075,7 +1082,7 @@ class LevelEndScreen extends Screen {
     // Description
     ctx.shadowBlur = this.game.getScaledValue(5);
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-    ctx.font = `${this.game.getScaledValue(18)}px Courier New`;
+    ctx.font = `${this.game.getScaledValue(18)}px Arial`;
     ctx.fillText(
       "You've completed all levels!",
       canvasWidth / 2,
@@ -1083,7 +1090,7 @@ class LevelEndScreen extends Screen {
     );
 
     ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.font = `${this.game.getScaledValue(16)}px Courier New`;
+    ctx.font = `${this.game.getScaledValue(16)}px Arial`;
     ctx.fillText(
       "Replay any level with increased difficulty",
       canvasWidth / 2,
@@ -1098,7 +1105,7 @@ class LevelEndScreen extends Screen {
     // Stars decoration
     ctx.shadowBlur = 0;
     ctx.fillStyle = "#FFD700";
-    ctx.font = `${this.game.getScaledValue(32)}px Courier New`;
+    ctx.font = `${this.game.getScaledValue(32)}px Arial`;
     ctx.fillText(
       "★",
       canvasWidth / 2 - this.game.getScaledValue(250),

@@ -219,7 +219,10 @@ class StoryManager {
     }
 
     // Previous button (only if not on first slide)
-    if (this.currentSlideIndex > 0 && this.isPointInRect(x, y, this.buttons.previous)) {
+    if (
+      this.currentSlideIndex > 0 &&
+      this.isPointInRect(x, y, this.buttons.previous)
+    ) {
       this.previousSlide();
       return true;
     }
