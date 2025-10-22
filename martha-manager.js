@@ -44,6 +44,12 @@ class MarthaManager {
     this.isEntering = false;
     this.exitDirection = 1; // 1 for right, -1 for left
 
+    // Recovery animation state
+    this.isRecovering = false;
+    this.recoveryTimer = 0;
+    this.recoveryDuration = 1000; // 1 second in milliseconds
+    this.recoveryDirection = { x: 0, y: 0 };
+
     // Sockball collection
     this.collectedSockballs = 0;
     this.targetSockballs = 0;
@@ -145,7 +151,9 @@ class MarthaManager {
     }
 
     // Update movement based on current state
-    if (this.isExiting) {
+    if (this.isRecovering) {
+      this.updateRecoveryMovement(deltaTime);
+    } else if (this.isExiting) {
       this.updateExitMovement(deltaTime);
     } else if (this.isEntering) {
       this.updateEnterMovement(deltaTime);
@@ -252,6 +260,29 @@ class MarthaManager {
     }
   }
 
+  updateRecoveryMovement(deltaTime) {
+    // Update recovery timer
+    this.recoveryTimer += deltaTime;
+
+    // Apply recovery movement (faster speed to get away from edge)
+    const recoverySpeed = this.speed * 5; // Move fast to recover
+    this.velocity.x = this.recoveryDirection.x * recoverySpeed;
+    this.velocity.y = this.recoveryDirection.y * recoverySpeed;
+
+    // Update facing direction during recovery
+    if (Math.abs(this.velocity.x) > 0.1) {
+      this.facingRight = this.velocity.x > 0;
+    }
+
+    // End recovery after duration
+    if (this.recoveryTimer >= this.recoveryDuration) {
+      this.isRecovering = false;
+      this.recoveryTimer = 0;
+      // Switch to a new random pattern after recovery
+      this.switchPattern();
+    }
+  }
+
   updatePatternMovement(deltaTime) {
     const timeMultiplier = deltaTime / 16.67;
 
@@ -315,8 +346,8 @@ class MarthaManager {
 
   updateCircularPattern(timeMultiplier) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.CIRCULAR.baseSpeed;
-    if (!this.patternData.circularAngle) {
-      this.patternData.circularAngle = 0;
+    if (!this.patternData.circularAngle && this.patternData.circularAngle !== 0) {
+      // Set center of circular path
       this.patternData.centerX =
         this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
       this.patternData.centerY =
@@ -326,6 +357,12 @@ class MarthaManager {
         (this.bounds.right - this.bounds.left) / 2.8,
         (this.bounds.bottom - this.bounds.top) / 2.8
       );
+
+      // Calculate starting angle from Martha's current position
+      // This prevents the "jump" - Martha starts from where she is
+      const dx = this.x + (this.width / 2) - this.patternData.centerX;
+      const dy = this.y + (this.height / 2) - this.patternData.centerY;
+      this.patternData.circularAngle = Math.atan2(dy, dx);
     }
 
     this.patternData.circularAngle +=
@@ -414,15 +451,14 @@ class MarthaManager {
         }
       }
 
-      // Right boundary
+      // Right boundary - trigger recovery animation
       if (this.x > this.bounds.right - this.width) {
         this.x = this.bounds.right - this.width;
-        this.velocity.x = -Math.abs(this.velocity.x); // Bounce left
-        if (this.currentPattern === "horizontal") {
-          this.direction = -1;
-        } else if (this.patternData.diagonalDirection) {
-          this.patternData.diagonalDirection.x = -1;
-        }
+        // Start recovery animation moving left
+        this.isRecovering = true;
+        this.recoveryTimer = 0;
+        this.recoveryDirection = { x: -1, y: 0 };
+        this.facingRight = false;
       }
 
       // Top boundary
@@ -436,47 +472,47 @@ class MarthaManager {
         }
       }
 
-      // Bottom boundary
+      // Bottom boundary - trigger recovery animation
       if (this.y > this.bounds.bottom - this.height) {
         this.y = this.bounds.bottom - this.height;
-        this.velocity.y = -Math.abs(this.velocity.y); // Bounce up
-        if (this.currentPattern === "vertical") {
-          this.direction = -1;
-        } else if (this.patternData.diagonalDirection) {
-          this.patternData.diagonalDirection.y = -1;
-        }
+        // Start recovery animation moving up
+        this.isRecovering = true;
+        this.recoveryTimer = 0;
+        this.recoveryDirection = { x: 0, y: -1 };
       }
 
-      // Ensure Martha is always moving (minimum velocity)
-      const currentSpeed = Math.sqrt(
-        this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y
-      );
-      const minSpeed = 1.0;
-      if (currentSpeed < minSpeed) {
-        // If moving too slowly, give a small push
-        // Check if stuck at edges and push away from them
-        const edgeThreshold = 5; // Pixels from edge to consider "at edge"
+      // Ensure Martha is always moving (minimum velocity) - skip during recovery
+      if (!this.isRecovering) {
+        const currentSpeed = Math.sqrt(
+          this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y
+        );
+        const minSpeed = 1.0;
+        if (currentSpeed < minSpeed) {
+          // If moving too slowly, give a small push
+          // Check if stuck at edges and push away from them
+          const edgeThreshold = 5; // Pixels from edge to consider "at edge"
 
-        if (this.x <= this.bounds.left + edgeThreshold) {
-          // Stuck at left edge - push right
-          this.velocity.x = minSpeed;
-          this.velocity.y = 0;
-        } else if (this.x >= this.bounds.right - this.width - edgeThreshold) {
-          // Stuck at right edge - push left
-          this.velocity.x = -minSpeed;
-          this.velocity.y = 0;
-        } else if (this.y <= this.bounds.top + edgeThreshold) {
-          // Stuck at top edge - push down
-          this.velocity.x = 0;
-          this.velocity.y = minSpeed;
-        } else if (this.y >= this.bounds.bottom - this.height - edgeThreshold) {
-          // Stuck at bottom edge - push up
-          this.velocity.x = 0;
-          this.velocity.y = -minSpeed;
-        } else {
-          // Not at edge, use current direction or default right
-          const defaultDirection = this.direction || 1;
-          this.velocity.x = defaultDirection * minSpeed;
+          if (this.x <= this.bounds.left + edgeThreshold) {
+            // Stuck at left edge - push right
+            this.velocity.x = minSpeed;
+            this.velocity.y = 0;
+          } else if (this.x >= this.bounds.right - this.width - edgeThreshold) {
+            // Stuck at right edge - push left (this should now be handled by recovery)
+            this.velocity.x = -minSpeed;
+            this.velocity.y = 0;
+          } else if (this.y <= this.bounds.top + edgeThreshold) {
+            // Stuck at top edge - push down
+            this.velocity.x = 0;
+            this.velocity.y = minSpeed;
+          } else if (this.y >= this.bounds.bottom - this.height - edgeThreshold) {
+            // Stuck at bottom edge - push up (this should now be handled by recovery)
+            this.velocity.x = 0;
+            this.velocity.y = -minSpeed;
+          } else {
+            // Not at edge, use current direction or default right
+            const defaultDirection = this.direction || 1;
+            this.velocity.x = defaultDirection * minSpeed;
+          }
         }
       }
 
