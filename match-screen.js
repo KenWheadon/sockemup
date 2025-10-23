@@ -1089,11 +1089,19 @@ class MatchScreen extends Screen {
       ? "rgba(255, 200, 68, 0.9)"
       : "rgba(255, 255, 255, 0.9)";
 
-    this.renderText(ctx, "⏱️", layout.timeX - this.game.getScaledValue(50), layout.timeY, {
-      fontSize: layout.headerFontSize,
-      align: "center",
-      baseline: "middle",
-    });
+    // Draw clock icon
+    if (this.game.images["icon-clock.png"]) {
+      const clockIcon = this.game.images["icon-clock.png"];
+      const clockIconHeight = this.game.getScaledValue(40);
+      const clockIconWidth = clockIconHeight * (clockIcon.width / clockIcon.height);
+      ctx.drawImage(
+        clockIcon,
+        layout.timeX - this.game.getScaledValue(50) - clockIconWidth / 2,
+        layout.timeY - clockIconHeight / 2,
+        clockIconWidth,
+        clockIconHeight
+      );
+    }
 
     const timeText = `${timeElapsed}s / ${timeLimit}s`;
     this.renderText(ctx, timeText, layout.timeX, layout.timeY, {

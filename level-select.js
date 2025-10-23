@@ -3106,12 +3106,28 @@ class LevelSelect extends Screen {
         const statusX = cardX + cardWidth - this.game.getScaledValue(15);
         const statusY = cardY + cardHeight - this.game.getScaledValue(15);
 
-        this.renderText(ctx, unlocked ? "✓" : "🔒", statusX, statusY, {
-          fontSize: this.game.getScaledValue(16),
-          align: "right",
-          baseline: "bottom",
-          color: unlocked ? "#90EE90" : "#888888",
-        });
+        if (unlocked) {
+          this.renderText(ctx, "✓", statusX, statusY, {
+            fontSize: this.game.getScaledValue(16),
+            align: "right",
+            baseline: "bottom",
+            color: "#90EE90",
+          });
+        } else {
+          // Draw lock icon
+          if (this.game.images["icon-lock.png"]) {
+            const lockIcon = this.game.images["icon-lock.png"];
+            const lockIconHeight = this.game.getScaledValue(16);
+            const lockIconWidth = lockIconHeight * (lockIcon.width / lockIcon.height);
+            ctx.drawImage(
+              lockIcon,
+              statusX - lockIconWidth,
+              statusY - lockIconHeight,
+              lockIconWidth,
+              lockIconHeight
+            );
+          }
+        }
 
         ctx.restore();
       });
@@ -3840,15 +3856,22 @@ class LevelSelect extends Screen {
       }
 
       ctx.save();
-      ctx.fillStyle = isAffordable
-        ? "rgba(144, 238, 144, 0.8)"
-        : "rgba(255, 182, 193, 0.8)";
-      ctx.font = `${this.game.getScaledValue(24)}px Arial`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
       ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
       ctx.shadowBlur = this.game.getScaledValue(4);
-      ctx.fillText("🔒", x, y - this.game.getScaledValue(15));
+
+      // Draw lock icon
+      if (this.game.images["icon-lock.png"]) {
+        const lockIcon = this.game.images["icon-lock.png"];
+        const lockIconHeight = this.game.getScaledValue(24);
+        const lockIconWidth = lockIconHeight * (lockIcon.width / lockIcon.height);
+        ctx.drawImage(
+          lockIcon,
+          x - lockIconWidth / 2,
+          y - this.game.getScaledValue(15) - lockIconHeight / 2,
+          lockIconWidth,
+          lockIconHeight
+        );
+      }
       ctx.restore();
 
       ctx.save();
