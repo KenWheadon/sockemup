@@ -715,12 +715,7 @@ const GameConfig = {
       "star.png",
       "throw-bg.png",
       "throw-bg-2.png",
-      "throw-bg-3.png",
-      "throw-bg-4.png",
       "throw-bg-5.png",
-      "throw-bg-6.png",
-      "throw-bg-7.png",
-      "throw-bg-8.png",
       "throw-bg-9.png",
       "level-select-bg.png",
       "you-win.png",
@@ -869,13 +864,13 @@ const GameConfig = {
   // Level background mappings
   LEVEL_BACKGROUNDS: [
     "throw-bg.png", // Level 1
-    "throw-bg-2.png", // Level 2
-    "throw-bg-3.png", // Level 3
-    "throw-bg-4.png", // Level 4
+    "throw-bg.png", // Level 2
+    "throw-bg-2.png", // Level 3
+    "throw-bg-2.png", // Level 4
     "throw-bg-5.png", // Level 5
-    "throw-bg-6.png", // Level 6
-    "throw-bg-7.png", // Level 7
-    "throw-bg-8.png", // Level 8
+    "throw-bg-5.png", // Level 6
+    "throw-bg-9.png", // Level 7
+    "throw-bg-9.png", // Level 8
     "throw-bg-9.png", // Level 9
   ],
 

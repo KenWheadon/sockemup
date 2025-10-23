@@ -683,7 +683,7 @@ class LevelSelect extends Screen {
         );
       }
 
-      if (this.game.unlockedLevels[i] && !this.game.completedLevels[i]) {
+      if (this.game.unlockedLevels[i]) {
         this.levelPulseTimers[i] += deltaTime * 0.002;
       }
     }
@@ -3734,17 +3734,25 @@ class LevelSelect extends Screen {
       ctx.shadowOffsetY = this.game.getScaledValue(3);
 
       if (isCompleted) {
+        // Subtle pulse animation for completed levels with offset based on level index
+        const offset = levelIndex * 0.7; // Offset each level's animation
+        const pulse = Math.sin(pulseTimer * 0.5 + offset) * 0.02 + 1; // 2% size variation
+        const float = Math.sin(pulseTimer * 0.7 + offset) * this.game.getScaledValue(1.5); // Slight vertical float
+
         if (sockImage) {
           if (colorFilter) {
             ctx.filter = colorFilter;
           }
 
+          const pulsedSize = buttonSize * pulse;
+          const sizeDiff = (pulsedSize - buttonSize) / 2;
+
           ctx.drawImage(
             sockImage,
-            x - halfSize,
-            y - halfSize,
-            buttonSize,
-            buttonSize
+            x - halfSize - sizeDiff,
+            y - halfSize - sizeDiff + float,
+            pulsedSize,
+            pulsedSize
           );
         }
       } else {
