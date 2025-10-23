@@ -1001,56 +1001,95 @@ class ThrowingScreen extends Screen {
 
     const buttonLeft = x - width / 2;
     const buttonTop = y - height / 2;
-    const radius = this.game.getScaledValue(6);
 
-    // Button background
-    ctx.fillStyle = isHovered ? this.lightenColor(baseColor) : baseColor;
-    ctx.strokeStyle = isHovered
-      ? "rgba(255, 255, 255, 0.8)"
-      : "rgba(255, 255, 255, 0.4)";
-    ctx.lineWidth = 2;
+    // Check if this is the exit button and we have the image
+    const isExitButton = text === "Exit";
+    const buttonImage = isExitButton ? this.game.images["btn-exit.png"] : null;
 
-    // Rounded rectangle
-    ctx.beginPath();
-    ctx.moveTo(buttonLeft + radius, buttonTop);
-    ctx.lineTo(buttonLeft + width - radius, buttonTop);
-    ctx.arcTo(
-      buttonLeft + width,
-      buttonTop,
-      buttonLeft + width,
-      buttonTop + radius,
-      radius
-    );
-    ctx.lineTo(buttonLeft + width, buttonTop + height - radius);
-    ctx.arcTo(
-      buttonLeft + width,
-      buttonTop + height,
-      buttonLeft + width - radius,
-      buttonTop + height,
-      radius
-    );
-    ctx.lineTo(buttonLeft + radius, buttonTop + height);
-    ctx.arcTo(
-      buttonLeft,
-      buttonTop + height,
-      buttonLeft,
-      buttonTop + height - radius,
-      radius
-    );
-    ctx.lineTo(buttonLeft, buttonTop + radius);
-    ctx.arcTo(buttonLeft, buttonTop, buttonLeft + radius, buttonTop, radius);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    if (buttonImage) {
+      // Use button image
+      const aspectRatio = buttonImage.width / buttonImage.height;
+      let imgWidth = width;
+      let imgHeight = imgWidth / aspectRatio;
 
-    // Button text
-    this.renderText(ctx, text, x, y, {
-      fontSize: this.layoutCache.smallFontSize,
-      align: "center",
-      baseline: "middle",
-      color: "rgba(255, 255, 255, 0.9)",
-      weight: "bold",
-    });
+      // If height is too large, scale by height instead
+      if (imgHeight > height) {
+        imgHeight = height;
+        imgWidth = imgHeight * aspectRatio;
+      }
+
+      const imgX = buttonLeft + (width - imgWidth) / 2;
+      const imgY = buttonTop + (height - imgHeight) / 2;
+
+      // Apply hover effect - scale and add glow
+      if (isHovered) {
+        ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+        ctx.shadowBlur = this.game.getScaledValue(20);
+
+        // Scale up slightly on hover
+        const scale = 1.05;
+        const scaledWidth = imgWidth * scale;
+        const scaledHeight = imgHeight * scale;
+        const scaledX = buttonLeft + (width - scaledWidth) / 2;
+        const scaledY = buttonTop + (height - scaledHeight) / 2;
+
+        ctx.drawImage(buttonImage, scaledX, scaledY, scaledWidth, scaledHeight);
+      } else {
+        ctx.drawImage(buttonImage, imgX, imgY, imgWidth, imgHeight);
+      }
+    } else {
+      // Fallback for other buttons - use gradient style
+      const radius = this.game.getScaledValue(6);
+
+      // Button background
+      ctx.fillStyle = isHovered ? this.lightenColor(baseColor) : baseColor;
+      ctx.strokeStyle = isHovered
+        ? "rgba(255, 255, 255, 0.8)"
+        : "rgba(255, 255, 255, 0.4)";
+      ctx.lineWidth = 2;
+
+      // Rounded rectangle
+      ctx.beginPath();
+      ctx.moveTo(buttonLeft + radius, buttonTop);
+      ctx.lineTo(buttonLeft + width - radius, buttonTop);
+      ctx.arcTo(
+        buttonLeft + width,
+        buttonTop,
+        buttonLeft + width,
+        buttonTop + radius,
+        radius
+      );
+      ctx.lineTo(buttonLeft + width, buttonTop + height - radius);
+      ctx.arcTo(
+        buttonLeft + width,
+        buttonTop + height,
+        buttonLeft + width - radius,
+        buttonTop + height,
+        radius
+      );
+      ctx.lineTo(buttonLeft + radius, buttonTop + height);
+      ctx.arcTo(
+        buttonLeft,
+        buttonTop + height,
+        buttonLeft,
+        buttonTop + height - radius,
+        radius
+      );
+      ctx.lineTo(buttonLeft, buttonTop + radius);
+      ctx.arcTo(buttonLeft, buttonTop, buttonLeft + radius, buttonTop, radius);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Button text
+      this.renderText(ctx, text, x, y, {
+        fontSize: this.layoutCache.smallFontSize,
+        align: "center",
+        baseline: "middle",
+        color: "rgba(255, 255, 255, 0.9)",
+        weight: "bold",
+      });
+    }
 
     ctx.restore();
   }

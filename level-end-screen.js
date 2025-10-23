@@ -957,72 +957,119 @@ class LevelEndScreen extends Screen {
 
   renderContinueButton(ctx) {
     const button = this.continueButton;
+    const buttonImage = this.game.images["btn-continue.png"];
 
     ctx.save();
 
-    // Enhanced gradient background
-    const gradient = ctx.createLinearGradient(
-      button.x,
-      button.y,
-      button.x,
-      button.y + button.height
-    );
+    if (buttonImage) {
+      // Use button image
+      const aspectRatio = buttonImage.width / buttonImage.height;
+      let imgWidth = button.width;
+      let imgHeight = imgWidth / aspectRatio;
 
-    let color1, color2;
-    if (button.pressed) {
-      color1 = "#2980B9";
-      color2 = "#1A5276";
-    } else if (button.hovered) {
-      color1 = "#4ECDC4";
-      color2 = "#3498DB";
+      // If height is too large, scale by height instead
+      if (imgHeight > button.height) {
+        imgHeight = button.height;
+        imgWidth = imgHeight * aspectRatio;
+      }
+
+      const imgX = button.x + (button.width - imgWidth) / 2;
+      const imgY = button.y + (button.height - imgHeight) / 2;
+
+      // Apply hover/pressed effects - scale and add glow
+      if (button.pressed) {
+        // Pressed state - slightly smaller scale
+        ctx.shadowColor = "rgba(255, 215, 0, 0.6)";
+        ctx.shadowBlur = this.game.getScaledValue(15);
+
+        const scale = 0.98;
+        const scaledWidth = imgWidth * scale;
+        const scaledHeight = imgHeight * scale;
+        const scaledX = button.x + (button.width - scaledWidth) / 2;
+        const scaledY = button.y + (button.height - scaledHeight) / 2;
+
+        ctx.drawImage(buttonImage, scaledX, scaledY, scaledWidth, scaledHeight);
+      } else if (button.hovered) {
+        // Hover state - scale up and glow
+        ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+        ctx.shadowBlur = this.game.getScaledValue(20);
+
+        const scale = 1.05;
+        const scaledWidth = imgWidth * scale;
+        const scaledHeight = imgHeight * scale;
+        const scaledX = button.x + (button.width - scaledWidth) / 2;
+        const scaledY = button.y + (button.height - scaledHeight) / 2;
+
+        ctx.drawImage(buttonImage, scaledX, scaledY, scaledWidth, scaledHeight);
+      } else {
+        // Normal state
+        ctx.drawImage(buttonImage, imgX, imgY, imgWidth, imgHeight);
+      }
     } else {
-      color1 = "#3498DB";
-      color2 = "#2471A3";
-    }
+      // Fallback to gradient style if image not loaded
+      const gradient = ctx.createLinearGradient(
+        button.x,
+        button.y,
+        button.x,
+        button.y + button.height
+      );
 
-    gradient.addColorStop(0, color1);
-    gradient.addColorStop(1, color2);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(button.x, button.y, button.width, button.height);
+      let color1, color2;
+      if (button.pressed) {
+        color1 = "#2980B9";
+        color2 = "#1A5276";
+      } else if (button.hovered) {
+        color1 = "#4ECDC4";
+        color2 = "#3498DB";
+      } else {
+        color1 = "#3498DB";
+        color2 = "#2471A3";
+      }
 
-    // Enhanced border
-    ctx.strokeStyle = button.hovered ? "#5DADE2" : "#2980B9";
-    ctx.lineWidth = this.game.getScaledValue(3);
-    ctx.strokeRect(button.x, button.y, button.width, button.height);
+      gradient.addColorStop(0, color1);
+      gradient.addColorStop(1, color2);
+      ctx.fillStyle = gradient;
+      ctx.fillRect(button.x, button.y, button.width, button.height);
 
-    // Glow effect when hovered
-    if (button.hovered) {
-      ctx.shadowColor = "#4ECDC4";
-      ctx.shadowBlur =
-        this.game.getScaledValue(20) * this.getGlowIntensity(0.7, 1.0);
+      // Enhanced border
+      ctx.strokeStyle = button.hovered ? "#5DADE2" : "#2980B9";
+      ctx.lineWidth = this.game.getScaledValue(3);
       ctx.strokeRect(button.x, button.y, button.width, button.height);
 
-      // Inner highlight
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-      ctx.lineWidth = this.game.getScaledValue(1);
-      ctx.strokeRect(
-        button.x + 2,
-        button.y + 2,
-        button.width - 4,
-        button.height - 4
-      );
+      // Glow effect when hovered
+      if (button.hovered) {
+        ctx.shadowColor = "#4ECDC4";
+        ctx.shadowBlur =
+          this.game.getScaledValue(20) * this.getGlowIntensity(0.7, 1.0);
+        ctx.strokeRect(button.x, button.y, button.width, button.height);
+
+        // Inner highlight
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.lineWidth = this.game.getScaledValue(1);
+        ctx.strokeRect(
+          button.x + 2,
+          button.y + 2,
+          button.width - 4,
+          button.height - 4
+        );
+      }
+
+      // Button text with shadow
+      ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
+      ctx.shadowBlur = this.game.getScaledValue(5);
+      ctx.shadowOffsetX = button.pressed ? 0 : this.game.getScaledValue(2);
+      ctx.shadowOffsetY = button.pressed ? 0 : this.game.getScaledValue(2);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `bold ${this.game.getScaledValue(18)}px Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      const textY = button.y + button.height / 2;
+      const textX = button.x + button.width / 2;
+      ctx.fillText("CONTINUE", textX, textY);
     }
-
-    // Button text with shadow
-    ctx.shadowColor = "rgba(0, 0, 0, 0.7)";
-    ctx.shadowBlur = this.game.getScaledValue(5);
-    ctx.shadowOffsetX = button.pressed ? 0 : this.game.getScaledValue(2);
-    ctx.shadowOffsetY = button.pressed ? 0 : this.game.getScaledValue(2);
-
-    ctx.fillStyle = "#ffffff";
-    ctx.font = `bold ${this.game.getScaledValue(18)}px Arial`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-
-    const textY = button.y + button.height / 2;
-    const textX = button.x + button.width / 2;
-    ctx.fillText("CONTINUE", textX, textY);
 
     ctx.restore();
   }

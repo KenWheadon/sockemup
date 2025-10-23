@@ -735,6 +735,7 @@ const GameConfig = {
       "btn-credits.png",
       "btn-skip.png",
       "btn-continue.png",
+      "secret-video-button.png",
     ],
   },
 

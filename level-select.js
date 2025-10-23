@@ -51,6 +51,11 @@ class LevelSelect extends Screen {
     this.currentSockType = 1;
     this.dropZoneHover = null;
 
+    // Logo click effect
+    this.logoPressed = false;
+    this.logoPressTimer = 0;
+    this.logoPressScale = 1.0;
+
     // Drag momentum tracking (fix for sock physics)
     this.lastMouseX = 0;
     this.lastMouseY = 0;
@@ -339,8 +344,8 @@ class LevelSelect extends Screen {
         canvasHeight / 2 +
         youWinImageSize.height / 2 +
         this.game.getScaledValue(80),
-      videoButtonWidth: this.game.getScaledValue(200),
-      videoButtonHeight: this.game.getScaledValue(50),
+      videoButtonWidth: this.game.getScaledValue(400),
+      videoButtonHeight: this.game.getScaledValue(100),
 
       statsPanelWidth: this.game.getScaledValue(200),
       statsPanelHeight: this.game.getScaledValue(40),
@@ -715,6 +720,25 @@ class LevelSelect extends Screen {
     }
 
     this.storyViewer.update(deltaTime);
+
+    // Update logo press animation
+    if (this.logoPressed) {
+      this.logoPressTimer += deltaTime;
+      const pressDuration = 150; // Duration in milliseconds for the press effect
+
+      if (this.logoPressTimer < pressDuration) {
+        // Animate to 95% scale
+        this.logoPressScale = 1.0 - (this.logoPressTimer / pressDuration) * 0.05;
+      } else if (this.logoPressTimer < pressDuration * 2) {
+        // Animate back to 100% scale
+        const returnProgress = (this.logoPressTimer - pressDuration) / pressDuration;
+        this.logoPressScale = 0.95 + returnProgress * 0.05;
+      } else {
+        // Animation complete
+        this.logoPressed = false;
+        this.logoPressScale = 1.0;
+      }
+    }
 
     this.storyReplayButton.hoverProgress =
       this.storyReplayButton.hoverProgress || 0;
@@ -1613,6 +1637,8 @@ class LevelSelect extends Screen {
     }
 
     if (this.isLogoClicked(x, y)) {
+      this.logoPressed = true;
+      this.logoPressTimer = 0;
       this.activateEasterEgg();
       return true;
     }
@@ -2108,8 +2134,16 @@ class LevelSelect extends Screen {
   renderLogo(ctx) {
     const layout = this.layoutCache;
 
+    ctx.save();
+
+    // Apply scale effect for click feedback
+    if (this.logoPressScale !== 1.0) {
+      ctx.translate(layout.logoX, layout.logoY);
+      ctx.scale(this.logoPressScale, this.logoPressScale);
+      ctx.translate(-layout.logoX, -layout.logoY);
+    }
+
     if (this.easterEggActive) {
-      ctx.save();
       const glowIntensity = this.getGlowIntensity(10, 20);
       ctx.shadowColor = "#FFD700";
       ctx.shadowBlur = glowIntensity;
@@ -2123,8 +2157,6 @@ class LevelSelect extends Screen {
           layout.logoHeight
         );
       }
-
-      ctx.restore();
     } else {
       if (this.game.images["logo.png"]) {
         ctx.drawImage(
@@ -2136,6 +2168,8 @@ class LevelSelect extends Screen {
         );
       }
     }
+
+    ctx.restore();
   }
 
   renderInstructions(ctx) {
@@ -4365,96 +4399,132 @@ class LevelSelect extends Screen {
   renderVideoButton(ctx) {
     const layout = this.layoutCache;
     const button = this.videoButton;
+    const buttonImage = this.game.images["secret-video-button.png"];
 
     ctx.save();
 
     const x = layout.videoButtonX - layout.videoButtonWidth / 2;
     const y = layout.videoButtonY - layout.videoButtonHeight / 2;
-    const radius = this.game.getScaledValue(8);
 
-    // Enhanced gradient background
-    const gradient = ctx.createLinearGradient(
-      x,
-      y,
-      x,
-      y + layout.videoButtonHeight
-    );
+    if (buttonImage) {
+      // Use button image
+      const aspectRatio = buttonImage.width / buttonImage.height;
+      let imgWidth = layout.videoButtonWidth;
+      let imgHeight = imgWidth / aspectRatio;
 
-    let color1, color2;
-    if (button.hovered) {
-      color1 = "#BB8FCE";
-      color2 = "#A569BD";
+      // If height is too large, scale by height instead
+      if (imgHeight > layout.videoButtonHeight) {
+        imgHeight = layout.videoButtonHeight;
+        imgWidth = imgHeight * aspectRatio;
+      }
+
+      const imgX = x + (layout.videoButtonWidth - imgWidth) / 2;
+      const imgY = y + (layout.videoButtonHeight - imgHeight) / 2;
+
+      // Apply hover effect - scale and add glow
+      if (button.hovered) {
+        ctx.shadowColor = "rgba(187, 143, 206, 0.8)"; // Purple glow matching the button's theme
+        ctx.shadowBlur = this.game.getScaledValue(20);
+
+        // Scale up slightly on hover
+        const scale = 1.05;
+        const scaledWidth = imgWidth * scale;
+        const scaledHeight = imgHeight * scale;
+        const scaledX = x + (layout.videoButtonWidth - scaledWidth) / 2;
+        const scaledY = y + (layout.videoButtonHeight - scaledHeight) / 2;
+
+        ctx.drawImage(buttonImage, scaledX, scaledY, scaledWidth, scaledHeight);
+      } else {
+        ctx.drawImage(buttonImage, imgX, imgY, imgWidth, imgHeight);
+      }
     } else {
-      color1 = "#A569BD";
-      color2 = "#8E44AD";
-    }
+      // Fallback to gradient style if image not loaded
+      const radius = this.game.getScaledValue(8);
 
-    gradient.addColorStop(0, color1);
-    gradient.addColorStop(1, color2);
-    ctx.fillStyle = gradient;
+      // Enhanced gradient background
+      const gradient = ctx.createLinearGradient(
+        x,
+        y,
+        x,
+        y + layout.videoButtonHeight
+      );
 
-    if (button.hovered) {
-      ctx.shadowColor = "#BB8FCE";
-      ctx.shadowBlur = this.game.getScaledValue(12);
-    }
+      let color1, color2;
+      if (button.hovered) {
+        color1 = "#BB8FCE";
+        color2 = "#A569BD";
+      } else {
+        color1 = "#A569BD";
+        color2 = "#8E44AD";
+      }
 
-    ctx.strokeStyle = button.hovered ? "#D7BDE2" : "#8E44AD";
-    ctx.lineWidth = this.game.getScaledValue(3);
+      gradient.addColorStop(0, color1);
+      gradient.addColorStop(1, color2);
+      ctx.fillStyle = gradient;
 
-    // Draw rounded rectangle
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + layout.videoButtonWidth - radius, y);
-    ctx.quadraticCurveTo(
-      x + layout.videoButtonWidth,
-      y,
-      x + layout.videoButtonWidth,
-      y + radius
-    );
-    ctx.lineTo(
-      x + layout.videoButtonWidth,
-      y + layout.videoButtonHeight - radius
-    );
-    ctx.quadraticCurveTo(
-      x + layout.videoButtonWidth,
-      y + layout.videoButtonHeight,
-      x + layout.videoButtonWidth - radius,
-      y + layout.videoButtonHeight
-    );
-    ctx.lineTo(x + radius, y + layout.videoButtonHeight);
-    ctx.quadraticCurveTo(
-      x,
-      y + layout.videoButtonHeight,
-      x,
-      y + layout.videoButtonHeight - radius
-    );
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
+      if (button.hovered) {
+        ctx.shadowColor = "#BB8FCE";
+        ctx.shadowBlur = this.game.getScaledValue(12);
+      }
 
-    ctx.fill();
-    ctx.stroke();
+      ctx.strokeStyle = button.hovered ? "#D7BDE2" : "#8E44AD";
+      ctx.lineWidth = this.game.getScaledValue(3);
 
-    if (button.hovered) {
-      ctx.shadowColor = "#BB8FCE";
-      ctx.shadowBlur = this.game.getScaledValue(10);
+      // Draw rounded rectangle
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + layout.videoButtonWidth - radius, y);
+      ctx.quadraticCurveTo(
+        x + layout.videoButtonWidth,
+        y,
+        x + layout.videoButtonWidth,
+        y + radius
+      );
+      ctx.lineTo(
+        x + layout.videoButtonWidth,
+        y + layout.videoButtonHeight - radius
+      );
+      ctx.quadraticCurveTo(
+        x + layout.videoButtonWidth,
+        y + layout.videoButtonHeight,
+        x + layout.videoButtonWidth - radius,
+        y + layout.videoButtonHeight
+      );
+      ctx.lineTo(x + radius, y + layout.videoButtonHeight);
+      ctx.quadraticCurveTo(
+        x,
+        y + layout.videoButtonHeight,
+        x,
+        y + layout.videoButtonHeight - radius
+      );
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+
+      ctx.fill();
       ctx.stroke();
+
+      if (button.hovered) {
+        ctx.shadowColor = "#BB8FCE";
+        ctx.shadowBlur = this.game.getScaledValue(10);
+        ctx.stroke();
+      }
+
+      // Button text
+      this.renderText(
+        ctx,
+        "SECRET BONUS VIDEO",
+        layout.videoButtonX,
+        layout.videoButtonY,
+        {
+          fontSize: this.game.getScaledValue(18),
+          color: "white",
+          weight: "bold",
+        }
+      );
     }
 
     ctx.restore();
-
-    // Button text
-    this.renderText(
-      ctx,
-      "SECRET BONUS VIDEO",
-      layout.videoButtonX,
-      layout.videoButtonY,
-      {
-        fontSize: this.game.getScaledValue(18),
-        color: "white",
-        weight: "bold",
-      }
-    );
   }
 
   openVideoPlayer() {
