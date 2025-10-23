@@ -481,7 +481,7 @@ class LevelSelect extends Screen {
         <div class="credits-modal" id="creditsModal">
           <div class="credits-content">
             <div class="credits-header">
-              <img src="images/company-logo.png" alt="Weird Demon Games" class="company-logo" />
+              <div class="company-logo-sprite" id="companyLogoSprite"></div>
               <h2>Weird Demon Games</h2>
               <button class="close-credits" id="closeCredits">×</button>
             </div>
