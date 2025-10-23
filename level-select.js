@@ -3473,7 +3473,9 @@ class LevelSelect extends Screen {
     const isPrevious = text.includes("Prev") || text.includes("←");
     const isNext = text.includes("Next") || text.includes("→");
 
-    if (isPrevious) {
+    if (isClose) {
+      buttonImage = this.game.images["btn-exit.png"];
+    } else if (isPrevious) {
       buttonImage = this.game.images["btn-back.png"];
     } else if (isNext) {
       buttonImage = this.game.images["btn-next.png"];
@@ -3487,8 +3489,8 @@ class LevelSelect extends Screen {
       height: height
     });
 
-    // If we have a button image for Next/Previous, use it
-    if (buttonImage && !isClose) {
+    // If we have a button image, use it
+    if (buttonImage) {
       // Calculate dimensions to fit the button while maintaining aspect ratio
       const aspectRatio = buttonImage.width / buttonImage.height;
       let imgWidth = width;
@@ -3519,40 +3521,6 @@ class LevelSelect extends Screen {
       } else {
         ctx.drawImage(buttonImage, imgX, imgY, imgWidth, imgHeight);
       }
-    } else {
-      // Fallback for Close button or if images not loaded - use gradient style
-      const gradient = ctx.createLinearGradient(
-        buttonX,
-        buttonY,
-        buttonX,
-        buttonY + height
-      );
-      if (isClose) {
-        gradient.addColorStop(0, "rgba(200, 50, 50, 0.8)");
-        gradient.addColorStop(1, "rgba(150, 30, 30, 0.8)");
-      } else {
-        gradient.addColorStop(0, "rgba(100, 150, 255, 0.8)");
-        gradient.addColorStop(1, "rgba(65, 105, 225, 0.8)");
-      }
-      ctx.fillStyle = gradient;
-      this.drawRoundedRect(ctx, buttonX, buttonY, width, height, radius);
-      ctx.fill();
-
-      ctx.strokeStyle = isClose
-        ? "rgba(255, 100, 100, 0.6)"
-        : "rgba(150, 200, 255, 0.6)";
-      ctx.lineWidth = this.game.getScaledValue(2);
-      this.drawRoundedRect(ctx, buttonX, buttonY, width, height, radius);
-      ctx.stroke();
-
-      // Button text
-      this.renderText(ctx, text, x, y, {
-        fontSize: this.game.getScaledValue(14),
-        color: "white",
-        weight: "bold",
-        align: "center",
-        baseline: "middle",
-      });
     }
 
     ctx.restore();

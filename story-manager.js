@@ -694,14 +694,17 @@ class StoryManager {
     let buttonImage = null;
     const isNext = text === "Next" || text === "Start";
     const isPrevious = text === "Previous";
+    const isSkip = text === "Skip";
 
     if (isNext) {
       buttonImage = this.game.images["btn-next.png"];
     } else if (isPrevious) {
       buttonImage = this.game.images["btn-back.png"];
+    } else if (isSkip) {
+      buttonImage = this.game.images["btn-skip.png"];
     }
 
-    // If we have a button image for Next/Previous, use it
+    // If we have a button image, use it
     if (buttonImage) {
       // Calculate dimensions to fit the button while maintaining aspect ratio
       const aspectRatio = buttonImage.width / buttonImage.height;
@@ -734,7 +737,7 @@ class StoryManager {
         ctx.drawImage(buttonImage, imgX, imgY, imgWidth, imgHeight);
       }
     } else {
-      // Fallback for Skip button or if images not loaded - use gradient style
+      // Fallback if images not loaded - use gradient style
       // Enhanced button with gradient and shadow
       if (button.hovered) {
         ctx.shadowColor = color;
