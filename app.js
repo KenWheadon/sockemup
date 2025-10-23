@@ -22,6 +22,15 @@ class SockGame {
     // Track if time bonus was earned (finished before time limit)
     this.timeBonusEarned = false;
 
+    // New achievement stat tracking
+    this.totalSockballsEarned = 0; // Lifetime sockballs earned (for Martha's Millionaire)
+    this.totalMoneySpent = 0; // Total money spent unlocking levels (for Big Spender)
+    this.levelsPlayed = 0; // Total levels played including replays (for Veteran Tenant)
+    this.consecutivePerfectThrows = 0; // Current streak of perfect throws (for Sock Sniper)
+    this.consecutiveMisses = 0; // Current streak of misses (for Butterfingers)
+    this.easterEggSockballsCreated = 0; // Sockballs created via easter egg this level (for Sockball Wizard)
+    this.logoClickCount = 0; // Times logo has been clicked (for Logo Clicker)
+
     this.images = {};
     this.loadedImages = 0;
     this.totalImages = 0;
@@ -558,6 +567,13 @@ class SockGame {
       this.sockBalls = data.sockBalls || 0;
       this.totalSockMatches = data.totalSockMatches || 0;
 
+      // Load new achievement stats
+      this.totalSockballsEarned = data.totalSockballsEarned || 0;
+      this.totalMoneySpent = data.totalMoneySpent || 0;
+      this.levelsPlayed = data.levelsPlayed || 0;
+      this.logoClickCount = data.logoClickCount || 0;
+      this.easterEggSockballsCreated = data.easterEggSockballsCreated || 0;
+
       // NEW GAME+: Load per-difficulty progress
       // Always default to Base Game (difficulty 0) on page load
       this.selectedDifficulty = 0;
@@ -675,6 +691,12 @@ class SockGame {
       playerPoints: this.playerPoints,
       sockBalls: this.sockBalls,
       totalSockMatches: this.totalSockMatches,
+      // New achievement stats
+      totalSockballsEarned: this.totalSockballsEarned,
+      totalMoneySpent: this.totalMoneySpent,
+      levelsPlayed: this.levelsPlayed,
+      logoClickCount: this.logoClickCount,
+      easterEggSockballsCreated: this.easterEggSockballsCreated,
       // NEW GAME+: Save per-difficulty progress
       selectedDifficulty: this.selectedDifficulty,
       highestUnlockedDifficulty: this.highestUnlockedDifficulty,
@@ -712,6 +734,16 @@ class SockGame {
 
     // Mark this level as completed at this difficulty
     this.completedLevelsByDifficulty[difficulty][levelIndex] = true;
+
+    // Achievement: HALFWAY_THERE (complete levels 1-5 on base difficulty)
+    if (difficulty === 0) {
+      const firstFiveLevelsComplete = [0, 1, 2, 3, 4].every(
+        (i) => this.completedLevelsByDifficulty[0][i]
+      );
+      if (firstFiveLevelsComplete) {
+        this.unlockAchievement("halfway_there");
+      }
+    }
 
     // Unlock story panel on first completion (base difficulty only)
     if (difficulty === 0 && !this.unlockedStoryPanels[levelIndex]) {
@@ -804,6 +836,12 @@ class SockGame {
   startLevel(levelIndex, difficulty = null) {
     this.currentLevel = levelIndex;
     const baseLevel = GameConfig.LEVELS[levelIndex];
+
+    // Track levels played for Veteran Tenant achievement
+    this.levelsPlayed++;
+    if (this.levelsPlayed >= 50) {
+      this.unlockAchievement("veteran_tenant");
+    }
 
     // Phase 3.3 - Apply difficulty multipliers
     if (difficulty !== null) {

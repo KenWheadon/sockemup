@@ -527,10 +527,19 @@ class ThrowingScreen extends Screen {
               this.showMessage("BONUS CATCH!", "success", 1500);
               if (catchQuality === "PERFECT") {
                 this.game.feedbackManager.onPerfectCatch();
+                this.game.consecutivePerfectThrows++;
+                this.game.consecutiveMisses = 0;
+
+                // Achievement: SOCK_SNIPER (3 perfect throws in a row)
+                if (this.game.consecutivePerfectThrows >= 3) {
+                  this.game.unlockAchievement("sock_sniper");
+                }
               } else if (catchQuality === "GOOD") {
                 this.game.feedbackManager.onGoodCatch();
+                this.game.consecutivePerfectThrows = 0;
               } else {
                 this.game.feedbackManager.onRegularCatch();
+                this.game.consecutivePerfectThrows = 0;
               }
             } else if (catchQuality === "PERFECT") {
               this.game.feedbackManager.onPerfectCatch();
@@ -538,10 +547,21 @@ class ThrowingScreen extends Screen {
 
               // Achievement: PERFECT_THROW
               this.game.unlockAchievement("perfect_throw");
+
+              // Track consecutive perfect throws for Sock Sniper
+              this.game.consecutivePerfectThrows++;
+              this.game.consecutiveMisses = 0;
+
+              // Achievement: SOCK_SNIPER (3 perfect throws in a row)
+              if (this.game.consecutivePerfectThrows >= 3) {
+                this.game.unlockAchievement("sock_sniper");
+              }
             } else if (catchQuality === "GOOD") {
               this.game.feedbackManager.onGoodCatch();
+              this.game.consecutivePerfectThrows = 0; // Reset perfect streak
             } else {
               this.game.feedbackManager.onRegularCatch();
+              this.game.consecutivePerfectThrows = 0; // Reset perfect streak
             }
 
             if (this.consecutiveHits >= 10) {
@@ -558,6 +578,16 @@ class ThrowingScreen extends Screen {
         // Ball left catch zone without being caught - it's a miss
         this.missedThrows++;
         this.consecutiveHits = 0;
+
+        // Track consecutive misses for Butterfingers
+        this.game.consecutiveMisses++;
+        this.game.consecutivePerfectThrows = 0;
+
+        // Achievement: BUTTERFINGERS (miss 5 throws in a row)
+        if (this.game.consecutiveMisses >= 5) {
+          this.game.unlockAchievement("butterfingers");
+        }
+
         return false;
       }
 
@@ -619,6 +649,9 @@ class ThrowingScreen extends Screen {
       if (!this.marthaManager.onScreen) {
         this.levelComplete = true;
         this.gamePhase = "complete";
+
+        // Achievement: EVICTION_NOTICE (lose a level)
+        this.game.unlockAchievement("eviction_notice");
 
         // Fix Bug #5: Set flag BEFORE scheduling timeout to prevent race condition
         if (!this.gameOverAudioPlayed) {

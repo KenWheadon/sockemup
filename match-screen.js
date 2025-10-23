@@ -698,6 +698,11 @@ class MatchScreen extends Screen {
             this.game.unlockAchievement("streak_king");
           }
 
+          // Achievement: COMBO_MASTER (10x match streak)
+          if (this.matchStreak >= 10) {
+            this.game.unlockAchievement("combo_master");
+          }
+
           // Screen shake effect
           this.createScreenShake();
 
@@ -727,6 +732,11 @@ class MatchScreen extends Screen {
               // Achievement: SPEEDY_MATCHER (complete with 30+ seconds remaining)
               if (timeRemaining >= 30) {
                 this.game.unlockAchievement("speedy_matcher");
+              }
+
+              // Achievement: SPEED_DEMON (match all socks in under 10 seconds)
+              if (timeElapsed < 10) {
+                this.game.unlockAchievement("speed_demon");
               }
             }
           }

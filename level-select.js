@@ -1418,6 +1418,13 @@ class LevelSelect extends Screen {
       if (this.game.playerPoints >= levelCost) {
         this.game.audioManager.playSound("level-unlock", false, 0.6);
         this.game.playerPoints -= levelCost;
+
+        // Track money spent for Big Spender achievement
+        this.game.totalMoneySpent += levelCost;
+        if (this.game.totalMoneySpent >= 1000) {
+          this.game.unlockAchievement("big_spender");
+        }
+
         this.game.unlockedLevels[levelIndex] = true;
         this.game.saveGameData();
         this.game.startLevel(levelIndex, this.game.selectedDifficulty);
@@ -1849,6 +1856,13 @@ class LevelSelect extends Screen {
 
   awardPointsForMatch(sock1, sock2) {
     this.game.playerPoints += 1;
+
+    // Track easter egg sockballs for Sockball Wizard achievement
+    this.game.easterEggSockballsCreated++;
+    if (this.game.easterEggSockballsCreated >= 10) {
+      this.game.unlockAchievement("sockball_wizard");
+    }
+
     this.game.saveGameData();
 
     this.game.audioManager.playSound("points-gained", false, 0.7);
@@ -1925,9 +1939,20 @@ class LevelSelect extends Screen {
 
   activateEasterEgg() {
     this.logoClickCount++;
+    this.game.logoClickCount++; // Track in game for achievement persistence
+
+    // Achievement: LOGO_CLICKER (click logo 10 times)
+    if (this.game.logoClickCount >= 10) {
+      this.game.unlockAchievement("logo_clicker");
+    }
+
     if (!this.easterEggActive) {
       this.easterEggActive = true;
+
+      // Achievement: EASTER_EGG_HUNTER (unlock the easter egg)
+      this.game.unlockAchievement("easter_egg_hunter");
     }
+
     this.spawnSingleSock();
   }
 

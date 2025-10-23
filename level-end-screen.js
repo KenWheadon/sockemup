@@ -500,6 +500,11 @@ class LevelEndScreen extends Screen {
       this.game.playerPoints + this.totalScore
     );
 
+    // Achievement: DEEP_POCKETS (have 500 money at once)
+    if (this.game.playerPoints >= 500) {
+      this.game.unlockAchievement("deep_pockets");
+    }
+
     // Save game data (level completion and achievements were already handled in setup)
     this.game.saveGameData();
 
