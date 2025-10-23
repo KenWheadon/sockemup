@@ -1016,34 +1016,33 @@ class MatchScreen extends Screen {
         }
       );
 
-      // Draw arrow pointing at sock pile
+      // Draw hand icon pointing at sock pile
       ctx.save();
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-      ctx.lineWidth = this.game.getScaledValue(3);
 
-      // Arrow line
-      ctx.beginPath();
-      ctx.moveTo(
-        layout.instructionArrowX + this.game.getScaledValue(50),
-        layout.instructionArrowY
-      );
-      ctx.lineTo(layout.instructionArrowX, layout.instructionArrowY);
-      ctx.stroke();
+      if (this.game.images["arrow-no-pixel.png"]) {
+        const handIcon = this.game.images["arrow-no-pixel.png"];
+        const handIconHeight = this.game.getScaledValue(40);
+        const aspectRatio = handIcon.width / handIcon.height;
+        const handIconWidth = handIconHeight * aspectRatio;
 
-      // Arrowhead
-      ctx.beginPath();
-      ctx.moveTo(layout.instructionArrowX, layout.instructionArrowY);
-      ctx.lineTo(
-        layout.instructionArrowX + this.game.getScaledValue(15),
-        layout.instructionArrowY - this.game.getScaledValue(8)
-      );
-      ctx.lineTo(
-        layout.instructionArrowX + this.game.getScaledValue(15),
-        layout.instructionArrowY + this.game.getScaledValue(8)
-      );
-      ctx.closePath();
-      ctx.fill();
+        // Position for the hand icon
+        const handX = layout.instructionArrowX + this.game.getScaledValue(25);
+        const handY = layout.instructionArrowY;
+
+        // Translate to center of icon, apply rotation and flip, then draw
+        ctx.translate(handX, handY);
+        ctx.rotate(-Math.PI / 2); // Rotate 90 degrees counter-clockwise (pointing left)
+        ctx.scale(-1, 1); // Flip horizontally
+
+        ctx.drawImage(
+          handIcon,
+          -handIconWidth / 2,
+          -handIconHeight / 2,
+          handIconWidth,
+          handIconHeight
+        );
+      }
+
       ctx.restore();
     }
 
