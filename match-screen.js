@@ -59,7 +59,9 @@ class MatchScreen extends Screen {
     const barHeight = this.game.getScaledValue(GameConfig.UI_BAR.height);
     const barY = 0; // Top of screen
     const barPadding = this.game.getScaledValue(GameConfig.UI_BAR.padding);
-    const panelSpacing = this.game.getScaledValue(GameConfig.UI_BAR.panelSpacing);
+    const panelSpacing = this.game.getScaledValue(
+      GameConfig.UI_BAR.panelSpacing
+    );
 
     return {
       ...baseLayout,
@@ -152,7 +154,7 @@ class MatchScreen extends Screen {
 
     // Reset canvas transform in case shake is still active
     if (this.game.canvas) {
-      this.game.canvas.style.transform = '';
+      this.game.canvas.style.transform = "";
     }
 
     // Stop match music when leaving match screen
@@ -161,7 +163,7 @@ class MatchScreen extends Screen {
   }
 
   clearAllTimeouts() {
-    this.activeTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+    this.activeTimeouts.forEach((timeoutId) => clearTimeout(timeoutId));
     this.activeTimeouts = [];
   }
 
@@ -174,7 +176,8 @@ class MatchScreen extends Screen {
   setSockballAnimationTarget() {
     const layout = this.layoutCache;
     // Set the target position for sockball animations to the sockball counter icon
-    this.sockManager.sockballTargetX = layout.sockBallsX - this.game.getScaledValue(25);
+    this.sockManager.sockballTargetX =
+      layout.sockBallsX - this.game.getScaledValue(25);
     this.sockManager.sockballTargetY = layout.sockBallsY;
   }
 
@@ -643,7 +646,7 @@ class MatchScreen extends Screen {
           // Play points gained sound with slight delay
           const timeoutId = setTimeout(() => {
             // Fix Bug #4: Guard clause to prevent execution after screen cleanup
-            if (this.game.gameState !== 'matching') return;
+            if (this.game.gameState !== "matching") return;
             this.game.audioManager.playSound("points-gained", false, 0.4);
           }, 500);
           this.activeTimeouts.push(timeoutId);
@@ -684,7 +687,8 @@ class MatchScreen extends Screen {
           // Check if we've completed the required number of matches (stop timer immediately)
           // Count BOTH animated sockballs AND queued sockballs
           const level = GameConfig.LEVELS[this.game.currentLevel];
-          const totalSockballs = this.game.sockBalls + this.game.getSockballQueueLength();
+          const totalSockballs =
+            this.game.sockBalls + this.game.getSockballQueueLength();
           if (level && totalSockballs >= level.sockPairs) {
             // Mark level as completed to stop the timer
             if (!this.levelCompleted) {
@@ -698,7 +702,9 @@ class MatchScreen extends Screen {
               if (timeElapsed <= timeLimit) {
                 // Set time bonus flag - this will double rent payment points on level end screen
                 this.game.timeBonusEarned = true;
-                console.log(`⏱️ Time bonus earned! Finished in ${timeElapsed}s (limit: ${timeLimit}s)`);
+                console.log(
+                  `⏱️ Time bonus earned! Finished in ${timeElapsed}s (limit: ${timeLimit}s)`
+                );
               }
 
               // Achievement: SPEEDY_MATCHER (complete with 30+ seconds remaining)
@@ -858,7 +864,9 @@ class MatchScreen extends Screen {
       if (timeElapsed <= timeLimit) {
         // Set time bonus flag - this will double rent payment points on level end screen
         this.game.timeBonusEarned = true;
-        console.log(`⏱️ Time bonus earned! Finished in ${timeElapsed}s (limit: ${timeLimit}s)`);
+        console.log(
+          `⏱️ Time bonus earned! Finished in ${timeElapsed}s (limit: ${timeLimit}s)`
+        );
       }
 
       // Achievement: SPEEDY_MATCHER (complete with 30+ seconds remaining)
@@ -1016,15 +1024,24 @@ class MatchScreen extends Screen {
 
       // Arrow line
       ctx.beginPath();
-      ctx.moveTo(layout.instructionArrowX + this.game.getScaledValue(50), layout.instructionArrowY);
+      ctx.moveTo(
+        layout.instructionArrowX + this.game.getScaledValue(50),
+        layout.instructionArrowY
+      );
       ctx.lineTo(layout.instructionArrowX, layout.instructionArrowY);
       ctx.stroke();
 
       // Arrowhead
       ctx.beginPath();
       ctx.moveTo(layout.instructionArrowX, layout.instructionArrowY);
-      ctx.lineTo(layout.instructionArrowX + this.game.getScaledValue(15), layout.instructionArrowY - this.game.getScaledValue(8));
-      ctx.lineTo(layout.instructionArrowX + this.game.getScaledValue(15), layout.instructionArrowY + this.game.getScaledValue(8));
+      ctx.lineTo(
+        layout.instructionArrowX + this.game.getScaledValue(15),
+        layout.instructionArrowY - this.game.getScaledValue(8)
+      );
+      ctx.lineTo(
+        layout.instructionArrowX + this.game.getScaledValue(15),
+        layout.instructionArrowY + this.game.getScaledValue(8)
+      );
       ctx.closePath();
       ctx.fill();
       ctx.restore();
@@ -1070,13 +1087,19 @@ class MatchScreen extends Screen {
       );
     }
 
-    this.renderText(ctx, `${this.game.sockBalls}`, sockBallsX + this.game.getScaledValue(10), sockBallsY, {
-      fontSize: layout.headerFontSize,
-      align: "left",
-      baseline: "middle",
-      color: "rgba(255, 215, 0, 0.9)",
-      weight: "bold",
-    });
+    this.renderText(
+      ctx,
+      `${this.game.sockBalls}`,
+      sockBallsX + this.game.getScaledValue(10),
+      sockBallsY,
+      {
+        fontSize: layout.headerFontSize,
+        align: "left",
+        baseline: "middle",
+        color: "rgba(255, 215, 0, 0.9)",
+        weight: "bold",
+      }
+    );
 
     // Time display
     const timeElapsed = Math.max(0, Math.floor(this.game.timeElapsed));
@@ -1095,7 +1118,8 @@ class MatchScreen extends Screen {
     if (this.game.images["icon-clock.png"]) {
       const clockIcon = this.game.images["icon-clock.png"];
       const clockIconHeight = this.game.getScaledValue(40);
-      const clockIconWidth = clockIconHeight * (clockIcon.width / clockIcon.height);
+      const clockIconWidth =
+        clockIconHeight * (clockIcon.width / clockIcon.height);
       ctx.drawImage(
         clockIcon,
         layout.timeX - this.game.getScaledValue(50) - clockIconWidth / 2,
@@ -1157,24 +1181,30 @@ class MatchScreen extends Screen {
     const buttonLeft = x - width / 2;
     const buttonTop = y - height / 2;
 
-    // Check if this is the exit button and we have the image
+    // Check which button this is and get the appropriate image
     const isExitButton = text === "Exit";
-    const buttonImage = isExitButton ? this.game.images["btn-exit.png"] : null;
+    const isPauseButton = text === "❚❚ Pause";
+    const isResumeButton = text === "▶ Resume";
+
+    let buttonImage = null;
+    if (isExitButton) {
+      buttonImage = this.game.images["btn-exit.png"];
+    } else if (isPauseButton) {
+      buttonImage = this.game.images["btn-pause.png"];
+    } else if (isResumeButton) {
+      buttonImage = this.game.images["btn-resume.png"];
+    }
 
     if (buttonImage) {
-      // Use button image
+      // Use button image - always fit to height for consistency
       const aspectRatio = buttonImage.width / buttonImage.height;
-      let imgWidth = width;
-      let imgHeight = imgWidth / aspectRatio;
 
-      // If height is too large, scale by height instead
-      if (imgHeight > height) {
-        imgHeight = height;
-        imgWidth = imgHeight * aspectRatio;
-      }
+      // Always fit to height to ensure all buttons have same height
+      const imgHeight = height;
+      const imgWidth = imgHeight * aspectRatio;
 
       const imgX = buttonLeft + (width - imgWidth) / 2;
-      const imgY = buttonTop + (height - imgHeight) / 2;
+      const imgY = buttonTop;
 
       // Apply hover effect - scale and add glow
       if (isHovered) {
@@ -1198,18 +1228,38 @@ class MatchScreen extends Screen {
 
       // Button background
       ctx.fillStyle = isHovered ? this.lightenColor(baseColor) : baseColor;
-      ctx.strokeStyle = isHovered ? "rgba(255, 255, 255, 0.8)" : "rgba(255, 255, 255, 0.4)";
+      ctx.strokeStyle = isHovered
+        ? "rgba(255, 255, 255, 0.8)"
+        : "rgba(255, 255, 255, 0.4)";
       ctx.lineWidth = 2;
 
       // Rounded rectangle
       ctx.beginPath();
       ctx.moveTo(buttonLeft + radius, buttonTop);
       ctx.lineTo(buttonLeft + width - radius, buttonTop);
-      ctx.arcTo(buttonLeft + width, buttonTop, buttonLeft + width, buttonTop + radius, radius);
+      ctx.arcTo(
+        buttonLeft + width,
+        buttonTop,
+        buttonLeft + width,
+        buttonTop + radius,
+        radius
+      );
       ctx.lineTo(buttonLeft + width, buttonTop + height - radius);
-      ctx.arcTo(buttonLeft + width, buttonTop + height, buttonLeft + width - radius, buttonTop + height, radius);
+      ctx.arcTo(
+        buttonLeft + width,
+        buttonTop + height,
+        buttonLeft + width - radius,
+        buttonTop + height,
+        radius
+      );
       ctx.lineTo(buttonLeft + radius, buttonTop + height);
-      ctx.arcTo(buttonLeft, buttonTop + height, buttonLeft, buttonTop + height - radius, radius);
+      ctx.arcTo(
+        buttonLeft,
+        buttonTop + height,
+        buttonLeft,
+        buttonTop + height - radius,
+        radius
+      );
       ctx.lineTo(buttonLeft, buttonTop + radius);
       ctx.arcTo(buttonLeft, buttonTop, buttonLeft + radius, buttonTop, radius);
       ctx.closePath();
@@ -1229,11 +1279,29 @@ class MatchScreen extends Screen {
     ctx.restore();
   }
 
+  renderPauseOverlay(ctx) {
+    // Call parent to render the dark overlay and "PAUSED" text
+    super.renderPauseOverlay(ctx);
+
+    // Render the resume button on top of the overlay
+    const layout = this.layoutCache;
+    this.renderBottomBarButton(
+      ctx,
+      layout.pauseButtonX,
+      layout.pauseButtonY,
+      layout.pauseButtonWidth,
+      layout.pauseButtonHeight,
+      "▶ Resume",
+      this.pauseButton.hovered,
+      "rgba(100, 100, 100, 0.8)"
+    );
+  }
+
   lightenColor(color) {
     // Simple color lightening - increase opacity or brightness
     return color.replace(/[\d.]+\)$/, (match) => {
       const opacity = parseFloat(match);
-      return (Math.min(opacity + 0.1, 1.0)) + ")";
+      return Math.min(opacity + 0.1, 1.0) + ")";
     });
   }
 }

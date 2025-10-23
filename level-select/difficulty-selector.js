@@ -271,80 +271,115 @@ class DifficultySelector {
   renderButton(ctx) {
     ctx.save();
 
-    const radius = this.game.getScaledValue(8);
+    const buttonImage = this.game.images["btn-difficulty.png"];
 
-    // Button background with gradient
-    const gradient = ctx.createLinearGradient(
-      this.button.x,
-      this.button.y,
-      this.button.x,
-      this.button.y + this.button.height
-    );
+    if (buttonImage) {
+      // Use the pixel art button image
+      const imageAspectRatio = buttonImage.width / buttonImage.height;
 
-    if (this.button.hovered || this.isOpen) {
-      gradient.addColorStop(0, "rgba(100, 150, 255, 0.95)");
-      gradient.addColorStop(1, "rgba(60, 100, 200, 0.95)");
-    } else {
-      gradient.addColorStop(0, "rgba(80, 120, 200, 0.85)");
-      gradient.addColorStop(1, "rgba(50, 80, 160, 0.85)");
-    }
-    ctx.fillStyle = gradient;
+      // Fit to height to maintain consistent button heights
+      const drawHeight = this.button.height;
+      const drawWidth = drawHeight * imageAspectRatio;
+      const drawX = this.button.x + (this.button.width - drawWidth) / 2;
+      const drawY = this.button.y;
 
-    // Add glow if hovered or open
-    if (this.button.hovered || this.isOpen) {
-      ctx.shadowColor = "rgba(100, 150, 255, 0.6)";
-      ctx.shadowBlur = this.game.getScaledValue(12);
-    }
-
-    // Button border
-    ctx.strokeStyle =
-      this.button.hovered || this.isOpen
-        ? "rgba(150, 200, 255, 0.9)"
-        : "rgba(100, 150, 255, 0.6)";
-    ctx.lineWidth = this.game.getScaledValue(3);
-
-    this.ui.drawRoundedRect(
-      ctx,
-      this.button.x,
-      this.button.y,
-      this.button.width,
-      this.button.height,
-      radius
-    );
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.restore();
-
-    // Button text
-    const currentDifficultyName = this.getDifficultyName(
-      this.game.selectedDifficulty
-    );
-    this.ui.renderText(
-      ctx,
-      currentDifficultyName,
-      this.button.x + this.button.width / 2,
-      this.button.y + this.button.height / 2,
-      {
-        fontSize: this.game.getScaledValue(16),
-        color: "white",
-        weight: "bold",
-        align: "center",
-        baseline: "middle",
+      // Apply hover and open effects
+      if (this.button.hovered || this.isOpen) {
+        ctx.globalAlpha = 1.0;
+        ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
+        ctx.shadowBlur = 10;
+      } else {
+        ctx.globalAlpha = 0.9;
       }
-    );
 
-    // Dropdown arrow indicator
-    ctx.save();
-    ctx.fillStyle = "white";
-    ctx.font = `${this.game.getScaledValue(12)}px Arial`;
-    ctx.textAlign = "right";
-    ctx.textBaseline = "middle";
-    ctx.fillText(
-      this.isOpen ? "▲" : "▼",
-      this.button.x + this.button.width - this.game.getScaledValue(10),
-      this.button.y + this.button.height / 2
-    );
+      ctx.drawImage(
+        buttonImage,
+        drawX,
+        drawY,
+        drawWidth,
+        drawHeight
+      );
+
+      // Reset effects
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1.0;
+    } else {
+      // Fallback to original rendering if image not loaded
+      const radius = this.game.getScaledValue(8);
+
+      // Button background with gradient
+      const gradient = ctx.createLinearGradient(
+        this.button.x,
+        this.button.y,
+        this.button.x,
+        this.button.y + this.button.height
+      );
+
+      if (this.button.hovered || this.isOpen) {
+        gradient.addColorStop(0, "rgba(100, 150, 255, 0.95)");
+        gradient.addColorStop(1, "rgba(60, 100, 200, 0.95)");
+      } else {
+        gradient.addColorStop(0, "rgba(80, 120, 200, 0.85)");
+        gradient.addColorStop(1, "rgba(50, 80, 160, 0.85)");
+      }
+      ctx.fillStyle = gradient;
+
+      // Add glow if hovered or open
+      if (this.button.hovered || this.isOpen) {
+        ctx.shadowColor = "rgba(100, 150, 255, 0.6)";
+        ctx.shadowBlur = this.game.getScaledValue(12);
+      }
+
+      // Button border
+      ctx.strokeStyle =
+        this.button.hovered || this.isOpen
+          ? "rgba(150, 200, 255, 0.9)"
+          : "rgba(100, 150, 255, 0.6)";
+      ctx.lineWidth = this.game.getScaledValue(3);
+
+      this.ui.drawRoundedRect(
+        ctx,
+        this.button.x,
+        this.button.y,
+        this.button.width,
+        this.button.height,
+        radius
+      );
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Button text
+      const currentDifficultyName = this.getDifficultyName(
+        this.game.selectedDifficulty
+      );
+      this.ui.renderText(
+        ctx,
+        currentDifficultyName,
+        this.button.x + this.button.width / 2,
+        this.button.y + this.button.height / 2,
+        {
+          fontSize: this.game.getScaledValue(16),
+          color: "white",
+          weight: "bold",
+          align: "center",
+          baseline: "middle",
+        }
+      );
+
+      // Dropdown arrow indicator
+      ctx.save();
+      ctx.fillStyle = "white";
+      ctx.font = `${this.game.getScaledValue(12)}px Arial`;
+      ctx.textAlign = "right";
+      ctx.textBaseline = "middle";
+      ctx.fillText(
+        this.isOpen ? "▲" : "▼",
+        this.button.x + this.button.width - this.game.getScaledValue(10),
+        this.button.y + this.button.height / 2
+      );
+    }
     ctx.restore();
   }
 

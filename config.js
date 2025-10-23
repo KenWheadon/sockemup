@@ -728,6 +728,8 @@ const GameConfig = {
       "btn-next.png",
       "btn-back.png",
       "btn-pause.png",
+      "btn-resume.png",
+      "btn-difficulty.png",
       "btn-exit.png",
       "btn-trophies.png",
       "btn-htp.png",

@@ -502,6 +502,12 @@ class LevelSelect extends Screen {
       creditsModal.remove();
     }
     this.creditsModal = null;
+
+    // Clear bonus/easter egg socks
+    this.menuSocks = [];
+    this.easterEggActive = false;
+    this.isDragging = false;
+    this.dragSock = null;
   }
 
   setupCreditsModal() {
