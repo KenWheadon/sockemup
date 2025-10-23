@@ -91,6 +91,22 @@ class AudioManager {
     }
   }
 
+  pauseMusic() {
+    if (this.currentMusic && !this.currentMusic.paused) {
+      console.log(`⏸️ Pausing music: ${this.currentMusicName}`);
+      this.currentMusic.pause();
+    }
+  }
+
+  resumeMusic() {
+    if (this.currentMusic && this.currentMusic.paused) {
+      console.log(`▶️ Resuming music: ${this.currentMusicName}`);
+      this.currentMusic.play().catch((e) => {
+        console.warn(`Music resume failed for ${this.currentMusicName}:`, e);
+      });
+    }
+  }
+
   fadeOutMusic(duration = 1000) {
     if (!this.currentMusic || this.isFading) return;
 

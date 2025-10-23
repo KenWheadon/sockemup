@@ -682,6 +682,14 @@ class LevelSelect extends Screen {
     }
 
     // Update feedback manager to keep achievement/story notifications visible
+    // Tell feedbackManager that Martha is off-screen to prevent dialogue bubbles from showing
+    const layout = this.layoutCache;
+    this.game.feedbackManager.updateMarthaPosition(
+      layout.marthaX || 0,
+      layout.marthaY || 0,
+      layout.marthaWidth || 0,
+      false // Martha is not "on screen" in the throwing screen context
+    );
     this.game.feedbackManager.update(deltaTime);
 
     for (let i = 0; i < this.levelHoverAnimations.length; i++) {
@@ -4429,6 +4437,10 @@ class LevelSelect extends Screen {
   openVideoPlayer() {
     this.videoPlayerActive = true;
 
+    // Pause background music while video plays
+    console.log("🎵 Pausing background music for video");
+    this.game.audioManager.pauseMusic();
+
     try {
       // Create video element
       this.videoElement = document.createElement("video");
@@ -4465,6 +4477,10 @@ class LevelSelect extends Screen {
       this.videoElement.remove();
       this.videoElement = null;
     }
+
+    // Resume background music after video closes
+    console.log("🎵 Resuming background music after video");
+    this.game.audioManager.resumeMusic();
 
     console.log("🎥 Video player closed");
   }

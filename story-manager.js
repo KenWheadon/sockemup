@@ -236,6 +236,7 @@ class StoryManager {
 
     // Skip button
     if (this.isPointInRect(x, y, this.buttons.skip)) {
+      this.ensureMusicIsPlaying();
       this.hide();
       return true;
     }
@@ -245,12 +246,14 @@ class StoryManager {
       this.currentSlideIndex > 0 &&
       this.isPointInRect(x, y, this.buttons.previous)
     ) {
+      this.ensureMusicIsPlaying();
       this.previousSlide();
       return true;
     }
 
     // Next button
     if (this.isPointInRect(x, y, this.buttons.next)) {
+      this.ensureMusicIsPlaying();
       if (this.currentSlideIndex < this.slides.length - 1) {
         this.nextSlide();
       } else {
@@ -261,6 +264,23 @@ class StoryManager {
     }
 
     return true; // Consume click even if not on button
+  }
+
+  // Ensure background music is playing after user interaction
+  ensureMusicIsPlaying() {
+    // Enable audio manager if not already enabled
+    if (!this.game.audioManager.enabled) {
+      this.game.audioManager.enable();
+    }
+
+    // Check if music should be playing but isn't
+    if (
+      !this.game.audioManager.currentMusic ||
+      this.game.audioManager.currentMusic.paused
+    ) {
+      console.log("🎵 Starting background music after user interaction");
+      this.game.audioManager.playMusic("menu-music", true);
+    }
   }
 
   nextSlide() {
