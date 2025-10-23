@@ -369,35 +369,41 @@ class LevelSelect extends Screen {
   }
 
   setupEasterDropZones() {
-    this.clearLayoutCache();
-    this.calculateLayout();
+    // Only initialize drop zones if they don't exist yet
+    // This preserves their state and positions when returning to the level select screen
+    if (this.easterDropZones.length === 0) {
+      this.clearLayoutCache();
+      this.calculateLayout();
 
-    const layout = this.layoutCache;
+      const layout = this.layoutCache;
 
-    this.easterDropZones = [
-      {
-        x: layout.dropZone1X,
-        y: layout.dropZone1Y,
-        width: layout.dropZoneSize,
-        height: layout.dropZoneSize,
-        sock: null,
-        glowEffect: 0,
-        hoverEffect: 0,
-        snapEffect: 0,
-        id: 0,
-      },
-      {
-        x: layout.dropZone2X,
-        y: layout.dropZone2Y,
-        width: layout.dropZoneSize,
-        height: layout.dropZoneSize,
-        sock: null,
-        glowEffect: 0,
-        hoverEffect: 0,
-        snapEffect: 0,
-        id: 1,
-      },
-    ];
+      this.easterDropZones = [
+        {
+          x: layout.dropZone1X,
+          y: layout.dropZone1Y,
+          width: layout.dropZoneSize,
+          height: layout.dropZoneSize,
+          sock: null,
+          glowEffect: 0,
+          hoverEffect: 0,
+          snapEffect: 0,
+          id: 0,
+        },
+        {
+          x: layout.dropZone2X,
+          y: layout.dropZone2Y,
+          width: layout.dropZoneSize,
+          height: layout.dropZoneSize,
+          sock: null,
+          glowEffect: 0,
+          hoverEffect: 0,
+          snapEffect: 0,
+          id: 1,
+        },
+      ];
+    }
+    // If drop zones already exist, don't recalculate or update anything
+    // This keeps them in the same position throughout the game session
   }
 
   setup() {
