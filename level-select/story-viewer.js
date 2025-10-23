@@ -32,6 +32,9 @@ class StoryViewer {
     // Spritesheet animation state
     this.currentFrame = 0;
     this.frameTimer = 0;
+
+    // Pulse animation for unviewed panels
+    this.pulseTimer = 0;
   }
 
   /**
@@ -42,7 +45,27 @@ class StoryViewer {
     if (unlockedCount === 0) return;
 
     this.isOpen = true;
-    this.currentPanel = 0;
+
+    // Find the earliest unviewed panel
+    const unlockedPanels = this.getUnlockedPanels();
+    let earliestUnviewed = 0;
+    for (let i = 0; i < unlockedPanels.length; i++) {
+      const panelIndex = unlockedPanels[i];
+      if (!this.game.viewedStoryPanels[panelIndex]) {
+        earliestUnviewed = i;
+        break;
+      }
+    }
+
+    this.currentPanel = earliestUnviewed;
+
+    // Mark the current panel as viewed
+    if (unlockedPanels.length > 0) {
+      const panelIndex = unlockedPanels[this.currentPanel];
+      this.game.viewedStoryPanels[panelIndex] = true;
+      this.game.saveGameData();
+    }
+
     this.resetSpriteAnimation();
     this.game.audioManager.playSound("button-click", false, 0.5);
   }
@@ -62,6 +85,12 @@ class StoryViewer {
     const unlockedPanels = this.getUnlockedPanels();
     if (this.currentPanel < unlockedPanels.length - 1) {
       this.currentPanel++;
+
+      // Mark the new panel as viewed
+      const panelIndex = unlockedPanels[this.currentPanel];
+      this.game.viewedStoryPanels[panelIndex] = true;
+      this.game.saveGameData();
+
       this.resetSpriteAnimation();
       this.game.audioManager.playSound("button-click", false, 0.5);
     }
@@ -73,6 +102,13 @@ class StoryViewer {
   previousPanel() {
     if (this.currentPanel > 0) {
       this.currentPanel--;
+
+      // Mark the new panel as viewed
+      const unlockedPanels = this.getUnlockedPanels();
+      const panelIndex = unlockedPanels[this.currentPanel];
+      this.game.viewedStoryPanels[panelIndex] = true;
+      this.game.saveGameData();
+
       this.resetSpriteAnimation();
       this.game.audioManager.playSound("button-click", false, 0.5);
     }
@@ -97,6 +133,18 @@ class StoryViewer {
       }
     }
     return unlockedPanels;
+  }
+
+  /**
+   * Check if there are any unlocked but unviewed panels
+   */
+  hasUnviewedPanels() {
+    for (let i = 0; i < this.game.unlockedStoryPanels.length; i++) {
+      if (this.game.unlockedStoryPanels[i] && !this.game.viewedStoryPanels[i]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -129,6 +177,9 @@ class StoryViewer {
    * Update animations
    */
   update(deltaTime) {
+    // Update pulse animation timer (for unviewed panels indicator)
+    this.pulseTimer += deltaTime;
+
     // Update button hover animation
     const buttonAnimSpeed = 0.008;
     const target = this.button.hovered ? 1 : 0;

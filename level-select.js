@@ -2486,6 +2486,9 @@ class LevelSelect extends Screen {
       (u) => u
     ).length;
 
+    // Check if there are unviewed panels to enable pulse
+    const hasUnviewedPanels = this.storyViewer.hasUnviewedPanels();
+
     this.renderTopBarButton(
       ctx,
       layout.storyViewerButtonX,
@@ -2495,9 +2498,10 @@ class LevelSelect extends Screen {
       "Story",
       this.storyViewer.button.hovered,
       "rgba(138, 43, 226, 0.8)",
-      `${unlockedLoreCount}/9`,
+      null, // Remove x/9 display
       unlockedLoreCount === 0, // isDisabled when no panels unlocked
-      "btn-story.png"
+      "btn-story.png",
+      hasUnviewedPanels // Pulse when there are unviewed panels
     );
 
     this.renderTopBarButton(
@@ -2526,7 +2530,8 @@ class LevelSelect extends Screen {
     baseColor,
     countBadge = null,
     isDisabled = false,
-    imageKey = null
+    imageKey = null,
+    shouldPulse = false
   ) {
     ctx.save();
 
@@ -2558,6 +2563,16 @@ class LevelSelect extends Screen {
         ctx.shadowBlur = 10;
       } else {
         ctx.globalAlpha = 0.9;
+      }
+
+      // Add pulse effect if requested
+      if (shouldPulse && !isDisabled) {
+        const pulseFrequency = 0.002; // Slower pulse
+        const pulseAmount = Math.sin(this.storyViewer.pulseTimer * pulseFrequency) * 0.5 + 0.5;
+        const glowIntensity = 0.3 + pulseAmount * 0.7;
+
+        ctx.shadowColor = `rgba(255, 100, 255, ${glowIntensity})`;
+        ctx.shadowBlur = this.game.getScaledValue(15 + pulseAmount * 10);
       }
 
       ctx.drawImage(buttonImage, drawX, drawY, drawWidth, drawHeight);

@@ -63,6 +63,7 @@ class SockGame {
 
     // Story panel unlocks (one per level completed)
     this.unlockedStoryPanels = Array(9).fill(false);
+    this.viewedStoryPanels = Array(9).fill(false); // Track which panels have been viewed
     this.newStoryPanelUnlocked = -1; // Index of newly unlocked panel to animate
 
     // Initialize audio manager
@@ -617,6 +618,8 @@ class SockGame {
       // Story panels
       this.unlockedStoryPanels =
         data.unlockedStoryPanels || Array(9).fill(false);
+      this.viewedStoryPanels =
+        data.viewedStoryPanels || Array(9).fill(false);
 
       // NEW GAME+ banner tracking
       this.hasShownNewGamePlusBanner = data.hasShownNewGamePlusBanner || false;
@@ -690,6 +693,7 @@ class SockGame {
       achievements: this.achievements,
       // Story panels
       unlockedStoryPanels: this.unlockedStoryPanels,
+      viewedStoryPanels: this.viewedStoryPanels,
     };
     localStorage.setItem("sockGameData", JSON.stringify(data));
     console.log(
