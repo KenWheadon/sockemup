@@ -148,6 +148,27 @@ class AudioManager {
     });
   }
 
+  playRandomSound(soundPrefix, count, loop = false, volume = null) {
+    if (!this.enabled) return;
+
+    // Pick a random sound from the group (1 to count)
+    const randomIndex = Math.floor(Math.random() * count) + 1;
+    const soundName = `${soundPrefix}${randomIndex}`;
+
+    // Check if any sound from this group is currently playing
+    for (let i = 1; i <= count; i++) {
+      const checkSoundName = `${soundPrefix}${i}`;
+      const sound = this.sounds[checkSoundName];
+      if (sound && !sound.paused && !sound.ended) {
+        console.log(`🎵 Sound from ${soundPrefix} group already playing, skipping`);
+        return;
+      }
+    }
+
+    // Play the randomly selected sound
+    this.playSound(soundName, loop, volume);
+  }
+
   stopSound(soundName) {
     if (!this.enabled || !this.sounds[soundName]) return;
 

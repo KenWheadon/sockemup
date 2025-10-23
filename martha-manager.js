@@ -649,8 +649,8 @@ class MarthaManager {
     // Add points based on catch quality
     this.game.playerPoints += points;
 
-    // Play Martha hit sound
-    this.game.audioManager.playSound("martha-hit", false, 0.5);
+    // Play random goblin sound (8 different sounds)
+    this.game.audioManager.playRandomSound("goblin-sound", 8, false, 0.5);
 
     // Activate hit effect
     this.hitEffect.active = true;

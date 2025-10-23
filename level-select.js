@@ -1550,8 +1550,8 @@ class LevelSelect extends Screen {
         this.marthaLaughing = true;
         this.marthaLaughFrameIndex = 0;
         this.marthaLaughAnimationTimer = 0;
-        // Play Martha laugh sound
-        this.game.audioManager.playSound("martha-laugh", false, 0.7);
+        // Play random goblin sound (8 different sounds)
+        this.game.audioManager.playRandomSound("goblin-sound", 8, false, 0.7);
       }
 
       return true;
