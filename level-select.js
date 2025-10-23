@@ -29,8 +29,8 @@ class LevelSelect extends Screen {
 
     // You Win graphic configuration
     this.YOU_WIN_CONFIG = {
-      maxWidth: 300 * 1.25,
-      maxHeight: 120 * 1.25,
+      maxWidth: 300 * 1.75,
+      maxHeight: 120 * 1.75,
       offsetY: 225,
       glowIntensity: 15,
       pulseSpeed: 0.005,
@@ -66,6 +66,10 @@ class LevelSelect extends Screen {
     this.marthaLaughing = false;
     this.marthaLaughFrameIndex = 0;
     this.marthaLaughAnimationTimer = 0;
+
+    // You Win animation state
+    this.youWinFrameIndex = 0;
+    this.youWinAnimationTimer = 0;
 
     // Martha quote system - rotating speech bubbles
     this.marthaQuotes = [
@@ -744,6 +748,23 @@ class LevelSelect extends Screen {
         if (this.marthaLaughFrameIndex >= spritesheet.animationFrames.length) {
           this.marthaLaughing = false;
           this.marthaLaughFrameIndex = 0;
+        }
+      }
+    }
+
+    // Update You Win animation (loops continuously when all levels complete)
+    if (this.areAllLevelsCompleted()) {
+      this.youWinAnimationTimer += deltaTime;
+      const youWinSpritesheet = GameConfig.YOU_WIN_SPRITESHEET;
+      const frameTime = 1000 / youWinSpritesheet.fps;
+
+      if (this.youWinAnimationTimer >= frameTime) {
+        this.youWinFrameIndex++;
+        this.youWinAnimationTimer = 0;
+
+        // Loop the animation
+        if (this.youWinFrameIndex >= youWinSpritesheet.animationFrames.length) {
+          this.youWinFrameIndex = 0;
         }
       }
     }
@@ -1913,7 +1934,8 @@ class LevelSelect extends Screen {
   }
 
   calculateYouWinImageSize() {
-    const youWinImage = this.game.images["you-win.png"];
+    const spritesheet = GameConfig.YOU_WIN_SPRITESHEET;
+    const youWinImage = this.game.images[spritesheet.filename];
     if (!youWinImage) {
       return { width: 0, height: 0 };
     }
@@ -1922,7 +1944,7 @@ class LevelSelect extends Screen {
     const maxHeight = this.game.getScaledValue(this.YOU_WIN_CONFIG.maxHeight);
 
     if (this.YOU_WIN_CONFIG.maintainAspectRatio) {
-      const aspectRatio = youWinImage.width / youWinImage.height;
+      const aspectRatio = spritesheet.frameWidth / spritesheet.frameHeight;
 
       if (aspectRatio > maxWidth / maxHeight) {
         return {
@@ -1945,8 +1967,10 @@ class LevelSelect extends Screen {
 
   renderYouWinGraphic(ctx) {
     const layout = this.layoutCache;
+    const spritesheet = GameConfig.YOU_WIN_SPRITESHEET;
+    const youWinImage = this.game.images[spritesheet.filename];
 
-    if (this.game.images["you-win.png"]) {
+    if (youWinImage) {
       ctx.save();
 
       const time = Date.now();
@@ -1962,8 +1986,19 @@ class LevelSelect extends Screen {
       ctx.translate(layout.youWinX, layout.youWinY);
       ctx.scale(scale, scale);
 
+      // Calculate spritesheet frame position
+      const frameIndex = spritesheet.animationFrames[this.youWinFrameIndex];
+      const col = frameIndex % spritesheet.columns;
+      const row = Math.floor(frameIndex / spritesheet.columns);
+      const sx = col * spritesheet.frameWidth;
+      const sy = row * spritesheet.frameHeight;
+
       ctx.drawImage(
-        this.game.images["you-win.png"],
+        youWinImage,
+        sx,
+        sy,
+        spritesheet.frameWidth,
+        spritesheet.frameHeight,
         -layout.youWinWidth / 2,
         -layout.youWinHeight / 2,
         layout.youWinWidth,

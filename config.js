@@ -313,6 +313,20 @@ const GameConfig = {
     fps: 24, // Match How to Play animation speed
   },
 
+  MARTHA_UNLOCK8_SPRITESHEET: {
+    filename: "martha-unlock8-spritesheet.png",
+    frameWidth: 229, // Width of each frame in the spritesheet (1374 / 6)
+    frameHeight: 276, // Height of each frame in the spritesheet (1656 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 24, // Match How to Play animation speed
+  },
+
   MARTHA_UNLOCK9_SPRITESHEET: {
     filename: "martha-unlock9-spritesheet.png",
     frameWidth: 310, // Width of each frame in the spritesheet (1860 / 6)
@@ -325,6 +339,20 @@ const GameConfig = {
       21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
     ], // All 36 frames
     fps: 24, // Match How to Play animation speed
+  },
+
+  YOU_WIN_SPRITESHEET: {
+    filename: "you-win-spritesheet.png",
+    frameWidth: 376, // Width of each frame in the spritesheet (2256 / 6)
+    frameHeight: 337, // Height of each frame in the spritesheet (2022 / 6)
+    columns: 6,
+    rows: 6,
+    totalFrames: 36,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+    ], // All 36 frames
+    fps: 12, // Animation speed for victory screen
   },
 
   // Throwing screen settings
@@ -678,6 +706,7 @@ const GameConfig = {
       "martha-unlock4-spritesheet.png",
       "martha-unlock5-spritesheet.png",
       "martha-unlock7-spritesheet.png",
+      "martha-unlock8-spritesheet.png",
       "martha-unlock9-spritesheet.png",
     ],
     UI: [
@@ -695,6 +724,7 @@ const GameConfig = {
       "throw-bg-9.png",
       "level-select-bg.png",
       "you-win.png",
+      "you-win-spritesheet.png",
     ],
   },
 
@@ -1068,8 +1098,9 @@ const GameConfig = {
     {
       id: "panel_8",
       title: "The Truth",
-      text: "Martha doesn’t dodge your throws—she’s trying to catch them. Her arms are just tragically short. When a sockball hits her square in the chest, she beams with pride. When it hits her face, she just laughs and mutters, ‘Reggie could never aim like that.’ Turns out, every throw—face shot included—helps her absorb more sockball magic.",
+      text: "Martha doesn't dodge your throws—she's trying to catch them. Her arms are just tragically short. When a sockball hits her square in the chest, she beams with pride. When it hits her face, she just laughs and mutters, 'Reggie could never aim like that.' Turns out, every throw—face shot included—helps her absorb more sockball magic.",
       image: "story-8.png",
+      spritesheet: "MARTHA_UNLOCK8_SPRITESHEET",
     },
     {
       id: "panel_9",
