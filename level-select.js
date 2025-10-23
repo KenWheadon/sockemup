@@ -3468,39 +3468,94 @@ class LevelSelect extends Screen {
 
     ctx.save();
 
-    const gradient = ctx.createLinearGradient(
-      buttonX,
-      buttonY,
-      buttonX,
-      buttonY + height
-    );
-    if (isClose) {
-      gradient.addColorStop(0, "rgba(200, 50, 50, 0.8)");
-      gradient.addColorStop(1, "rgba(150, 30, 30, 0.8)");
-    } else {
-      gradient.addColorStop(0, "rgba(100, 150, 255, 0.8)");
-      gradient.addColorStop(1, "rgba(65, 105, 225, 0.8)");
-    }
-    ctx.fillStyle = gradient;
-    this.drawRoundedRect(ctx, buttonX, buttonY, width, height, radius);
-    ctx.fill();
+    // Determine which button image to use based on text content
+    let buttonImage = null;
+    const isPrevious = text.includes("Prev") || text.includes("←");
+    const isNext = text.includes("Next") || text.includes("→");
 
-    ctx.strokeStyle = isClose
-      ? "rgba(255, 100, 100, 0.6)"
-      : "rgba(150, 200, 255, 0.6)";
-    ctx.lineWidth = this.game.getScaledValue(2);
-    this.drawRoundedRect(ctx, buttonX, buttonY, width, height, radius);
-    ctx.stroke();
+    if (isPrevious) {
+      buttonImage = this.game.images["btn-back.png"];
+    } else if (isNext) {
+      buttonImage = this.game.images["btn-next.png"];
+    }
+
+    // Check if mouse is hovering (we need to track hover state for these buttons)
+    const isHovered = this.isPointInRect(this.lastMouseX || 0, this.lastMouseY || 0, {
+      x: buttonX,
+      y: buttonY,
+      width: width,
+      height: height
+    });
+
+    // If we have a button image for Next/Previous, use it
+    if (buttonImage && !isClose) {
+      // Calculate dimensions to fit the button while maintaining aspect ratio
+      const aspectRatio = buttonImage.width / buttonImage.height;
+      let imgWidth = width;
+      let imgHeight = imgWidth / aspectRatio;
+
+      // If height is too large, scale by height instead
+      if (imgHeight > height) {
+        imgHeight = height;
+        imgWidth = imgHeight * aspectRatio;
+      }
+
+      const imgX = buttonX + (width - imgWidth) / 2;
+      const imgY = buttonY + (height - imgHeight) / 2;
+
+      // Apply hover effect - scale and add glow
+      if (isHovered) {
+        ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+        ctx.shadowBlur = this.game.getScaledValue(20);
+
+        // Scale up slightly on hover
+        const scale = 1.05;
+        const scaledWidth = imgWidth * scale;
+        const scaledHeight = imgHeight * scale;
+        const scaledX = buttonX + (width - scaledWidth) / 2;
+        const scaledY = buttonY + (height - scaledHeight) / 2;
+
+        ctx.drawImage(buttonImage, scaledX, scaledY, scaledWidth, scaledHeight);
+      } else {
+        ctx.drawImage(buttonImage, imgX, imgY, imgWidth, imgHeight);
+      }
+    } else {
+      // Fallback for Close button or if images not loaded - use gradient style
+      const gradient = ctx.createLinearGradient(
+        buttonX,
+        buttonY,
+        buttonX,
+        buttonY + height
+      );
+      if (isClose) {
+        gradient.addColorStop(0, "rgba(200, 50, 50, 0.8)");
+        gradient.addColorStop(1, "rgba(150, 30, 30, 0.8)");
+      } else {
+        gradient.addColorStop(0, "rgba(100, 150, 255, 0.8)");
+        gradient.addColorStop(1, "rgba(65, 105, 225, 0.8)");
+      }
+      ctx.fillStyle = gradient;
+      this.drawRoundedRect(ctx, buttonX, buttonY, width, height, radius);
+      ctx.fill();
+
+      ctx.strokeStyle = isClose
+        ? "rgba(255, 100, 100, 0.6)"
+        : "rgba(150, 200, 255, 0.6)";
+      ctx.lineWidth = this.game.getScaledValue(2);
+      this.drawRoundedRect(ctx, buttonX, buttonY, width, height, radius);
+      ctx.stroke();
+
+      // Button text
+      this.renderText(ctx, text, x, y, {
+        fontSize: this.game.getScaledValue(14),
+        color: "white",
+        weight: "bold",
+        align: "center",
+        baseline: "middle",
+      });
+    }
 
     ctx.restore();
-
-    this.renderText(ctx, text, x, y, {
-      fontSize: this.game.getScaledValue(14),
-      color: "white",
-      weight: "bold",
-      align: "center",
-      baseline: "middle",
-    });
   }
 
   renderEasterDropZones(ctx) {

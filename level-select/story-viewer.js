@@ -820,65 +820,107 @@ class StoryViewer {
    * Render a single navigation button
    */
   renderNavigationButton(ctx, x, y, width, height, text, isClose, hovered = false) {
-    const radius = this.game.getScaledValue(10);
-
     ctx.save();
 
-    // Enhanced button with gradient and shadow
-    if (hovered) {
-      const color = isClose ? "#888888" : "#4A90E2";
-      ctx.shadowColor = color;
-      ctx.shadowBlur = this.game.getScaledValue(15);
+    // Determine which button image to use
+    let buttonImage = null;
+    if (!isClose) {
+      if (text === "Next") {
+        buttonImage = this.game.images["btn-next.png"];
+      } else if (text === "Previous") {
+        buttonImage = this.game.images["btn-back.png"];
+      }
     }
 
-    // Button gradient background
-    const gradient = ctx.createLinearGradient(x, y, x, y + height);
-    const color = isClose ? "#888888" : "#4A90E2";
+    // If we have a button image for Next/Previous, use it
+    if (buttonImage) {
+      // Calculate dimensions to fit the button while maintaining aspect ratio
+      const aspectRatio = buttonImage.width / buttonImage.height;
+      let imgWidth = width;
+      let imgHeight = imgWidth / aspectRatio;
 
-    if (hovered) {
-      // Lighter when hovered
-      const r = Math.min(255, parseInt(color.substring(1, 3), 16) + 50);
-      const g = Math.min(255, parseInt(color.substring(3, 5), 16) + 50);
-      const b = Math.min(255, parseInt(color.substring(5, 7), 16) + 50);
-      const lighterColor = "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
-      gradient.addColorStop(0, lighterColor);
-      gradient.addColorStop(1, color);
+      // If height is too large, scale by height instead
+      if (imgHeight > height) {
+        imgHeight = height;
+        imgWidth = imgHeight * aspectRatio;
+      }
+
+      const imgX = x + (width - imgWidth) / 2;
+      const imgY = y + (height - imgHeight) / 2;
+
+      // Apply hover effect - scale and add glow
+      if (hovered) {
+        ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
+        ctx.shadowBlur = this.game.getScaledValue(20);
+
+        // Scale up slightly on hover
+        const scale = 1.05;
+        const scaledWidth = imgWidth * scale;
+        const scaledHeight = imgHeight * scale;
+        const scaledX = x + (width - scaledWidth) / 2;
+        const scaledY = y + (height - scaledHeight) / 2;
+
+        ctx.drawImage(buttonImage, scaledX, scaledY, scaledWidth, scaledHeight);
+      } else {
+        ctx.drawImage(buttonImage, imgX, imgY, imgWidth, imgHeight);
+      }
     } else {
-      gradient.addColorStop(0, color + 'DD');
-      gradient.addColorStop(1, color + 'AA');
+      // Fallback for Close button - use original gradient style
+      const radius = this.game.getScaledValue(10);
+
+      // Enhanced button with gradient and shadow
+      if (hovered) {
+        ctx.shadowColor = "#888888";
+        ctx.shadowBlur = this.game.getScaledValue(15);
+      }
+
+      // Button gradient background
+      const gradient = ctx.createLinearGradient(x, y, x, y + height);
+      const color = "#888888";
+
+      if (hovered) {
+        // Lighter when hovered
+        const r = Math.min(255, parseInt(color.substring(1, 3), 16) + 50);
+        const g = Math.min(255, parseInt(color.substring(3, 5), 16) + 50);
+        const b = Math.min(255, parseInt(color.substring(5, 7), 16) + 50);
+        const lighterColor = "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+        gradient.addColorStop(0, lighterColor);
+        gradient.addColorStop(1, color);
+      } else {
+        gradient.addColorStop(0, color + 'DD');
+        gradient.addColorStop(1, color + 'AA');
+      }
+
+      ctx.fillStyle = gradient;
+      this.ui.drawRoundedRect(ctx, x, y, width, height, radius);
+      ctx.fill();
+
+      // Button shine effect
+      const shineGradient = ctx.createLinearGradient(x, y, x, y + height * 0.5);
+      shineGradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
+      shineGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+      ctx.fillStyle = shineGradient;
+      this.ui.drawRoundedRect(ctx, x, y, width, height * 0.5, radius);
+      ctx.fill();
+
+      // Button border
+      ctx.strokeStyle = hovered ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.4)";
+      ctx.lineWidth = hovered ? this.game.getScaledValue(3) : this.game.getScaledValue(2);
+      this.ui.drawRoundedRect(ctx, x, y, width, height, radius);
+      ctx.stroke();
+
+      // Button text with shadow
+      ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+      ctx.shadowBlur = this.game.getScaledValue(4);
+      ctx.shadowOffsetY = this.game.getScaledValue(2);
+
+      ctx.fillStyle = "white";
+      ctx.font = `bold ${this.game.getScaledValue(17)}px Arial`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, x + width / 2, y + height / 2);
     }
-
-    ctx.fillStyle = gradient;
-    this.ui.drawRoundedRect(ctx, x, y, width, height, radius);
-    ctx.fill();
-
-    // Button shine effect
-    const shineGradient = ctx.createLinearGradient(x, y, x, y + height * 0.5);
-    shineGradient.addColorStop(0, "rgba(255, 255, 255, 0.3)");
-    shineGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-    ctx.fillStyle = shineGradient;
-    this.ui.drawRoundedRect(ctx, x, y, width, height * 0.5, radius);
-    ctx.fill();
-
-    // Button border
-    ctx.strokeStyle = hovered ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.4)";
-    ctx.lineWidth = hovered ? this.game.getScaledValue(3) : this.game.getScaledValue(2);
-    this.ui.drawRoundedRect(ctx, x, y, width, height, radius);
-    ctx.stroke();
-
-    // Button text with shadow
-    ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-    ctx.shadowBlur = this.game.getScaledValue(4);
-    ctx.shadowOffsetY = this.game.getScaledValue(2);
 
     ctx.restore();
-
-    this.ui.renderText(ctx, text, x + width / 2, y + height / 2, {
-      fontSize: this.game.getScaledValue(17),
-      color: "white",
-      weight: "bold",
-      align: "center",
-      baseline: "middle",
-    });
   }
 }
