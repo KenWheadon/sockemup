@@ -2130,9 +2130,9 @@ class LevelSelect extends Screen {
     if (this.easterEggActive && this.menuSocks.length > 0) {
       this.renderText(
         ctx,
-        "Drag socks to the drop zones next to Martha!",
+        "Drag socks to the drop zones for bonus points!",
         layout.centerX,
-        layout.instructionsY + layout.mediumSpacing,
+        layout.instructionsY + layout.mediumSpacing * 2.5,
         {
           fontSize: layout.smallFontSize,
           color: "rgba(255, 215, 0, 0.8)",
