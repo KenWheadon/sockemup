@@ -249,12 +249,24 @@ class LevelSelect extends Screen {
     const barY = 0; // Top of screen
     const barPadding = this.game.getScaledValue(GameConfig.UI_BAR.padding);
 
+    // Calculate logo dimensions maintaining aspect ratio
+    const logoImage = this.game.images["logo.png"];
+    let logoWidth = this.game.getScaledValue(200);
+    let logoHeight = this.game.getScaledValue(100);
+
+    if (logoImage && logoImage.complete && logoImage.naturalWidth > 0) {
+      const logoAspectRatio = logoImage.naturalWidth / logoImage.naturalHeight;
+      const maxLogoWidth = this.game.getScaledValue(200);
+      logoWidth = maxLogoWidth;
+      logoHeight = maxLogoWidth / logoAspectRatio;
+    }
+
     this.layoutCache = {
       ...baseLayout,
       logoX: canvasWidth / 2,
-      logoY: barHeight + this.game.getScaledValue(60),
-      logoWidth: this.game.getScaledValue(200),
-      logoHeight: this.game.getScaledValue(100),
+      logoY: barHeight + this.game.getScaledValue(100),
+      logoWidth: logoWidth,
+      logoHeight: logoHeight,
       instructionsY: barHeight + this.game.getScaledValue(140),
       levelButtonSize: this.game.getScaledValue(
         this.levelConfig.baseButtonSize
@@ -2115,34 +2127,12 @@ class LevelSelect extends Screen {
   renderInstructions(ctx) {
     const layout = this.layoutCache;
 
-    this.renderText(
-      ctx,
-      "Click sock pile to shoot socks, drag socks to drop zones",
-      layout.centerX,
-      layout.instructionsY,
-      {
-        fontSize: layout.bodyFontSize,
-        color: "rgba(255, 255, 255, 0.9)",
-      }
-    );
-
-    this.renderText(
-      ctx,
-      "Match pairs to create sock balls, then give Martha your rent!",
-      layout.centerX,
-      layout.instructionsY + layout.mediumSpacing,
-      {
-        fontSize: layout.bodyFontSize,
-        color: "rgba(255, 255, 255, 0.9)",
-      }
-    );
-
     if (this.easterEggActive && this.menuSocks.length > 0) {
       this.renderText(
         ctx,
         "Drag socks to the drop zones next to Martha!",
         layout.centerX,
-        layout.instructionsY + layout.mediumSpacing * 2,
+        layout.instructionsY + layout.mediumSpacing,
         {
           fontSize: layout.smallFontSize,
           color: "rgba(255, 215, 0, 0.8)",
@@ -3737,7 +3727,8 @@ class LevelSelect extends Screen {
         // Subtle pulse animation for completed levels with offset based on level index
         const offset = levelIndex * 0.7; // Offset each level's animation
         const pulse = Math.sin(pulseTimer * 0.5 + offset) * 0.02 + 1; // 2% size variation
-        const float = Math.sin(pulseTimer * 0.7 + offset) * this.game.getScaledValue(1.5); // Slight vertical float
+        const float =
+          Math.sin(pulseTimer * 0.7 + offset) * this.game.getScaledValue(1.5); // Slight vertical float
 
         if (sockImage) {
           if (colorFilter) {
