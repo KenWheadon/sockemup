@@ -993,40 +993,42 @@ class MatchScreen extends Screen {
   renderMatchScreenUI(ctx) {
     const layout = this.layoutCache;
 
-    // Instructions beside sock pile with arrow
-    const instructionText = "Click sock pile";
-    this.renderText(
-      ctx,
-      instructionText,
-      layout.instructionArrowX + this.game.getScaledValue(60),
-      layout.instructionArrowY,
-      {
-        fontSize: layout.bodyFontSize,
-        color: "rgba(255, 255, 255, 0.9)",
-        align: "left",
-      }
-    );
+    // Instructions beside sock pile with arrow - only show if pile is not empty
+    if (this.sockManager.sockList.length > 0) {
+      const instructionText = "Click sock pile";
+      this.renderText(
+        ctx,
+        instructionText,
+        layout.instructionArrowX + this.game.getScaledValue(60),
+        layout.instructionArrowY,
+        {
+          fontSize: layout.bodyFontSize,
+          color: "rgba(255, 255, 255, 0.9)",
+          align: "left",
+        }
+      );
 
-    // Draw arrow pointing at sock pile
-    ctx.save();
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.lineWidth = this.game.getScaledValue(3);
+      // Draw arrow pointing at sock pile
+      ctx.save();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.lineWidth = this.game.getScaledValue(3);
 
-    // Arrow line
-    ctx.beginPath();
-    ctx.moveTo(layout.instructionArrowX + this.game.getScaledValue(50), layout.instructionArrowY);
-    ctx.lineTo(layout.instructionArrowX, layout.instructionArrowY);
-    ctx.stroke();
+      // Arrow line
+      ctx.beginPath();
+      ctx.moveTo(layout.instructionArrowX + this.game.getScaledValue(50), layout.instructionArrowY);
+      ctx.lineTo(layout.instructionArrowX, layout.instructionArrowY);
+      ctx.stroke();
 
-    // Arrowhead
-    ctx.beginPath();
-    ctx.moveTo(layout.instructionArrowX, layout.instructionArrowY);
-    ctx.lineTo(layout.instructionArrowX + this.game.getScaledValue(15), layout.instructionArrowY - this.game.getScaledValue(8));
-    ctx.lineTo(layout.instructionArrowX + this.game.getScaledValue(15), layout.instructionArrowY + this.game.getScaledValue(8));
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
+      // Arrowhead
+      ctx.beginPath();
+      ctx.moveTo(layout.instructionArrowX, layout.instructionArrowY);
+      ctx.lineTo(layout.instructionArrowX + this.game.getScaledValue(15), layout.instructionArrowY - this.game.getScaledValue(8));
+      ctx.lineTo(layout.instructionArrowX + this.game.getScaledValue(15), layout.instructionArrowY + this.game.getScaledValue(8));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
 
     // Render top bar
     this.renderTopBar(ctx);

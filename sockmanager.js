@@ -464,7 +464,7 @@ class SockManager {
     }
 
     if (this.sockPile.pulseEffect > 0) {
-      scale = 1 + Math.sin(this.sockPile.pulseEffect * 0.3) * 0.1;
+      scale = 1.5 + Math.sin(this.sockPile.pulseEffect * 0.3) * 0.15;
     }
 
     const drawWidth = this.sockPile.width * scale;

@@ -723,6 +723,7 @@ const GameConfig = {
       "icon-money.png",
       "icon-lock.png",
       "icon-sock.png",
+      "icon-clock.png",
     ],
   },
 
