@@ -74,7 +74,7 @@ const GameConfig = {
   SOCK_SHOOT_SPEED: 37,
 
   // dropssss
-  DROP_TARGET_PAIRS: 5,
+  DROP_TARGET_PAIRS: 3,
 
   // Martha settings
   MARTHA_SIZE: { width: 84, height: 86 }, // 20% larger + matching spritesheet aspect ratio (269:275)

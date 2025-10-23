@@ -117,19 +117,28 @@ class StoryManager {
     const buttonSpacing = this.game.getScaledValue(15);
 
     // Skip button - far left
-    this.buttons.skip.x = this.slideContainer.x + this.game.getScaledValue(30);
+    this.buttons.skip.x = this.slideContainer.x + this.game.getScaledValue(10);
     this.buttons.skip.y = buttonY;
     this.buttons.skip.width = buttonWidth;
     this.buttons.skip.height = buttonHeight;
 
     // Previous button - right side, first button
-    this.buttons.previous.x = this.slideContainer.x + this.slideContainer.width - buttonWidth * 2 - buttonSpacing - this.game.getScaledValue(30);
+    this.buttons.previous.x =
+      this.slideContainer.x +
+      this.slideContainer.width -
+      buttonWidth * 2 -
+      buttonSpacing -
+      this.game.getScaledValue(10);
     this.buttons.previous.y = buttonY;
     this.buttons.previous.width = buttonWidth;
     this.buttons.previous.height = buttonHeight;
 
     // Next button - right side, second button
-    this.buttons.next.x = this.slideContainer.x + this.slideContainer.width - buttonWidth - this.game.getScaledValue(30);
+    this.buttons.next.x =
+      this.slideContainer.x +
+      this.slideContainer.width -
+      buttonWidth -
+      this.game.getScaledValue(10);
     this.buttons.next.y = buttonY;
     this.buttons.next.width = buttonWidth;
     this.buttons.next.height = buttonHeight;
@@ -378,7 +387,6 @@ class StoryManager {
     this.renderSlideIndicators(ctx);
 
     ctx.restore();
-    ctx.restore();
   }
 
   renderSlideContainer(ctx, animProgress) {
@@ -460,7 +468,7 @@ class StoryManager {
 
       if (t < 0.5) {
         // First half: fade out
-        alpha = 1 - (t * 2);
+        alpha = 1 - t * 2;
       } else {
         // Second half: fade in
         alpha = (t - 0.5) * 2;
@@ -481,11 +489,21 @@ class StoryManager {
     ctx.beginPath();
     ctx.moveTo(container.x + cornerRadius, container.y);
     ctx.lineTo(container.x + container.width - cornerRadius, container.y);
-    ctx.quadraticCurveTo(container.x + container.width, container.y, container.x + container.width, container.y + cornerRadius);
+    ctx.quadraticCurveTo(
+      container.x + container.width,
+      container.y,
+      container.x + container.width,
+      container.y + cornerRadius
+    );
     ctx.lineTo(container.x + container.width, container.y + titleBarHeight);
     ctx.lineTo(container.x, container.y + titleBarHeight);
     ctx.lineTo(container.x, container.y + cornerRadius);
-    ctx.quadraticCurveTo(container.x, container.y, container.x + cornerRadius, container.y);
+    ctx.quadraticCurveTo(
+      container.x,
+      container.y,
+      container.x + cornerRadius,
+      container.y
+    );
     ctx.closePath();
     ctx.fill();
 
@@ -496,7 +514,11 @@ class StoryManager {
     ctx.font = `bold ${this.game.getScaledValue(36)}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(slide.title, container.x + container.width / 2, container.y + titleBarHeight / 2);
+    ctx.fillText(
+      slide.title,
+      container.x + container.width / 2,
+      container.y + titleBarHeight / 2
+    );
     ctx.restore();
 
     // Side-by-side layout: Image on left, text on right
@@ -504,7 +526,8 @@ class StoryManager {
     const leftPanelWidth = container.width * 0.42;
     const rightPanelWidth = container.width * 0.52;
     const leftPanelX = container.x + this.game.getScaledValue(30);
-    const rightPanelX = leftPanelX + leftPanelWidth + this.game.getScaledValue(25);
+    const rightPanelX =
+      leftPanelX + leftPanelWidth + this.game.getScaledValue(25);
 
     // Left panel - Image with container
     ctx.save();
@@ -567,20 +590,31 @@ class StoryManager {
         }
 
         const imageX = leftPanelX + leftPanelWidth / 2 - imageWidth / 2;
-        const imageY = mainContentY + imageContainerHeight / 2 - imageHeight / 2;
+        const imageY =
+          mainContentY + imageContainerHeight / 2 - imageHeight / 2;
 
         // Get current frame from animation sequence
-        const frameIndex =
-          spritesheetConfig.animationFrames[this.currentFrame];
-        const frameX = (frameIndex % spritesheetConfig.columns) * spritesheetConfig.frameWidth;
-        const frameY = Math.floor(frameIndex / spritesheetConfig.columns) * spritesheetConfig.frameHeight;
+        const frameIndex = spritesheetConfig.animationFrames[this.currentFrame];
+        const frameX =
+          (frameIndex % spritesheetConfig.columns) *
+          spritesheetConfig.frameWidth;
+        const frameY =
+          Math.floor(frameIndex / spritesheetConfig.columns) *
+          spritesheetConfig.frameHeight;
 
         // Subtle floating animation - disabled during transitions
-        const floatOffset = this.isTransitioning ? 0 : Math.sin(Date.now() / 800) * this.game.getScaledValue(3);
-        const imageScale = this.isTransitioning ? 1 : 1 + Math.sin(Date.now() / 1000) * 0.02;
+        const floatOffset = this.isTransitioning
+          ? 0
+          : Math.sin(Date.now() / 800) * this.game.getScaledValue(3);
+        const imageScale = this.isTransitioning
+          ? 1
+          : 1 + Math.sin(Date.now() / 1000) * 0.02;
 
         ctx.save();
-        ctx.translate(imageX + imageWidth / 2, imageY + imageHeight / 2 + floatOffset);
+        ctx.translate(
+          imageX + imageWidth / 2,
+          imageY + imageHeight / 2 + floatOffset
+        );
         ctx.scale(imageScale, imageScale);
         ctx.translate(-(imageX + imageWidth / 2), -(imageY + imageHeight / 2));
 
@@ -620,14 +654,22 @@ class StoryManager {
         }
 
         const imageX = leftPanelX + leftPanelWidth / 2 - imageWidth / 2;
-        const imageY = mainContentY + imageContainerHeight / 2 - imageHeight / 2;
+        const imageY =
+          mainContentY + imageContainerHeight / 2 - imageHeight / 2;
 
         // Subtle floating animation - disabled during transitions
-        const floatOffset = this.isTransitioning ? 0 : Math.sin(Date.now() / 800) * this.game.getScaledValue(3);
-        const imageScale = this.isTransitioning ? 1 : 1 + Math.sin(Date.now() / 1000) * 0.02;
+        const floatOffset = this.isTransitioning
+          ? 0
+          : Math.sin(Date.now() / 800) * this.game.getScaledValue(3);
+        const imageScale = this.isTransitioning
+          ? 1
+          : 1 + Math.sin(Date.now() / 1000) * 0.02;
 
         ctx.save();
-        ctx.translate(imageX + imageWidth / 2, imageY + imageHeight / 2 + floatOffset);
+        ctx.translate(
+          imageX + imageWidth / 2,
+          imageY + imageHeight / 2 + floatOffset
+        );
         ctx.scale(imageScale, imageScale);
         ctx.translate(-(imageX + imageWidth / 2), -(imageY + imageHeight / 2));
 
@@ -756,8 +798,8 @@ class StoryManager {
         buttonGradient.addColorStop(0, this.lightenColor(color, 0.2));
         buttonGradient.addColorStop(1, color);
       } else {
-        buttonGradient.addColorStop(0, color + 'DD');
-        buttonGradient.addColorStop(1, color + 'AA');
+        buttonGradient.addColorStop(0, color + "DD");
+        buttonGradient.addColorStop(1, color + "AA");
       }
 
       ctx.fillStyle = buttonGradient;
@@ -792,8 +834,12 @@ class StoryManager {
       ctx.fill();
 
       // Button border
-      ctx.strokeStyle = button.hovered ? "rgba(255, 255, 255, 0.9)" : "rgba(255, 255, 255, 0.4)";
-      ctx.lineWidth = button.hovered ? this.game.getScaledValue(3) : this.game.getScaledValue(2);
+      ctx.strokeStyle = button.hovered
+        ? "rgba(255, 255, 255, 0.9)"
+        : "rgba(255, 255, 255, 0.4)";
+      ctx.lineWidth = button.hovered
+        ? this.game.getScaledValue(3)
+        : this.game.getScaledValue(2);
       this.drawRoundedRect(
         ctx,
         button.x,
@@ -828,7 +874,7 @@ class StoryManager {
     const r = Math.min(255, ((num >> 16) & 0xff) + Math.floor(255 * amount));
     const g = Math.min(255, ((num >> 8) & 0xff) + Math.floor(255 * amount));
     const b = Math.min(255, (num & 0xff) + Math.floor(255 * amount));
-    return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+    return "#" + ((r << 16) | (g << 8) | b).toString(16).padStart(6, "0");
   }
 
   renderSlideIndicators(ctx) {

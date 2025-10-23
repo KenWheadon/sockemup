@@ -2568,7 +2568,8 @@ class LevelSelect extends Screen {
       // Add pulse effect if requested
       if (shouldPulse && !isDisabled) {
         const pulseFrequency = 0.002; // Slower pulse
-        const pulseAmount = Math.sin(this.storyViewer.pulseTimer * pulseFrequency) * 0.5 + 0.5;
+        const pulseAmount =
+          Math.sin(this.storyViewer.pulseTimer * pulseFrequency) * 0.5 + 0.5;
         const glowIntensity = 0.3 + pulseAmount * 0.7;
 
         ctx.shadowColor = `rgba(255, 100, 255, ${glowIntensity})`;
@@ -3010,7 +3011,7 @@ class LevelSelect extends Screen {
       ctx.shadowBlur = this.game.getScaledValue(20);
       this.renderText(
         ctx,
-        "🏆 Achievements",
+        "TROPHIES",
         drawerX + drawerWidth / 2,
         this.game.getScaledValue(35),
         {

@@ -74,11 +74,11 @@ class MatchScreen extends Screen {
       dropZoneAreaY: canvasHeight / 3 + this.game.getScaledValue(20), // Slightly lower to avoid top bar
       pairWidth: canvasWidth / GameConfig.DROP_TARGET_PAIRS,
       sockPileX: canvasWidth / 2,
-      sockPileY: canvasHeight - this.game.getScaledValue(80), // Back to bottom
+      sockPileY: canvasHeight - this.game.getScaledValue(110), // Bumped up 30 pixels (80 + 30)
       sockPileSize: this.game.getScaledValue(120),
       // Instructions beside sock pile
       instructionArrowX: canvasWidth / 2 + this.game.getScaledValue(90),
-      instructionArrowY: canvasHeight - this.game.getScaledValue(80),
+      instructionArrowY: canvasHeight - this.game.getScaledValue(110), // Bumped up 30 pixels
 
       // Top bar layout
       barY: barY,
@@ -86,14 +86,14 @@ class MatchScreen extends Screen {
       barPadding: barPadding,
 
       // Top bar elements (left to right)
-      sockBallsX: barPadding + this.game.getScaledValue(80),
+      sockBallsX: barPadding + this.game.getScaledValue(100),
       sockBallsY: barY + barHeight / 2,
 
-      timeX: barPadding + this.game.getScaledValue(240),
-      timeY: barY + barHeight / 2,
-
-      streakX: barPadding + this.game.getScaledValue(480),
+      streakX: canvasWidth / 2,
       streakY: barY + barHeight / 2,
+
+      timeX: canvasWidth / 2 - this.game.getScaledValue(200),
+      timeY: barY + barHeight / 2,
 
       // Buttons on the right side of top bar
       pauseButtonX: canvasWidth - this.game.getScaledValue(240),
@@ -183,14 +183,30 @@ class MatchScreen extends Screen {
 
   setupDropZones() {
     const layout = this.layoutCache;
+    const canvasWidth = this.game.getCanvasWidth();
+    const canvasHeight = this.game.getCanvasHeight();
     this.dropZones = [];
 
-    for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
-      const pairCenterX = layout.pairWidth / 2 + pairId * layout.pairWidth;
+    // Center the zones horizontally with tighter spacing
+    const totalPairs = GameConfig.DROP_TARGET_PAIRS;
+    const horizontalSpacing = this.game.getScaledValue(180); // Closer together
+    const totalWidth = (totalPairs - 1) * horizontalSpacing;
+    const startX = (canvasWidth - totalWidth) / 2;
 
+    // Vertical positioning - pairs 1 and 3 are lower than pair 2
+    const baseY = canvasHeight / 2 - this.game.getScaledValue(80); // Nudged up by 20 pixels
+    const verticalOffset = this.game.getScaledValue(60); // How much lower 1 & 3 are
+
+    for (let pairId = 0; pairId < totalPairs; pairId++) {
+      const pairCenterX = startX + pairId * horizontalSpacing;
+
+      // Pair 2 (middle, index 1) is higher, pairs 1 and 3 (indices 0 and 2) are lower
+      const pairBaseY = pairId === 1 ? baseY : baseY + verticalOffset;
+
+      // Top zone
       this.dropZones.push({
         x: pairCenterX,
-        y: layout.dropZoneAreaY - layout.dropZoneSpacing / 2,
+        y: pairBaseY - layout.dropZoneSpacing / 2,
         width: layout.dropZoneSize,
         height: layout.dropZoneSize,
         pairId: pairId,
@@ -201,9 +217,10 @@ class MatchScreen extends Screen {
         id: pairId * 2,
       });
 
+      // Bottom zone
       this.dropZones.push({
         x: pairCenterX,
-        y: layout.dropZoneAreaY + layout.dropZoneSpacing / 2,
+        y: pairBaseY + layout.dropZoneSpacing / 2,
         width: layout.dropZoneSize,
         height: layout.dropZoneSize,
         pairId: pairId,
@@ -905,9 +922,28 @@ class MatchScreen extends Screen {
 
   renderDropZonePairBoxes(ctx) {
     const layout = this.layoutCache;
-    const lineWidth = this.game.getScaledValue(2);
-    const dashLength = this.game.getScaledValue(5);
+    const lineWidth = this.game.getScaledValue(3);
     const margin = this.game.getScaledValue(50);
+    const cornerRadius = this.game.getScaledValue(10); // Reduced from 15 to 10
+
+    // Color themes for each pair (soft, pastel colors)
+    const pairColors = [
+      {
+        bg: "rgba(255, 182, 193, 0.15)",
+        border: "rgba(255, 105, 180, 0.5)",
+        name: "rgba(255, 105, 180, 0.9)",
+      }, // Soft pink
+      {
+        bg: "rgba(173, 216, 230, 0.15)",
+        border: "rgba(100, 149, 237, 0.5)",
+        name: "rgba(100, 149, 237, 0.9)",
+      }, // Soft blue
+      {
+        bg: "rgba(144, 238, 144, 0.15)",
+        border: "rgba(46, 204, 113, 0.5)",
+        name: "rgba(46, 204, 113, 0.9)",
+      }, // Soft green
+    ];
 
     for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
       const pairZones = this.dropZones.filter((zone) => zone.pairId === pairId);
@@ -918,20 +954,73 @@ class MatchScreen extends Screen {
         const minY = Math.min(pairZones[0].y, pairZones[1].y) - margin;
         const maxY = Math.max(pairZones[0].y, pairZones[1].y) + margin;
 
-        ctx.save();
-        ctx.strokeStyle = "rgba(200, 200, 200, 0.5)";
-        ctx.lineWidth = lineWidth;
-        ctx.setLineDash([dashLength, dashLength]);
-        ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+        const width = maxX - minX;
+        const height = maxY - minY;
+        const centerX = (minX + maxX) / 2;
 
+        const colors = pairColors[pairId % pairColors.length];
+
+        ctx.save();
+
+        // Draw rounded rectangle background with gradient
+        const gradient = ctx.createLinearGradient(minX, minY, minX, maxY);
+        gradient.addColorStop(0, colors.bg);
+        gradient.addColorStop(1, "rgba(0, 0, 0, 0.05)");
+
+        ctx.fillStyle = gradient;
+        this.roundRect(ctx, minX, minY, width, height, cornerRadius);
+        ctx.fill();
+
+        // Draw solid border (no dashes)
+        ctx.strokeStyle = colors.border;
+        ctx.lineWidth = lineWidth;
+        ctx.setLineDash([]); // Solid line
+        this.roundRect(ctx, minX, minY, width, height, cornerRadius);
+        ctx.stroke();
+
+        // Draw pair number badge BELOW the zone (centered)
+        const badgeWidth = this.game.getScaledValue(50);
+        const badgeHeight = this.game.getScaledValue(35);
+        const badgeY = maxY + this.game.getScaledValue(15);
+        const badgeCornerRadius = this.game.getScaledValue(8);
+
+        // Badge solid background
+        ctx.fillStyle = colors.border;
+        this.roundRect(
+          ctx,
+          centerX - badgeWidth / 2,
+          badgeY,
+          badgeWidth,
+          badgeHeight,
+          badgeCornerRadius
+        );
+        ctx.fill();
+
+        // Badge border for extra definition
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+        ctx.lineWidth = this.game.getScaledValue(2);
+        this.roundRect(
+          ctx,
+          centerX - badgeWidth / 2,
+          badgeY,
+          badgeWidth,
+          badgeHeight,
+          badgeCornerRadius
+        );
+        ctx.stroke();
+
+        // Badge number
         this.renderText(
           ctx,
-          `Pair ${pairId + 1}`,
-          (minX + maxX) / 2,
-          minY - this.game.getScaledValue(10),
+          `${pairId + 1}`,
+          centerX,
+          badgeY + badgeHeight / 2,
           {
-            fontSize: layout.bodyFontSize,
-            color: "rgba(255, 255, 255, 0.8)",
+            fontSize: layout.headerFontSize,
+            color: "rgba(255, 255, 255, 0.95)",
+            align: "center",
+            baseline: "middle",
+            weight: "bold",
           }
         );
 
@@ -940,10 +1029,26 @@ class MatchScreen extends Screen {
     }
   }
 
+  // Helper method to draw rounded rectangles
+  roundRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.arcTo(x + width, y, x + width, y + radius, radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+    ctx.lineTo(x + radius, y + height);
+    ctx.arcTo(x, y + height, x, y + height - radius, radius);
+    ctx.lineTo(x, y + radius);
+    ctx.arcTo(x, y, x + radius, y, radius);
+    ctx.closePath();
+  }
+
   renderDropZones(ctx) {
     const lineWidth = this.game.getScaledValue(2);
     const hoverLineWidth = this.game.getScaledValue(3);
     const shadowBlur = this.game.getScaledValue(15);
+    const cornerRadius = this.game.getScaledValue(10); // Match pair box corner radius
 
     this.dropZones.forEach((zone, index) => {
       ctx.save();
@@ -963,21 +1068,29 @@ class MatchScreen extends Screen {
 
       ctx.strokeStyle = zone.sock ? "rgba(100, 255, 100, 0.8)" : "white";
       ctx.lineWidth = this.dropZoneHover === index ? hoverLineWidth : lineWidth;
-      ctx.strokeRect(
+
+      // Draw rounded rectangle for drop zone
+      this.roundRect(
+        ctx,
         zone.x - zone.width / 2,
         zone.y - zone.height / 2,
         zone.width,
-        zone.height
+        zone.height,
+        cornerRadius
       );
+      ctx.stroke();
 
       if (this.dropZoneHover === index) {
         ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
-        ctx.fillRect(
+        this.roundRect(
+          ctx,
           zone.x - zone.width / 2,
           zone.y - zone.height / 2,
           zone.width,
-          zone.height
+          zone.height,
+          cornerRadius
         );
+        ctx.fill();
       }
 
       ctx.restore();
@@ -1000,6 +1113,77 @@ class MatchScreen extends Screen {
 
   renderMatchScreenUI(ctx) {
     const layout = this.layoutCache;
+    const canvasWidth = this.game.getCanvasWidth();
+
+    // Instructional text below the top bar
+    const instructionY =
+      layout.barY + layout.barHeight + this.game.getScaledValue(25);
+    this.renderText(
+      ctx,
+      "Drag matching socks to a drop zone to make a sockball",
+      canvasWidth / 2,
+      instructionY,
+      {
+        fontSize: layout.bodyFontSize,
+        color: "rgba(255, 255, 255, 0.85)",
+        align: "center",
+        baseline: "middle",
+        weight: "normal",
+      }
+    );
+
+    // Remaining socks counter to the LEFT of sock pile
+    if (this.sockManager.sockList.length > 0) {
+      const remainingSocks = this.sockManager.sockList.length;
+      const counterText = `${remainingSocks} ${
+        remainingSocks === 1 ? "Sock" : "Socks"
+      }`;
+
+      // Position to the left of sock pile
+      const counterX = layout.sockPileX - this.game.getScaledValue(140);
+      const counterY = layout.sockPileY;
+
+      // Draw background panel with rounded corners
+      ctx.save();
+      const textWidth = this.game.getScaledValue(100);
+      const textHeight = this.game.getScaledValue(50);
+      const cornerRadius = this.game.getScaledValue(10); // Match other UI elements
+
+      // Draw rounded background
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      this.roundRect(
+        ctx,
+        counterX - textWidth / 2,
+        counterY - textHeight / 2,
+        textWidth,
+        textHeight,
+        cornerRadius
+      );
+      ctx.fill();
+
+      // Draw rounded border
+      ctx.strokeStyle = "rgba(255, 215, 0, 0.6)";
+      ctx.lineWidth = this.game.getScaledValue(2);
+      this.roundRect(
+        ctx,
+        counterX - textWidth / 2,
+        counterY - textHeight / 2,
+        textWidth,
+        textHeight,
+        cornerRadius
+      );
+      ctx.stroke();
+
+      // Draw text
+      this.renderText(ctx, counterText, counterX, counterY, {
+        fontSize: layout.bodyFontSize,
+        color: "rgba(255, 215, 0, 0.9)",
+        align: "center",
+        baseline: "middle",
+        weight: "bold",
+      });
+      ctx.restore();
+    }
 
     // Instructions beside sock pile with arrow - only show if pile is not empty
     if (this.sockManager.sockList.length > 0) {
@@ -1054,6 +1238,11 @@ class MatchScreen extends Screen {
     const layout = this.layoutCache;
     const canvasWidth = this.game.getCanvasWidth();
 
+    // Get level data once for the entire top bar
+    const level = GameConfig.LEVELS[this.game.currentLevel];
+    const totalSockballs = level ? level.sockPairs : 0;
+    const timeLimit = level ? level.matchingTime : 60;
+
     // Draw top bar background
     ctx.save();
     ctx.fillStyle = GameConfig.UI_BAR.backgroundColor;
@@ -1068,7 +1257,7 @@ class MatchScreen extends Screen {
     ctx.stroke();
     ctx.restore();
 
-    // Sockballs counter (left side)
+    // Sockballs counter (left side) - now shows x/total format
     const sockBallsX = layout.sockBallsX;
     const sockBallsY = layout.sockBallsY;
 
@@ -1079,7 +1268,7 @@ class MatchScreen extends Screen {
       const sockIconWidth = sockIconHeight * (sockIcon.width / sockIcon.height);
       ctx.drawImage(
         sockIcon,
-        sockBallsX - this.game.getScaledValue(25) - sockIconWidth / 2,
+        sockBallsX - this.game.getScaledValue(40) - sockIconWidth / 2,
         sockBallsY - sockIconHeight / 2,
         sockIconWidth,
         sockIconHeight
@@ -1088,7 +1277,7 @@ class MatchScreen extends Screen {
 
     this.renderText(
       ctx,
-      `${this.game.sockBalls}`,
+      `${this.game.sockBalls} / ${totalSockballs}`,
       sockBallsX + this.game.getScaledValue(10),
       sockBallsY,
       {
@@ -1100,11 +1289,26 @@ class MatchScreen extends Screen {
       }
     );
 
-    // Time display
+    // Streak counter (CENTER of top bar - always visible)
+    const streakText =
+      this.matchStreak > 0 ? `🔥 ${this.matchStreak}x Streak` : `🔥 0x Streak`;
+    const streakColor =
+      this.matchStreak >= 5
+        ? "rgba(255, 100, 0, 0.9)" // Hot orange for 5+
+        : this.matchStreak >= 3
+        ? "rgba(255, 165, 0, 0.9)" // Orange for 3+
+        : "rgba(200, 200, 200, 0.7)"; // Gray for 0-2
+
+    this.renderText(ctx, streakText, layout.streakX, layout.streakY, {
+      fontSize: layout.bodyFontSize,
+      align: "center",
+      baseline: "middle",
+      color: streakColor,
+      weight: "bold",
+    });
+
+    // Time display (left of center)
     const timeElapsed = Math.max(0, Math.floor(this.game.timeElapsed));
-    // Fix Bug #1: Add bounds checking for level access
-    const level = GameConfig.LEVELS[this.game.currentLevel];
-    const timeLimit = level ? level.matchingTime : 60; // Default to 60s if level not found
     const isOverTime = timeElapsed > timeLimit;
 
     const timeColor = isOverTime
@@ -1136,18 +1340,6 @@ class MatchScreen extends Screen {
       color: timeColor,
       weight: "bold",
     });
-
-    // Streak counter (only show if streak > 1)
-    if (this.matchStreak > 1) {
-      const streakText = `🔥 ${this.matchStreak}x STREAK`;
-      this.renderText(ctx, streakText, layout.streakX, layout.streakY, {
-        fontSize: layout.bodyFontSize,
-        align: "left",
-        baseline: "middle",
-        color: "rgba(255, 165, 0, 0.9)",
-        weight: "bold",
-      });
-    }
 
     // Pause button
     this.renderBottomBarButton(
