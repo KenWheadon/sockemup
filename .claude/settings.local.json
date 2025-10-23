@@ -8,7 +8,8 @@
       "Bash(node -c:*)",
       "Bash(python -m http.server:*)",
       "Bash(start \"c:\\Users\\kenne\\OneDrive\\Documents\\GitHub\\sockemup\\test-sprite.html\")",
-      "Bash(start \"c:\\Users\\kenne\\OneDrive\\Documents\\GitHub\\sockemup\\index.html\")"
+      "Bash(start \"c:\\Users\\kenne\\OneDrive\\Documents\\GitHub\\sockemup\\index.html\")",
+      "Bash(del nul)"
     ],
     "deny": [],
     "ask": []
