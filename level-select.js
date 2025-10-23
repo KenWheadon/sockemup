@@ -303,30 +303,36 @@ class LevelSelect extends Screen {
       barHeight: barHeight,
       barPadding: barPadding,
 
-      // Top bar elements (left to right)
       statsX: barPadding + this.game.getScaledValue(100),
       statsY: barY + barHeight / 2,
 
-      // Buttons in top bar (right side)
-      achievementsButtonX: canvasWidth - this.game.getScaledValue(510),
-      achievementsButtonY: barY + barHeight / 2,
-      achievementsButtonWidth: this.game.getScaledValue(120),
-      achievementsButtonHeight: this.game.getScaledValue(50),
+      buttonHeight: this.game.getScaledValue(35),
+      rightEdgeMargin: this.game.getScaledValue(15),
+      buttonGap: this.game.getScaledValue(15),
 
-      storyReplayButtonX: canvasWidth - this.game.getScaledValue(380),
-      storyReplayButtonY: barY + barHeight / 2,
-      storyReplayButtonWidth: this.game.getScaledValue(110),
-      storyReplayButtonHeight: this.game.getScaledValue(50),
-
-      storyViewerButtonX: canvasWidth - this.game.getScaledValue(250),
-      storyViewerButtonY: barY + barHeight / 2,
-      storyViewerButtonWidth: this.game.getScaledValue(110),
-      storyViewerButtonHeight: this.game.getScaledValue(50),
-
-      creditsButtonX: canvasWidth - this.game.getScaledValue(120),
+      // Credits button (rightmost)
+      creditsButtonHeight: this.game.getScaledValue(35),
+      creditsButtonWidth: this.game.getScaledValue(80),
+      creditsButtonX: canvasWidth - this.game.getScaledValue(60),
       creditsButtonY: barY + barHeight / 2,
-      creditsButtonWidth: this.game.getScaledValue(100),
-      creditsButtonHeight: this.game.getScaledValue(50),
+
+      // Story button
+      storyViewerButtonHeight: this.game.getScaledValue(35),
+      storyViewerButtonWidth: this.game.getScaledValue(90),
+      storyViewerButtonX: canvasWidth - this.game.getScaledValue(160),
+      storyViewerButtonY: barY + barHeight / 2,
+
+      // How to Play button
+      storyReplayButtonHeight: this.game.getScaledValue(35),
+      storyReplayButtonWidth: this.game.getScaledValue(120),
+      storyReplayButtonX: canvasWidth - this.game.getScaledValue(275),
+      storyReplayButtonY: barY + barHeight / 2,
+
+      // Trophies button (leftmost)
+      achievementsButtonHeight: this.game.getScaledValue(35),
+      achievementsButtonWidth: this.game.getScaledValue(100),
+      achievementsButtonX: canvasWidth - this.game.getScaledValue(405),
+      achievementsButtonY: barY + barHeight / 2,
 
       achievementsDrawerWidth: this.game.getScaledValue(500),
       achievementsDrawerButtonX: this.game.getScaledValue(35),
@@ -728,10 +734,12 @@ class LevelSelect extends Screen {
 
       if (this.logoPressTimer < pressDuration) {
         // Animate to 95% scale
-        this.logoPressScale = 1.0 - (this.logoPressTimer / pressDuration) * 0.05;
+        this.logoPressScale =
+          1.0 - (this.logoPressTimer / pressDuration) * 0.05;
       } else if (this.logoPressTimer < pressDuration * 2) {
         // Animate back to 100% scale
-        const returnProgress = (this.logoPressTimer - pressDuration) / pressDuration;
+        const returnProgress =
+          (this.logoPressTimer - pressDuration) / pressDuration;
         this.logoPressScale = 0.95 + returnProgress * 0.05;
       } else {
         // Animation complete
@@ -2447,7 +2455,10 @@ class LevelSelect extends Screen {
       layout.achievementsButtonHeight,
       "Trophies",
       this.achievementsDrawer.button.hovered,
-      "rgba(218, 165, 32, 0.8)"
+      "rgba(218, 165, 32, 0.8)",
+      null,
+      false,
+      "btn-trophies.png"
     );
 
     this.renderTopBarButton(
@@ -2458,7 +2469,10 @@ class LevelSelect extends Screen {
       layout.storyReplayButtonHeight,
       "How to Play",
       this.storyReplayButton.hovered,
-      "rgba(70, 130, 180, 0.8)"
+      "rgba(70, 130, 180, 0.8)",
+      null,
+      false,
+      "btn-htp.png"
     );
 
     // Calculate unlocked lore count
@@ -2476,7 +2490,8 @@ class LevelSelect extends Screen {
       this.storyViewer.button.hovered,
       "rgba(138, 43, 226, 0.8)",
       `${unlockedLoreCount}/9`,
-      unlockedLoreCount === 0 // isDisabled when no panels unlocked
+      unlockedLoreCount === 0, // isDisabled when no panels unlocked
+      "btn-story.png"
     );
 
     this.renderTopBarButton(
@@ -2487,7 +2502,10 @@ class LevelSelect extends Screen {
       layout.creditsButtonHeight,
       "Credits",
       this.creditsButton.hovered,
-      "rgba(100, 100, 100, 0.8)"
+      "rgba(100, 100, 100, 0.8)",
+      null,
+      false,
+      "btn-credits.png"
     );
   }
 
@@ -2501,89 +2519,145 @@ class LevelSelect extends Screen {
     isHovered,
     baseColor,
     countBadge = null,
-    isDisabled = false
+    isDisabled = false,
+    imageKey = null
   ) {
     ctx.save();
 
     const buttonLeft = x - width / 2;
     const buttonTop = y - height / 2;
-    const radius = this.game.getScaledValue(6);
 
-    // Button background
-    if (isDisabled) {
-      ctx.fillStyle = "rgba(80, 80, 80, 0.5)";
-    } else {
-      ctx.fillStyle = isHovered ? this.lightenColor(baseColor) : baseColor;
-    }
+    // If an image is provided, render it instead of the old button style
+    if (imageKey && this.game.images[imageKey]) {
+      const buttonImage = this.game.images[imageKey];
 
-    ctx.strokeStyle = isDisabled
-      ? "rgba(100, 100, 100, 0.3)"
-      : isHovered
-      ? "rgba(255, 255, 255, 0.8)"
-      : "rgba(255, 255, 255, 0.4)";
-    ctx.lineWidth = 2;
+      // Always fit to height to ensure consistent button heights
+      // Calculate width based on image aspect ratio
+      const imageAspectRatio = buttonImage.width / buttonImage.height;
 
-    // Rounded rectangle
-    ctx.beginPath();
-    ctx.moveTo(buttonLeft + radius, buttonTop);
-    ctx.lineTo(buttonLeft + width - radius, buttonTop);
-    ctx.arcTo(
-      buttonLeft + width,
-      buttonTop,
-      buttonLeft + width,
-      buttonTop + radius,
-      radius
-    );
-    ctx.lineTo(buttonLeft + width, buttonTop + height - radius);
-    ctx.arcTo(
-      buttonLeft + width,
-      buttonTop + height,
-      buttonLeft + width - radius,
-      buttonTop + height,
-      radius
-    );
-    ctx.lineTo(buttonLeft + radius, buttonTop + height);
-    ctx.arcTo(
-      buttonLeft,
-      buttonTop + height,
-      buttonLeft,
-      buttonTop + height - radius,
-      radius
-    );
-    ctx.lineTo(buttonLeft, buttonTop + radius);
-    ctx.arcTo(buttonLeft, buttonTop, buttonLeft + radius, buttonTop, radius);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+      let drawWidth, drawHeight, drawX, drawY;
 
-    // Button text
-    this.renderText(
-      ctx,
-      text,
-      x,
-      y - (countBadge ? this.game.getScaledValue(6) : 0),
-      {
-        fontSize: this.layoutCache.smallFontSize,
-        align: "center",
-        baseline: "middle",
-        color: isDisabled
-          ? "rgba(150, 150, 150, 0.6)"
-          : "rgba(255, 255, 255, 0.9)",
-        weight: "bold",
+      drawHeight = height;
+      drawWidth = height * imageAspectRatio;
+      drawX = buttonLeft + (width - drawWidth) / 2;
+      drawY = buttonTop;
+
+      // Apply hover and disabled effects
+      if (isDisabled) {
+        ctx.globalAlpha = 0.5;
+      } else if (isHovered) {
+        ctx.globalAlpha = 1.0;
+        // Optional: Add a subtle glow or highlight
+        ctx.shadowColor = "rgba(255, 255, 255, 0.5)";
+        ctx.shadowBlur = 10;
+      } else {
+        ctx.globalAlpha = 0.9;
       }
-    );
 
-    // Count badge below text
-    if (countBadge) {
-      this.renderText(ctx, countBadge, x, y + this.game.getScaledValue(12), {
-        fontSize: this.game.getScaledValue(12),
-        align: "center",
-        baseline: "middle",
-        color: isDisabled
-          ? "rgba(150, 150, 150, 0.6)"
-          : "rgba(255, 215, 0, 0.9)",
-        weight: "bold",
-      });
+      ctx.drawImage(buttonImage, drawX, drawY, drawWidth, drawHeight);
+
+      // Reset effects
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1.0;
+
+      // Count badge below image
+      if (countBadge) {
+        this.renderText(
+          ctx,
+          countBadge,
+          x,
+          y + height / 2 + this.game.getScaledValue(10),
+          {
+            fontSize: this.game.getScaledValue(12),
+            align: "center",
+            baseline: "middle",
+            color: isDisabled
+              ? "rgba(150, 150, 150, 0.6)"
+              : "rgba(255, 215, 0, 0.9)",
+            weight: "bold",
+          }
+        );
+      }
+    } else {
+      // Original rendering code (fallback if no image provided)
+      const radius = this.game.getScaledValue(6);
+
+      // Button background
+      if (isDisabled) {
+        ctx.fillStyle = "rgba(80, 80, 80, 0.5)";
+      } else {
+        ctx.fillStyle = isHovered ? this.lightenColor(baseColor) : baseColor;
+      }
+
+      ctx.strokeStyle = isDisabled
+        ? "rgba(100, 100, 100, 0.3)"
+        : isHovered
+        ? "rgba(255, 255, 255, 0.8)"
+        : "rgba(255, 255, 255, 0.4)";
+      ctx.lineWidth = 2;
+
+      // Rounded rectangle
+      ctx.beginPath();
+      ctx.moveTo(buttonLeft + radius, buttonTop);
+      ctx.lineTo(buttonLeft + width - radius, buttonTop);
+      ctx.arcTo(
+        buttonLeft + width,
+        buttonTop,
+        buttonLeft + width,
+        buttonTop + radius,
+        radius
+      );
+      ctx.lineTo(buttonLeft + width, buttonTop + height - radius);
+      ctx.arcTo(
+        buttonLeft + width,
+        buttonTop + height,
+        buttonLeft + width - radius,
+        buttonTop + height,
+        radius
+      );
+      ctx.lineTo(buttonLeft + radius, buttonTop + height);
+      ctx.arcTo(
+        buttonLeft,
+        buttonTop + height,
+        buttonLeft,
+        buttonTop + height - radius,
+        radius
+      );
+      ctx.lineTo(buttonLeft, buttonTop + radius);
+      ctx.arcTo(buttonLeft, buttonTop, buttonLeft + radius, buttonTop, radius);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Button text
+      this.renderText(
+        ctx,
+        text,
+        x,
+        y - (countBadge ? this.game.getScaledValue(6) : 0),
+        {
+          fontSize: this.layoutCache.smallFontSize,
+          align: "center",
+          baseline: "middle",
+          color: isDisabled
+            ? "rgba(150, 150, 150, 0.6)"
+            : "rgba(255, 255, 255, 0.9)",
+          weight: "bold",
+        }
+      );
+
+      // Count badge below text
+      if (countBadge) {
+        this.renderText(ctx, countBadge, x, y + this.game.getScaledValue(12), {
+          fontSize: this.game.getScaledValue(12),
+          align: "center",
+          baseline: "middle",
+          color: isDisabled
+            ? "rgba(150, 150, 150, 0.6)"
+            : "rgba(255, 215, 0, 0.9)",
+          weight: "bold",
+        });
+      }
     }
 
     ctx.restore();
@@ -3160,7 +3234,8 @@ class LevelSelect extends Screen {
           if (this.game.images["icon-lock.png"]) {
             const lockIcon = this.game.images["icon-lock.png"];
             const lockIconHeight = this.game.getScaledValue(16);
-            const lockIconWidth = lockIconHeight * (lockIcon.width / lockIcon.height);
+            const lockIconWidth =
+              lockIconHeight * (lockIcon.width / lockIcon.height);
             ctx.drawImage(
               lockIcon,
               statusX - lockIconWidth,
@@ -3516,12 +3591,16 @@ class LevelSelect extends Screen {
     }
 
     // Check if mouse is hovering (we need to track hover state for these buttons)
-    const isHovered = this.isPointInRect(this.lastMouseX || 0, this.lastMouseY || 0, {
-      x: buttonX,
-      y: buttonY,
-      width: width,
-      height: height
-    });
+    const isHovered = this.isPointInRect(
+      this.lastMouseX || 0,
+      this.lastMouseY || 0,
+      {
+        x: buttonX,
+        y: buttonY,
+        width: width,
+        height: height,
+      }
+    );
 
     // If we have a button image, use it
     if (buttonImage) {
@@ -3928,7 +4007,8 @@ class LevelSelect extends Screen {
       if (this.game.images["icon-lock.png"]) {
         const lockIcon = this.game.images["icon-lock.png"];
         const lockIconHeight = this.game.getScaledValue(24);
-        const lockIconWidth = lockIconHeight * (lockIcon.width / lockIcon.height);
+        const lockIconWidth =
+          lockIconHeight * (lockIcon.width / lockIcon.height);
         ctx.drawImage(
           lockIcon,
           x - lockIconWidth / 2,
@@ -3949,7 +4029,8 @@ class LevelSelect extends Screen {
 
       if (this.game.images["icon-money.png"]) {
         const costMoneyIcon = this.game.images["icon-money.png"];
-        const costIconWidth = costIconHeight * (costMoneyIcon.width / costMoneyIcon.height);
+        const costIconWidth =
+          costIconHeight * (costMoneyIcon.width / costMoneyIcon.height);
         ctx.drawImage(
           costMoneyIcon,
           x - this.game.getScaledValue(35),

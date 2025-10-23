@@ -72,9 +72,9 @@ class DifficultySelector {
     this.button.width = this.game.getScaledValue(200);
     this.button.height = this.game.getScaledValue(45);
 
-    // Center the button horizontally in the screen, offset 90px to the left, aligned vertically with other top bar buttons
+    // Center the button horizontally in the screen, offset 180px to the left, aligned vertically with other top bar buttons
     this.button.x =
-      canvasWidth / 2 - this.button.width / 2 - this.game.getScaledValue(90);
+      canvasWidth / 2 - this.button.width / 2 - this.game.getScaledValue(180);
     this.button.y = layout.barY + layout.barHeight / 2 - this.button.height / 2;
 
     // Dropdown appears below the button, opens downward
