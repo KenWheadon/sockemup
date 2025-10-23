@@ -1054,11 +1054,19 @@ class MatchScreen extends Screen {
     const sockBallsX = layout.sockBallsX;
     const sockBallsY = layout.sockBallsY;
 
-    this.renderText(ctx, "🧦", sockBallsX - this.game.getScaledValue(25), sockBallsY, {
-      fontSize: layout.headerFontSize,
-      align: "center",
-      baseline: "middle",
-    });
+    // Draw sock icon
+    if (this.game.images["icon-sock.png"]) {
+      const sockIcon = this.game.images["icon-sock.png"];
+      const sockIconHeight = this.game.getScaledValue(40);
+      const sockIconWidth = sockIconHeight * (sockIcon.width / sockIcon.height);
+      ctx.drawImage(
+        sockIcon,
+        sockBallsX - this.game.getScaledValue(25) - sockIconWidth / 2,
+        sockBallsY - sockIconHeight / 2,
+        sockIconWidth,
+        sockIconHeight
+      );
+    }
 
     this.renderText(ctx, `${this.game.sockBalls}`, sockBallsX + this.game.getScaledValue(10), sockBallsY, {
       fontSize: layout.headerFontSize,

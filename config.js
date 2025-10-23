@@ -720,6 +720,9 @@ const GameConfig = {
       "level-select-bg.png",
       "you-win.png",
       "you-win-spritesheet.png",
+      "icon-money.png",
+      "icon-lock.png",
+      "icon-sock.png",
     ],
   },
 

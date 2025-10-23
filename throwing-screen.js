@@ -883,17 +883,19 @@ class ThrowingScreen extends Screen {
     ctx.restore();
 
     // Sockballs counter (left side)
-    this.renderText(
-      ctx,
-      "🧦",
-      layout.sockballCounterX - this.game.getScaledValue(25),
-      layout.sockballCounterY,
-      {
-        fontSize: layout.headerFontSize,
-        align: "center",
-        baseline: "middle",
-      }
-    );
+    // Draw sock icon
+    if (this.game.images["icon-sock.png"]) {
+      const sockIcon = this.game.images["icon-sock.png"];
+      const sockIconHeight = this.game.getScaledValue(40);
+      const sockIconWidth = sockIconHeight * (sockIcon.width / sockIcon.height);
+      ctx.drawImage(
+        sockIcon,
+        layout.sockballCounterX - this.game.getScaledValue(25) - sockIconWidth / 2,
+        layout.sockballCounterY - sockIconHeight / 2,
+        sockIconWidth,
+        sockIconHeight
+      );
+    }
 
     this.renderText(
       ctx,

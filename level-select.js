@@ -2340,17 +2340,19 @@ class LevelSelect extends Screen {
     ctx.restore();
 
     // Player stats (left side)
-    this.renderText(
-      ctx,
-      "💰",
-      layout.statsX - this.game.getScaledValue(50),
-      layout.statsY,
-      {
-        fontSize: layout.headerFontSize,
-        align: "center",
-        baseline: "middle",
-      }
-    );
+    // Draw money icon
+    if (this.game.images["icon-money.png"]) {
+      const moneyIcon = this.game.images["icon-money.png"];
+      const iconHeight = this.game.getScaledValue(40);
+      const iconWidth = iconHeight * (moneyIcon.width / moneyIcon.height);
+      ctx.drawImage(
+        moneyIcon,
+        layout.statsX - this.game.getScaledValue(50) - iconWidth / 2,
+        layout.statsY - iconHeight / 2,
+        iconWidth,
+        iconHeight
+      );
+    }
 
     this.renderText(
       ctx,
@@ -2366,17 +2368,19 @@ class LevelSelect extends Screen {
       }
     );
 
-    this.renderText(
-      ctx,
-      "🧦",
-      layout.statsX + this.game.getScaledValue(120),
-      layout.statsY,
-      {
-        fontSize: layout.headerFontSize,
-        align: "center",
-        baseline: "middle",
-      }
-    );
+    // Draw sock icon
+    if (this.game.images["icon-sock.png"]) {
+      const sockIcon = this.game.images["icon-sock.png"];
+      const sockIconHeight = this.game.getScaledValue(40);
+      const sockIconWidth = sockIconHeight * (sockIcon.width / sockIcon.height);
+      ctx.drawImage(
+        sockIcon,
+        layout.statsX + this.game.getScaledValue(120) - sockIconWidth / 2,
+        layout.statsY - sockIconHeight / 2,
+        sockIconWidth,
+        sockIconHeight
+      );
+    }
 
     this.renderText(
       ctx,
@@ -3850,11 +3854,28 @@ class LevelSelect extends Screen {
       ctx.save();
       ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
       ctx.shadowBlur = this.game.getScaledValue(4);
+
+      // Draw money icon
+      const costIconHeight = this.game.getScaledValue(24);
+      const costY = y + this.game.getScaledValue(15);
+
+      if (this.game.images["icon-money.png"]) {
+        const costMoneyIcon = this.game.images["icon-money.png"];
+        const costIconWidth = costIconHeight * (costMoneyIcon.width / costMoneyIcon.height);
+        ctx.drawImage(
+          costMoneyIcon,
+          x - this.game.getScaledValue(35),
+          costY - costIconHeight / 2,
+          costIconWidth,
+          costIconHeight
+        );
+      }
+
       this.renderText(
         ctx,
-        `💰 ${levelCost}`,
-        x,
-        y + this.game.getScaledValue(15),
+        `${levelCost}`,
+        x + this.game.getScaledValue(5),
+        costY,
         {
           fontSize: layout.smallFontSize + 2,
           color: isAffordable ? "#90EE90" : "#FFB6C1",
