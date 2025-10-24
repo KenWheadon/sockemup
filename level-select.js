@@ -3226,11 +3226,30 @@ class LevelSelect extends Screen {
         const iconY = cardY + cardHeight / 2;
 
         ctx.globalAlpha = unlocked ? 1 : 0.4;
-        this.renderText(ctx, achievement.icon, iconX, iconY, {
-          fontSize: this.game.getScaledValue(32),
-          align: "center",
-          baseline: "middle",
-        });
+
+        // Check if icon is an image path or emoji
+        if (achievement.icon.endsWith('.png')) {
+          // Render as image
+          const iconSize = this.game.getScaledValue(32);
+          const iconImage = this.game.images[achievement.icon];
+          if (iconImage) {
+            ctx.drawImage(
+              iconImage,
+              iconX - iconSize / 2,
+              iconY - iconSize / 2,
+              iconSize,
+              iconSize
+            );
+          }
+        } else {
+          // Render as emoji text
+          this.renderText(ctx, achievement.icon, iconX, iconY, {
+            fontSize: this.game.getScaledValue(32),
+            align: "center",
+            baseline: "middle",
+          });
+        }
+
         ctx.globalAlpha = 1;
 
         const textX = cardX + this.game.getScaledValue(60);

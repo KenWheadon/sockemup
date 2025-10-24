@@ -498,9 +498,25 @@ class FeedbackManager {
       ctx.fillStyle = "#9370DB";
       ctx.fillText("📖", iconX, iconY);
     } else {
-      // Achievement icon
-      ctx.fillStyle = "#FFD700";
-      ctx.fillText(achievement.icon, iconX, iconY);
+      // Achievement icon - check if it's an image or emoji
+      if (achievement.icon.endsWith('.png')) {
+        // Render as image
+        const iconSize = this.game.getScaledValue(24);
+        const iconImage = this.game.images[achievement.icon];
+        if (iconImage) {
+          ctx.drawImage(
+            iconImage,
+            iconX,
+            iconY - iconSize / 2,
+            iconSize,
+            iconSize
+          );
+        }
+      } else {
+        // Render as emoji text
+        ctx.fillStyle = "#FFD700";
+        ctx.fillText(achievement.icon, iconX, iconY);
+      }
     }
 
     // Simple text
