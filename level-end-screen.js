@@ -246,7 +246,19 @@ class LevelEndScreen extends Screen {
     if (this.showRentDue) {
       this.marthaImage = this.game.images["martha-losing-spritesheet.png"];
     } else {
-      this.marthaImage = this.game.images["martha-sockballs-spritesheet.png"];
+      // Choose winning Martha spritesheet based on difficulty
+      const difficulty = this.game.currentDifficulty || 0;
+
+      if (difficulty >= 3) {
+        // NEW GAME+ 3-4: Use fatsop spritesheet
+        this.marthaImage = this.game.images["martha-fatsop-spritesheet.png"];
+      } else if (difficulty >= 1) {
+        // NEW GAME+ 1-2: Use rumble spritesheet
+        this.marthaImage = this.game.images["martha-rumble-spritesheet.png"];
+      } else {
+        // Normal difficulty: Use default sockballs spritesheet
+        this.marthaImage = this.game.images["martha-sockballs-spritesheet.png"];
+      }
     }
   }
 
@@ -421,9 +433,21 @@ class LevelEndScreen extends Screen {
 
     // Update spritesheet animation
     if (this.useSpritesheet) {
-      const config = this.showRentDue
-        ? GameConfig.MARTHA_LOSING_SPRITESHEET
-        : GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;
+      let config;
+      if (this.showRentDue) {
+        config = GameConfig.MARTHA_LOSING_SPRITESHEET;
+      } else {
+        // Choose config based on difficulty
+        const difficulty = this.game.currentDifficulty || 0;
+        if (difficulty >= 3) {
+          config = GameConfig.MARTHA_FATSOP_SPRITESHEET;
+        } else if (difficulty >= 1) {
+          config = GameConfig.MARTHA_RUMBLE_SPRITESHEET;
+        } else {
+          config = GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;
+        }
+      }
+
       const msPerFrame = 1000 / config.fps;
       this.marthaAnimationTimer += deltaTime;
 
@@ -767,10 +791,21 @@ class LevelEndScreen extends Screen {
     }
 
     if (this.useSpritesheet) {
-      // Render spritesheet frame
-      const config = this.showRentDue
-        ? GameConfig.MARTHA_LOSING_SPRITESHEET
-        : GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;
+      // Render spritesheet frame - choose config based on difficulty
+      let config;
+      if (this.showRentDue) {
+        config = GameConfig.MARTHA_LOSING_SPRITESHEET;
+      } else {
+        const difficulty = this.game.currentDifficulty || 0;
+        if (difficulty >= 3) {
+          config = GameConfig.MARTHA_FATSOP_SPRITESHEET;
+        } else if (difficulty >= 1) {
+          config = GameConfig.MARTHA_RUMBLE_SPRITESHEET;
+        } else {
+          config = GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;
+        }
+      }
+
       const frameIndex = config.animationFrames[this.marthaAnimationFrame];
       const col = frameIndex % config.columns;
       const row = Math.floor(frameIndex / config.columns);
