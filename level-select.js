@@ -508,6 +508,14 @@ class LevelSelect extends Screen {
     this.easterEggActive = false;
     this.isDragging = false;
     this.dragSock = null;
+
+    // Reset drop zones - clear any socks in the drop zones
+    this.easterDropZones.forEach((zone) => {
+      zone.sock = null;
+      zone.glowEffect = 0;
+      zone.hoverEffect = 0;
+      zone.snapEffect = 0;
+    });
   }
 
   setupCreditsModal() {
@@ -2128,6 +2136,7 @@ class LevelSelect extends Screen {
     this.renderAchievementsDrawer(ctx);
 
     if (this.easterEggActive) {
+      this.renderEasterDropZonePairBox(ctx);
       this.renderEasterDropZones(ctx);
     }
 
@@ -3686,8 +3695,57 @@ class LevelSelect extends Screen {
     ctx.restore();
   }
 
+  renderEasterDropZonePairBox(ctx) {
+    if (this.easterDropZones.length < 2) return;
+
+    const layout = this.layoutCache;
+    const lineWidth = this.game.getScaledValue(3);
+    const margin = this.game.getScaledValue(30);
+    const cornerRadius = this.game.getScaledValue(10);
+
+    // Calculate bounding box around both drop zones
+    const minX = Math.min(this.easterDropZones[0].x, this.easterDropZones[1].x) - margin;
+    const maxX = Math.max(this.easterDropZones[0].x, this.easterDropZones[1].x) + margin;
+    const minY = Math.min(this.easterDropZones[0].y, this.easterDropZones[1].y) - margin;
+    const maxY = Math.max(this.easterDropZones[0].y, this.easterDropZones[1].y) + margin;
+
+    const width = maxX - minX;
+    const height = maxY - minY;
+    const centerX = (minX + maxX) / 2;
+
+    ctx.save();
+
+    // Draw rounded rectangle background with subtle gradient
+    const gradient = ctx.createLinearGradient(minX, minY, minX, maxY);
+    gradient.addColorStop(0, "rgba(255, 215, 0, 0.1)");
+    gradient.addColorStop(1, "rgba(0, 0, 0, 0.05)");
+
+    ctx.fillStyle = gradient;
+    this.roundRect(ctx, minX, minY, width, height, cornerRadius);
+    ctx.fill();
+
+    // Draw solid border
+    ctx.strokeStyle = "rgba(255, 215, 0, 0.5)";
+    ctx.lineWidth = lineWidth;
+    this.roundRect(ctx, minX, minY, width, height, cornerRadius);
+    ctx.stroke();
+
+    // Draw "Drop Here" text above the box
+    const textY = minY - this.game.getScaledValue(15);
+    this.renderText(ctx, "Drop Here", centerX, textY, {
+      fontSize: layout.bodyFontSize,
+      color: "rgba(255, 215, 0, 0.9)",
+      align: "center",
+      baseline: "bottom",
+      weight: "bold",
+    });
+
+    ctx.restore();
+  }
+
   renderEasterDropZones(ctx) {
     const layout = this.layoutCache;
+    const cornerRadius = this.game.getScaledValue(10); // Match match-screen corner radius
 
     this.easterDropZones.forEach((zone) => {
       ctx.save();
@@ -3704,58 +3762,53 @@ class LevelSelect extends Screen {
         glowIntensity = Math.max(glowIntensity, 0.8);
       }
 
-      let borderColor = "rgba(200, 200, 200, 0.5)";
-      let backgroundColor = "rgba(255, 255, 255, 0.1)";
-      let shadowColor = "rgba(255, 255, 255, 0.2)";
-      let shadowBlur = this.game.getScaledValue(5);
+      let borderColor = "white";
+      let backgroundColor = "transparent";
+      let shadowColor = "rgba(100, 255, 100, 0.5)";
+      let shadowBlur = this.game.getScaledValue(15);
 
       if (isOccupied) {
-        borderColor = "rgba(46, 204, 113, 0.8)";
-        backgroundColor = "rgba(46, 204, 113, 0.3)";
-        shadowColor = "rgba(46, 204, 113, 0.5)";
-        shadowBlur = this.game.getScaledValue(10);
+        borderColor = "rgba(100, 255, 100, 0.8)";
       } else if (isHovered) {
-        borderColor = "#2ecc71";
-        backgroundColor = "rgba(46, 204, 113, 0.25)";
-        shadowColor = "rgba(46, 204, 113, 0.6)";
-        shadowBlur = this.game.getScaledValue(15);
+        borderColor = "white";
+        backgroundColor = "rgba(255, 255, 255, 0.1)";
       }
 
+      // Apply glow effect
       if (glowIntensity > 0) {
         ctx.shadowColor = shadowColor;
-        ctx.shadowBlur = shadowBlur * (1 + glowIntensity);
+        ctx.shadowBlur = shadowBlur * glowIntensity;
       }
 
-      ctx.fillStyle = backgroundColor;
-      ctx.fillRect(
-        zone.x - zone.width / 2,
-        zone.y - zone.height / 2,
-        zone.width,
-        zone.height
-      );
+      // Draw rounded rectangle for drop zone (matching match screen style)
+      const lineWidth = isHovered ? this.game.getScaledValue(3) : this.game.getScaledValue(2);
 
-      ctx.setLineDash([5, 5]);
       ctx.strokeStyle = borderColor;
-      ctx.lineWidth = this.game.getScaledValue(isHovered ? 3 : 2);
-      ctx.strokeRect(
+      ctx.lineWidth = lineWidth;
+
+      // Draw rounded rectangle stroke
+      this.roundRect(
+        ctx,
         zone.x - zone.width / 2,
         zone.y - zone.height / 2,
         zone.width,
-        zone.height
+        zone.height,
+        cornerRadius
       );
+      ctx.stroke();
 
-      ctx.setLineDash([]);
-
-      if (!isOccupied && !isHovered) {
-        const pulseIntensity = Math.sin(Date.now() * 0.003) * 0.3 + 0.7;
-        ctx.strokeStyle = `rgba(200, 200, 200, ${pulseIntensity * 0.6})`;
-        ctx.lineWidth = this.game.getScaledValue(1);
-        ctx.strokeRect(
+      // Fill if hovered
+      if (isHovered && backgroundColor !== "transparent") {
+        ctx.fillStyle = backgroundColor;
+        this.roundRect(
+          ctx,
           zone.x - zone.width / 2,
           zone.y - zone.height / 2,
           zone.width,
-          zone.height
+          zone.height,
+          cornerRadius
         );
+        ctx.fill();
       }
 
       ctx.restore();
@@ -3816,6 +3869,21 @@ class LevelSelect extends Screen {
 
   easeOutCubic(t) {
     return 1 - Math.pow(1 - t, 3);
+  }
+
+  // Helper method to draw rounded rectangles (matching match-screen.js)
+  roundRect(ctx, x, y, width, height, radius) {
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + width - radius, y);
+    ctx.arcTo(x + width, y, x + width, y + radius, radius);
+    ctx.lineTo(x + width, y + height - radius);
+    ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+    ctx.lineTo(x + radius, y + height);
+    ctx.arcTo(x, y + height, x, y + height - radius, radius);
+    ctx.lineTo(x, y + radius);
+    ctx.arcTo(x, y, x + radius, y, radius);
+    ctx.closePath();
   }
 
   renderLevelButtons(ctx) {

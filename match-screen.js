@@ -1300,15 +1300,25 @@ class MatchScreen extends Screen {
     );
 
     // Streak counter (CENTER of top bar - always visible)
-    const streakText =
-      this.matchStreak > 0 ? `🔥 ${this.matchStreak}x Streak` : `🔥 0x Streak`;
+    // Determine which fire icon to use based on streak
+    let fireIcon = "icon-fire1.png"; // Default fire icon
+    if (this.matchStreak >= 10) {
+      fireIcon = "icon-fire3.png"; // Biggest flame for 10+ streak
+    } else if (this.matchStreak >= 5) {
+      fireIcon = "icon-fire2.png"; // Medium flame for 5+ streak
+    }
+
+    const streakText = `${this.matchStreak}x Streak`;
     const streakColor =
-      this.matchStreak >= 5
-        ? "rgba(255, 100, 0, 0.9)" // Hot orange for 5+
+      this.matchStreak >= 10
+        ? "rgba(255, 100, 0, 0.9)" // Hot orange for 10+
+        : this.matchStreak >= 5
+        ? "rgba(255, 165, 0, 0.9)" // Orange for 5+
         : this.matchStreak >= 3
-        ? "rgba(255, 165, 0, 0.9)" // Orange for 3+
+        ? "rgba(255, 200, 0, 0.9)" // Yellow-orange for 3+
         : "rgba(200, 200, 200, 0.7)"; // Gray for 0-2
 
+    // Draw streak text first
     this.renderText(ctx, streakText, layout.streakX, layout.streakY, {
       fontSize: layout.bodyFontSize,
       align: "center",
@@ -1316,6 +1326,21 @@ class MatchScreen extends Screen {
       color: streakColor,
       weight: "bold",
     });
+
+    // Draw fire icon to the right of the text
+    const iconSize = layout.bodyFontSize * 1.2;
+    ctx.font = `bold ${layout.bodyFontSize}px "Press Start 2P", monospace`;
+    const textWidth = ctx.measureText(streakText).width;
+    const iconX = layout.streakX + textWidth / 2 + 5;
+    if (this.game.images[fireIcon]) {
+      ctx.drawImage(
+        this.game.images[fireIcon],
+        iconX,
+        layout.streakY - iconSize / 2,
+        iconSize,
+        iconSize
+      );
+    }
 
     // Time display (left of center)
     const timeElapsed = Math.max(0, Math.floor(this.game.timeElapsed));
