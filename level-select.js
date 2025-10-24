@@ -1566,6 +1566,18 @@ class LevelSelect extends Screen {
         this.toggleAchievementsDrawer();
         return true;
       }
+
+      // Check if click is anywhere on the drawer to prevent click-through
+      const canvasHeight = this.game.getCanvasHeight();
+      if (
+        x >= drawerX &&
+        x <= drawerX + drawerWidth &&
+        y >= 0 &&
+        y <= canvasHeight
+      ) {
+        // Click is on the drawer - consume the click to prevent click-through
+        return true;
+      }
     }
 
     // Check achievements button using direct hit detection
@@ -1899,12 +1911,14 @@ class LevelSelect extends Screen {
       this.achievementsDrawer.isOpen &&
       this.achievementsDrawer.animationProgress > 0.5
     ) {
-      const scrollSpeed = this.game.getScaledValue(30);
+      // Use a small multiplier instead of scaling to make scrolling subtle
+      // deltaY is typically around 100 per wheel tick, so 0.5 gives us ~50px per tick
+      const scrollAmount = deltaY * 0.5;
       this.achievementsDrawer.scrollOffset = Math.max(
         0,
         Math.min(
           this.achievementsDrawer.maxScroll,
-          this.achievementsDrawer.scrollOffset + deltaY * scrollSpeed
+          this.achievementsDrawer.scrollOffset + scrollAmount
         )
       );
       return true;
@@ -3229,16 +3243,29 @@ class LevelSelect extends Screen {
 
         // Check if icon is an image path or emoji
         if (achievement.icon.endsWith('.png')) {
-          // Render as image
-          const iconSize = this.game.getScaledValue(32);
+          // Render as image with aspect ratio maintained
+          const maxIconSize = this.game.getScaledValue(32);
           const iconImage = this.game.images[achievement.icon];
           if (iconImage) {
+            const aspectRatio = iconImage.width / iconImage.height;
+            let iconWidth, iconHeight;
+
+            if (aspectRatio > 1) {
+              // Wider than tall
+              iconWidth = maxIconSize;
+              iconHeight = maxIconSize / aspectRatio;
+            } else {
+              // Taller than wide or square
+              iconHeight = maxIconSize;
+              iconWidth = maxIconSize * aspectRatio;
+            }
+
             ctx.drawImage(
               iconImage,
-              iconX - iconSize / 2,
-              iconY - iconSize / 2,
-              iconSize,
-              iconSize
+              iconX - iconWidth / 2,
+              iconY - iconHeight / 2,
+              iconWidth,
+              iconHeight
             );
           }
         } else {
@@ -3308,7 +3335,7 @@ class LevelSelect extends Screen {
           // Draw lock icon
           if (this.game.images["icon-lock.png"]) {
             const lockIcon = this.game.images["icon-lock.png"];
-            const lockIconHeight = this.game.getScaledValue(16);
+            const lockIconHeight = this.game.getScaledValue(28);
             const lockIconWidth =
               lockIconHeight * (lockIcon.width / lockIcon.height);
             ctx.drawImage(

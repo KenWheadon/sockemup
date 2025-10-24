@@ -125,6 +125,7 @@ class SockGame {
     this.handleMouseMove = this.handleMouseMove.bind(this);
     this.handleMouseUp = this.handleMouseUp.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.handleWheel = this.handleWheel.bind(this);
     this.handleResize = this.handleResize.bind(this);
     this.handleKeyDown = this.handleKeyDown.bind(this);
     this.handleTouchStart = this.handleTouchStart.bind(this);
@@ -383,6 +384,7 @@ class SockGame {
     this.canvas.addEventListener("mousemove", this.handleMouseMove);
     this.canvas.addEventListener("mouseup", this.handleMouseUp);
     this.canvas.addEventListener("click", this.handleClick);
+    this.canvas.addEventListener("wheel", this.handleWheel, { passive: false });
     window.addEventListener("resize", this.handleResize);
 
     // Phase 1.3 - Keyboard listener for pause (P or ESC)
@@ -407,6 +409,7 @@ class SockGame {
     this.canvas.removeEventListener("mousedown", this.handleMouseDown);
     this.canvas.removeEventListener("mousemove", this.handleMouseMove);
     this.canvas.removeEventListener("mouseup", this.handleMouseUp);
+    this.canvas.removeEventListener("wheel", this.handleWheel);
     this.canvas.removeEventListener("click", this.handleClick);
     window.removeEventListener("resize", this.handleResize);
     window.removeEventListener("keydown", this.handleKeyDown);
@@ -1008,6 +1011,20 @@ class SockGame {
       this.mouseDownState = null;
     } catch (error) {
       console.error("Error handling click:", error);
+    }
+  }
+
+  handleWheel(e) {
+    try {
+      // Only process wheel events for level select screen
+      if (this.gameState === "menu") {
+        const handled = this.levelSelect.onMouseWheel(e.deltaY);
+        if (handled) {
+          e.preventDefault();
+        }
+      }
+    } catch (error) {
+      console.error("Error handling wheel:", error);
     }
   }
 

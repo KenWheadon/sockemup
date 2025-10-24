@@ -500,16 +500,29 @@ class FeedbackManager {
     } else {
       // Achievement icon - check if it's an image or emoji
       if (achievement.icon.endsWith('.png')) {
-        // Render as image
-        const iconSize = this.game.getScaledValue(24);
+        // Render as image with aspect ratio maintained
+        const maxIconSize = this.game.getScaledValue(24);
         const iconImage = this.game.images[achievement.icon];
         if (iconImage) {
+          const aspectRatio = iconImage.width / iconImage.height;
+          let iconWidth, iconHeight;
+
+          if (aspectRatio > 1) {
+            // Wider than tall
+            iconWidth = maxIconSize;
+            iconHeight = maxIconSize / aspectRatio;
+          } else {
+            // Taller than wide or square
+            iconHeight = maxIconSize;
+            iconWidth = maxIconSize * aspectRatio;
+          }
+
           ctx.drawImage(
             iconImage,
             iconX,
-            iconY - iconSize / 2,
-            iconSize,
-            iconSize
+            iconY - iconHeight / 2,
+            iconWidth,
+            iconHeight
           );
         }
       } else {
