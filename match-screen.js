@@ -991,52 +991,6 @@ class MatchScreen extends Screen {
         this.roundRect(ctx, minX, minY, width, height, cornerRadius);
         ctx.stroke();
 
-        // Draw pair number badge BELOW the zone (centered)
-        const badgeWidth = this.game.getScaledValue(50);
-        const badgeHeight = this.game.getScaledValue(35);
-        const badgeY = maxY + this.game.getScaledValue(15);
-        const badgeCornerRadius = this.game.getScaledValue(8);
-
-        // Badge solid background
-        ctx.fillStyle = colors.border;
-        this.roundRect(
-          ctx,
-          centerX - badgeWidth / 2,
-          badgeY,
-          badgeWidth,
-          badgeHeight,
-          badgeCornerRadius
-        );
-        ctx.fill();
-
-        // Badge border for extra definition
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-        ctx.lineWidth = this.game.getScaledValue(2);
-        this.roundRect(
-          ctx,
-          centerX - badgeWidth / 2,
-          badgeY,
-          badgeWidth,
-          badgeHeight,
-          badgeCornerRadius
-        );
-        ctx.stroke();
-
-        // Badge number
-        this.renderText(
-          ctx,
-          `${pairId + 1}`,
-          centerX,
-          badgeY + badgeHeight / 2,
-          {
-            fontSize: layout.headerFontSize,
-            color: "rgba(255, 255, 255, 0.95)",
-            align: "center",
-            baseline: "middle",
-            weight: "bold",
-          }
-        );
-
         ctx.restore();
       }
     }
