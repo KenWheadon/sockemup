@@ -140,9 +140,14 @@ class ThrowingScreen extends Screen {
     this.sockballProjectiles = [];
     this.showingMessage = false;
 
-    // Stop throwing music when leaving screen
-    console.log("🎵 Throwing screen cleanup - stopping throwing music");
-    this.game.audioManager.stopMusic();
+    // Only stop music if NOT transitioning to game over screen
+    // (victory/defeat music should continue playing on the level end screen)
+    if (this.game.gameState !== "gameOver" && this.game.previousGameState !== "throwing") {
+      console.log("🎵 Throwing screen cleanup - stopping throwing music");
+      this.game.audioManager.stopMusic();
+    } else {
+      console.log("🎵 Throwing screen cleanup - keeping victory/defeat music playing");
+    }
   }
 
   clearAllTimeouts() {
@@ -710,6 +715,17 @@ class ThrowingScreen extends Screen {
       this.marthaManager.width,
       this.marthaManager.onScreen
     );
+
+    // Fix: Show trajectory after cooldown completes (even without mouse movement)
+    if (this.canThrow() && (this.mouseX > 0 || this.mouseY > 0 || this.keyboardAimX !== null)) {
+      // Use keyboard aim if active, otherwise use last mouse position
+      const aimX = this.keyboardAimX !== null ? this.keyboardAimX : this.mouseX;
+      const aimY = this.keyboardAimY !== null ? this.keyboardAimY : this.mouseY;
+      this.updateTrajectoryPreview(aimX, aimY);
+      this.showTrajectory = true;
+    } else if (!this.canThrow()) {
+      this.showTrajectory = false;
+    }
 
     if (this.showingMessage) {
       this.messageTimer -= deltaTime;
