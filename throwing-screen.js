@@ -451,6 +451,14 @@ class ThrowingScreen extends Screen {
       if (sockball.y > canvasHeight + sockball.size) {
         this.missedThrows++;
         this.consecutiveHits = 0; // Reset consecutive hits on miss
+        this.game.consecutiveMisses++; // Track consecutive misses for Butterfingers
+        this.game.consecutivePerfectThrows = 0; // Reset perfect streak
+
+        // Achievement: BUTTERFINGERS (miss 5 throws in a row)
+        if (this.game.consecutiveMisses >= 5) {
+          this.game.unlockAchievement("butterfingers");
+        }
+
         return false;
       }
 
