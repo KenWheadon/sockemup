@@ -517,6 +517,31 @@ class MatchScreen extends Screen {
     }
 
     this.updateHoverEffects(x, y);
+
+    // Update cursor based on what's being hovered
+    this.updateCursor(x, y);
+  }
+
+  updateCursor(x, y) {
+    // Check if hovering over buttons
+    const isButtonHovered = this.pauseButton.hovered || this.exitButton.hovered;
+
+    // Check if hovering over sock pile
+    const isSockPileHovered = this.sockPileHover;
+
+    // Check if hovering over a sock
+    const isSockHovered = !this.isDragging && this.sockManager.getSockAt(x, y) !== null;
+
+    // Set cursor based on what's being hovered/interacted with
+    if (this.isDragging) {
+      this.game.canvas.style.cursor = "grabbing";
+    } else if (isSockHovered) {
+      this.game.canvas.style.cursor = "grab";
+    } else if (isButtonHovered || isSockPileHovered) {
+      this.game.canvas.style.cursor = "pointer";
+    } else {
+      this.game.canvas.style.cursor = "default";
+    }
   }
 
   calculateThrowVelocity() {
@@ -708,10 +733,16 @@ class MatchScreen extends Screen {
           this.createScreenShake();
 
           // Check if we've completed the required number of matches (stop timer immediately)
-          // Count BOTH animated sockballs AND queued sockballs
+          // Count: queued (waiting for animation) + animating + completed
+          // Queue is now properly managed - items removed when animation starts
           const level = GameConfig.LEVELS[this.game.currentLevel];
-          const totalSockballs =
-            this.game.sockBalls + this.game.getSockballQueueLength();
+          const completedSockballs = this.game.sockBalls;
+          const queuedSockballs = this.game.getSockballQueueLength();
+          const animatingSockballs = this.sockManager.getAnimatingSockballsCount();
+          const totalSockballs = completedSockballs + queuedSockballs + animatingSockballs;
+
+          console.log(`🔍 Sockball count - Completed: ${completedSockballs}, Queued: ${queuedSockballs}, Animating: ${animatingSockballs}, Total: ${totalSockballs}/${level.sockPairs}`);
+
           if (level && totalSockballs >= level.sockPairs) {
             // Mark level as completed to stop the timer
             if (!this.levelCompleted) {

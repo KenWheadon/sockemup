@@ -11,7 +11,8 @@
       "Bash(start \"c:\\Users\\kenne\\OneDrive\\Documents\\GitHub\\sockemup\\index.html\")",
       "Bash(del nul)",
       "Bash(dir:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(powershell -Command \"(Get-Content ''c:\\Users\\kenne\\OneDrive\\Documents\\GitHub\\sockemup\\sockmanager.js'').Count\")"
     ],
     "deny": [],
     "ask": []

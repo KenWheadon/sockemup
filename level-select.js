@@ -1202,11 +1202,17 @@ class LevelSelect extends Screen {
     // Check if hovering over Martha image
     const isMarthaHovered = this.isMarthaClicked(this.lastMouseX, this.lastMouseY);
 
-    // Set cursor to pointer if hovering over any interactive element
-    if (isButtonHovered || isLevelHovered || isLogoHovered || isMarthaHovered) {
-      this.game.canvas.style.cursor = "pointer";
-    } else if (this.isDragging) {
+    // Check if hovering over a sock (when easter egg is active)
+    const isSockHovered = this.easterEggActive &&
+      this.getSockAtPosition(this.lastMouseX, this.lastMouseY) !== null;
+
+    // Set cursor based on what's being hovered/interacted with
+    if (this.isDragging) {
       this.game.canvas.style.cursor = "grabbing";
+    } else if (isSockHovered) {
+      this.game.canvas.style.cursor = "grab";
+    } else if (isButtonHovered || isLevelHovered || isLogoHovered || isMarthaHovered) {
+      this.game.canvas.style.cursor = "pointer";
     } else {
       this.game.canvas.style.cursor = "default";
     }
@@ -1969,12 +1975,17 @@ class LevelSelect extends Screen {
 
   awardPointsForMatch(sock1, sock2) {
     this.game.playerPoints += 1;
+    this.game.sockBalls++; // Increment the sockball currency counter
+    this.game.totalSockMatches++; // Track lifetime total matches (displays on top bar)
 
     // Track easter egg sockballs for Sockball Wizard achievement
     this.game.easterEggSockballsCreated++;
     if (this.game.easterEggSockballsCreated >= 10) {
       this.game.unlockAchievement("sockball_wizard");
     }
+
+    // Track total sockballs earned (for Martha's Millionaire achievement)
+    this.game.totalSockballsEarned++;
 
     this.game.saveGameData();
 
