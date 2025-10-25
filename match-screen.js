@@ -155,6 +155,7 @@ class MatchScreen extends Screen {
     // Reset canvas transform in case shake is still active
     if (this.game.canvas) {
       this.game.canvas.style.transform = "";
+      this.game.canvas.className = ""; // Reset cursor to default
     }
 
     // Stop match music when leaving match screen

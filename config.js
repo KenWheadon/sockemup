@@ -424,6 +424,41 @@ const GameConfig = {
       baseSpeed: 1.5,
       description: "Moves randomly",
     },
+    FIGURE_EIGHT: {
+      name: "figure-eight",
+      baseSpeed: 1.5,
+      description: "Moves in a figure-8 pattern",
+    },
+    ZIGZAG_HORIZONTAL: {
+      name: "zigzag-horizontal",
+      baseSpeed: 1.5,
+      description: "Zigzags horizontally across the screen",
+    },
+    ZIGZAG_VERTICAL: {
+      name: "zigzag-vertical",
+      baseSpeed: 1.5,
+      description: "Zigzags vertically down the screen",
+    },
+    SPIRAL: {
+      name: "spiral",
+      baseSpeed: 1.5,
+      description: "Spirals outward or inward",
+    },
+    BOUNCE: {
+      name: "bounce",
+      baseSpeed: 1.5,
+      description: "Bounces around like a DVD screensaver",
+    },
+    SQUARE: {
+      name: "square",
+      baseSpeed: 1.5,
+      description: "Moves in a square pattern",
+    },
+    WAVE: {
+      name: "wave",
+      baseSpeed: 1.5,
+      description: "Moves in a sine wave pattern",
+    },
   },
 
   // Martha hit effects

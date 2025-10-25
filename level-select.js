@@ -544,7 +544,11 @@ class LevelSelect extends Screen {
                   </div>
                   <div class="credit-role">
                     <span class="role">Logo</span>
-                    <span class="name">Wrymskin</span>
+                    <span class="name">Wyrmskin</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Quality Assurance</span>
+                    <span class="name">ravex & Games for Love volunteers</span>
                   </div>
                   <div class="credit-role">
                     <span class="role">Audio Effects - freesound.org</span>
@@ -1133,7 +1137,13 @@ class LevelSelect extends Screen {
       this.achievementsDrawer.closeButton.hovered = false;
     }
 
-    if (this.isDragging && this.dragSock) {
+    // Don't update drag position if story or menus are open
+    if (
+      this.isDragging &&
+      this.dragSock &&
+      !this.game.storyManager.showingStory &&
+      !this.storyViewer.isOpen
+    ) {
       this.dragSock.x = x - this.dragOffset.x;
       this.dragSock.y = y - this.dragOffset.y;
     }
@@ -1203,6 +1213,11 @@ class LevelSelect extends Screen {
       }
     }
 
+    // Don't allow sock dragging when story or menus are open
+    if (this.game.storyManager.showingStory || this.storyViewer.isOpen) {
+      return false;
+    }
+
     if (this.easterEggActive) {
       const sock = this.getSockAtPosition(x, y);
       if (sock) {
@@ -1217,6 +1232,13 @@ class LevelSelect extends Screen {
         this.lastMouseY = y;
         this.mouseVelocityX = 0;
         this.mouseVelocityY = 0;
+
+        // Remove sock from drop zone if it was in one
+        this.easterDropZones.forEach((zone) => {
+          if (zone.sock === sock) {
+            zone.sock = null;
+          }
+        });
 
         return true;
       }
@@ -1275,6 +1297,9 @@ class LevelSelect extends Screen {
       this.dragSock = null;
       this.dropZoneHover = null;
       this.checkForEasterEggMatches();
+
+      // Prevent onClick from triggering after sock drag
+      return true;
     }
   }
 
@@ -1433,6 +1458,10 @@ class LevelSelect extends Screen {
           this.game.unlockAchievement("big_spender");
         }
 
+        // Update the actual difficulty-specific array, not just the pointer
+        this.game.unlockedLevelsByDifficulty[this.game.selectedDifficulty][
+          levelIndex
+        ] = true;
         this.game.unlockedLevels[levelIndex] = true;
         this.game.saveGameData();
         this.game.startLevel(levelIndex, this.game.selectedDifficulty);
@@ -1640,6 +1669,7 @@ class LevelSelect extends Screen {
       })
     ) {
       this.game.audioManager.playSound("button-click", false, 0.5);
+      this.cancelActiveDrag();
       this.game.storyManager.show();
       return true;
     }
@@ -1653,6 +1683,7 @@ class LevelSelect extends Screen {
         height: layout.storyViewerButtonHeight,
       })
     ) {
+      this.cancelActiveDrag();
       this.storyViewer.open();
       return true;
     }
@@ -1765,12 +1796,31 @@ class LevelSelect extends Screen {
         this.awardPointsForMatch(sock1, sock2);
 
         this.removeMatchedSocks(sock1, sock2);
+
+        // Check if we should deactivate easter egg (no socks left)
+        this.checkEasterEggDeactivation();
       } else {
         this.game.audioManager.playSound("easter-egg-mismatch", false, 0.6);
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
         this.handleEasterEggMismatch(sock1, sock2);
       }
+    }
+  }
+
+  checkEasterEggDeactivation() {
+    // Deactivate easter egg if there are no more socks in the menu
+    if (this.menuSocks.length === 0 && this.easterEggActive) {
+      this.easterEggActive = false;
+    }
+  }
+
+  cancelActiveDrag() {
+    // Cancel any active sock dragging
+    if (this.isDragging && this.dragSock) {
+      this.isDragging = false;
+      this.dragSock = null;
+      this.dropZoneHover = null;
     }
   }
 
@@ -3242,7 +3292,7 @@ class LevelSelect extends Screen {
         ctx.globalAlpha = unlocked ? 1 : 0.4;
 
         // Check if icon is an image path or emoji
-        if (achievement.icon.endsWith('.png')) {
+        if (achievement.icon.endsWith(".png")) {
           // Render as image with aspect ratio maintained
           const maxIconSize = this.game.getScaledValue(32);
           const iconImage = this.game.images[achievement.icon];
@@ -3750,10 +3800,14 @@ class LevelSelect extends Screen {
     const cornerRadius = this.game.getScaledValue(10);
 
     // Calculate bounding box around both drop zones
-    const minX = Math.min(this.easterDropZones[0].x, this.easterDropZones[1].x) - margin;
-    const maxX = Math.max(this.easterDropZones[0].x, this.easterDropZones[1].x) + margin;
-    const minY = Math.min(this.easterDropZones[0].y, this.easterDropZones[1].y) - margin;
-    const maxY = Math.max(this.easterDropZones[0].y, this.easterDropZones[1].y) + margin;
+    const minX =
+      Math.min(this.easterDropZones[0].x, this.easterDropZones[1].x) - margin;
+    const maxX =
+      Math.max(this.easterDropZones[0].x, this.easterDropZones[1].x) + margin;
+    const minY =
+      Math.min(this.easterDropZones[0].y, this.easterDropZones[1].y) - margin;
+    const maxY =
+      Math.max(this.easterDropZones[0].y, this.easterDropZones[1].y) + margin;
 
     const width = maxX - minX;
     const height = maxY - minY;
@@ -3827,7 +3881,9 @@ class LevelSelect extends Screen {
       }
 
       // Draw rounded rectangle for drop zone (matching match screen style)
-      const lineWidth = isHovered ? this.game.getScaledValue(3) : this.game.getScaledValue(2);
+      const lineWidth = isHovered
+        ? this.game.getScaledValue(3)
+        : this.game.getScaledValue(2);
 
       ctx.strokeStyle = borderColor;
       ctx.lineWidth = lineWidth;
