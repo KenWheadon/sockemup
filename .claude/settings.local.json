@@ -10,7 +10,8 @@
       "Bash(start \"c:\\Users\\kenne\\OneDrive\\Documents\\GitHub\\sockemup\\test-sprite.html\")",
       "Bash(start \"c:\\Users\\kenne\\OneDrive\\Documents\\GitHub\\sockemup\\index.html\")",
       "Bash(del nul)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []
