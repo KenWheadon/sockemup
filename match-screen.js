@@ -922,9 +922,11 @@ class MatchScreen extends Screen {
       this.renderDraggedSock(ctx);
     }
 
-    this.sockManager.renderSockballAnimations(ctx);
     this.sockManager.renderParticleEffects(ctx);
     this.renderMatchScreenUI(ctx);
+
+    // Render sockball animations AFTER the top bar so they appear above it
+    this.sockManager.renderSockballAnimations(ctx);
 
     // Render feedback manager for achievement toasts
     this.game.feedbackManager.render(ctx);
@@ -1328,17 +1330,19 @@ class MatchScreen extends Screen {
     });
 
     // Draw fire icon to the right of the text
-    const iconSize = layout.bodyFontSize * 1.2;
+    const iconWidth = layout.bodyFontSize * 1.2;
     ctx.font = `bold ${layout.bodyFontSize}px "Press Start 2P", monospace`;
     const textWidth = ctx.measureText(streakText).width;
     const iconX = layout.streakX + textWidth / 2 + 5;
     if (this.game.images[fireIcon]) {
+      const fireImage = this.game.images[fireIcon];
+      const iconHeight = iconWidth * (fireImage.height / fireImage.width);
       ctx.drawImage(
-        this.game.images[fireIcon],
+        fireImage,
         iconX,
-        layout.streakY - iconSize / 2,
-        iconSize,
-        iconSize
+        layout.streakY - iconHeight / 2,
+        iconWidth,
+        iconHeight
       );
     }
 

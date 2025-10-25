@@ -584,8 +584,8 @@ class MarthaManager {
     const dy = sockball.y - marthaCenterY;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Calculate max distance for catch (using Martha's width as reference)
-    const maxDistance = this.width / 2;
+    // Calculate max distance for catch (using fixed base width for consistency)
+    const maxDistance = GameConfig.MARTHA_SIZE.width / 2;
 
     // Normalized distance (0 = center, 1 = edge of Martha, >1 = beyond edge)
     const normalizedDistance = distance / maxDistance;
@@ -682,9 +682,10 @@ class MarthaManager {
 
   checkCollision(sockball) {
     // Phase 2.1 - Enhanced collision with catch radius multiplier
+    // Use fixed base size for consistent catch radius regardless of sprite
     const sockballRadius = GameConfig.SOCKBALL_SIZE / 2;
     const catchRadius =
-      (this.width / 2) * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+      (GameConfig.MARTHA_SIZE.width / 2) * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
 
     // Calculate Martha's center
     const marthaCenterX = this.x + this.width / 2;
@@ -768,7 +769,8 @@ class MarthaManager {
     // Calculate Martha's center position
     const centerX = this.x + this.width / 2;
     const centerY = this.y + this.height / 2;
-    const baseRadius = this.width / 2;
+    // Use fixed base size for consistent catch zones regardless of sprite
+    const baseRadius = GameConfig.MARTHA_SIZE.width / 2;
 
     // Get the catch radius with multiplier
     const catchRadius =
@@ -782,25 +784,6 @@ class MarthaManager {
     const regularRadius = catchRadius;
 
     ctx.save();
-
-    // If Martha is exiting/entering, show BONUS zone indicator!
-    if (this.isExiting || this.isEntering) {
-      // Pulsing bonus indicator
-      const pulseIntensity = Math.sin(Date.now() * 0.01) * 0.3 + 0.7;
-
-      // Outer bonus glow
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, regularRadius * 1.3, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255, 105, 180, ${0.6 * pulseIntensity})`; // Hot pink
-      ctx.lineWidth = 4;
-      ctx.setLineDash([4, 4]);
-      ctx.stroke();
-      ctx.fillStyle = `rgba(255, 105, 180, ${0.15 * pulseIntensity})`;
-      ctx.fill();
-
-      // Reset line dash for regular zones
-      ctx.setLineDash([]);
-    }
 
     // Draw Regular catch zone (outermost) - Blue
     ctx.beginPath();

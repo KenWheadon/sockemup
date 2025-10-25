@@ -844,9 +844,9 @@ const GameConfig = {
 
   // Martha catch mechanics settings
   CATCH_MECHANICS: {
-    CATCH_RADIUS_MULTIPLIER: 2.6,
+    CATCH_RADIUS_MULTIPLIER: 2,
     PERFECT_CATCH_THRESHOLD: 0.6,
-    GOOD_CATCH_THRESHOLD: 1.2,
+    GOOD_CATCH_THRESHOLD: 1.25,
     PERFECT_CATCH_BONUS: 15,
     GOOD_CATCH_BONUS: 10,
     REGULAR_CATCH_BONUS: 5,
@@ -887,37 +887,37 @@ const GameConfig = {
     },
     PLUS_1: {
       name: "NEW GAME+1",
-      speedMultiplier: 1.15,
+      speedMultiplier: 1.5,
       timeMultiplier: 0.98,
       throwCooldownMultiplier: 0.95,
-      catchRadiusMultiplier: 0.9,
+      catchRadiusMultiplier: 0.8,
       displayName: "★",
       stars: 1,
     },
     PLUS_2: {
       name: "NEW GAME+2",
-      speedMultiplier: 1.3,
+      speedMultiplier: 2,
       timeMultiplier: 0.95,
       throwCooldownMultiplier: 0.9,
-      catchRadiusMultiplier: 0.8,
+      catchRadiusMultiplier: 0.6,
       displayName: "★★",
       stars: 2,
     },
     PLUS_3: {
       name: "NEW GAME+3",
-      speedMultiplier: 1.45,
+      speedMultiplier: 3,
       timeMultiplier: 0.92,
       throwCooldownMultiplier: 0.85,
-      catchRadiusMultiplier: 0.7,
+      catchRadiusMultiplier: 0.45,
       displayName: "★★★",
       stars: 3,
     },
     PLUS_4: {
       name: "NEW GAME+4",
-      speedMultiplier: 1.6,
+      speedMultiplier: 4,
       timeMultiplier: 0.9,
       throwCooldownMultiplier: 0.8,
-      catchRadiusMultiplier: 0.6,
+      catchRadiusMultiplier: 0.3,
       displayName: "★★★★",
       stars: 4,
     },
@@ -940,7 +940,7 @@ const GameConfig = {
   getLevelCost: function (levelIndex, difficulty = 0) {
     const baseCost = this.LEVEL_COSTS[levelIndex];
     const flatIncrease = 75; // Add 75 per difficulty level
-    return baseCost + (difficulty * flatIncrease);
+    return baseCost + difficulty * flatIncrease;
   },
 
   // Level background mappings
@@ -1145,6 +1145,20 @@ const GameConfig = {
       name: "Pinball King",
       description: "Get 25 total wall bounce catches (lifetime)",
       icon: "icon-trophy.png",
+      unlocked: false,
+    },
+    BONUS_HUNTER: {
+      id: "bonus_hunter",
+      name: "Bonus Hunter",
+      description: "Hit Martha with a bonus sockball",
+      icon: "icon-fire1.png",
+      unlocked: false,
+    },
+    BONUS_MASTER: {
+      id: "bonus_master",
+      name: "Bonus Master",
+      description: "Get 10 bonus hits (lifetime)",
+      icon: "icon-fire3.png",
       unlocked: false,
     },
   },

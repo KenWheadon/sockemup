@@ -468,11 +468,12 @@ class ThrowingScreen extends Screen {
       const currentDistance = Math.sqrt(dx * dx + dy * dy);
 
       // Check if in catch zone (adjusted by difficulty)
+      // Use fixed base size for consistent catch radius regardless of sprite
       const difficultyMode = GameConfig.getDifficultyMode(
         this.game.currentDifficulty
       );
       const baseCatchRadius =
-        (this.marthaManager.width / 2) *
+        (GameConfig.MARTHA_SIZE.width / 2) *
         GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
       const catchRadius =
         baseCatchRadius * difficultyMode.catchRadiusMultiplier;
@@ -555,6 +556,17 @@ class ThrowingScreen extends Screen {
             }
 
             if (isBonusHit) {
+              // Track bonus hits for achievements
+              this.game.totalBonusHits++;
+
+              // Achievement: BONUS_HUNTER (first bonus hit)
+              this.game.unlockAchievement("bonus_hunter");
+
+              // Achievement: BONUS_MASTER (10 total bonus hits)
+              if (this.game.totalBonusHits >= 10) {
+                this.game.unlockAchievement("bonus_master");
+              }
+
               // Bonus hits get special message but use normal quality feedback
               this.showMessage("BONUS CATCH!", "success", 1500);
               if (catchQuality === "PERFECT") {
