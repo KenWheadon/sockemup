@@ -147,6 +147,13 @@ class DifficultySelector {
   }
 
   /**
+   * Check if button or dropdown is hovered
+   */
+  isButtonHovered() {
+    return this.button.hovered || (this.isOpen && this.hoveredOption !== -1);
+  }
+
+  /**
    * Update button hover state
    */
   updateButtonHover(x, y) {

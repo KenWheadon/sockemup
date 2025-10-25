@@ -1149,6 +1149,9 @@ class LevelSelect extends Screen {
     }
 
     this.updateDropZoneHover(x, y);
+
+    // Update cursor based on what's being hovered
+    this.updateCursor();
   }
 
   updateDropZoneHover(x, y) {
@@ -1166,6 +1169,46 @@ class LevelSelect extends Screen {
           zone.hoverEffect = Math.max(zone.hoverEffect, 10);
         }
       });
+    }
+  }
+
+  updateCursor() {
+    // Check if any button is hovered
+    const isButtonHovered =
+      this.storyReplayButton.hovered ||
+      this.creditsButton.hovered ||
+      this.videoButton.hovered ||
+      this.achievementsDrawer.button.hovered ||
+      this.achievementsDrawer.closeButton.hovered ||
+      this.storyViewer.button.hovered ||
+      (this.game.highestUnlockedDifficulty > 0 &&
+        this.difficultySelector.isButtonHovered());
+
+    // Check if hovering over a level button
+    const isLevelHovered = this.hoveredLevel !== -1;
+
+    // Check if hovering over logo
+    const layout = this.layoutCache;
+    const logoWidth = this.game.getScaledValue(400);
+    const logoHeight = this.game.getScaledValue(150);
+    const logoX = layout.centerX - logoWidth / 2;
+    const logoY = this.game.getScaledValue(100);
+    const isLogoHovered =
+      this.lastMouseX >= logoX &&
+      this.lastMouseX <= logoX + logoWidth &&
+      this.lastMouseY >= logoY &&
+      this.lastMouseY <= logoY + logoHeight;
+
+    // Check if hovering over Martha image
+    const isMarthaHovered = this.isMarthaClicked(this.lastMouseX, this.lastMouseY);
+
+    // Set cursor to pointer if hovering over any interactive element
+    if (isButtonHovered || isLevelHovered || isLogoHovered || isMarthaHovered) {
+      this.game.canvas.style.cursor = "pointer";
+    } else if (this.isDragging) {
+      this.game.canvas.style.cursor = "grabbing";
+    } else {
+      this.game.canvas.style.cursor = "default";
     }
   }
 

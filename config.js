@@ -845,7 +845,7 @@ const GameConfig = {
     // Add a sockball type to the queue (called when socks are matched)
     addSockballToQueue: function (sockType) {
       this.sockballQueue.push(sockType);
-      this.sockBalls++; // Increment total sockballs
+      // Don't increment sockBalls here - it's incremented when animation completes in sockmanager.js
     },
 
     // Get the next sockball type from the queue (for throwing)

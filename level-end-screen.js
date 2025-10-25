@@ -491,6 +491,9 @@ class LevelEndScreen extends Screen {
     const b = this.continueButton;
     b.hovered =
       x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height;
+
+    // Update cursor
+    this.game.canvas.style.cursor = b.hovered ? "pointer" : "default";
   }
 
   onMouseDown(x, y) {
