@@ -844,7 +844,7 @@ const GameConfig = {
 
   // Martha catch mechanics settings
   CATCH_MECHANICS: {
-    CATCH_RADIUS_MULTIPLIER: 2,
+    CATCH_RADIUS_MULTIPLIER: 2.5,
     PERFECT_CATCH_THRESHOLD: 0.6,
     GOOD_CATCH_THRESHOLD: 1.25,
     PERFECT_CATCH_BONUS: 15,
