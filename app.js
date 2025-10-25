@@ -26,6 +26,7 @@ class SockGame {
     this.totalSockballsEarned = 0; // Lifetime sockballs earned (for Martha's Millionaire)
     this.totalMoneySpent = 0; // Total money spent unlocking levels (for Big Spender)
     this.levelsPlayed = 0; // Total levels played including replays (for Veteran Tenant)
+    this.totalWallBounceCatches = 0; // Lifetime wall bounce catches (for Pinball King)
     this.consecutivePerfectThrows = 0; // Current streak of perfect throws (for Sock Sniper)
     this.consecutiveMisses = 0; // Current streak of misses (for Butterfingers)
     this.easterEggSockballsCreated = 0; // Sockballs created via easter egg this level (for Sockball Wizard)
@@ -574,6 +575,7 @@ class SockGame {
       this.totalSockballsEarned = data.totalSockballsEarned || 0;
       this.totalMoneySpent = data.totalMoneySpent || 0;
       this.levelsPlayed = data.levelsPlayed || 0;
+      this.totalWallBounceCatches = data.totalWallBounceCatches || 0;
       this.logoClickCount = data.logoClickCount || 0;
       this.easterEggSockballsCreated = data.easterEggSockballsCreated || 0;
 
@@ -698,6 +700,7 @@ class SockGame {
       totalSockballsEarned: this.totalSockballsEarned,
       totalMoneySpent: this.totalMoneySpent,
       levelsPlayed: this.levelsPlayed,
+      totalWallBounceCatches: this.totalWallBounceCatches,
       logoClickCount: this.logoClickCount,
       easterEggSockballsCreated: this.easterEggSockballsCreated,
       // NEW GAME+: Save per-difficulty progress

@@ -56,6 +56,7 @@ class ThrowingScreen extends Screen {
     this.perfectThrowsThisLevel = 0;
     this.missedThrows = 0;
     this.consecutiveHits = 0; // Track consecutive hits on Martha
+    this.wallBounceCatchesThisLevel = 0; // Track wall bounce catches
 
     // Exit button
     this.exitButton = {
@@ -94,6 +95,7 @@ class ThrowingScreen extends Screen {
     this.perfectThrowsThisLevel = 0;
     this.missedThrows = 0;
     this.consecutiveHits = 0;
+    this.wallBounceCatchesThisLevel = 0;
 
     // Setup Martha for current level
     const level = GameConfig.LEVELS[this.game.currentLevel];
@@ -436,12 +438,13 @@ class ThrowingScreen extends Screen {
           sockball.size / 2,
           Math.min(canvasWidth - sockball.size / 2, sockball.x)
         );
+        sockball.bounced = true; // Mark as bounced when hitting side walls
       }
 
       if (sockball.y <= sockball.size / 2) {
         sockball.vy *= -GameConfig.BOUNCE_DAMPING;
         sockball.y = sockball.size / 2;
-        sockball.bounced = true;
+        sockball.bounced = true; // Mark as bounced when hitting top
       }
 
       // Remove if falls off bottom (counts as a miss)
@@ -464,10 +467,15 @@ class ThrowingScreen extends Screen {
       const dy = sockball.y - marthaCenterY;
       const currentDistance = Math.sqrt(dx * dx + dy * dy);
 
-      // Check if in catch zone
-      const catchRadius =
+      // Check if in catch zone (adjusted by difficulty)
+      const difficultyMode = GameConfig.getDifficultyMode(
+        this.game.currentDifficulty
+      );
+      const baseCatchRadius =
         (this.marthaManager.width / 2) *
         GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+      const catchRadius =
+        baseCatchRadius * difficultyMode.catchRadiusMultiplier;
       const sockballRadius = GameConfig.SOCKBALL_SIZE / 2;
       const inCatchZone = currentDistance <= catchRadius + sockballRadius;
 
@@ -526,6 +534,25 @@ class ThrowingScreen extends Screen {
             this.game.audioManager.playSound("points-gained", false, 0.3);
 
             this.consecutiveHits++;
+
+            // Track wall bounce catches for achievements
+            if (sockball.bounced) {
+              this.wallBounceCatchesThisLevel++;
+              this.game.totalWallBounceCatches++;
+
+              // Achievement: BANK_SHOT (first wall bounce catch)
+              this.game.unlockAchievement("bank_shot");
+
+              // Achievement: PINBALL_WIZARD (3 wall bounce catches in one level)
+              if (this.wallBounceCatchesThisLevel >= 3) {
+                this.game.unlockAchievement("pinball_wizard");
+              }
+
+              // Achievement: PINBALL_KING (25 total wall bounce catches)
+              if (this.game.totalWallBounceCatches >= 25) {
+                this.game.unlockAchievement("pinball_king");
+              }
+            }
 
             if (isBonusHit) {
               // Bonus hits get special message but use normal quality feedback

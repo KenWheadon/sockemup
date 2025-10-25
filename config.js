@@ -646,7 +646,8 @@ const GameConfig = {
   ],
 
   // Level costs and unlock data
-  LEVEL_COSTS: [0, 25, 75, 125, 175, 250, 325, 400, 500],
+  // Smoothed progression: easier early game, better scaling for NEW GAME+ difficulties
+  LEVEL_COSTS: [0, 20, 50, 90, 140, 200, 270, 350, 450],
   //LEVEL_COSTS: [0, 1, 2, 3, 4, 5, 6, 7, 8],
 
   INITIAL_UNLOCKED_LEVELS: [
@@ -880,6 +881,7 @@ const GameConfig = {
       speedMultiplier: 1.0,
       timeMultiplier: 1.0,
       throwCooldownMultiplier: 1.0,
+      catchRadiusMultiplier: 1.0,
       displayName: "Normal",
       stars: 0,
     },
@@ -888,6 +890,7 @@ const GameConfig = {
       speedMultiplier: 1.15,
       timeMultiplier: 0.98,
       throwCooldownMultiplier: 0.95,
+      catchRadiusMultiplier: 0.9,
       displayName: "★",
       stars: 1,
     },
@@ -896,6 +899,7 @@ const GameConfig = {
       speedMultiplier: 1.3,
       timeMultiplier: 0.95,
       throwCooldownMultiplier: 0.9,
+      catchRadiusMultiplier: 0.8,
       displayName: "★★",
       stars: 2,
     },
@@ -904,6 +908,7 @@ const GameConfig = {
       speedMultiplier: 1.45,
       timeMultiplier: 0.92,
       throwCooldownMultiplier: 0.85,
+      catchRadiusMultiplier: 0.7,
       displayName: "★★★",
       stars: 3,
     },
@@ -912,6 +917,7 @@ const GameConfig = {
       speedMultiplier: 1.6,
       timeMultiplier: 0.9,
       throwCooldownMultiplier: 0.8,
+      catchRadiusMultiplier: 0.6,
       displayName: "★★★★",
       stars: 4,
     },
@@ -930,11 +936,11 @@ const GameConfig = {
   },
 
   // Calculate level cost adjusted for difficulty
-  // Cost increases by 15% per difficulty level (+1 = 15%, +2 = 30%, etc)
+  // Flat cost increase per difficulty level for better NEW GAME+ scaling
   getLevelCost: function (levelIndex, difficulty = 0) {
     const baseCost = this.LEVEL_COSTS[levelIndex];
-    const costMultiplier = 1 + difficulty * 0.15;
-    return Math.ceil(baseCost * costMultiplier);
+    const flatIncrease = 75; // Add 75 per difficulty level
+    return baseCost + (difficulty * flatIncrease);
   },
 
   // Level background mappings
@@ -1118,6 +1124,27 @@ const GameConfig = {
       name: "Butterfingers",
       description: "Miss 5 throws in a row",
       icon: "icon-butter.png",
+      unlocked: false,
+    },
+    BANK_SHOT: {
+      id: "bank_shot",
+      name: "Bank Shot",
+      description: "Bounce off a wall and hit Martha",
+      icon: "icon-coin.png",
+      unlocked: false,
+    },
+    PINBALL_WIZARD: {
+      id: "pinball_wizard",
+      name: "Pinball Wizard",
+      description: "Get 3 wall bounce catches in one level",
+      icon: "icon-demon.png",
+      unlocked: false,
+    },
+    PINBALL_KING: {
+      id: "pinball_king",
+      name: "Pinball King",
+      description: "Get 25 total wall bounce catches (lifetime)",
+      icon: "icon-trophy.png",
       unlocked: false,
     },
   },
