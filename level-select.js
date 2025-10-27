@@ -1073,8 +1073,8 @@ class LevelSelect extends Screen {
       }
 
       const closeButtonSize = this.game.getScaledValue(40);
-      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
-      const closeButtonY = this.game.getScaledValue(20);
+      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(30); // Moved left by 10px
+      const closeButtonY = this.game.getScaledValue(30); // Moved down by 10px
 
       const dx = x - closeButtonX;
       const dy = y - closeButtonY;
@@ -1206,8 +1206,8 @@ class LevelSelect extends Screen {
       const progress = this.achievementsDrawer.animationProgress;
       const drawerX = -drawerWidth + drawerWidth * progress;
       const closeButtonSize = this.game.getScaledValue(40);
-      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
-      const closeButtonY = this.game.getScaledValue(20);
+      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(30); // Moved left by 10px
+      const closeButtonY = this.game.getScaledValue(30); // Moved down by 10px
 
       const dx = x - closeButtonX;
       const dy = y - closeButtonY;
@@ -1613,8 +1613,8 @@ class LevelSelect extends Screen {
       const progress = this.achievementsDrawer.animationProgress;
       const drawerX = -drawerWidth + drawerWidth * progress;
       const closeButtonSize = this.game.getScaledValue(40);
-      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
-      const closeButtonY = this.game.getScaledValue(20);
+      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(30); // Moved left by 10px
+      const closeButtonY = this.game.getScaledValue(30); // Moved down by 10px
 
       const dx = x - closeButtonX;
       const dy = y - closeButtonY;
