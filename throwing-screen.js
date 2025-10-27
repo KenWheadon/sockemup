@@ -122,12 +122,9 @@ class ThrowingScreen extends Screen {
     // Set up next sockball type
     this.updateNextSockballType();
 
-    // Phase 2.2 - Reset feedback manager for new level
     this.game.feedbackManager.reset();
     this.game.feedbackManager.onLevelStart();
 
-    // Start throwing music
-    console.log("🎵 Throwing screen setup - starting throwing music");
     this.game.audioManager.playMusic("throwing-music", true, 0.3);
 
     this.showMessage("Click to throw sockballs at Martha!", "info", 3000);
@@ -142,13 +139,11 @@ class ThrowingScreen extends Screen {
     this.sockballProjectiles = [];
     this.showingMessage = false;
 
-    // Only stop music if NOT transitioning to game over screen
-    // (victory/defeat music should continue playing on the level end screen)
-    if (this.game.gameState !== "gameOver" && this.game.previousGameState !== "throwing") {
-      console.log("🎵 Throwing screen cleanup - stopping throwing music");
+    if (
+      this.game.gameState !== "gameOver" &&
+      this.game.previousGameState !== "throwing"
+    ) {
       this.game.audioManager.stopMusic();
-    } else {
-      console.log("🎵 Throwing screen cleanup - keeping victory/defeat music playing");
     }
   }
 
@@ -160,6 +155,26 @@ class ThrowingScreen extends Screen {
   updateNextSockballType() {
     // Get the next sockball type from the queue
     this.nextSockballType = this.game.getNextSockballType();
+    console.log(
+      "updateNextSockballType called, result:",
+      this.nextSockballType,
+      "Queue length:",
+      this.game.getSockballQueueLength()
+    );
+
+    // If no type is available but we have sockballs to throw, generate from level's available types
+    if (!this.nextSockballType && this.availableSockballs > 0) {
+      const level = GameConfig.LEVELS[this.game.currentLevel];
+      const availableTypes = level.typesAvailable;
+      this.nextSockballType =
+        availableTypes[Math.floor(Math.random() * availableTypes.length)];
+      console.log(
+        "Generated sockball type from level's available types:",
+        this.nextSockballType,
+        "Available:",
+        availableTypes
+      );
+    }
   }
 
   createLayoutCache() {
@@ -325,11 +340,21 @@ class ThrowingScreen extends Screen {
   throwSockball(targetX, targetY) {
     if (!this.canThrow()) return;
 
-    // Get the sockball type from the queue
-    let sockballType = this.game.getNextSockballFromQueue(); // Fix Bug #2: Use 'let' for reassignment
+    // Use the previewed sockball type (which was already determined)
+    let sockballType = this.nextSockballType;
+
+    // Try to get from queue if we don't have a preview type
     if (!sockballType) {
-      console.warn("No sockball type available from queue, using random");
+      sockballType = this.game.getNextSockballFromQueue();
+    }
+
+    // If still no type, generate random as last resort
+    if (!sockballType) {
+      console.warn("No sockball type available, using random");
       sockballType = Math.floor(Math.random() * 6) + 1;
+    } else {
+      // Remove from queue since we're using the previewed type
+      this.game.getNextSockballFromQueue();
     }
 
     this.sockballsThrown++;
@@ -764,7 +789,10 @@ class ThrowingScreen extends Screen {
     );
 
     // Fix: Show trajectory after cooldown completes (even without mouse movement)
-    if (this.canThrow() && (this.mouseX > 0 || this.mouseY > 0 || this.keyboardAimX !== null)) {
+    if (
+      this.canThrow() &&
+      (this.mouseX > 0 || this.mouseY > 0 || this.keyboardAimX !== null)
+    ) {
       // Use keyboard aim if active, otherwise use last mouse position
       const aimX = this.keyboardAimX !== null ? this.keyboardAimX : this.mouseX;
       const aimY = this.keyboardAimY !== null ? this.keyboardAimY : this.mouseY;
@@ -901,40 +929,23 @@ class ThrowingScreen extends Screen {
     const pulseScale = this.getPulseScale(0.2);
     const radius = this.game.getScaledValue(20) * pulseScale;
 
-    // Outer glow
-    ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
-    ctx.beginPath();
-    ctx.arc(
-      this.launchPosition.x,
-      this.launchPosition.y,
-      radius * 1.5,
-      0,
-      Math.PI * 2
+    // Render the next sockball type in the launch indicator FIRST (behind circles)
+    console.log(
+      "Next sockball type:",
+      this.nextSockballType,
+      "Image exists:",
+      this.game.images[`sockball${this.nextSockballType}.png`]
     );
-    ctx.fill();
-
-    // Inner circle
-    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.lineWidth = this.game.getScaledValue(3);
-
-    ctx.beginPath();
-    ctx.arc(
-      this.launchPosition.x,
-      this.launchPosition.y,
-      radius,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-    ctx.stroke();
-
-    // Render the next sockball type in the launch indicator
     if (this.nextSockballType) {
       const sockballImage =
         this.game.images[`sockball${this.nextSockballType}.png`];
       if (sockballImage) {
-        const sockballSize = this.game.getScaledValue(16) * pulseScale;
+        const sockballSize =
+          this.game.getScaledValue(GameConfig.SOCKBALL_SIZE) * pulseScale;
+        console.log(
+          "Drawing sockball at launch indicator, size:",
+          sockballSize
+        );
         ctx.drawImage(
           sockballImage,
           this.launchPosition.x - sockballSize / 2,
@@ -943,6 +954,7 @@ class ThrowingScreen extends Screen {
           sockballSize
         );
       } else {
+        console.log("No sockball image, using fallback");
         // Fallback colored circle
         ctx.fillStyle = `hsl(${this.nextSockballType * 60}, 70%, 50%)`;
         ctx.beginPath();
@@ -955,7 +967,35 @@ class ThrowingScreen extends Screen {
         );
         ctx.fill();
       }
+    } else {
+      console.log("nextSockballType is null/undefined");
     }
+
+    // Outer glow ring (transparent)
+    ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+    ctx.beginPath();
+    ctx.arc(
+      this.launchPosition.x,
+      this.launchPosition.y,
+      radius * 1.5,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+
+    // Inner circle ring (only stroke, no fill to not cover sockball)
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.lineWidth = this.game.getScaledValue(3);
+
+    ctx.beginPath();
+    ctx.arc(
+      this.launchPosition.x,
+      this.launchPosition.y,
+      radius,
+      0,
+      Math.PI * 2
+    );
+    ctx.stroke();
 
     ctx.restore();
   }
@@ -986,7 +1026,9 @@ class ThrowingScreen extends Screen {
       const sockIconWidth = sockIconHeight * (sockIcon.width / sockIcon.height);
       ctx.drawImage(
         sockIcon,
-        layout.sockballCounterX - this.game.getScaledValue(25) - sockIconWidth / 2,
+        layout.sockballCounterX -
+          this.game.getScaledValue(25) -
+          sockIconWidth / 2,
         layout.sockballCounterY - sockIconHeight / 2,
         sockIconWidth,
         sockIconHeight

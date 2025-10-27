@@ -419,8 +419,6 @@ class LevelSelect extends Screen {
 
   setup() {
     super.setup();
-
-    console.log("🎵 Level select setup - starting menu music");
     this.game.audioManager.playMusic("menu-music", true);
 
     if (this.game.newStoryPanelUnlocked >= 0) {
@@ -436,14 +434,6 @@ class LevelSelect extends Screen {
       top: -500,
       bottom: canvasHeight + 500,
     };
-
-    console.log(
-      "Level select setup - Canvas dimensions:",
-      canvasWidth,
-      "x",
-      canvasHeight
-    );
-    console.log("Initial garbage collection bounds:", this.menuPhysics.bounds);
 
     this.setupEasterDropZones();
     this.setupCreditsModal();
@@ -486,7 +476,6 @@ class LevelSelect extends Screen {
   cleanup() {
     super.cleanup();
 
-    console.log("🎵 Level select cleanup - stopping menu music");
     this.game.audioManager.stopMusic();
 
     this.closeVideoPlayer();
@@ -1200,10 +1189,14 @@ class LevelSelect extends Screen {
       this.lastMouseY <= logoY + logoHeight;
 
     // Check if hovering over Martha image
-    const isMarthaHovered = this.isMarthaClicked(this.lastMouseX, this.lastMouseY);
+    const isMarthaHovered = this.isMarthaClicked(
+      this.lastMouseX,
+      this.lastMouseY
+    );
 
     // Check if hovering over a sock (when easter egg is active)
-    const isSockHovered = this.easterEggActive &&
+    const isSockHovered =
+      this.easterEggActive &&
       this.getSockAtPosition(this.lastMouseX, this.lastMouseY) !== null;
 
     // Set cursor based on what's being hovered/interacted with
@@ -1211,7 +1204,12 @@ class LevelSelect extends Screen {
       this.game.canvas.style.cursor = "grabbing";
     } else if (isSockHovered) {
       this.game.canvas.style.cursor = "grab";
-    } else if (isButtonHovered || isLevelHovered || isLogoHovered || isMarthaHovered) {
+    } else if (
+      isButtonHovered ||
+      isLevelHovered ||
+      isLogoHovered ||
+      isMarthaHovered
+    ) {
       this.game.canvas.style.cursor = "pointer";
     } else {
       this.game.canvas.style.cursor = "default";
@@ -4882,8 +4880,6 @@ class LevelSelect extends Screen {
   openVideoPlayer() {
     this.videoPlayerActive = true;
 
-    // Pause background music while video plays
-    console.log("🎵 Pausing background music for video");
     this.game.audioManager.pauseMusic();
 
     try {
@@ -4901,12 +4897,7 @@ class LevelSelect extends Screen {
         this.closeVideoPlayer();
       });
 
-      this.videoElement.addEventListener("loadeddata", () => {
-        console.log("🎥 Video loaded successfully");
-      });
-
       document.body.appendChild(this.videoElement);
-      console.log("🎥 Video player opened");
     } catch (error) {
       console.error("🎥 Error creating video element:", error);
       this.closeVideoPlayer();
@@ -4923,11 +4914,7 @@ class LevelSelect extends Screen {
       this.videoElement = null;
     }
 
-    // Resume background music after video closes
-    console.log("🎵 Resuming background music after video");
     this.game.audioManager.resumeMusic();
-
-    console.log("🎥 Video player closed");
   }
 
   renderVideoPlayer(ctx) {

@@ -292,7 +292,6 @@ class StoryManager {
       !this.game.audioManager.currentMusic ||
       this.game.audioManager.currentMusic.paused
     ) {
-      console.log("🎵 Starting background music after user interaction");
       this.game.audioManager.playMusic("menu-music", true);
     }
   }

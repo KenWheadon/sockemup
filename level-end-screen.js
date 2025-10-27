@@ -159,17 +159,11 @@ class LevelEndScreen extends Screen {
     this.initializeParticles();
     this.titleBounceTimer = 0;
     this.marthaScaleTimer = 0;
-
-    console.log(
-      "🎵 Level end screen setup - victory/defeat music continues from throwing screen"
-    );
   }
 
   cleanup() {
     super.cleanup();
 
-    // Stop the victory/defeat music when leaving the level end screen
-    console.log("🎵 Level end screen cleanup - stopping victory/defeat music");
     this.game.audioManager.stopMusic();
   }
 

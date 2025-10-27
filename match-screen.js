@@ -141,8 +141,6 @@ class MatchScreen extends Screen {
     this.matchStartTime = Date.now();
     this.levelCompleted = false; // Track if level is completed to stop timer
 
-    // Start match music
-    console.log("🎵 Match screen setup - starting match music");
     this.game.audioManager.playMusic("match-music", true, 0.3);
   }
 
@@ -158,8 +156,6 @@ class MatchScreen extends Screen {
       this.game.canvas.className = ""; // Reset cursor to default
     }
 
-    // Stop match music when leaving match screen
-    console.log("🎵 Match screen cleanup - stopping match music");
     this.game.audioManager.stopMusic();
   }
 
@@ -530,7 +526,8 @@ class MatchScreen extends Screen {
     const isSockPileHovered = this.sockPileHover;
 
     // Check if hovering over a sock
-    const isSockHovered = !this.isDragging && this.sockManager.getSockAt(x, y) !== null;
+    const isSockHovered =
+      !this.isDragging && this.sockManager.getSockAt(x, y) !== null;
 
     // Set cursor based on what's being hovered/interacted with
     if (this.isDragging) {
@@ -671,16 +668,33 @@ class MatchScreen extends Screen {
 
   checkForMatches() {
     const currentTime = Date.now();
+    console.log(
+      "🔍 checkForMatches called, DROP_TARGET_PAIRS:",
+      GameConfig.DROP_TARGET_PAIRS
+    );
 
     for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
       const pairZones = this.dropZones.filter((zone) => zone.pairId === pairId);
+      console.log(
+        `  Pair ${pairId}: ${pairZones.length} zones, sock1:`,
+        pairZones[0]?.sock,
+        "sock2:",
+        pairZones[1]?.sock
+      );
 
       if (pairZones.length === 2 && pairZones[0].sock && pairZones[1].sock) {
+        console.log(
+          `  ✓ Both zones have socks, types: ${pairZones[0].sock.type} vs ${pairZones[1].sock.type}`
+        );
         if (pairZones[0].sock.type === pairZones[1].sock.type) {
           // MATCH - track the sock type for sockball creation
           const matchedSockType = pairZones[0].sock.type;
+          console.log(`  ✅ MATCH DETECTED! Type: ${matchedSockType}`);
 
           // Add this sockball type to the game's sockball queue
+          console.log(
+            `  📦 About to call addSockballToQueue(${matchedSockType})`
+          );
           this.game.addSockballToQueue(matchedSockType);
 
           // Play match sound
@@ -738,10 +752,14 @@ class MatchScreen extends Screen {
           const level = GameConfig.LEVELS[this.game.currentLevel];
           const completedSockballs = this.game.sockBalls;
           const queuedSockballs = this.game.getSockballQueueLength();
-          const animatingSockballs = this.sockManager.getAnimatingSockballsCount();
-          const totalSockballs = completedSockballs + queuedSockballs + animatingSockballs;
+          const animatingSockballs =
+            this.sockManager.getAnimatingSockballsCount();
+          const totalSockballs =
+            completedSockballs + queuedSockballs + animatingSockballs;
 
-          console.log(`🔍 Sockball count - Completed: ${completedSockballs}, Queued: ${queuedSockballs}, Animating: ${animatingSockballs}, Total: ${totalSockballs}/${level.sockPairs}`);
+          console.log(
+            `🔍 Sockball count - Completed: ${completedSockballs}, Queued: ${queuedSockballs}, Animating: ${animatingSockballs}, Total: ${totalSockballs}/${level.sockPairs}`
+          );
 
           if (level && totalSockballs >= level.sockPairs) {
             // Mark level as completed to stop the timer
