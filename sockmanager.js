@@ -236,7 +236,6 @@ class SockManager {
         animation.wiggleIntensity =
           Math.sin(wiggleFreq) * this.game.getScaledValue(3) * easeProgress;
 
-        // Fix Bug #14: Check if we crossed a multiple of 8 (for floating-point timer)
         if (Math.floor(animation.timer / 8) > Math.floor(oldTimer / 8)) {
           this.particleEffects.push({
             x:

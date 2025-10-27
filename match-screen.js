@@ -529,7 +529,9 @@ class MatchScreen extends Screen {
 
     // Check if hovering over a sock (only when not paused)
     const isSockHovered =
-      !this.isPaused && !this.isDragging && this.sockManager.getSockAt(x, y) !== null;
+      !this.isPaused &&
+      !this.isDragging &&
+      this.sockManager.getSockAt(x, y) !== null;
 
     // Set cursor based on what's being hovered/interacted with
     if (this.isDragging) {
@@ -587,7 +589,6 @@ class MatchScreen extends Screen {
     if (this.draggedSock) {
       const snapDistance = this.game.getScaledValue(80);
 
-      // Fix Bug #7: Find the closest zone and break after finding first match
       for (const zone of this.dropZones) {
         const distance = this.physics.getDropZoneDistance(
           this.draggedSock,
@@ -851,15 +852,12 @@ class MatchScreen extends Screen {
   }
 
   onUpdate(deltaTime) {
-    // Fix Bug #6: Update parent class timers
     this.updateAnimationTimers(deltaTime);
 
-    // Update pulse timer for sock pile animation
     if (!this.sockPileClicked) {
       this.pulseTimer += deltaTime * 0.005; // Slow pulse
     }
 
-    // Count UP (elapsed time) - only if pile has been clicked, not paused, and level not completed
     if (this.sockPileClicked && !this.isPaused && !this.levelCompleted) {
       const timeIncrement = deltaTime / 1000; // Convert milliseconds to seconds
       this.game.timeElapsed += timeIncrement;
@@ -884,7 +882,6 @@ class MatchScreen extends Screen {
       if (zone.hoverEffect > 0) zone.hoverEffect--;
     });
 
-    // Fix Bug #10: Add bounds checking for level access
     const level = GameConfig.LEVELS[this.game.currentLevel];
     if (!level) return; // Guard clause
 

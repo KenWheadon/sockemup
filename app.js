@@ -581,8 +581,28 @@ class SockGame {
 
       // DEV MODE: Unlock and complete all levels across all difficulties
       if (GameConfig.DEV_MODE) {
-        const allLevelsUnlocked = [true, true, true, true, true, true, true, true, true];
-        const allLevelsCompleted = [true, true, true, true, true, true, true, true, true];
+        const allLevelsUnlocked = [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+        ];
+        const allLevelsCompleted = [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+        ];
 
         // Set all difficulties (0-4) with all levels unlocked and completed
         for (let diff = 0; diff <= 4; diff++) {
@@ -643,8 +663,28 @@ class SockGame {
       // DEV MODE: Initialize with all levels unlocked and completed if enabled
       if (GameConfig.DEV_MODE) {
         this.highestUnlockedDifficulty = 4; // Unlock all 5 difficulties (0-4)
-        const allLevelsUnlocked = [true, true, true, true, true, true, true, true, true];
-        const allLevelsCompleted = [true, true, true, true, true, true, true, true, true];
+        const allLevelsUnlocked = [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+        ];
+        const allLevelsCompleted = [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+        ];
 
         // Set all difficulties (0-4) with all levels unlocked and completed
         this.unlockedLevelsByDifficulty = {};
@@ -845,7 +885,6 @@ class SockGame {
   }
 
   generateSockList(level) {
-    // Fix Bug #25: Ensure pairs are always created correctly
     this.sockList = [];
     const types = level.typesAvailable;
 
@@ -870,7 +909,6 @@ class SockGame {
       // Track the game state when mouse down occurs
       this.mouseDownState = this.gameState;
 
-      // Fix Bug #17: Add error handling for coordinate conversion
       const coords = this.screenToCanvas(e.clientX, e.clientY);
       const x = coords.x;
       const y = coords.y;
@@ -892,7 +930,6 @@ class SockGame {
 
   handleMouseMove(e) {
     try {
-      // Fix Bug #17: Add error handling for coordinate conversion
       const coords = this.screenToCanvas(e.clientX, e.clientY);
       const x = coords.x;
       const y = coords.y;
@@ -914,7 +951,6 @@ class SockGame {
 
   handleMouseUp(e) {
     try {
-      // Fix Bug #17: Add error handling for coordinate conversion
       const coords = this.screenToCanvas(e.clientX, e.clientY);
       const x = coords.x;
       const y = coords.y;

@@ -42,7 +42,6 @@ class AudioManager {
       this.stopMusic();
     }
 
-    // Fix Bug #16: Don't restart if same music is already playing (and not ended)
     if (
       this.currentMusicName === musicName &&
       this.currentMusic &&

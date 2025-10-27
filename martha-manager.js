@@ -276,8 +276,6 @@ class MarthaManager {
     this.velocity.x = this.exitDirection * enterSpeed;
     this.velocity.y = 0;
 
-    // Fix Bug #8: Use <= and >= for edge case handling
-    // Check if Martha is back on screen
     if (this.exitDirection > 0 && this.x <= this.bounds.right - this.width) {
       this.isEntering = false;
       this.x = this.bounds.right - this.width;
@@ -1052,7 +1050,9 @@ class MarthaManager {
     // Phase 2.1 - Enhanced collision with catch radius multiplier and difficulty scaling
     // Use fixed base size for consistent catch radius regardless of sprite
     const sockballRadius = GameConfig.SOCKBALL_SIZE / 2;
-    const difficultyMode = GameConfig.getDifficultyMode(this.game.currentDifficulty);
+    const difficultyMode = GameConfig.getDifficultyMode(
+      this.game.currentDifficulty
+    );
     const baseCatchRadius =
       (GameConfig.MARTHA_SIZE.width / 2) *
       GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
@@ -1144,8 +1144,11 @@ class MarthaManager {
     const baseRadius = GameConfig.MARTHA_SIZE.width / 2;
 
     // Get the catch radius with multiplier and difficulty scaling
-    const difficultyMode = GameConfig.getDifficultyMode(this.game.currentDifficulty);
-    const baseCatchRadius = baseRadius * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+    const difficultyMode = GameConfig.getDifficultyMode(
+      this.game.currentDifficulty
+    );
+    const baseCatchRadius =
+      baseRadius * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
     const catchRadius = baseCatchRadius * difficultyMode.catchRadiusMultiplier;
 
     // Calculate zone radii based on thresholds
