@@ -97,8 +97,8 @@ class ThrowingScreen extends Screen {
     this.consecutiveHits = 0;
     this.wallBounceCatchesThisLevel = 0;
 
-    // Setup Martha for current level
-    const level = GameConfig.LEVELS[this.game.currentLevel];
+    // Setup Martha for current level - use difficulty-modified level data
+    const level = this.game.currentLevelData || GameConfig.LEVELS[this.game.currentLevel];
     this.marthaManager.setup(level);
 
     // Scale launch position
@@ -511,8 +511,11 @@ class ThrowingScreen extends Screen {
           sockball.bestZoneEntered = currentZone;
         }
 
+        // Check if moving away from Martha OR if this is the closest point
         const movingAway = currentDistance > sockball.previousDistanceToMartha;
 
+        // Catch the sockball if moving away OR if we've been in the catch zone long enough
+        // and have tracked a best zone
         if (movingAway && sockball.bestZoneEntered) {
           const catchQuality = this.marthaManager.hitBySockball(
             sockball,
@@ -609,6 +612,103 @@ class ThrowingScreen extends Screen {
 
         sockball.previousDistanceToMartha = currentDistance;
       } else if (sockball.enteredCatchZone) {
+        // Sockball left the catch zone - if we tracked a best zone, it means it got close enough to count as a catch
+        // This handles cases where the sockball moved through too fast to detect "moving away"
+        if (sockball.bestZoneEntered) {
+          const catchQuality = this.marthaManager.hitBySockball(
+            sockball,
+            sockball.bestZoneEntered,
+            isBonusHit
+          );
+          if (catchQuality) {
+            // Track catch quality counts for score screen
+            if (
+              this.game.catchQualityCounts &&
+              this.game.catchQualityCounts[catchQuality] !== undefined
+            ) {
+              this.game.catchQualityCounts[catchQuality]++;
+            }
+
+            this.game.audioManager.playSound("particle-burst", false, 0.4);
+
+            this.game.audioManager.playSound("points-gained", false, 0.3);
+
+            this.consecutiveHits++;
+
+            // Track wall bounce catches for achievements
+            if (sockball.bounced) {
+              this.wallBounceCatchesThisLevel++;
+              this.game.totalWallBounceCatches++;
+
+              this.game.unlockAchievement("bank_shot");
+
+              if (this.wallBounceCatchesThisLevel >= 3) {
+                this.game.unlockAchievement("pinball_wizard");
+              }
+
+              if (this.game.totalWallBounceCatches >= 25) {
+                this.game.unlockAchievement("pinball_king");
+              }
+            }
+
+            if (isBonusHit) {
+              // Track bonus hits for achievements
+              this.game.totalBonusHits++;
+
+              this.game.unlockAchievement("bonus_hunter");
+
+              if (this.game.totalBonusHits >= 10) {
+                this.game.unlockAchievement("bonus_master");
+              }
+              this.showMessage("BONUS CATCH!", "success", 1500);
+              if (catchQuality === "PERFECT") {
+                this.game.feedbackManager.onPerfectCatch();
+                this.game.consecutivePerfectThrows++;
+                this.game.consecutiveMisses = 0;
+
+                if (this.game.consecutivePerfectThrows >= 3) {
+                  this.game.unlockAchievement("sock_sniper");
+                }
+              } else if (catchQuality === "GOOD") {
+                this.game.feedbackManager.onGoodCatch();
+                this.game.consecutivePerfectThrows = 0;
+              } else {
+                this.game.feedbackManager.onRegularCatch();
+                this.game.consecutivePerfectThrows = 0;
+              }
+            } else if (catchQuality === "PERFECT") {
+              this.game.feedbackManager.onPerfectCatch();
+              this.perfectThrowsThisLevel++;
+
+              // Achievement: PERFECT_THROW
+              this.game.unlockAchievement("perfect_throw");
+
+              // Track consecutive perfect throws for Sock Sniper
+              this.game.consecutivePerfectThrows++;
+              this.game.consecutiveMisses = 0;
+
+              // Achievement: SOCK_SNIPER (3 perfect throws in a row)
+              if (this.game.consecutivePerfectThrows >= 3) {
+                this.game.unlockAchievement("sock_sniper");
+              }
+            } else if (catchQuality === "GOOD") {
+              this.game.feedbackManager.onGoodCatch();
+              this.game.consecutivePerfectThrows = 0; // Reset perfect streak
+            } else {
+              this.game.feedbackManager.onRegularCatch();
+              this.game.consecutivePerfectThrows = 0; // Reset perfect streak
+            }
+
+            if (this.consecutiveHits >= 10) {
+              this.game.unlockAchievement("deadeye");
+            }
+
+            sockball.active = false;
+            return false;
+          }
+        }
+
+        // If we didn't register a hit, count it as a miss
         this.missedThrows++;
         this.consecutiveHits = 0;
 
@@ -638,7 +738,12 @@ class ThrowingScreen extends Screen {
 
         this.game.feedbackManager.onLevelComplete();
 
-        if (this.missedThrows === 0 && this.sockballsThrown > 0) {
+        // Martha's Favorite achievement: no missed throws on level 9 only
+        if (
+          this.missedThrows === 0 &&
+          this.sockballsThrown > 0 &&
+          this.game.currentLevel === 8
+        ) {
           this.game.unlockAchievement("marthas_favorite");
         }
       }

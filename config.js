@@ -1021,7 +1021,7 @@ const GameConfig = {
     MARTHAS_FAVORITE: {
       id: "marthas_favorite",
       name: "Martha's Favorite",
-      description: "Don't miss any throws",
+      description: "Don't miss any throws on level 9",
       icon: "icon-heart.png",
       unlocked: false,
     },

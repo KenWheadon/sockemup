@@ -736,7 +736,7 @@ class MatchScreen extends Screen {
             if (!this.levelCompleted) {
               this.levelCompleted = true;
 
-              const timeLimit = level.matchingTime;
+              const timeLimit = this.game.matchingTime;
               const timeElapsed = Math.floor(this.game.timeElapsed);
               const timeRemaining = timeLimit - timeElapsed;
 
@@ -895,7 +895,7 @@ class MatchScreen extends Screen {
       // Mark level as completed to stop the timer
       this.levelCompleted = true;
 
-      const timeLimit = level.matchingTime;
+      const timeLimit = this.game.matchingTime;
       const timeElapsed = Math.floor(this.game.timeElapsed);
       const timeRemaining = timeLimit - timeElapsed;
 
@@ -1206,7 +1206,7 @@ class MatchScreen extends Screen {
     // Get level data once for the entire top bar
     const level = GameConfig.LEVELS[this.game.currentLevel];
     const totalSockballs = level ? level.sockPairs : 0;
-    const timeLimit = level ? level.matchingTime : 60;
+    const timeLimit = this.game.matchingTime;
 
     // Draw top bar background
     ctx.save();

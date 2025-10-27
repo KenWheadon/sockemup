@@ -981,7 +981,8 @@ class MarthaManager {
   }
 
   hitBySockball(sockball, forcedQuality = null, isBonusHit = false) {
-    if (this.hitEffect.active) return false; // Already hit recently
+    // Allow hits even during hit effect - removed the blocking check
+    // This prevents sockballs from disappearing without counting during the flash effect
 
     // Bonus hits don't count toward Martha's collection (they're extra!)
     if (!isBonusHit) {
@@ -1048,12 +1049,14 @@ class MarthaManager {
   }
 
   checkCollision(sockball) {
-    // Phase 2.1 - Enhanced collision with catch radius multiplier
+    // Phase 2.1 - Enhanced collision with catch radius multiplier and difficulty scaling
     // Use fixed base size for consistent catch radius regardless of sprite
     const sockballRadius = GameConfig.SOCKBALL_SIZE / 2;
-    const catchRadius =
+    const difficultyMode = GameConfig.getDifficultyMode(this.game.currentDifficulty);
+    const baseCatchRadius =
       (GameConfig.MARTHA_SIZE.width / 2) *
       GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+    const catchRadius = baseCatchRadius * difficultyMode.catchRadiusMultiplier;
 
     // Calculate Martha's center
     const marthaCenterX = this.x + this.width / 2;
@@ -1140,9 +1143,10 @@ class MarthaManager {
     // Use fixed base size for consistent catch zones regardless of sprite
     const baseRadius = GameConfig.MARTHA_SIZE.width / 2;
 
-    // Get the catch radius with multiplier
-    const catchRadius =
-      baseRadius * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+    // Get the catch radius with multiplier and difficulty scaling
+    const difficultyMode = GameConfig.getDifficultyMode(this.game.currentDifficulty);
+    const baseCatchRadius = baseRadius * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+    const catchRadius = baseCatchRadius * difficultyMode.catchRadiusMultiplier;
 
     // Calculate zone radii based on thresholds
     const perfectRadius =
