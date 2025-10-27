@@ -85,307 +85,244 @@ const GameConfig = {
   MARTHA_HIT_EFFECT_DURATION: 60, // frames
   MARTHA_SPRITESHEET: {
     filename: "martha-running-spritesheet.png",
-    frameWidth: 269, // Width of each frame in the spritesheet (1614 / 6)
-    frameHeight: 275, // Height of each frame in the spritesheet (1650 / 6)
+    frameWidth: 269,
+    frameHeight: 275,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11], // Which frames to use in the animation sequence
-    fps: 12, // 12 frames per second for running animation
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    fps: 12,
   },
 
   MARTHA_LAUGHING_SPRITESHEET: {
     filename: "martha-laughing-spritesheet.png",
-    frameWidth: 202, // Width of each frame in the spritesheet (1212 / 6)
-    frameHeight: 283, // Height of each frame in the spritesheet (1698 / 6)
+    frameWidth: 202,
+    frameHeight: 283,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 24, // 24 frames per second
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 24,
   },
 
   MARTHA_SOCKBALLS_SPRITESHEET: {
     filename: "martha-sockballs-spritesheet.png",
-    frameWidth: 215, // Width of each frame in the spritesheet (1290 / 6)
-    frameHeight: 321, // Height of each frame in the spritesheet (1926 / 6)
+    frameWidth: 215,
+    frameHeight: 321,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 12, // 12 frames per second for juggling animation
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 12,
   },
 
   MARTHA_LOSING_SPRITESHEET: {
     filename: "martha-losing-spritesheet.png",
-    frameWidth: 173, // Width of each frame in the spritesheet (1038 / 6)
-    frameHeight: 263, // Height of each frame in the spritesheet (1578 / 6)
+    frameWidth: 173,
+    frameHeight: 263,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 12, // 12 frames per second for losing animation
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 12,
   },
 
   MARTHA_RUMBLE_SPRITESHEET: {
     filename: "martha-rumble-spritesheet.png",
-    frameWidth: 253, // Width of each frame in the spritesheet (1518 / 6)
-    frameHeight: 259, // Height of each frame in the spritesheet (1554 / 6)
+    frameWidth: 253,
+    frameHeight: 259,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 12, // 12 frames per second for rumble animation (NEW GAME+ 1-2)
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 12,
   },
 
   MARTHA_FATSOP_SPRITESHEET: {
     filename: "martha-fatsop-spritesheet.png",
-    frameWidth: 341, // Width of each frame in the spritesheet (2046 / 6)
-    frameHeight: 341, // Height of each frame in the spritesheet (2046 / 6)
+    frameWidth: 341,
+    frameHeight: 341,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 12, // 12 frames per second for fatsop animation (NEW GAME+ 3-4)
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 12,
   },
 
   MARTHA_CRAWLING_SPRITESHEET: {
     filename: "martha-crawling-spritesheet.png",
-    frameWidth: 335, // Width of each frame in the spritesheet (2010 / 6)
-    frameHeight: 238, // Height of each frame in the spritesheet (1428 / 6)
+    frameWidth: 335,
+    frameHeight: 238,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 18, // 18 frames per second for faster crawling animation
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 18,
   },
 
   MARTHA_STORY1_SPRITESHEET: {
     filename: "martha-story1-spritesheet.png",
-    frameWidth: 260, // Width of each frame in the spritesheet (1560 / 6)
-    frameHeight: 220, // Height of each frame in the spritesheet (1320 / 6)
+    frameWidth: 260,
+    frameHeight: 220,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 12, // 12 frames per second for story animation
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 12,
   },
 
   MARTHA_STORY2_SPRITESHEET: {
     filename: "martha-story2-spritesheet.png",
-    frameWidth: 265, // Width of each frame in the spritesheet (1590 / 6)
-    frameHeight: 216, // Height of each frame in the spritesheet (1296 / 6)
+    frameWidth: 265,
+    frameHeight: 216,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 12, // 12 frames per second for story animation
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 12,
   },
 
   MARTHA_STORY3_SPRITESHEET: {
     filename: "martha-story3-spritesheet.png",
-    frameWidth: 277, // Width of each frame in the spritesheet (1662 / 6)
-    frameHeight: 267, // Height of each frame in the spritesheet (1602 / 6)
+    frameWidth: 277,
+    frameHeight: 267,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 12, // 12 frames per second for story animation
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 12,
   },
 
   MARTHA_STORY4_SPRITESHEET: {
     filename: "martha-story4-spritesheet.png",
-    frameWidth: 264, // Width of each frame in the spritesheet (1584 / 6)
-    frameHeight: 299, // Height of each frame in the spritesheet (1794 / 6)
+    frameWidth: 264,
+    frameHeight: 299,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 12, // 12 frames per second for story animation
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 12,
   },
 
   MARTHA_STORY5_SPRITESHEET: {
     filename: "martha-story5-spritesheet.png",
-    frameWidth: 172, // Width of each frame in the spritesheet (1032 / 6)
-    frameHeight: 259, // Height of each frame in the spritesheet (1554 / 6)
+    frameWidth: 172,
+    frameHeight: 259,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 12, // 12 frames per second for story animation
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 12,
   },
 
   MARTHA_STORY6_SPRITESHEET: {
     filename: "martha-story6-spritesheet.png",
-    frameWidth: 257, // Width of each frame in the spritesheet (1542 / 6)
-    frameHeight: 259, // Height of each frame in the spritesheet (1554 / 6)
+    frameWidth: 257,
+    frameHeight: 259,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 12, // 12 frames per second for story animation
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 12,
   },
 
   MARTHA_UNLOCK1_SPRITESHEET: {
     filename: "martha-unlock1-spritesheet.png",
-    frameWidth: 268, // Width of each frame in the spritesheet (1608 / 6)
-    frameHeight: 280, // Height of each frame in the spritesheet (1680 / 6)
+    frameWidth: 268,
+    frameHeight: 280,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 24, // Increased to match How to Play animation speed
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 24,
   },
 
   MARTHA_UNLOCK2_SPRITESHEET: {
     filename: "martha-unlock2-spritesheet.png",
-    frameWidth: 166, // Width of each frame in the spritesheet (996 / 6)
-    frameHeight: 269, // Height of each frame in the spritesheet (1614 / 6)
+    frameWidth: 166,
+    frameHeight: 269,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 24, // Match How to Play animation speed
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 24,
   },
 
   MARTHA_UNLOCK3_SPRITESHEET: {
     filename: "martha-unlock3-spritesheet.png",
-    frameWidth: 403, // Width of each frame in the spritesheet (2418 / 6)
-    frameHeight: 225, // Height of each frame in the spritesheet (1350 / 6)
+    frameWidth: 403,
+    frameHeight: 225,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 24, // Match How to Play animation speed
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 24,
   },
 
   MARTHA_UNLOCK4_SPRITESHEET: {
     filename: "martha-unlock4-spritesheet.png",
-    frameWidth: 178, // Width of each frame in the spritesheet (1068 / 6)
-    frameHeight: 261, // Height of each frame in the spritesheet (1566 / 6)
+    frameWidth: 178,
+    frameHeight: 261,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 24, // Match How to Play animation speed
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 24,
   },
 
   MARTHA_UNLOCK5_SPRITESHEET: {
     filename: "martha-unlock5-spritesheet.png",
-    frameWidth: 339, // Width of each frame in the spritesheet (2034 / 6)
-    frameHeight: 208, // Height of each frame in the spritesheet (1248 / 6)
+    frameWidth: 339,
+    frameHeight: 208,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 24, // Match How to Play animation speed
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 24,
   },
 
   MARTHA_UNLOCK7_SPRITESHEET: {
     filename: "martha-unlock7-spritesheet.png",
-    frameWidth: 433, // Width of each frame in the spritesheet (2598 / 6)
-    frameHeight: 383, // Height of each frame in the spritesheet (2298 / 6)
+    frameWidth: 433,
+    frameHeight: 383,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 24, // Match How to Play animation speed
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 24,
   },
 
   MARTHA_UNLOCK8_SPRITESHEET: {
     filename: "martha-unlock8-spritesheet.png",
-    frameWidth: 229, // Width of each frame in the spritesheet (1374 / 6)
-    frameHeight: 276, // Height of each frame in the spritesheet (1656 / 6)
+    frameWidth: 229,
+    frameHeight: 276,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 24, // Match How to Play animation speed
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 24,
   },
 
   MARTHA_UNLOCK9_SPRITESHEET: {
     filename: "martha-unlock9-spritesheet.png",
-    frameWidth: 310, // Width of each frame in the spritesheet (1860 / 6)
-    frameHeight: 345, // Height of each frame in the spritesheet (2070 / 6)
+    frameWidth: 310,
+    frameHeight: 345,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 24, // Match How to Play animation speed
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 24,
   },
 
   YOU_WIN_SPRITESHEET: {
     filename: "you-win-spritesheet.png",
-    frameWidth: 376, // Width of each frame in the spritesheet (2256 / 6)
-    frameHeight: 337, // Height of each frame in the spritesheet (2022 / 6)
+    frameWidth: 376,
+    frameHeight: 337,
     columns: 6,
     rows: 6,
     totalFrames: 36,
-    animationFrames: [
-      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
-    ], // All 36 frames
-    fps: 12, // Animation speed for victory screen
+    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35],
+    fps: 12,
   },
 
   // Throwing screen settings
@@ -403,66 +340,18 @@ const GameConfig = {
 
   // Martha movement patterns
   MARTHA_PATTERNS: {
-    HORIZONTAL: {
-      name: "horizontal",
-      baseSpeed: 1.5,
-      description: "Moves left and right",
-    },
-    VERTICAL: {
-      name: "vertical",
-      baseSpeed: 1.5,
-      description: "Moves up and down",
-    },
-    DIAGONAL: {
-      name: "diagonal",
-      baseSpeed: 1.5,
-      description: "Moves in diagonal patterns",
-    },
-    CIRCULAR: {
-      name: "circular",
-      baseSpeed: 1.5,
-      description: "Moves in circular patterns",
-    },
-    RANDOM: {
-      name: "random",
-      baseSpeed: 1.5,
-      description: "Moves randomly",
-    },
-    FIGURE_EIGHT: {
-      name: "figure-eight",
-      baseSpeed: 1.5,
-      description: "Moves in a figure-8 pattern",
-    },
-    ZIGZAG_HORIZONTAL: {
-      name: "zigzag-horizontal",
-      baseSpeed: 1.5,
-      description: "Zigzags horizontally across the screen",
-    },
-    ZIGZAG_VERTICAL: {
-      name: "zigzag-vertical",
-      baseSpeed: 1.5,
-      description: "Zigzags vertically down the screen",
-    },
-    SPIRAL: {
-      name: "spiral",
-      baseSpeed: 1.5,
-      description: "Spirals outward or inward",
-    },
-    BOUNCE: {
-      name: "bounce",
-      baseSpeed: 1.5,
-      description: "Bounces around like a DVD screensaver",
-    },
-    SQUARE: {
-      name: "square",
-      baseSpeed: 1.5,
-      description: "Moves in a square pattern",
-    },
-    WAVE: {
-      name: "wave",
-      baseSpeed: 1.5,
-      description: "Moves in a sine wave pattern",
-    },
+    HORIZONTAL: { name: "horizontal", baseSpeed: 1.5, description: "Moves left and right" },
+    VERTICAL: { name: "vertical", baseSpeed: 1.5, description: "Moves up and down" },
+    DIAGONAL: { name: "diagonal", baseSpeed: 1.5, description: "Moves in diagonal patterns" },
+    CIRCULAR: { name: "circular", baseSpeed: 1.5, description: "Moves in circular patterns" },
+    RANDOM: { name: "random", baseSpeed: 1.5, description: "Moves randomly" },
+    FIGURE_EIGHT: { name: "figure-eight", baseSpeed: 1.5, description: "Moves in a figure-8 pattern" },
+    ZIGZAG_HORIZONTAL: { name: "zigzag-horizontal", baseSpeed: 1.5, description: "Zigzags horizontally across the screen" },
+    ZIGZAG_VERTICAL: { name: "zigzag-vertical", baseSpeed: 1.5, description: "Zigzags vertically down the screen" },
+    SPIRAL: { name: "spiral", baseSpeed: 1.5, description: "Spirals outward or inward" },
+    BOUNCE: { name: "bounce", baseSpeed: 1.5, description: "Bounces around like a DVD screensaver" },
+    SQUARE: { name: "square", baseSpeed: 1.5, description: "Moves in a square pattern" },
+    WAVE: { name: "wave", baseSpeed: 1.5, description: "Moves in a sine wave pattern" },
   },
 
   // Martha hit effects
@@ -505,90 +394,6 @@ const GameConfig = {
 
   // Game levels
   LEVELS: [
-    //DEMO stats
-    //   {
-    //     marthaSpeed: 1,
-    //     sockPairs: 1,
-    //     typesAvailable: [1],
-    //     matchingTime: 60,
-    //     marthaWantsSockballs: 1,
-    //     marthaPatterns: ["random", "circular"],
-    //     marthaPatternSpeed: 1,
-    //   },
-    //   {
-    //     marthaSpeed: 1,
-    //     sockPairs: 1,
-    //     typesAvailable: [1],
-    //     matchingTime: 60,
-    //     marthaWantsSockballs: 1,
-    //     marthaPatterns: ["random", "circular"],
-    //     marthaPatternSpeed: 1,
-    //   },
-    //   {
-    //     marthaSpeed: 1,
-    //     sockPairs: 1,
-    //     typesAvailable: [1],
-    //     matchingTime: 60,
-    //     marthaWantsSockballs: 1,
-    //     marthaPatterns: ["random", "circular"],
-    //     marthaPatternSpeed: 1,
-    //   },
-    //   {
-    //     marthaSpeed: 1,
-    //     sockPairs: 1,
-    //     typesAvailable: [1],
-    //     matchingTime: 60,
-    //     marthaWantsSockballs: 1,
-    //     marthaPatterns: ["random", "circular"],
-    //     marthaPatternSpeed: 1,
-    //   },
-    //   {
-    //     marthaSpeed: 1,
-    //     sockPairs: 1,
-    //     typesAvailable: [1],
-    //     matchingTime: 60,
-    //     marthaWantsSockballs: 1,
-    //     marthaPatterns: ["random", "circular"],
-    //     marthaPatternSpeed: 1,
-    //   },
-    //   {
-    //     marthaSpeed: 1,
-    //     sockPairs: 1,
-    //     typesAvailable: [1],
-    //     matchingTime: 60,
-    //     marthaWantsSockballs: 1,
-    //     marthaPatterns: ["random", "circular"],
-    //     marthaPatternSpeed: 1,
-    //   },
-    //   {
-    //     marthaSpeed: 1,
-    //     sockPairs: 1,
-    //     typesAvailable: [1],
-    //     matchingTime: 60,
-    //     marthaWantsSockballs: 1,
-    //     marthaPatterns: ["random", "circular"],
-    //     marthaPatternSpeed: 1,
-    //   },
-    //   {
-    //     marthaSpeed: 1,
-    //     sockPairs: 1,
-    //     typesAvailable: [1],
-    //     matchingTime: 60,
-    //     marthaWantsSockballs: 1,
-    //     marthaPatterns: ["random", "circular"],
-    //     marthaPatternSpeed: 1,
-    //   },
-    //   {
-    //     marthaSpeed: 1,
-    //     sockPairs: 1,
-    //     typesAvailable: [1],
-    //     matchingTime: 60,
-    //     marthaWantsSockballs: 1,
-    //     marthaPatterns: ["random", "circular"],
-    //     marthaPatternSpeed: 1,
-    //   },
-    // ],
-    //good stats
     {
       marthaSpeed: 0.5,
       sockPairs: 3,
@@ -687,7 +492,6 @@ const GameConfig = {
   // Level costs and unlock data
   // Smoothed progression: easier early game, better scaling for NEW GAME+ difficulties
   LEVEL_COSTS: [0, 20, 50, 90, 140, 200, 270, 350, 450],
-  //LEVEL_COSTS: [0, 1, 2, 3, 4, 5, 6, 7, 8],
 
   INITIAL_UNLOCKED_LEVELS: [
     true,
