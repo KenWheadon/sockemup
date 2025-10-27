@@ -12,7 +12,8 @@
       "Bash(del nul)",
       "Bash(dir:*)",
       "Bash(findstr:*)",
-      "Bash(powershell -Command \"(Get-Content ''c:\\Users\\kenne\\OneDrive\\Documents\\GitHub\\sockemup\\sockmanager.js'').Count\")"
+      "Bash(powershell -Command \"(Get-Content ''c:\\Users\\kenne\\OneDrive\\Documents\\GitHub\\sockemup\\sockmanager.js'').Count\")",
+      "Bash(powershell -Command \"(Get-Content ''c:\\Users\\kenne\\OneDrive\\Documents\\GitHub\\sockemup\\level-select.js'').Count\")"
     ],
     "deny": [],
     "ask": []

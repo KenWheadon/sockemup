@@ -214,7 +214,6 @@ class LevelSelect extends Screen {
   calculateMarthaImageSize() {
     const marthaImage = this.game.images["martha-demand-level-select.png"];
     if (!marthaImage) {
-      console.warn("Martha image not found: martha-demand-level-select.png");
       this.marthaImageSize = { width: 0, height: 0 };
       return;
     }
@@ -372,9 +371,6 @@ class LevelSelect extends Screen {
       top: -500,
       bottom: canvasHeight + 500,
     };
-
-    console.log("Canvas dimensions:", canvasWidth, "x", canvasHeight);
-    console.log("Garbage collection bounds:", this.menuPhysics.bounds);
 
     this.setupEasterDropZones();
   }
@@ -661,7 +657,6 @@ class LevelSelect extends Screen {
   showCredits() {
     if (this.creditsOpen) return;
 
-    console.log("👥 Opening credits");
     this.game.audioManager.playSound("button-click", false, 0.5);
 
     if (this.creditsModal) {
@@ -678,7 +673,6 @@ class LevelSelect extends Screen {
   hideCredits() {
     if (!this.creditsOpen) return;
 
-    console.log("❌ Closing credits");
     this.game.audioManager.playSound("button-click", false, 0.5);
 
     if (this.creditsModal) {
@@ -953,17 +947,6 @@ class LevelSelect extends Screen {
       sock.x > this.menuPhysics.bounds.right ||
       sock.y < this.menuPhysics.bounds.top ||
       sock.y > this.menuPhysics.bounds.bottom;
-
-    if (isOutside) {
-      console.log("Sock being garbage collected:", {
-        sockPosition: { x: sock.x, y: sock.y },
-        bounds: this.menuPhysics.bounds,
-        canvasSize: {
-          width: this.game.getCanvasWidth(),
-          height: this.game.getCanvasHeight(),
-        },
-      });
-    }
 
     return isOutside;
   }
@@ -1810,9 +1793,6 @@ class LevelSelect extends Screen {
 
     this.clearSockFromDropZones(sock1);
     this.clearSockFromDropZones(sock2);
-
-    console.log("Removed matched socks:", sock1.type, sock2.type);
-    console.log("Remaining socks count:", this.menuSocks.length);
   }
 
   checkForEasterEggMatches() {
@@ -1828,7 +1808,6 @@ class LevelSelect extends Screen {
         sock1.type === undefined ||
         sock2.type === undefined
       ) {
-        console.log("One or both socks are invalid, clearing drop zones");
         this.easterDropZones[0].sock = null;
         this.easterDropZones[1].sock = null;
         return;
@@ -1878,7 +1857,6 @@ class LevelSelect extends Screen {
       sock1.type === undefined ||
       sock2.type === undefined
     ) {
-      console.log("Invalid socks in mismatch handler, aborting");
       return;
     }
 
@@ -1913,7 +1891,6 @@ class LevelSelect extends Screen {
 
   createEasterEggMismatchEffect(sock1, sock2) {
     if (!sock1 || !sock2 || sock1.x === undefined || sock2.x === undefined) {
-      console.log("Invalid socks in mismatch effect, aborting");
       return;
     }
 
@@ -4893,13 +4870,11 @@ class LevelSelect extends Screen {
 
       // Add error handlers
       this.videoElement.addEventListener("error", () => {
-        console.error("🎥 Video failed to load");
         this.closeVideoPlayer();
       });
 
       document.body.appendChild(this.videoElement);
     } catch (error) {
-      console.error("🎥 Error creating video element:", error);
       this.closeVideoPlayer();
     }
   }
@@ -4955,7 +4930,6 @@ class LevelSelect extends Screen {
           videoHeight
         );
       } catch (error) {
-        console.error("🎥 Error drawing video frame:", error);
         // Show error message
         ctx.shadowBlur = 0;
         ctx.fillStyle = "#FF6B6B";

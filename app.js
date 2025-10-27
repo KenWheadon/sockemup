@@ -228,18 +228,11 @@ class SockGame {
 
   addSockballToQueue(sockType) {
     this.sockballQueue.push(sockType);
-    // Remove the sockBalls increment - it's handled elsewhere in the game
-    console.log(
-      `Added sockball type ${sockType} to queue. Queue length: ${this.sockballQueue.length}`
-    );
   }
 
   getNextSockballFromQueue() {
     if (this.sockballQueue.length > 0) {
-      const sockType = this.sockballQueue.shift(); // Remove and return first item (FIFO)
-      console.log(
-        `Retrieved sockball type ${sockType} from queue. Remaining: ${this.sockballQueue.length}`
-      );
+      const sockType = this.sockballQueue.shift();
       return sockType;
     }
     return null;
@@ -247,7 +240,7 @@ class SockGame {
 
   getNextSockballType() {
     if (this.sockballQueue.length > 0) {
-      return this.sockballQueue[0]; // Return first item without removing
+      return this.sockballQueue[0];
     }
     return null;
   }
@@ -697,10 +690,8 @@ class SockGame {
     // Unlock story panel on first completion (base difficulty only)
     if (difficulty === 0 && !this.unlockedStoryPanels[levelIndex]) {
       this.unlockedStoryPanels[levelIndex] = true;
-      this.newStoryPanelUnlocked = levelIndex; // Flag for animation on level select
-      console.log(`📖 Story Panel ${levelIndex + 1} unlocked!`);
+      this.newStoryPanelUnlocked = levelIndex;
 
-      // Trigger visual notification through feedback manager
       const storyPanel = GameConfig.STORY_PANELS[levelIndex];
       if (storyPanel && this.feedbackManager) {
         this.feedbackManager.showStoryUnlocked(storyPanel);
@@ -715,24 +706,12 @@ class SockGame {
       );
     });
 
-    console.log(
-      `🎮 Difficulty check: All levels at difficulty ${difficulty} completed? ${allLevelsCompleted}`
-    );
-    console.log(
-      `🎮 Current highest unlocked difficulty: ${this.highestUnlockedDifficulty}`
-    );
-    console.log(`🎮 Difficulty completions:`, this.completedLevelsByDifficulty);
-
     // Unlock next difficulty if all levels completed
     const previousDifficulty = this.highestUnlockedDifficulty;
     if (allLevelsCompleted && difficulty === this.highestUnlockedDifficulty) {
       this.highestUnlockedDifficulty = Math.min(
         difficulty + 1,
         4 // Max difficulty is +4
-      );
-
-      console.log(
-        `🎮 ✨ NEW GAME+ UNLOCKED! Difficulty ${previousDifficulty} → ${this.highestUnlockedDifficulty}`
       );
 
       // NEW GAME+: Show explanation if just unlocked first difficulty AND haven't shown banner before
@@ -742,7 +721,6 @@ class SockGame {
         !this.hasShownNewGamePlusBanner
       ) {
         this.showNewGamePlusNotification = true;
-        console.log(`🎮 📢 Showing NEW GAME+ notification banner!`);
       }
     }
 
@@ -752,7 +730,6 @@ class SockGame {
   // Achievement tracking system
   unlockAchievement(achievementId) {
     if (!this.achievements[achievementId]) {
-      console.warn(`Achievement ${achievementId} not found`);
       return false;
     }
 
@@ -763,10 +740,6 @@ class SockGame {
     // Unlock the achievement
     this.achievements[achievementId].unlocked = true;
     this.achievements[achievementId].unlockedAt = Date.now();
-
-    console.log(
-      `🏆 Achievement unlocked: ${this.achievements[achievementId].name}`
-    );
 
     // Trigger visual notification
     if (this.feedbackManager) {

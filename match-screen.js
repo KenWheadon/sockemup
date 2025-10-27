@@ -772,11 +772,7 @@ class MatchScreen extends Screen {
               const timeRemaining = timeLimit - timeElapsed;
 
               if (timeElapsed <= timeLimit) {
-                // Set time bonus flag - this will double rent payment points on level end screen
                 this.game.timeBonusEarned = true;
-                console.log(
-                  `⏱️ Time bonus earned! Finished in ${timeElapsed}s (limit: ${timeLimit}s)`
-                );
               }
 
               // Achievement: SPEEDY_MATCHER (complete with 30+ seconds remaining)
