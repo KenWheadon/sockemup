@@ -118,6 +118,19 @@ class LevelSelect extends Screen {
     this.creditsModal = null;
     this.creditsEventHandlers = null;
 
+    // Animation speed constants
+    this.ANIMATION_SPEED = 0.008; // Hover, button, and drawer animations
+    this.PULSE_SPEED = 0.005; // YOU_WIN pulse animation
+    this.WIGGLE_SPEED = 0.01; // Level button wiggle (also in levelConfig)
+    this.PULSE_UPDATE_SPEED = 0.002; // Level pulse timer update
+    this.TIME_MULTIPLIER_BASE = 16.67; // Based on 60 FPS
+    this.ROTATION_VELOCITY_THRESHOLD = 0.01; // Minimum rotation speed before stopping
+
+    // Press animation constants
+    this.PRESS_DURATION = 150; // Logo press duration in milliseconds
+    this.PRESS_MIN_SCALE = 0.95; // Minimum scale during press
+    this.PRESS_SCALE_RANGE = 0.05; // Range of scale change (max - min)
+
     // Physics for menu socks
     this.menuPhysics = {
       friction: 0.992,
@@ -681,6 +694,23 @@ class LevelSelect extends Screen {
     }
   }
 
+  /**
+   * Smoothly interpolates a value toward a target value
+   * @param {number} current - Current value
+   * @param {number} target - Target value
+   * @param {number} speed - Animation speed multiplier
+   * @param {number} deltaTime - Time elapsed since last frame
+   * @returns {number} Interpolated value
+   */
+  smoothToward(current, target, speed, deltaTime) {
+    if (current < target) {
+      return Math.min(current + speed * deltaTime, target);
+    } else if (current > target) {
+      return Math.max(current - speed * deltaTime, target);
+    }
+    return current;
+  }
+
   onUpdate(deltaTime) {
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.update(deltaTime);
@@ -707,22 +737,16 @@ class LevelSelect extends Screen {
     for (let i = 0; i < this.levelHoverAnimations.length; i++) {
       const isHovered = this.hoveredLevel === i;
       const targetValue = isHovered ? 1 : 0;
-      const animSpeed = 0.008;
 
-      if (this.levelHoverAnimations[i] < targetValue) {
-        this.levelHoverAnimations[i] = Math.min(
-          this.levelHoverAnimations[i] + animSpeed * deltaTime,
-          targetValue
-        );
-      } else if (this.levelHoverAnimations[i] > targetValue) {
-        this.levelHoverAnimations[i] = Math.max(
-          this.levelHoverAnimations[i] - animSpeed * deltaTime,
-          targetValue
-        );
-      }
+      this.levelHoverAnimations[i] = this.smoothToward(
+        this.levelHoverAnimations[i],
+        targetValue,
+        this.ANIMATION_SPEED,
+        deltaTime
+      );
 
       if (this.game.unlockedLevels[i]) {
-        this.levelPulseTimers[i] += deltaTime * 0.002;
+        this.levelPulseTimers[i] += deltaTime * this.PULSE_UPDATE_SPEED;
       }
     }
 
@@ -731,17 +755,16 @@ class LevelSelect extends Screen {
     // Update logo press animation
     if (this.logoPressed) {
       this.logoPressTimer += deltaTime;
-      const pressDuration = 150; // Duration in milliseconds for the press effect
 
-      if (this.logoPressTimer < pressDuration) {
-        // Animate to 95% scale
+      if (this.logoPressTimer < this.PRESS_DURATION) {
+        // Animate to minimum scale
         this.logoPressScale =
-          1.0 - (this.logoPressTimer / pressDuration) * 0.05;
-      } else if (this.logoPressTimer < pressDuration * 2) {
-        // Animate back to 100% scale
+          1.0 - (this.logoPressTimer / this.PRESS_DURATION) * this.PRESS_SCALE_RANGE;
+      } else if (this.logoPressTimer < this.PRESS_DURATION * 2) {
+        // Animate back to maximum scale
         const returnProgress =
-          (this.logoPressTimer - pressDuration) / pressDuration;
-        this.logoPressScale = 0.95 + returnProgress * 0.05;
+          (this.logoPressTimer - this.PRESS_DURATION) / this.PRESS_DURATION;
+        this.logoPressScale = this.PRESS_MIN_SCALE + returnProgress * this.PRESS_SCALE_RANGE;
       } else {
         // Animation complete
         this.logoPressed = false;
@@ -753,33 +776,21 @@ class LevelSelect extends Screen {
       this.storyReplayButton.hoverProgress || 0;
     this.creditsButton.hoverProgress = this.creditsButton.hoverProgress || 0;
 
-    const buttonAnimSpeed = 0.008;
-
     const storyTarget = this.storyReplayButton.hovered ? 1 : 0;
-    if (this.storyReplayButton.hoverProgress < storyTarget) {
-      this.storyReplayButton.hoverProgress = Math.min(
-        this.storyReplayButton.hoverProgress + buttonAnimSpeed * deltaTime,
-        storyTarget
-      );
-    } else if (this.storyReplayButton.hoverProgress > storyTarget) {
-      this.storyReplayButton.hoverProgress = Math.max(
-        this.storyReplayButton.hoverProgress - buttonAnimSpeed * deltaTime,
-        storyTarget
-      );
-    }
+    this.storyReplayButton.hoverProgress = this.smoothToward(
+      this.storyReplayButton.hoverProgress,
+      storyTarget,
+      this.ANIMATION_SPEED,
+      deltaTime
+    );
 
     const creditsTarget = this.creditsButton.hovered ? 1 : 0;
-    if (this.creditsButton.hoverProgress < creditsTarget) {
-      this.creditsButton.hoverProgress = Math.min(
-        this.creditsButton.hoverProgress + buttonAnimSpeed * deltaTime,
-        creditsTarget
-      );
-    } else if (this.creditsButton.hoverProgress > creditsTarget) {
-      this.creditsButton.hoverProgress = Math.max(
-        this.creditsButton.hoverProgress - buttonAnimSpeed * deltaTime,
-        creditsTarget
-      );
-    }
+    this.creditsButton.hoverProgress = this.smoothToward(
+      this.creditsButton.hoverProgress,
+      creditsTarget,
+      this.ANIMATION_SPEED,
+      deltaTime
+    );
 
     if (this.easterEggActive) {
       this.updateMenuSocks(deltaTime);
@@ -849,19 +860,13 @@ class LevelSelect extends Screen {
       return animation.progress < 1;
     });
 
-    const drawerAnimSpeed = 0.008;
     const drawerTarget = this.achievementsDrawer.isOpen ? 1 : 0;
-    if (this.achievementsDrawer.animationProgress < drawerTarget) {
-      this.achievementsDrawer.animationProgress = Math.min(
-        this.achievementsDrawer.animationProgress + drawerAnimSpeed * deltaTime,
-        drawerTarget
-      );
-    } else if (this.achievementsDrawer.animationProgress > drawerTarget) {
-      this.achievementsDrawer.animationProgress = Math.max(
-        this.achievementsDrawer.animationProgress - drawerAnimSpeed * deltaTime,
-        drawerTarget
-      );
-    }
+    this.achievementsDrawer.animationProgress = this.smoothToward(
+      this.achievementsDrawer.animationProgress,
+      drawerTarget,
+      this.ANIMATION_SPEED,
+      deltaTime
+    );
 
     this.updateMismatchParticles(deltaTime);
   }
@@ -869,13 +874,13 @@ class LevelSelect extends Screen {
   updateMismatchParticles(deltaTime) {
     if (!this.mismatchParticles) return;
 
-    const timeMultiplier = deltaTime / 16.67;
+    const timeMultiplier = deltaTime / this.TIME_MULTIPLIER_BASE;
 
     this.mismatchParticles.forEach((particle, index) => {
       particle.x += particle.vx * timeMultiplier;
       particle.y += particle.vy * timeMultiplier;
-      particle.vx *= Math.pow(0.98, timeMultiplier);
-      particle.vy *= Math.pow(0.98, timeMultiplier);
+      particle.vx *= Math.pow(this.menuPhysics.rotationFriction, timeMultiplier);
+      particle.vy *= Math.pow(this.menuPhysics.rotationFriction, timeMultiplier);
       particle.life -= timeMultiplier;
 
       if (particle.life <= 0) {
@@ -885,7 +890,7 @@ class LevelSelect extends Screen {
   }
 
   updateMenuSocks(deltaTime) {
-    const timeMultiplier = deltaTime / 16.67;
+    const timeMultiplier = deltaTime / this.TIME_MULTIPLIER_BASE;
 
     this.menuSocks = this.menuSocks.filter((sock) => {
       if (sock === this.dragSock || this.isSockInDropZone(sock)) return true;
@@ -920,7 +925,7 @@ class LevelSelect extends Screen {
       ) {
         sock.vx = 0;
         sock.vy = 0;
-        if (sock.rotationSpeed && Math.abs(sock.rotationSpeed) < 0.01) {
+        if (sock.rotationSpeed && Math.abs(sock.rotationSpeed) < this.ROTATION_VELOCITY_THRESHOLD) {
           sock.rotationSpeed = 0;
         }
       }
