@@ -395,20 +395,7 @@ class MatchScreen extends Screen {
   onMouseDown(x, y) {
     const layout = this.layoutCache;
 
-    // Check exit button click
-    const exitButtonLeft = layout.exitButtonX - layout.exitButtonWidth / 2;
-    const exitButtonTop = layout.exitButtonY - layout.exitButtonHeight / 2;
-    if (
-      x >= exitButtonLeft &&
-      x <= exitButtonLeft + layout.exitButtonWidth &&
-      y >= exitButtonTop &&
-      y <= exitButtonTop + layout.exitButtonHeight
-    ) {
-      this.exitToLevelSelect();
-      return true;
-    }
-
-    // Check pause button click
+    // Check pause button click (always allow)
     const pauseButtonLeft = layout.pauseButtonX - layout.pauseButtonWidth / 2;
     const pauseButtonTop = layout.pauseButtonY - layout.pauseButtonHeight / 2;
     if (
@@ -421,9 +408,22 @@ class MatchScreen extends Screen {
       return true;
     }
 
-    // Prevent interaction when paused
+    // Prevent all other interactions when paused (exit button, sock pile, socks)
     if (this.isPaused) {
       return false;
+    }
+
+    // Check exit button click (only when not paused)
+    const exitButtonLeft = layout.exitButtonX - layout.exitButtonWidth / 2;
+    const exitButtonTop = layout.exitButtonY - layout.exitButtonHeight / 2;
+    if (
+      x >= exitButtonLeft &&
+      x <= exitButtonLeft + layout.exitButtonWidth &&
+      y >= exitButtonTop &&
+      y <= exitButtonTop + layout.exitButtonHeight
+    ) {
+      this.exitToLevelSelect();
+      return true;
     }
 
     if (this.sockManager.checkSockPileClick(x, y)) {
@@ -464,16 +464,7 @@ class MatchScreen extends Screen {
   onMouseMove(x, y) {
     const layout = this.layoutCache;
 
-    // Update exit button hover
-    const exitButtonLeft = layout.exitButtonX - layout.exitButtonWidth / 2;
-    const exitButtonTop = layout.exitButtonY - layout.exitButtonHeight / 2;
-    this.exitButton.hovered =
-      x >= exitButtonLeft &&
-      x <= exitButtonLeft + layout.exitButtonWidth &&
-      y >= exitButtonTop &&
-      y <= exitButtonTop + layout.exitButtonHeight;
-
-    // Update pause button hover
+    // Update pause button hover (always allow hover for pause/resume)
     const pauseButtonLeft = layout.pauseButtonX - layout.pauseButtonWidth / 2;
     const pauseButtonTop = layout.pauseButtonY - layout.pauseButtonHeight / 2;
     this.pauseButton.hovered =
@@ -482,10 +473,21 @@ class MatchScreen extends Screen {
       y >= pauseButtonTop &&
       y <= pauseButtonTop + layout.pauseButtonHeight;
 
-    // Don't allow dragging when paused
+    // Don't allow exit button hover, dragging, or sock pile hover when paused
     if (this.isPaused) {
+      this.exitButton.hovered = false;
+      this.sockPileHover = false;
       return;
     }
+
+    // Update exit button hover (only when not paused)
+    const exitButtonLeft = layout.exitButtonX - layout.exitButtonWidth / 2;
+    const exitButtonTop = layout.exitButtonY - layout.exitButtonHeight / 2;
+    this.exitButton.hovered =
+      x >= exitButtonLeft &&
+      x <= exitButtonLeft + layout.exitButtonWidth &&
+      y >= exitButtonTop &&
+      y <= exitButtonTop + layout.exitButtonHeight;
 
     if (this.draggedSock) {
       this.draggedSock.x = x - this.dragOffset.x;
@@ -522,12 +524,12 @@ class MatchScreen extends Screen {
     // Check if hovering over buttons
     const isButtonHovered = this.pauseButton.hovered || this.exitButton.hovered;
 
-    // Check if hovering over sock pile
-    const isSockPileHovered = this.sockPileHover;
+    // Check if hovering over sock pile (only when not paused)
+    const isSockPileHovered = !this.isPaused && this.sockPileHover;
 
-    // Check if hovering over a sock
+    // Check if hovering over a sock (only when not paused)
     const isSockHovered =
-      !this.isDragging && this.sockManager.getSockAt(x, y) !== null;
+      !this.isPaused && !this.isDragging && this.sockManager.getSockAt(x, y) !== null;
 
     // Set cursor based on what's being hovered/interacted with
     if (this.isDragging) {
@@ -747,8 +749,8 @@ class MatchScreen extends Screen {
                 this.game.unlockAchievement("speedy_matcher");
               }
 
-              // Achievement: SPEED_DEMON (match all socks in under 10 seconds)
-              if (timeElapsed < 10) {
+              // Achievement: SPEED_DEMON (complete with 10+ seconds remaining)
+              if (timeRemaining >= 10) {
                 this.game.unlockAchievement("speed_demon");
               }
             }

@@ -4029,9 +4029,15 @@ class LevelSelect extends Screen {
   renderLevelButtons(ctx) {
     const layout = this.layoutCache;
 
+    // Generate title based on current difficulty
+    let titleText = "Select Level";
+    if (this.game.selectedDifficulty > 0) {
+      titleText = `Select New Game +${this.game.selectedDifficulty} Level`;
+    }
+
     this.renderText(
       ctx,
-      "Select Level",
+      titleText,
       layout.centerX,
       layout.levelGridStartY - this.game.getScaledValue(100),
       {

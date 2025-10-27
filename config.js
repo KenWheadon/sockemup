@@ -1,4 +1,8 @@
 const GameConfig = {
+  // ========== DEVELOPER MODE ==========
+  // Set to true to unlock all levels and difficulties for QA/testing
+  DEV_MODE: true,
+
   // Target canvas dimensions and aspect ratio
   TARGET_WIDTH: 1200,
   TARGET_HEIGHT: 800,

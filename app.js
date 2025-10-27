@@ -533,7 +533,13 @@ class SockGame {
       this.easterEggSockballsCreated = data.easterEggSockballsCreated || 0;
 
       this.selectedDifficulty = 0;
-      this.highestUnlockedDifficulty = data.highestUnlockedDifficulty || 0;
+
+      // DEV MODE: Unlock all difficulties if enabled
+      if (GameConfig.DEV_MODE) {
+        this.highestUnlockedDifficulty = 4; // Unlock all 5 difficulties (0-4)
+      } else {
+        this.highestUnlockedDifficulty = data.highestUnlockedDifficulty || 0;
+      }
 
       // Load per-difficulty unlocks and completions
       this.unlockedLevelsByDifficulty = data.unlockedLevelsByDifficulty || {
@@ -570,6 +576,18 @@ class SockGame {
             false,
             false,
           ];
+        }
+      }
+
+      // DEV MODE: Unlock and complete all levels across all difficulties
+      if (GameConfig.DEV_MODE) {
+        const allLevelsUnlocked = [true, true, true, true, true, true, true, true, true];
+        const allLevelsCompleted = [true, true, true, true, true, true, true, true, true];
+
+        // Set all difficulties (0-4) with all levels unlocked and completed
+        for (let diff = 0; diff <= 4; diff++) {
+          this.unlockedLevelsByDifficulty[diff] = [...allLevelsUnlocked];
+          this.completedLevelsByDifficulty[diff] = [...allLevelsCompleted];
         }
       }
 
@@ -622,6 +640,24 @@ class SockGame {
         }
       }
     } else {
+      // DEV MODE: Initialize with all levels unlocked and completed if enabled
+      if (GameConfig.DEV_MODE) {
+        this.highestUnlockedDifficulty = 4; // Unlock all 5 difficulties (0-4)
+        const allLevelsUnlocked = [true, true, true, true, true, true, true, true, true];
+        const allLevelsCompleted = [true, true, true, true, true, true, true, true, true];
+
+        // Set all difficulties (0-4) with all levels unlocked and completed
+        this.unlockedLevelsByDifficulty = {};
+        this.completedLevelsByDifficulty = {};
+        for (let diff = 0; diff <= 4; diff++) {
+          this.unlockedLevelsByDifficulty[diff] = [...allLevelsUnlocked];
+          this.completedLevelsByDifficulty[diff] = [...allLevelsCompleted];
+        }
+
+        this.unlockedLevels = this.unlockedLevelsByDifficulty[0];
+        this.completedLevels = this.completedLevelsByDifficulty[0];
+      }
+
       const baseLevels = this.completedLevelsByDifficulty[0] || [];
       for (let i = 0; i < baseLevels.length; i++) {
         if (baseLevels[i] && !this.unlockedStoryPanels[i]) {
