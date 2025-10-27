@@ -88,24 +88,13 @@ class LevelEndScreen extends Screen {
     this.resetScores();
     this.calculateScoresAndRent();
 
-    // Mark level as complete if no rent penalty (moved from handleContinue)
-    // This must happen BEFORE checking for NEW GAME+ unlock
     if (this.rentPenalty === 0) {
       this.game.completedLevels[this.game.currentLevel] = true;
-      console.log(
-        `Level ${
-          this.game.currentLevel + 1
-        } marked as complete - no rent penalty!`
-      );
-
-      // Phase 3.3 - Track difficulty completion
       this.game.markLevelCompleted(
         this.game.currentLevel,
         this.game.currentDifficulty
       );
 
-      // Check achievements (moved from handleContinue)
-      // Fix Bug #23: Achievement: SOCK_MASTER (complete all 9 levels) - with defensive checks
       const allLevelsCompleted =
         this.game.completedLevels &&
         this.game.completedLevels.every((completed) => completed);
@@ -113,8 +102,6 @@ class LevelEndScreen extends Screen {
         this.game.unlockAchievement("sock_master");
       }
 
-      // Achievement: NEW_GAME_PLUS_HERO (complete any level on +1 difficulty)
-      // Check if any level has been completed at difficulty >= 1
       const hasCompletedNewGamePlus = Object.keys(
         this.game.completedLevelsByDifficulty
       ).some((difficulty) => {
@@ -130,7 +117,6 @@ class LevelEndScreen extends Screen {
         this.game.unlockAchievement("new_game_plus_hero");
       }
 
-      // Achievement: ULTIMATE_CHAMPION (complete all levels on +4 difficulty)
       if (this.game.currentDifficulty >= 4) {
         const allLevelsCompletedOnPlus4 = GameConfig.LEVELS.every(
           (_, index) => {
@@ -146,12 +132,11 @@ class LevelEndScreen extends Screen {
       }
     }
 
-    // Check if NEW GAME+ was just unlocked (AFTER markLevelCompleted)
     this.showingNewGamePlusUnlock = this.game.showNewGamePlusNotification;
     if (this.showingNewGamePlusUnlock) {
-      this.game.showNewGamePlusNotification = false; // Reset flag
-      this.game.hasShownNewGamePlusBanner = true; // Mark banner as shown permanently
-      this.game.saveGameData(); // Persist the flag immediately
+      this.game.showNewGamePlusNotification = false;
+      this.game.hasShownNewGamePlusBanner = true;
+      this.game.saveGameData();
     }
 
     this.setupScoreAnimation();

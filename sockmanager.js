@@ -294,8 +294,12 @@ class SockManager {
     const sockballImage = GameConfig.IMAGES.SOCK_BALLS[animation.sockType - 1];
 
     // Target the sockball counter on the top bar
-    const targetX = this.sockballTargetX || (this.game.getCanvasWidth() - this.game.getScaledValue(525));
-    const targetY = this.sockballTargetY || (this.game.getCanvasHeight() - this.game.getScaledValue(125));
+    const targetX =
+      this.sockballTargetX ||
+      this.game.getCanvasWidth() - this.game.getScaledValue(525);
+    const targetY =
+      this.sockballTargetY ||
+      this.game.getCanvasHeight() - this.game.getScaledValue(125);
 
     const sockballAnim = {
       image: sockballImage,
@@ -317,11 +321,7 @@ class SockManager {
 
     this.sockballAnimations.push(sockballAnim);
 
-    // Remove the sockball from the queue since we're now animating it
-    // This prevents double-counting (queue + completed)
     this.game.getNextSockballFromQueue();
-
-    console.log(`🎬 Sockball animation started. Total animating: ${this.sockballAnimations.length}, Queue: ${this.game.getSockballQueueLength()}`);
   }
 
   updateSockballAnimations(deltaTime) {
@@ -369,8 +369,6 @@ class SockManager {
           this.game.sockBalls++;
           this.game.totalSockMatches++; // Track lifetime total matches
           this.game.totalSockballsEarned++; // Track lifetime sockballs
-
-          console.log(`✅ Sockball animation completed. sockBalls: ${this.game.sockBalls}, Remaining animating: ${this.sockballAnimations.length - 1}`);
 
           // Check Sock Hoarder achievement (100 socks matched)
           if (this.game.totalSockMatches >= 100) {

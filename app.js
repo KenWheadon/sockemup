@@ -900,24 +900,18 @@ class SockGame {
 
   handleClick(e) {
     try {
-      // Prevent cross-screen clicks: only process if game state hasn't changed since mousedown
       if (
         this.mouseDownState !== null &&
         this.mouseDownState !== this.gameState
       ) {
-        console.log(
-          `🚫 Ignoring click - state changed from ${this.mouseDownState} to ${this.gameState}`
-        );
         this.mouseDownState = null;
         return;
       }
 
-      // Fix Bug #17: Add error handling for coordinate conversion
       const coords = this.screenToCanvas(e.clientX, e.clientY);
       const x = coords.x;
       const y = coords.y;
 
-      // Use the new Screen base class method
       if (this.gameState === "menu") {
         this.levelSelect.handleClick(x, y);
       } else if (this.gameState === "throwing") {
@@ -926,7 +920,6 @@ class SockGame {
         this.levelEndScreen.handleClick(x, y);
       }
 
-      // Reset mousedown state after processing click
       this.mouseDownState = null;
     } catch (error) {
       console.error("Error handling click:", error);
@@ -935,7 +928,6 @@ class SockGame {
 
   handleWheel(e) {
     try {
-      // Only process wheel events for level select screen
       if (this.gameState === "menu") {
         const handled = this.levelSelect.onMouseWheel(e.deltaY);
         if (handled) {
@@ -1068,7 +1060,6 @@ class SockGame {
   }
 
   cleanup() {
-    console.log("🧹 Cleaning up SockGame...");
     this.stopGameLoop();
     this.removeEventListeners();
 

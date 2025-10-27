@@ -2213,6 +2213,11 @@ class LevelSelect extends Screen {
       this.renderVideoButton(ctx);
     }
 
+    // Render easter egg socks BEFORE the top bar so they appear below it
+    if (this.easterEggActive) {
+      this.renderMenuSocks(ctx);
+    }
+
     this.renderTopBar(ctx);
 
     // NEW GAME+: Render difficulty selector (only if New Game+ unlocked)
@@ -2235,11 +2240,7 @@ class LevelSelect extends Screen {
 
     this.renderSockBallAnimations(ctx);
     this.renderPointGainAnimations(ctx);
-    this.renderMismatchParticles(ctx);
-
-    if (this.easterEggActive) {
-      this.renderMenuSocks(ctx);
-    }
+    this.renderMismatchParticles(ctx)
 
     // Render story viewer modal
     this.storyViewer.renderModal(ctx, this.layoutCache);
@@ -3163,18 +3164,23 @@ class LevelSelect extends Screen {
       );
       ctx.stroke();
 
-      // Render close button (styled to match credits popup)
+      // Render close button (styled to match credits popup exactly)
       const closeButtonSize = this.game.getScaledValue(40);
       const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
       const closeButtonY = this.game.getScaledValue(20);
 
       ctx.save();
 
-      // Close button background - matching credits style
+      // Apply hover scale effect (matching credits popup transform: scale(1.1))
+      if (this.achievementsDrawer.closeButton.hovered) {
+        ctx.translate(closeButtonX, closeButtonY);
+        ctx.scale(1.1, 1.1);
+        ctx.translate(-closeButtonX, -closeButtonY);
+      }
+
+      // Close button background - matching credits style exactly
       if (this.achievementsDrawer.closeButton.hovered) {
         ctx.fillStyle = "rgba(212, 175, 55, 0.2)";
-        ctx.shadowColor = "rgba(212, 175, 55, 0.4)";
-        ctx.shadowBlur = this.game.getScaledValue(10);
       } else {
         ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
       }
@@ -3183,7 +3189,7 @@ class LevelSelect extends Screen {
       ctx.arc(closeButtonX, closeButtonY, closeButtonSize / 2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Close button border - matching credits gold theme
+      // Close button border - matching credits gold theme exactly
       if (this.achievementsDrawer.closeButton.hovered) {
         ctx.strokeStyle = "rgba(212, 175, 55, 0.5)";
       } else {
@@ -3194,12 +3200,9 @@ class LevelSelect extends Screen {
       ctx.arc(closeButtonX, closeButtonY, closeButtonSize / 2, 0, Math.PI * 2);
       ctx.stroke();
 
-      ctx.shadowColor = "transparent";
-      ctx.shadowBlur = 0;
-
-      // X symbol - using × character like credits
+      // X symbol - matching credits popup exactly (× character, #e0e0e0, 1.5em ~ 24px)
       ctx.fillStyle = "#e0e0e0";
-      ctx.font = `bold ${this.game.getScaledValue(28)}px Arial`;
+      ctx.font = `bold ${this.game.getScaledValue(24)}px Arial`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("×", closeButtonX, closeButtonY);

@@ -654,7 +654,6 @@ class MatchScreen extends Screen {
   }
 
   exitToLevelSelect() {
-    console.log("🚪 Exiting match screen to level select");
     this.game.audioManager.playSound("click", false, 0.5);
     this.game.changeGameState("menu");
   }
@@ -668,41 +667,18 @@ class MatchScreen extends Screen {
 
   checkForMatches() {
     const currentTime = Date.now();
-    console.log(
-      "🔍 checkForMatches called, DROP_TARGET_PAIRS:",
-      GameConfig.DROP_TARGET_PAIRS
-    );
 
     for (let pairId = 0; pairId < GameConfig.DROP_TARGET_PAIRS; pairId++) {
       const pairZones = this.dropZones.filter((zone) => zone.pairId === pairId);
-      console.log(
-        `  Pair ${pairId}: ${pairZones.length} zones, sock1:`,
-        pairZones[0]?.sock,
-        "sock2:",
-        pairZones[1]?.sock
-      );
 
       if (pairZones.length === 2 && pairZones[0].sock && pairZones[1].sock) {
-        console.log(
-          `  ✓ Both zones have socks, types: ${pairZones[0].sock.type} vs ${pairZones[1].sock.type}`
-        );
         if (pairZones[0].sock.type === pairZones[1].sock.type) {
-          // MATCH - track the sock type for sockball creation
           const matchedSockType = pairZones[0].sock.type;
-          console.log(`  ✅ MATCH DETECTED! Type: ${matchedSockType}`);
-
-          // Add this sockball type to the game's sockball queue
-          console.log(
-            `  📦 About to call addSockballToQueue(${matchedSockType})`
-          );
           this.game.addSockballToQueue(matchedSockType);
 
-          // Play match sound
           this.game.audioManager.playSound("easter-egg-match", false, 0.5);
 
-          // Play points gained sound with slight delay
           const timeoutId = setTimeout(() => {
-            // Fix Bug #4: Guard clause to prevent execution after screen cleanup
             if (this.game.gameState !== "matching") return;
             this.game.audioManager.playSound("points-gained", false, 0.4);
           }, 500);
@@ -746,9 +722,6 @@ class MatchScreen extends Screen {
           // Screen shake effect
           this.createScreenShake();
 
-          // Check if we've completed the required number of matches (stop timer immediately)
-          // Count: queued (waiting for animation) + animating + completed
-          // Queue is now properly managed - items removed when animation starts
           const level = GameConfig.LEVELS[this.game.currentLevel];
           const completedSockballs = this.game.sockBalls;
           const queuedSockballs = this.game.getSockballQueueLength();
@@ -757,16 +730,10 @@ class MatchScreen extends Screen {
           const totalSockballs =
             completedSockballs + queuedSockballs + animatingSockballs;
 
-          console.log(
-            `🔍 Sockball count - Completed: ${completedSockballs}, Queued: ${queuedSockballs}, Animating: ${animatingSockballs}, Total: ${totalSockballs}/${level.sockPairs}`
-          );
-
           if (level && totalSockballs >= level.sockPairs) {
-            // Mark level as completed to stop the timer
             if (!this.levelCompleted) {
               this.levelCompleted = true;
 
-              // Check if player finished within the time limit for time bonus
               const timeLimit = level.matchingTime;
               const timeElapsed = Math.floor(this.game.timeElapsed);
               const timeRemaining = timeLimit - timeElapsed;
@@ -787,12 +754,10 @@ class MatchScreen extends Screen {
             }
           }
         } else {
-          // MISMATCH - new behavior
           this.handleMismatch(pairZones[0].sock, pairZones[1].sock);
           pairZones[0].sock = null;
           pairZones[1].sock = null;
 
-          // Reset streak on mismatch
           this.matchStreak = 0;
           this.lastMatchTime = 0;
         }
@@ -807,8 +772,7 @@ class MatchScreen extends Screen {
     // Create mismatch particle effects
     this.sockManager.createMismatchEffect(sock1, sock2);
 
-    // Throw both socks in random directions with more force
-    const throwForce = 12; // Stronger than normal throws
+    const throwForce = 20;
 
     this.physics.applySockThrow(sock1, {
       x: (Math.random() - 0.5) * throwForce,
@@ -929,20 +893,14 @@ class MatchScreen extends Screen {
       // Mark level as completed to stop the timer
       this.levelCompleted = true;
 
-      // Check if player finished within the time limit for time bonus
       const timeLimit = level.matchingTime;
       const timeElapsed = Math.floor(this.game.timeElapsed);
       const timeRemaining = timeLimit - timeElapsed;
 
       if (timeElapsed <= timeLimit) {
-        // Set time bonus flag - this will double rent payment points on level end screen
         this.game.timeBonusEarned = true;
-        console.log(
-          `⏱️ Time bonus earned! Finished in ${timeElapsed}s (limit: ${timeLimit}s)`
-        );
       }
 
-      // Achievement: SPEEDY_MATCHER (complete with 30+ seconds remaining)
       if (timeRemaining >= 30) {
         this.game.unlockAchievement("speedy_matcher");
       }
@@ -952,7 +910,6 @@ class MatchScreen extends Screen {
   }
 
   onRender(ctx) {
-    // Apply pulse effect to sock pile if not clicked yet
     if (!this.sockPileClicked) {
       this.sockManager.sockPile.pulseEffect = this.pulseTimer;
     } else {
@@ -971,10 +928,8 @@ class MatchScreen extends Screen {
     this.sockManager.renderParticleEffects(ctx);
     this.renderMatchScreenUI(ctx);
 
-    // Render sockball animations AFTER the top bar so they appear above it
     this.sockManager.renderSockballAnimations(ctx);
 
-    // Render feedback manager for achievement toasts
     this.game.feedbackManager.render(ctx);
   }
 
@@ -984,7 +939,6 @@ class MatchScreen extends Screen {
     const margin = this.game.getScaledValue(50);
     const cornerRadius = this.game.getScaledValue(10); // Reduced from 15 to 10
 
-    // Color themes for each pair (soft, pastel colors)
     const pairColors = [
       {
         bg: "rgba(255, 182, 193, 0.15)",
@@ -1020,7 +974,6 @@ class MatchScreen extends Screen {
 
         ctx.save();
 
-        // Draw rounded rectangle background with gradient
         const gradient = ctx.createLinearGradient(minX, minY, minX, maxY);
         gradient.addColorStop(0, colors.bg);
         gradient.addColorStop(1, "rgba(0, 0, 0, 0.05)");
@@ -1029,7 +982,6 @@ class MatchScreen extends Screen {
         this.roundRect(ctx, minX, minY, width, height, cornerRadius);
         ctx.fill();
 
-        // Draw solid border (no dashes)
         ctx.strokeStyle = colors.border;
         ctx.lineWidth = lineWidth;
         ctx.setLineDash([]); // Solid line
@@ -1041,7 +993,6 @@ class MatchScreen extends Screen {
     }
   }
 
-  // Helper method to draw rounded rectangles
   roundRect(ctx, x, y, width, height, radius) {
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
@@ -1060,7 +1011,7 @@ class MatchScreen extends Screen {
     const lineWidth = this.game.getScaledValue(2);
     const hoverLineWidth = this.game.getScaledValue(3);
     const shadowBlur = this.game.getScaledValue(15);
-    const cornerRadius = this.game.getScaledValue(10); // Match pair box corner radius
+    const cornerRadius = this.game.getScaledValue(10);
 
     this.dropZones.forEach((zone, index) => {
       ctx.save();

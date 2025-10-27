@@ -62,9 +62,7 @@ class AudioManager {
     this.currentMusic.currentTime = 0;
     this.isFading = false;
 
-    this.currentMusic.play().catch((e) => {
-      console.warn(`Music playback failed for ${musicName}:`, e);
-    });
+    this.currentMusic.play().catch((e) => {});
   }
 
   stopMusic() {
@@ -85,17 +83,13 @@ class AudioManager {
 
   pauseMusic() {
     if (this.currentMusic && !this.currentMusic.paused) {
-      console.log(`⏸️ Pausing music: ${this.currentMusicName}`);
       this.currentMusic.pause();
     }
   }
 
   resumeMusic() {
     if (this.currentMusic && this.currentMusic.paused) {
-      console.log(`▶️ Resuming music: ${this.currentMusicName}`);
-      this.currentMusic.play().catch((e) => {
-        console.warn(`Music resume failed for ${this.currentMusicName}:`, e);
-      });
+      this.currentMusic.play().catch((e) => {});
     }
   }
 
@@ -148,9 +142,7 @@ class AudioManager {
     sound.volume = actualVolume;
     sound.currentTime = 0;
 
-    sound.play().catch((e) => {
-      console.warn(`Sound playback failed for ${soundName}:`, e);
-    });
+    sound.play().catch((e) => {});
   }
 
   playRandomSound(soundPrefix, count, loop = false, volume = null) {
@@ -200,15 +192,11 @@ class AudioManager {
   }
 
   cleanup() {
-    console.log("🧹 Cleaning up AudioManager...");
-
-    // Clear fade interval
     if (this.fadeInterval) {
       clearInterval(this.fadeInterval);
       this.fadeInterval = null;
     }
 
-    // Stop and cleanup all sounds
     Object.keys(this.sounds).forEach((soundName) => {
       const audio = this.sounds[soundName];
       audio.pause();
