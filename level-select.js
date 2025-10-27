@@ -3164,21 +3164,21 @@ class LevelSelect extends Screen {
       );
       ctx.stroke();
 
-      // Render close button (styled to match credits popup exactly)
+      // Render close button with red X icon
       const closeButtonSize = this.game.getScaledValue(40);
-      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(20);
-      const closeButtonY = this.game.getScaledValue(20);
+      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(30); // Moved left by 10px
+      const closeButtonY = this.game.getScaledValue(30); // Moved down by 10px
 
       ctx.save();
 
-      // Apply hover scale effect (matching credits popup transform: scale(1.1))
+      // Apply hover scale effect
       if (this.achievementsDrawer.closeButton.hovered) {
         ctx.translate(closeButtonX, closeButtonY);
         ctx.scale(1.1, 1.1);
         ctx.translate(-closeButtonX, -closeButtonY);
       }
 
-      // Close button background - matching credits style exactly
+      // Close button background
       if (this.achievementsDrawer.closeButton.hovered) {
         ctx.fillStyle = "rgba(212, 175, 55, 0.2)";
       } else {
@@ -3189,7 +3189,7 @@ class LevelSelect extends Screen {
       ctx.arc(closeButtonX, closeButtonY, closeButtonSize / 2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Close button border - matching credits gold theme exactly
+      // Close button border
       if (this.achievementsDrawer.closeButton.hovered) {
         ctx.strokeStyle = "rgba(212, 175, 55, 0.5)";
       } else {
@@ -3200,12 +3200,18 @@ class LevelSelect extends Screen {
       ctx.arc(closeButtonX, closeButtonY, closeButtonSize / 2, 0, Math.PI * 2);
       ctx.stroke();
 
-      // X symbol - matching credits popup exactly (× character, #e0e0e0, 1.5em ~ 24px)
-      ctx.fillStyle = "#e0e0e0";
-      ctx.font = `bold ${this.game.getScaledValue(24)}px Arial`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("×", closeButtonX, closeButtonY);
+      // Draw red X icon
+      if (this.game.images["icon-redx.png"]) {
+        const redXIcon = this.game.images["icon-redx.png"];
+        const iconSize = this.game.getScaledValue(24);
+        ctx.drawImage(
+          redXIcon,
+          closeButtonX - iconSize / 2,
+          closeButtonY - iconSize / 2,
+          iconSize,
+          iconSize
+        );
+      }
 
       ctx.restore();
 
