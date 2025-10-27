@@ -1015,9 +1015,9 @@ class SockGame {
   render() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    if (this.images["background.png"]) {
+    if (this.images["level-select-bg.png"]) {
       this.ctx.drawImage(
-        this.images["background.png"],
+        this.images["level-select-bg.png"],
         0,
         0,
         this.canvas.width,
