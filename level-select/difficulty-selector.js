@@ -113,13 +113,37 @@ class DifficultySelector {
     if (difficulty <= this.game.highestUnlockedDifficulty) {
       this.game.selectedDifficulty = difficulty;
 
+      // Initialize arrays for this difficulty if they don't exist
+      if (!this.game.unlockedLevelsByDifficulty[difficulty]) {
+        this.game.unlockedLevelsByDifficulty[difficulty] = [
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+        ];
+      }
+      if (!this.game.completedLevelsByDifficulty[difficulty]) {
+        this.game.completedLevelsByDifficulty[difficulty] = [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+        ];
+      }
+
       // Update legacy pointers to point to the selected difficulty's arrays
-      this.game.unlockedLevels = this.game.unlockedLevelsByDifficulty[
-        difficulty
-      ] || [true, false, false, false, false, false, false, false, false];
-      this.game.completedLevels = this.game.completedLevelsByDifficulty[
-        difficulty
-      ] || [false, false, false, false, false, false, false, false, false];
+      this.game.unlockedLevels = this.game.unlockedLevelsByDifficulty[difficulty];
+      this.game.completedLevels = this.game.completedLevelsByDifficulty[difficulty];
 
       this.game.audioManager.playSound("button-click", false, 0.6);
       this.close();

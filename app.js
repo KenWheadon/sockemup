@@ -532,7 +532,7 @@ class SockGame {
       this.logoClickCount = data.logoClickCount || 0;
       this.easterEggSockballsCreated = data.easterEggSockballsCreated || 0;
 
-      this.selectedDifficulty = 0;
+      this.selectedDifficulty = data.selectedDifficulty || 0;
 
       // DEV MODE: Unlock all difficulties if enabled
       if (GameConfig.DEV_MODE) {
@@ -577,6 +577,40 @@ class SockGame {
             false,
           ];
         }
+      }
+
+      // Ensure the currently selected difficulty has initialized arrays
+      if (
+        this.selectedDifficulty > 0 &&
+        !this.unlockedLevelsByDifficulty[this.selectedDifficulty]
+      ) {
+        this.unlockedLevelsByDifficulty[this.selectedDifficulty] = [
+          true,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+        ];
+      }
+      if (
+        this.selectedDifficulty > 0 &&
+        !this.completedLevelsByDifficulty[this.selectedDifficulty]
+      ) {
+        this.completedLevelsByDifficulty[this.selectedDifficulty] = [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+        ];
       }
 
       // DEV MODE: Unlock and complete all levels across all difficulties

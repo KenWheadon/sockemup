@@ -242,7 +242,7 @@ const GameConfig = {
 
   // Sockball throwing settings
   SOCKBALL_THROW_SPEED: 20,
-  SOCKBALL_THROW_COOLDOWN: 500,
+  SOCKBALL_THROW_COOLDOWN: 750,
   SOCKBALL_LAUNCH_POSITION: { x: 50, y: 750 }, // bottom left corner
 
   // Martha movement patterns
@@ -353,31 +353,31 @@ const GameConfig = {
       marthaSpeed: 0.5,
       sockPairs: 3,
       typesAvailable: [1],
-      matchingTime: 10,
+      matchingTime: 12,
       marthaWantsSockballs: 1,
       marthaPatterns: ["horizontal", "vertical"],
     },
     {
-      marthaSpeed: 0.6,
-      sockPairs: 6,
+      marthaSpeed: 0.65,
+      sockPairs: 4,
       typesAvailable: [1, 2],
-      matchingTime: 16,
+      matchingTime: 15,
       marthaWantsSockballs: 2,
       marthaPatterns: ["horizontal", "vertical", "diagonal"],
     },
     {
-      marthaSpeed: 0.7,
+      marthaSpeed: 0.8,
       sockPairs: 6,
       typesAvailable: [1, 2, 3],
-      matchingTime: 14,
-      marthaWantsSockballs: 4,
+      matchingTime: 22,
+      marthaWantsSockballs: 3,
       marthaPatterns: ["horizontal", "vertical", "diagonal", "circular"],
     },
     {
-      marthaSpeed: 0.8,
+      marthaSpeed: 0.85,
       sockPairs: 8,
       typesAvailable: [1, 2, 3, 4],
-      matchingTime: 18,
+      matchingTime: 30,
       marthaWantsSockballs: 5,
       marthaPatterns: [
         "horizontal",
@@ -388,11 +388,11 @@ const GameConfig = {
       ],
     },
     {
-      marthaSpeed: 0.9,
+      marthaSpeed: 0.95,
       sockPairs: 10,
       typesAvailable: [1, 2, 3, 4, 5],
-      matchingTime: 22,
-      marthaWantsSockballs: 6,
+      matchingTime: 38,
+      marthaWantsSockballs: 7,
       marthaPatterns: [
         "horizontal",
         "vertical",
@@ -406,8 +406,8 @@ const GameConfig = {
       marthaSpeed: 1,
       sockPairs: 12,
       typesAvailable: [1, 2, 3, 4, 5, 6],
-      matchingTime: 30,
-      marthaWantsSockballs: 8,
+      matchingTime: 45,
+      marthaWantsSockballs: 9,
       marthaPatterns: [
         "horizontal",
         "vertical",
@@ -422,8 +422,8 @@ const GameConfig = {
       marthaSpeed: 1.1,
       sockPairs: 12,
       typesAvailable: [2, 3, 4, 5],
-      matchingTime: 28,
-      marthaWantsSockballs: 9,
+      matchingTime: 40,
+      marthaWantsSockballs: 10,
       marthaPatterns: [
         "horizontal",
         "vertical",
@@ -437,10 +437,10 @@ const GameConfig = {
     },
     {
       marthaSpeed: 1.2,
-      sockPairs: 15,
+      sockPairs: 20,
       typesAvailable: [1, 2, 3, 4, 5],
-      matchingTime: 45,
-      marthaWantsSockballs: 11,
+      matchingTime: 60,
+      marthaWantsSockballs: 15,
       marthaPatterns: [
         "horizontal",
         "vertical",
@@ -477,7 +477,7 @@ const GameConfig = {
 
   // Level costs and unlock data
   // Smoothed progression: easier early game, better scaling for NEW GAME+ difficulties
-  LEVEL_COSTS: [0, 20, 50, 90, 140, 200, 270, 350, 450],
+  LEVEL_COSTS: [0, 30, 60, 110, 160, 210, 250, 300, 360],
 
   INITIAL_UNLOCKED_LEVELS: [
     true,
