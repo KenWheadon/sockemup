@@ -852,8 +852,6 @@ class SockGame {
     const level = {
       ...baseLevel,
       marthaSpeed: baseLevel.marthaSpeed * difficultyMode.speedMultiplier,
-      marthaPatternSpeed:
-        baseLevel.marthaPatternSpeed * difficultyMode.speedMultiplier,
       matchingTime: Math.floor(
         baseLevel.matchingTime * difficultyMode.timeMultiplier
       ),

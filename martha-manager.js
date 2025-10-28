@@ -107,14 +107,15 @@ class MarthaManager {
     // Apply base speed from level
     this.speed = level.marthaSpeed;
     this.availablePatterns = level.marthaPatterns;
-    this.patternSpeed = level.marthaPatternSpeed;
 
     // Apply difficulty speed multiplier for consistent speeds across NEW GAME+ difficulties
     const difficultyMode = GameConfig.getDifficultyMode(
       this.game.currentDifficulty
     );
     this.speed *= difficultyMode.speedMultiplier;
-    this.patternSpeed *= difficultyMode.speedMultiplier;
+
+    // Pattern speed is based on Martha's speed
+    this.patternSpeed = this.speed;
 
     // Select spritesheet based on difficulty (New Game+ uses crawling animation)
     if (this.game.currentDifficulty > 0) {
@@ -301,10 +302,13 @@ class MarthaManager {
     // Update recovery timer
     this.recoveryTimer += deltaTime;
 
-    // Apply recovery movement (faster speed to get away from edge)
-    const recoverySpeed = this.speed * 5; // Move fast to recover
-    this.velocity.x = this.recoveryDirection.x * recoverySpeed;
-    this.velocity.y = this.recoveryDirection.y * recoverySpeed;
+    // Calculate timeMultiplier for consistent frame-independent movement
+    const timeMultiplier = deltaTime / 16.67;
+
+    // Use baseSpeed of 1 (same as pattern movements) with patternSpeed multiplier
+    const baseSpeed = 1;
+    this.velocity.x = this.recoveryDirection.x * baseSpeed * this.patternSpeed * timeMultiplier;
+    this.velocity.y = this.recoveryDirection.y * baseSpeed * this.patternSpeed * timeMultiplier;
 
     // Update facing direction during recovery
     if (Math.abs(this.velocity.x) > 0.1) {
@@ -387,16 +391,16 @@ class MarthaManager {
       this.patternData.diagonalDirection = { x: 1, y: 1 };
     }
 
-    this.velocity.x =
-      this.patternData.diagonalDirection.x *
-      baseSpeed *
-      this.patternSpeed *
-      timeMultiplier;
-    this.velocity.y =
-      this.patternData.diagonalDirection.y *
-      baseSpeed *
-      this.patternSpeed *
-      timeMultiplier;
+    // Normalize the diagonal direction to ensure consistent speed
+    const length = Math.sqrt(
+      this.patternData.diagonalDirection.x ** 2 +
+        this.patternData.diagonalDirection.y ** 2
+    );
+    const normalizedX = this.patternData.diagonalDirection.x / length;
+    const normalizedY = this.patternData.diagonalDirection.y / length;
+
+    this.velocity.x = normalizedX * baseSpeed * this.patternSpeed * timeMultiplier;
+    this.velocity.y = normalizedY * baseSpeed * this.patternSpeed * timeMultiplier;
 
     // Update facing direction
     this.facingRight = this.patternData.diagonalDirection.x > 0;
@@ -439,21 +443,14 @@ class MarthaManager {
       );
     }
 
-    // Apply consistent speed scaling: angle += (baseSpeed * patternSpeed * timeMultiplier) * constant_factor
+    // Update angle based on speed - adjust multiplier to maintain circular speed consistent with linear patterns
     this.patternData.circularAngle +=
-      baseSpeed * this.patternSpeed * timeMultiplier * 0.02;
+      (baseSpeed * this.patternSpeed * timeMultiplier) / this.patternData.radius;
 
-    const targetX =
-      this.patternData.centerX +
-      Math.cos(this.patternData.circularAngle) * this.patternData.radius;
-    const targetY =
-      this.patternData.centerY +
-      Math.sin(this.patternData.circularAngle) * this.patternData.radius;
-
-    // Velocity scales with speed to maintain consistent movement
-    const velocityScale = 0.15 * this.speed;
-    this.velocity.x = (targetX - this.x) * velocityScale;
-    this.velocity.y = (targetY - this.y) * velocityScale;
+    // Calculate velocity as tangent to the circle for smooth circular motion
+    // Tangent velocity: perpendicular to radius, with magnitude = baseSpeed * patternSpeed * timeMultiplier
+    this.velocity.x = -Math.sin(this.patternData.circularAngle) * baseSpeed * this.patternSpeed * timeMultiplier;
+    this.velocity.y = Math.cos(this.patternData.circularAngle) * baseSpeed * this.patternSpeed * timeMultiplier;
 
     this.facingRight = this.velocity.x > 0;
   }
@@ -463,9 +460,11 @@ class MarthaManager {
 
     // Change direction less frequently for more predictable movement
     if (Math.random() < 0.004) {
+      const angle = Math.random() * Math.PI * 2;
+      // Use normalized random direction
       this.patternData.randomDirection = {
-        x: (Math.random() - 0.5) * 2,
-        y: (Math.random() - 0.5) * 2,
+        x: Math.cos(angle),
+        y: Math.sin(angle),
       };
     }
 
@@ -512,22 +511,26 @@ class MarthaManager {
       );
     }
 
-    // Apply consistent speed scaling: angle += (baseSpeed * patternSpeed * timeMultiplier) * constant_factor
-    this.patternData.figureEightAngle +=
-      baseSpeed * this.patternSpeed * timeMultiplier * 0.02;
-
     // Figure-8 uses parametric equations: x = sin(t), y = sin(2t)/2
+    // The derivative (velocity) is: dx/dt = cos(t), dy/dt = cos(2t)
     const t = this.patternData.figureEightAngle;
-    const targetX =
-      this.patternData.centerX + Math.sin(t) * this.patternData.radiusX;
-    const targetY =
-      this.patternData.centerY +
-      (Math.sin(2 * t) / 2) * this.patternData.radiusY;
 
-    // Velocity scales with speed to maintain consistent movement
-    const velocityScale = 0.15 * this.speed;
-    this.velocity.x = (targetX - this.x) * velocityScale;
-    this.velocity.y = (targetY - this.y) * velocityScale;
+    // Calculate the derivative (tangent) at current position
+    const dx = Math.cos(t);
+    const dy = Math.cos(2 * t);
+
+    // Normalize the velocity vector to ensure consistent speed
+    const length = Math.sqrt(dx * dx + dy * dy);
+    const normalizedDx = dx / length;
+    const normalizedDy = dy / length;
+
+    // Apply velocity with consistent speed
+    this.velocity.x = normalizedDx * baseSpeed * this.patternSpeed * timeMultiplier;
+    this.velocity.y = normalizedDy * baseSpeed * this.patternSpeed * timeMultiplier;
+
+    // Update angle based on normalized arc length for consistent movement
+    this.patternData.figureEightAngle +=
+      (baseSpeed * this.patternSpeed * timeMultiplier) / Math.max(this.patternData.radiusX, this.patternData.radiusY);
 
     this.facingRight = this.velocity.x > 0;
   }
@@ -604,17 +607,13 @@ class MarthaManager {
       );
     }
 
-    // Apply consistent speed scaling: angle += (baseSpeed * patternSpeed * timeMultiplier) * constant_factor
-    this.patternData.spiralAngle +=
-      baseSpeed * this.patternSpeed * timeMultiplier * 0.03;
+    // Spiral motion: combination of circular motion and radial expansion/contraction
+    // For consistent speed, we need to maintain constant linear velocity
 
-    // Expand or contract the spiral - scale with speed for consistent expansion
+    // Update radius change (radial velocity component)
+    const radialSpeed = baseSpeed * this.patternSpeed * timeMultiplier * 0.15;
     this.patternData.spiralRadius +=
-      this.patternData.spiralDirection *
-      baseSpeed *
-      this.patternSpeed *
-      timeMultiplier *
-      0.5;
+      this.patternData.spiralDirection * radialSpeed;
 
     // Reverse direction when hitting limits
     if (this.patternData.spiralRadius > this.patternData.maxRadius) {
@@ -625,17 +624,22 @@ class MarthaManager {
       this.patternData.spiralDirection = 1;
     }
 
-    const targetX =
-      this.patternData.centerX +
-      Math.cos(this.patternData.spiralAngle) * this.patternData.spiralRadius;
-    const targetY =
-      this.patternData.centerY +
-      Math.sin(this.patternData.spiralAngle) * this.patternData.spiralRadius;
+    // Angular velocity component - adjusted to maintain consistent overall speed
+    const angularSpeed = (baseSpeed * this.patternSpeed * timeMultiplier) / Math.max(this.patternData.spiralRadius, 50);
+    this.patternData.spiralAngle += angularSpeed;
 
-    // Velocity scales with speed to maintain consistent movement
-    const velocityScale = 0.15 * this.speed;
-    this.velocity.x = (targetX - this.x) * velocityScale;
-    this.velocity.y = (targetY - this.y) * velocityScale;
+    // Calculate velocity components: tangential + radial
+    const tangentX = -Math.sin(this.patternData.spiralAngle);
+    const tangentY = Math.cos(this.patternData.spiralAngle);
+    const radialX = Math.cos(this.patternData.spiralAngle);
+    const radialY = Math.sin(this.patternData.spiralAngle);
+
+    // Combine tangential and radial components, normalize for consistent speed
+    const vx = tangentX * baseSpeed * this.patternSpeed * timeMultiplier + radialX * radialSpeed;
+    const vy = tangentY * baseSpeed * this.patternSpeed * timeMultiplier + radialY * radialSpeed;
+
+    this.velocity.x = vx;
+    this.velocity.y = vy;
 
     this.facingRight = this.velocity.x > 0;
   }
@@ -737,20 +741,27 @@ class MarthaManager {
         this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
     }
 
-    // Move horizontally in a sine wave
-    this.velocity.x =
-      this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
+    // Wave pattern: moves horizontally while oscillating vertically
+    // Horizontal velocity component
+    const vx = this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
 
-    // Apply consistent speed scaling for wave phase
+    // Update wave phase
     this.patternData.wavePhase +=
       baseSpeed * this.patternSpeed * timeMultiplier * 0.05;
-    const targetY =
-      this.patternData.waveCenterY +
-      Math.sin(this.patternData.wavePhase) * this.patternData.waveAmplitude;
 
-    // Velocity scales with speed to maintain consistent movement
-    const velocityScale = 0.1 * this.speed;
-    this.velocity.y = (targetY - this.y) * velocityScale;
+    // Vertical velocity component (derivative of sine wave)
+    const waveFrequency = baseSpeed * this.patternSpeed * timeMultiplier * 0.05;
+    const vy = Math.cos(this.patternData.wavePhase) * this.patternData.waveAmplitude * waveFrequency;
+
+    // Normalize combined velocity to maintain consistent speed
+    const length = Math.sqrt(vx * vx + vy * vy);
+    if (length > 0) {
+      this.velocity.x = (vx / length) * baseSpeed * this.patternSpeed * timeMultiplier;
+      this.velocity.y = (vy / length) * baseSpeed * this.patternSpeed * timeMultiplier;
+    } else {
+      this.velocity.x = vx;
+      this.velocity.y = 0;
+    }
 
     this.facingRight = this.direction > 0;
   }

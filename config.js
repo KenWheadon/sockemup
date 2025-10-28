@@ -1,5 +1,8 @@
 // Default animation frames for full 36-frame spritesheets (0-35)
-const DEFAULT_SPRITESHEET_FRAMES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35];
+const DEFAULT_SPRITESHEET_FRAMES = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+  22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+];
 
 const GameConfig = {
   // ========== DEVELOPER MODE ==========
@@ -349,91 +352,110 @@ const GameConfig = {
       matchingTime: 10,
       marthaWantsSockballs: 1,
       marthaPatterns: ["horizontal", "vertical"],
-      marthaPatternSpeed: 0.5,
     },
     {
-      marthaSpeed: 0.65,
-      sockPairs: 4,
+      marthaSpeed: 0.6,
+      sockPairs: 6,
       typesAvailable: [1, 2],
-      matchingTime: 12,
-      marthaWantsSockballs: 3,
+      matchingTime: 16,
+      marthaWantsSockballs: 2,
       marthaPatterns: ["horizontal", "vertical", "diagonal"],
-      marthaPatternSpeed: 0.75,
     },
     {
-      marthaSpeed: 0.85,
+      marthaSpeed: 0.7,
       sockPairs: 6,
       typesAvailable: [1, 2, 3],
-      matchingTime: 15,
+      matchingTime: 14,
       marthaWantsSockballs: 4,
       marthaPatterns: ["horizontal", "vertical", "diagonal", "circular"],
-      marthaPatternSpeed: 0.85,
+    },
+    {
+      marthaSpeed: 0.8,
+      sockPairs: 8,
+      typesAvailable: [1, 2, 3, 4],
+      matchingTime: 18,
+      marthaWantsSockballs: 5,
+      marthaPatterns: ["horizontal", "vertical", "diagonal", "circular", "random"],
+    },
+    {
+      marthaSpeed: 0.9,
+      sockPairs: 10,
+      typesAvailable: [1, 2, 3, 4, 5],
+      matchingTime: 22,
+      marthaWantsSockballs: 6,
+      marthaPatterns: ["horizontal", "vertical", "diagonal", "circular", "random", "figure-eight"],
     },
     {
       marthaSpeed: 1,
-      sockPairs: 8,
-      typesAvailable: [1, 2, 3, 4],
-      matchingTime: 20,
-      marthaWantsSockballs: 5,
-      marthaPatterns: ["horizontal", "vertical", "diagonal", "circular"],
-      marthaPatternSpeed: 1,
-    },
-    {
-      marthaSpeed: 1.15,
-      sockPairs: 10,
-      typesAvailable: [1, 2, 3, 4, 5],
-      matchingTime: 25,
-      marthaWantsSockballs: 8,
-      marthaPatterns: ["diagonal", "circular", "random"],
-      marthaPatternSpeed: 1.1,
-    },
-    {
-      marthaSpeed: 1.2,
       sockPairs: 12,
       typesAvailable: [1, 2, 3, 4, 5, 6],
       matchingTime: 30,
-      marthaWantsSockballs: 10,
+      marthaWantsSockballs: 8,
       marthaPatterns: [
         "horizontal",
         "vertical",
         "diagonal",
         "circular",
         "random",
+        "figure-eight",
+        "zigzag-horizontal",
       ],
-      marthaPatternSpeed: 1.2,
     },
     {
-      marthaSpeed: 1.3,
-      sockPairs: 16,
+      marthaSpeed: 1,
+      sockPairs: 12,
       typesAvailable: [2, 3, 4, 5],
-      matchingTime: 40,
-      marthaWantsSockballs: 12,
-      marthaPatterns: ["diagonal", "circular"],
-      marthaPatternSpeed: 1.3,
+      matchingTime: 28,
+      marthaWantsSockballs: 9,
+      marthaPatterns: [
+        "horizontal",
+        "vertical",
+        "diagonal",
+        "circular",
+        "random",
+        "figure-eight",
+        "zigzag-horizontal",
+        "zigzag-vertical",
+      ],
     },
     {
-      marthaSpeed: 1.45,
+      marthaSpeed: 1,
       sockPairs: 15,
       typesAvailable: [1, 2, 3, 4, 5],
       matchingTime: 45,
-      marthaWantsSockballs: 13,
+      marthaWantsSockballs: 11,
       marthaPatterns: [
         "horizontal",
         "vertical",
         "diagonal",
         "circular",
         "random",
+        "figure-eight",
+        "zigzag-horizontal",
+        "zigzag-vertical",
+        "spiral",
       ],
-      marthaPatternSpeed: 1.35,
     },
     {
-      marthaSpeed: 1.6,
+      marthaSpeed: 1,
       sockPairs: 24,
       typesAvailable: [1, 2, 3, 4, 5, 6],
       matchingTime: 60,
-      marthaWantsSockballs: 21,
-      marthaPatterns: ["random", "circular"],
-      marthaPatternSpeed: 1.4,
+      marthaWantsSockballs: 20,
+      marthaPatterns: [
+        "horizontal",
+        "vertical",
+        "diagonal",
+        "circular",
+        "random",
+        "figure-eight",
+        "zigzag-horizontal",
+        "zigzag-vertical",
+        "spiral",
+        "bounce",
+        "square",
+        "wave",
+      ],
     },
   ],
 
@@ -657,41 +679,41 @@ const GameConfig = {
     },
     PLUS_1: {
       name: "NEW GAME+1",
-      speedMultiplier: 1.5,
-      timeMultiplier: 0.98,
-      throwCooldownMultiplier: 0.95,
-      throwSpeedMultiplier: 1.5,
-      catchRadiusMultiplier: 0.8,
+      speedMultiplier: 1.25,
+      timeMultiplier: 0.95,
+      throwCooldownMultiplier: 1,
+      throwSpeedMultiplier: 1.2,
+      catchRadiusMultiplier: 0.9,
       displayName: "★",
       stars: 1,
     },
     PLUS_2: {
       name: "NEW GAME+2",
-      speedMultiplier: 2,
-      timeMultiplier: 0.95,
-      throwCooldownMultiplier: 0.9,
-      throwSpeedMultiplier: 2.0,
-      catchRadiusMultiplier: 0.6,
+      speedMultiplier: 1.75,
+      timeMultiplier: 0.85,
+      throwCooldownMultiplier: 1,
+      throwSpeedMultiplier: 1.4,
+      catchRadiusMultiplier: 0.8,
       displayName: "★★",
       stars: 2,
     },
     PLUS_3: {
       name: "NEW GAME+3",
-      speedMultiplier: 3,
-      timeMultiplier: 0.92,
-      throwCooldownMultiplier: 0.85,
-      throwSpeedMultiplier: 3.0,
-      catchRadiusMultiplier: 0.45,
+      speedMultiplier: 2.15,
+      timeMultiplier: 0.78,
+      throwCooldownMultiplier: 1,
+      throwSpeedMultiplier: 1.75,
+      catchRadiusMultiplier: 0.65,
       displayName: "★★★",
       stars: 3,
     },
     PLUS_4: {
       name: "NEW GAME+4",
-      speedMultiplier: 4,
-      timeMultiplier: 0.9,
-      throwCooldownMultiplier: 0.8,
-      throwSpeedMultiplier: 4.0,
-      catchRadiusMultiplier: 0.3,
+      speedMultiplier: 2.75,
+      timeMultiplier: 0.7,
+      throwCooldownMultiplier: 1,
+      throwSpeedMultiplier: 2,
+      catchRadiusMultiplier: 0.5,
       displayName: "★★★★",
       stars: 4,
     },
@@ -1085,12 +1107,19 @@ const GameConfig = {
 // Apply defaults to spritesheets
 // Default: 6x6 grid (36 frames), all frames used, 12 fps
 Object.values(GameConfig).forEach((value) => {
-  if (typeof value === "object" && value !== null && value.filename && value.frameWidth && value.frameHeight) {
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    value.filename &&
+    value.frameWidth &&
+    value.frameHeight
+  ) {
     // Set defaults for common spritesheet properties
     if (!value.columns) value.columns = 6;
     if (!value.rows) value.rows = 6;
     if (!value.totalFrames) value.totalFrames = 36;
     if (!value.fps) value.fps = 12;
-    if (!value.animationFrames) value.animationFrames = DEFAULT_SPRITESHEET_FRAMES;
+    if (!value.animationFrames)
+      value.animationFrames = DEFAULT_SPRITESHEET_FRAMES;
   }
 });
