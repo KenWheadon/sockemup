@@ -837,7 +837,7 @@ class SockGame {
 
     // Track levels played for Veteran Tenant achievement
     this.levelsPlayed++;
-    if (this.levelsPlayed >= 50) {
+    if (this.levelsPlayed >= GameConfig.ACHIEVEMENTS.VETERAN_TENANT.threshold) {
       this.unlockAchievement("veteran_tenant");
     }
 

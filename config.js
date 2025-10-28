@@ -267,7 +267,11 @@ const GameConfig = {
       baseSpeed: 1,
       description: "Moves in circular patterns",
     },
-    RANDOM: { name: "random", baseSpeed: 1, description: "Moves randomly" },
+    RANDOM: {
+      name: "random",
+      baseSpeed: 1,
+      description: "Moves randomly",
+    },
     FIGURE_EIGHT: {
       name: "figure-eight",
       baseSpeed: 1,
@@ -375,7 +379,13 @@ const GameConfig = {
       typesAvailable: [1, 2, 3, 4],
       matchingTime: 18,
       marthaWantsSockballs: 5,
-      marthaPatterns: ["horizontal", "vertical", "diagonal", "circular", "random"],
+      marthaPatterns: [
+        "horizontal",
+        "vertical",
+        "diagonal",
+        "circular",
+        "random",
+      ],
     },
     {
       marthaSpeed: 0.9,
@@ -383,7 +393,14 @@ const GameConfig = {
       typesAvailable: [1, 2, 3, 4, 5],
       matchingTime: 22,
       marthaWantsSockballs: 6,
-      marthaPatterns: ["horizontal", "vertical", "diagonal", "circular", "random", "figure-eight"],
+      marthaPatterns: [
+        "horizontal",
+        "vertical",
+        "diagonal",
+        "circular",
+        "random",
+        "figure-eight",
+      ],
     },
     {
       marthaSpeed: 1,
@@ -402,7 +419,7 @@ const GameConfig = {
       ],
     },
     {
-      marthaSpeed: 1,
+      marthaSpeed: 1.1,
       sockPairs: 12,
       typesAvailable: [2, 3, 4, 5],
       matchingTime: 28,
@@ -419,7 +436,7 @@ const GameConfig = {
       ],
     },
     {
-      marthaSpeed: 1,
+      marthaSpeed: 1.2,
       sockPairs: 15,
       typesAvailable: [1, 2, 3, 4, 5],
       matchingTime: 45,
@@ -437,17 +454,16 @@ const GameConfig = {
       ],
     },
     {
-      marthaSpeed: 1,
-      sockPairs: 24,
+      marthaSpeed: 1.3,
+      sockPairs: 18,
       typesAvailable: [1, 2, 3, 4, 5, 6],
       matchingTime: 60,
-      marthaWantsSockballs: 20,
+      marthaWantsSockballs: 16,
       marthaPatterns: [
         "horizontal",
         "vertical",
         "diagonal",
         "circular",
-        "random",
         "figure-eight",
         "zigzag-horizontal",
         "zigzag-vertical",
@@ -774,6 +790,7 @@ const GameConfig = {
       description: "20+ seconds remaining",
       icon: "icon-lightning.png",
       unlocked: false,
+      threshold: 20,
     },
     MARTHAS_FAVORITE: {
       id: "marthas_favorite",
@@ -795,6 +812,7 @@ const GameConfig = {
       description: "Hit Martha 10 times in a row",
       icon: "icon-hat.png",
       unlocked: false,
+      threshold: 10,
     },
     QUICK_HANDS: {
       id: "quick_hands",
@@ -802,6 +820,8 @@ const GameConfig = {
       description: "Match 5 pairs in 15 seconds",
       icon: "icon-hands.png",
       unlocked: false,
+      pairs: 5,
+      timeLimit: 15,
     },
     STREAK_KING: {
       id: "streak_king",
@@ -809,6 +829,7 @@ const GameConfig = {
       description: "Get a 10x match streak",
       icon: "icon-fire2.png",
       unlocked: false,
+      threshold: 10,
     },
     NEW_GAME_PLUS_HERO: {
       id: "new_game_plus_hero",
@@ -830,6 +851,7 @@ const GameConfig = {
       description: "10+ seconds remaining",
       icon: "icon-clock.png",
       unlocked: false,
+      threshold: 10,
     },
     SOCK_SNIPER: {
       id: "sock_sniper",
@@ -837,13 +859,15 @@ const GameConfig = {
       description: "Hit Martha with 3 perfect throws in a row",
       icon: "icon-bullseye.png",
       unlocked: false,
+      threshold: 3,
     },
     COMBO_MASTER: {
       id: "combo_master",
       name: "Combo Master",
-      description: "Get a 20x match streak",
+      description: "Get a 18x match streak",
       icon: "icon-fire3.png",
       unlocked: false,
+      threshold: 18,
     },
     EVICTION_NOTICE: {
       id: "eviction_notice",
@@ -855,16 +879,18 @@ const GameConfig = {
     SOCK_HOARDER: {
       id: "sock_hoarder",
       name: "Sock Hoarder",
-      description: "Match 100 socks total",
+      description: "Match 250 socks total",
       icon: "icon-sock.png",
       unlocked: false,
+      threshold: 250,
     },
     DEEP_POCKETS: {
       id: "deep_pockets",
       name: "Deep Pockets",
-      description: "Have 500 money at once",
+      description: "Have 1000 money at once",
       icon: "icon-money.png",
       unlocked: false,
+      threshold: 1000,
     },
     BIG_SPENDER: {
       id: "big_spender",
@@ -872,6 +898,7 @@ const GameConfig = {
       description: "Spend 1000 money total",
       icon: "icon-goldbar.png",
       unlocked: false,
+      threshold: 1000,
     },
     MARTHAS_MILLIONAIRE: {
       id: "marthas_millionaire",
@@ -879,6 +906,7 @@ const GameConfig = {
       description: "Earn 2000 sockballs total (lifetime)",
       icon: "icon-diamond.png",
       unlocked: false,
+      threshold: 2000,
     },
     HALFWAY_THERE: {
       id: "halfway_there",
@@ -893,6 +921,7 @@ const GameConfig = {
       description: "Play 50 levels (including replays)",
       icon: "icon-house.png",
       unlocked: false,
+      threshold: 50,
     },
     EASTER_EGG_HUNTER: {
       id: "easter_egg_hunter",
@@ -907,6 +936,7 @@ const GameConfig = {
       description: "Use the easter egg to create 10 sockballs",
       icon: "icon-wizard.png",
       unlocked: false,
+      threshold: 10,
     },
     LOGO_CLICKER: {
       id: "logo_clicker",
@@ -914,6 +944,7 @@ const GameConfig = {
       description: "Click the logo 10 times",
       icon: "icon-mouse.png",
       unlocked: false,
+      threshold: 10,
     },
     BUTTERFINGERS: {
       id: "butterfingers",
@@ -921,6 +952,7 @@ const GameConfig = {
       description: "Miss 5 throws in a row",
       icon: "icon-butter.png",
       unlocked: false,
+      threshold: 5,
     },
     BANK_SHOT: {
       id: "bank_shot",
@@ -935,6 +967,7 @@ const GameConfig = {
       description: "Get 3 wall bounce catches in one level",
       icon: "icon-demon.png",
       unlocked: false,
+      threshold: 3,
     },
     PINBALL_KING: {
       id: "pinball_king",
@@ -942,6 +975,7 @@ const GameConfig = {
       description: "Get 25 total wall bounce catches (lifetime)",
       icon: "icon-trophy.png",
       unlocked: false,
+      threshold: 25,
     },
     BONUS_HUNTER: {
       id: "bonus_hunter",
@@ -956,6 +990,7 @@ const GameConfig = {
       description: "Get 10 bonus hits (lifetime)",
       icon: "icon-fire3.png",
       unlocked: false,
+      threshold: 10,
     },
   },
 

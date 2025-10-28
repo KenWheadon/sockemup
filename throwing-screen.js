@@ -463,7 +463,7 @@ class ThrowingScreen extends Screen {
         this.game.consecutiveMisses++;
         this.game.consecutivePerfectThrows = 0;
 
-        if (this.game.consecutiveMisses >= 5) {
+        if (this.game.consecutiveMisses >= GameConfig.ACHIEVEMENTS.BUTTERFINGERS.threshold) {
           this.game.unlockAchievement("butterfingers");
         }
 
@@ -553,11 +553,11 @@ class ThrowingScreen extends Screen {
 
               this.game.unlockAchievement("bank_shot");
 
-              if (this.wallBounceCatchesThisLevel >= 3) {
+              if (this.wallBounceCatchesThisLevel >= GameConfig.ACHIEVEMENTS.PINBALL_WIZARD.threshold) {
                 this.game.unlockAchievement("pinball_wizard");
               }
 
-              if (this.game.totalWallBounceCatches >= 25) {
+              if (this.game.totalWallBounceCatches >= GameConfig.ACHIEVEMENTS.PINBALL_KING.threshold) {
                 this.game.unlockAchievement("pinball_king");
               }
             }
@@ -568,7 +568,7 @@ class ThrowingScreen extends Screen {
 
               this.game.unlockAchievement("bonus_hunter");
 
-              if (this.game.totalBonusHits >= 10) {
+              if (this.game.totalBonusHits >= GameConfig.ACHIEVEMENTS.BONUS_MASTER.threshold) {
                 this.game.unlockAchievement("bonus_master");
               }
               this.showMessage("BONUS CATCH!", "success", 1500);
@@ -577,7 +577,7 @@ class ThrowingScreen extends Screen {
                 this.game.consecutivePerfectThrows++;
                 this.game.consecutiveMisses = 0;
 
-                if (this.game.consecutivePerfectThrows >= 3) {
+                if (this.game.consecutivePerfectThrows >= GameConfig.ACHIEVEMENTS.SOCK_SNIPER.threshold) {
                   this.game.unlockAchievement("sock_sniper");
                 }
               } else if (catchQuality === "GOOD") {
@@ -598,8 +598,8 @@ class ThrowingScreen extends Screen {
               this.game.consecutivePerfectThrows++;
               this.game.consecutiveMisses = 0;
 
-              // Achievement: SOCK_SNIPER (3 perfect throws in a row)
-              if (this.game.consecutivePerfectThrows >= 3) {
+              // Achievement: SOCK_SNIPER
+              if (this.game.consecutivePerfectThrows >= GameConfig.ACHIEVEMENTS.SOCK_SNIPER.threshold) {
                 this.game.unlockAchievement("sock_sniper");
               }
             } else if (catchQuality === "GOOD") {
@@ -610,7 +610,7 @@ class ThrowingScreen extends Screen {
               this.game.consecutivePerfectThrows = 0; // Reset perfect streak
             }
 
-            if (this.consecutiveHits >= 10) {
+            if (this.consecutiveHits >= GameConfig.ACHIEVEMENTS.DEADEYE.threshold) {
               this.game.unlockAchievement("deadeye");
             }
 
@@ -651,11 +651,11 @@ class ThrowingScreen extends Screen {
 
               this.game.unlockAchievement("bank_shot");
 
-              if (this.wallBounceCatchesThisLevel >= 3) {
+              if (this.wallBounceCatchesThisLevel >= GameConfig.ACHIEVEMENTS.PINBALL_WIZARD.threshold) {
                 this.game.unlockAchievement("pinball_wizard");
               }
 
-              if (this.game.totalWallBounceCatches >= 25) {
+              if (this.game.totalWallBounceCatches >= GameConfig.ACHIEVEMENTS.PINBALL_KING.threshold) {
                 this.game.unlockAchievement("pinball_king");
               }
             }
@@ -666,7 +666,7 @@ class ThrowingScreen extends Screen {
 
               this.game.unlockAchievement("bonus_hunter");
 
-              if (this.game.totalBonusHits >= 10) {
+              if (this.game.totalBonusHits >= GameConfig.ACHIEVEMENTS.BONUS_MASTER.threshold) {
                 this.game.unlockAchievement("bonus_master");
               }
               this.showMessage("BONUS CATCH!", "success", 1500);
@@ -675,7 +675,7 @@ class ThrowingScreen extends Screen {
                 this.game.consecutivePerfectThrows++;
                 this.game.consecutiveMisses = 0;
 
-                if (this.game.consecutivePerfectThrows >= 3) {
+                if (this.game.consecutivePerfectThrows >= GameConfig.ACHIEVEMENTS.SOCK_SNIPER.threshold) {
                   this.game.unlockAchievement("sock_sniper");
                 }
               } else if (catchQuality === "GOOD") {
@@ -696,8 +696,8 @@ class ThrowingScreen extends Screen {
               this.game.consecutivePerfectThrows++;
               this.game.consecutiveMisses = 0;
 
-              // Achievement: SOCK_SNIPER (3 perfect throws in a row)
-              if (this.game.consecutivePerfectThrows >= 3) {
+              // Achievement: SOCK_SNIPER
+              if (this.game.consecutivePerfectThrows >= GameConfig.ACHIEVEMENTS.SOCK_SNIPER.threshold) {
                 this.game.unlockAchievement("sock_sniper");
               }
             } else if (catchQuality === "GOOD") {
@@ -708,7 +708,7 @@ class ThrowingScreen extends Screen {
               this.game.consecutivePerfectThrows = 0; // Reset perfect streak
             }
 
-            if (this.consecutiveHits >= 10) {
+            if (this.consecutiveHits >= GameConfig.ACHIEVEMENTS.DEADEYE.threshold) {
               this.game.unlockAchievement("deadeye");
             }
 
@@ -724,7 +724,7 @@ class ThrowingScreen extends Screen {
         this.game.consecutiveMisses++;
         this.game.consecutivePerfectThrows = 0;
 
-        if (this.game.consecutiveMisses >= 5) {
+        if (this.game.consecutiveMisses >= GameConfig.ACHIEVEMENTS.BUTTERFINGERS.threshold) {
           this.game.unlockAchievement("butterfingers");
         }
 

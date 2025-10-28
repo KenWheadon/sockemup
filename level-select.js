@@ -1489,7 +1489,7 @@ class LevelSelect extends Screen {
 
         // Track money spent for Big Spender achievement
         this.game.totalMoneySpent += levelCost;
-        if (this.game.totalMoneySpent >= 1000) {
+        if (this.game.totalMoneySpent >= GameConfig.ACHIEVEMENTS.BIG_SPENDER.threshold) {
           this.game.unlockAchievement("big_spender");
         }
 
@@ -1960,7 +1960,7 @@ class LevelSelect extends Screen {
 
     // Track easter egg sockballs for Sockball Wizard achievement
     this.game.easterEggSockballsCreated++;
-    if (this.game.easterEggSockballsCreated >= 10) {
+    if (this.game.easterEggSockballsCreated >= GameConfig.ACHIEVEMENTS.SOCKBALL_WIZARD.threshold) {
       this.game.unlockAchievement("sockball_wizard");
     }
 
@@ -2047,8 +2047,8 @@ class LevelSelect extends Screen {
     this.logoClickCount++;
     this.game.logoClickCount++; // Track in game for achievement persistence
 
-    // Achievement: LOGO_CLICKER (click logo 10 times)
-    if (this.game.logoClickCount >= 10) {
+    // Achievement: LOGO_CLICKER
+    if (this.game.logoClickCount >= GameConfig.ACHIEVEMENTS.LOGO_CLICKER.threshold) {
       this.game.unlockAchievement("logo_clicker");
     }
 

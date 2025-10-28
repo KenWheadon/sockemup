@@ -511,8 +511,8 @@ class LevelEndScreen extends Screen {
       this.game.playerPoints + this.totalScore
     );
 
-    // Achievement: DEEP_POCKETS (have 500 money at once)
-    if (this.game.playerPoints >= 500) {
+    // Achievement: DEEP_POCKETS
+    if (this.game.playerPoints >= GameConfig.ACHIEVEMENTS.DEEP_POCKETS.threshold) {
       this.game.unlockAchievement("deep_pockets");
     }
 

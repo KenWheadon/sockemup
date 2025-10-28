@@ -700,10 +700,10 @@ class MatchScreen extends Screen {
             this.game.unlockAchievement("first_match");
           }
 
-          // Achievement: QUICK_HANDS (5 pairs in 15 seconds)
-          if (this.matchCount === 5) {
+          // Achievement: QUICK_HANDS
+          if (this.matchCount === GameConfig.ACHIEVEMENTS.QUICK_HANDS.pairs) {
             const timeElapsed = (currentTime - this.matchStartTime) / 1000;
-            if (timeElapsed <= 15) {
+            if (timeElapsed <= GameConfig.ACHIEVEMENTS.QUICK_HANDS.timeLimit) {
               this.game.unlockAchievement("quick_hands");
             }
           }
@@ -712,13 +712,13 @@ class MatchScreen extends Screen {
           this.matchStreak++;
           this.lastMatchTime = currentTime;
 
-          // Achievement: STREAK_KING (10x match streak)
-          if (this.matchStreak >= 10) {
+          // Achievement: STREAK_KING
+          if (this.matchStreak >= GameConfig.ACHIEVEMENTS.STREAK_KING.threshold) {
             this.game.unlockAchievement("streak_king");
           }
 
-          // Achievement: COMBO_MASTER (20x match streak)
-          if (this.matchStreak >= 20) {
+          // Achievement: COMBO_MASTER
+          if (this.matchStreak >= GameConfig.ACHIEVEMENTS.COMBO_MASTER.threshold) {
             this.game.unlockAchievement("combo_master");
           }
 
@@ -745,13 +745,13 @@ class MatchScreen extends Screen {
                 this.game.timeBonusEarned = true;
               }
 
-              // Achievement: SPEEDY_MATCHER (complete with 20+ seconds remaining)
-              if (timeRemaining >= 20) {
+              // Achievement: SPEEDY_MATCHER
+              if (timeRemaining >= GameConfig.ACHIEVEMENTS.SPEEDY_MATCHER.threshold) {
                 this.game.unlockAchievement("speedy_matcher");
               }
 
-              // Achievement: SPEED_DEMON (complete with 10+ seconds remaining)
-              if (timeRemaining >= 10) {
+              // Achievement: SPEED_DEMON
+              if (timeRemaining >= GameConfig.ACHIEVEMENTS.SPEED_DEMON.threshold) {
                 this.game.unlockAchievement("speed_demon");
               }
             }
@@ -900,7 +900,7 @@ class MatchScreen extends Screen {
         this.game.timeBonusEarned = true;
       }
 
-      if (timeRemaining >= 30) {
+      if (timeRemaining >= GameConfig.ACHIEVEMENTS.SPEEDY_MATCHER.threshold) {
         this.game.unlockAchievement("speedy_matcher");
       }
 

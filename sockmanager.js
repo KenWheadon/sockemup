@@ -369,13 +369,13 @@ class SockManager {
           this.game.totalSockMatches++; // Track lifetime total matches
           this.game.totalSockballsEarned++; // Track lifetime sockballs
 
-          // Check Sock Hoarder achievement (100 socks matched)
-          if (this.game.totalSockMatches >= 100) {
+          // Check Sock Hoarder achievement
+          if (this.game.totalSockMatches >= GameConfig.ACHIEVEMENTS.SOCK_HOARDER.threshold) {
             this.game.unlockAchievement("sock_hoarder");
           }
 
-          // Check Martha's Millionaire achievement (2000 sockballs earned)
-          if (this.game.totalSockballsEarned >= 2000) {
+          // Check Martha's Millionaire achievement
+          if (this.game.totalSockballsEarned >= GameConfig.ACHIEVEMENTS.MARTHAS_MILLIONAIRE.threshold) {
             this.game.unlockAchievement("marthas_millionaire");
           }
 
