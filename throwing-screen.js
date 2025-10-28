@@ -98,7 +98,8 @@ class ThrowingScreen extends Screen {
     this.wallBounceCatchesThisLevel = 0;
 
     // Setup Martha for current level - use difficulty-modified level data
-    const level = this.game.currentLevelData || GameConfig.LEVELS[this.game.currentLevel];
+    const level =
+      this.game.currentLevelData || GameConfig.LEVELS[this.game.currentLevel];
     this.marthaManager.setup(level);
 
     // Scale launch position
@@ -351,7 +352,13 @@ class ThrowingScreen extends Screen {
       return;
     }
 
-    const normalizedVelocity = GameConfig.SOCKBALL_THROW_SPEED / distance;
+    // Apply difficulty-based throw speed multiplier
+    const difficultyMode = GameConfig.getDifficultyMode(
+      this.game.currentDifficulty
+    );
+    const adjustedThrowSpeed =
+      GameConfig.SOCKBALL_THROW_SPEED * difficultyMode.throwSpeedMultiplier;
+    const normalizedVelocity = adjustedThrowSpeed / distance;
 
     // Create sockball projectile with the tracked type
     const sockball = {
@@ -380,8 +387,9 @@ class ThrowingScreen extends Screen {
   updateTrajectoryPreview(targetX, targetY) {
     this.trajectoryPoints = [];
 
-    // Simulate trajectory
-    const steps = 20;
+    // Use a fixed trajectory length based on direction, not speed
+    const fixedTrajectoryLength = this.game.getScaledValue(250); // Fixed visual length in pixels
+
     let x = this.launchPosition.x;
     let y = this.launchPosition.y;
 
@@ -393,24 +401,25 @@ class ThrowingScreen extends Screen {
       return;
     }
 
-    const normalizedVelocity = GameConfig.SOCKBALL_THROW_SPEED / distance;
+    // Normalize the direction
+    const dirX = deltaX / distance;
+    const dirY = deltaY / distance;
 
-    let vx = deltaX * normalizedVelocity;
-    let vy = deltaY * normalizedVelocity;
+    // Create trajectory points along a fixed distance
+    const pointCount = 8; // Number of dots in the trajectory line
+    for (let i = 0; i <= pointCount; i++) {
+      const distanceAlongLine = (i / pointCount) * fixedTrajectoryLength;
+      const pointX = this.launchPosition.x + dirX * distanceAlongLine;
+      const pointY = this.launchPosition.y + dirY * distanceAlongLine;
 
-    for (let i = 0; i < steps; i++) {
-      this.trajectoryPoints.push({ x, y });
-
-      x += vx;
-      y += vy;
-      vy += GameConfig.GRAVITY;
-
+      // Only add points that are within canvas bounds
       if (
-        y > this.game.getCanvasHeight() ||
-        x < 0 ||
-        x > this.game.getCanvasWidth()
+        pointX >= 0 &&
+        pointX <= this.game.getCanvasWidth() &&
+        pointY >= 0 &&
+        pointY <= this.game.getCanvasHeight()
       ) {
-        break;
+        this.trajectoryPoints.push({ x: pointX, y: pointY });
       }
     }
   }

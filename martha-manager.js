@@ -93,6 +93,9 @@ class MarthaManager {
     // Pattern repetition tracking
     this.patternHistory = [];
     this.maxConsecutivePatterns = 2;
+
+    // Initialization flag to track first-time setup vs animation-only changes
+    this.hasBeenInitialized = false;
   }
 
   setup(level) {
@@ -100,9 +103,18 @@ class MarthaManager {
     this.collectedSockballs = 0;
     this.targetSockballs = level.marthaWantsSockballs;
     this.sockballsWanted = level.marthaWantsSockballs;
+
+    // Apply base speed from level
     this.speed = level.marthaSpeed;
     this.availablePatterns = level.marthaPatterns;
     this.patternSpeed = level.marthaPatternSpeed;
+
+    // Apply difficulty speed multiplier for consistent speeds across NEW GAME+ difficulties
+    const difficultyMode = GameConfig.getDifficultyMode(
+      this.game.currentDifficulty
+    );
+    this.speed *= difficultyMode.speedMultiplier;
+    this.patternSpeed *= difficultyMode.speedMultiplier;
 
     // Select spritesheet based on difficulty (New Game+ uses crawling animation)
     if (this.game.currentDifficulty > 0) {
@@ -396,11 +408,13 @@ class MarthaManager {
       !this.patternData.circularAngle &&
       this.patternData.circularAngle !== 0
     ) {
-      // Set center of circular path
-      this.patternData.centerX =
-        this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
-      this.patternData.centerY =
-        this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
+      // Set center of circular path - use saved center if available (from pattern switch), otherwise use screen center
+      if (!this.patternData.centerX || !this.patternData.centerY) {
+        this.patternData.centerX =
+          this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
+        this.patternData.centerY =
+          this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
+      }
 
       // Calculate starting angle AND radius from Martha's current position
       // This prevents the "jump" - Martha starts from where she is
@@ -425,6 +439,7 @@ class MarthaManager {
       );
     }
 
+    // Apply consistent speed scaling: angle += (baseSpeed * patternSpeed * timeMultiplier) * constant_factor
     this.patternData.circularAngle +=
       baseSpeed * this.patternSpeed * timeMultiplier * 0.02;
 
@@ -435,8 +450,10 @@ class MarthaManager {
       this.patternData.centerY +
       Math.sin(this.patternData.circularAngle) * this.patternData.radius;
 
-    this.velocity.x = (targetX - this.x) * 0.15;
-    this.velocity.y = (targetY - this.y) * 0.15;
+    // Velocity scales with speed to maintain consistent movement
+    const velocityScale = 0.15 * this.speed;
+    this.velocity.x = (targetX - this.x) * velocityScale;
+    this.velocity.y = (targetY - this.y) * velocityScale;
 
     this.facingRight = this.velocity.x > 0;
   }
@@ -478,10 +495,13 @@ class MarthaManager {
       this.patternData.figureEightAngle !== 0
     ) {
       this.patternData.figureEightAngle = 0;
-      this.patternData.centerX =
-        this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
-      this.patternData.centerY =
-        this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
+      // Use saved center if available (from pattern switch), otherwise use screen center
+      if (!this.patternData.centerX || !this.patternData.centerY) {
+        this.patternData.centerX =
+          this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
+        this.patternData.centerY =
+          this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
+      }
       this.patternData.radiusX = Math.min(
         (this.bounds.right - this.bounds.left) / 4,
         200
@@ -492,6 +512,7 @@ class MarthaManager {
       );
     }
 
+    // Apply consistent speed scaling: angle += (baseSpeed * patternSpeed * timeMultiplier) * constant_factor
     this.patternData.figureEightAngle +=
       baseSpeed * this.patternSpeed * timeMultiplier * 0.02;
 
@@ -503,8 +524,10 @@ class MarthaManager {
       this.patternData.centerY +
       (Math.sin(2 * t) / 2) * this.patternData.radiusY;
 
-    this.velocity.x = (targetX - this.x) * 0.15;
-    this.velocity.y = (targetY - this.y) * 0.15;
+    // Velocity scales with speed to maintain consistent movement
+    const velocityScale = 0.15 * this.speed;
+    this.velocity.x = (targetX - this.x) * velocityScale;
+    this.velocity.y = (targetY - this.y) * velocityScale;
 
     this.facingRight = this.velocity.x > 0;
   }
@@ -566,10 +589,13 @@ class MarthaManager {
 
     if (!this.patternData.spiralAngle && this.patternData.spiralAngle !== 0) {
       this.patternData.spiralAngle = 0;
-      this.patternData.centerX =
-        this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
-      this.patternData.centerY =
-        this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
+      // Use saved center if available (from pattern switch), otherwise use screen center
+      if (!this.patternData.centerX || !this.patternData.centerY) {
+        this.patternData.centerX =
+          this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
+        this.patternData.centerY =
+          this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
+      }
       this.patternData.spiralRadius = 50;
       this.patternData.spiralDirection = this.direction; // 1 for outward, -1 for inward
       this.patternData.maxRadius = Math.min(
@@ -578,10 +604,11 @@ class MarthaManager {
       );
     }
 
+    // Apply consistent speed scaling: angle += (baseSpeed * patternSpeed * timeMultiplier) * constant_factor
     this.patternData.spiralAngle +=
       baseSpeed * this.patternSpeed * timeMultiplier * 0.03;
 
-    // Expand or contract the spiral
+    // Expand or contract the spiral - scale with speed for consistent expansion
     this.patternData.spiralRadius +=
       this.patternData.spiralDirection *
       baseSpeed *
@@ -605,8 +632,10 @@ class MarthaManager {
       this.patternData.centerY +
       Math.sin(this.patternData.spiralAngle) * this.patternData.spiralRadius;
 
-    this.velocity.x = (targetX - this.x) * 0.15;
-    this.velocity.y = (targetY - this.y) * 0.15;
+    // Velocity scales with speed to maintain consistent movement
+    const velocityScale = 0.15 * this.speed;
+    this.velocity.x = (targetX - this.x) * velocityScale;
+    this.velocity.y = (targetY - this.y) * velocityScale;
 
     this.facingRight = this.velocity.x > 0;
   }
@@ -648,16 +677,18 @@ class MarthaManager {
         (this.bounds.right - this.bounds.left) / 2,
         (this.bounds.bottom - this.bounds.top) / 2
       );
-      this.patternData.squareSpeed = 2;
     }
 
     this.patternData.squareProgress +=
       baseSpeed * this.patternSpeed * timeMultiplier * 0.5;
 
+    // Calculate speed for square movement - scales with difficulty
+    const squareMovementSpeed = baseSpeed * this.patternSpeed * timeMultiplier;
+
     // Move in square pattern
     switch (this.patternData.squareSide) {
       case 0: // Moving right
-        this.velocity.x = this.patternData.squareSpeed;
+        this.velocity.x = squareMovementSpeed;
         this.velocity.y = 0;
         if (this.patternData.squareProgress > this.patternData.squareSize) {
           this.patternData.squareSide = 1;
@@ -666,14 +697,14 @@ class MarthaManager {
         break;
       case 1: // Moving down
         this.velocity.x = 0;
-        this.velocity.y = this.patternData.squareSpeed;
+        this.velocity.y = squareMovementSpeed;
         if (this.patternData.squareProgress > this.patternData.squareSize) {
           this.patternData.squareSide = 2;
           this.patternData.squareProgress = 0;
         }
         break;
       case 2: // Moving left
-        this.velocity.x = -this.patternData.squareSpeed;
+        this.velocity.x = -squareMovementSpeed;
         this.velocity.y = 0;
         if (this.patternData.squareProgress > this.patternData.squareSize) {
           this.patternData.squareSide = 3;
@@ -682,7 +713,7 @@ class MarthaManager {
         break;
       case 3: // Moving up
         this.velocity.x = 0;
-        this.velocity.y = -this.patternData.squareSpeed;
+        this.velocity.y = -squareMovementSpeed;
         if (this.patternData.squareProgress > this.patternData.squareSize) {
           this.patternData.squareSide = 0;
           this.patternData.squareProgress = 0;
@@ -710,13 +741,16 @@ class MarthaManager {
     this.velocity.x =
       this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
 
+    // Apply consistent speed scaling for wave phase
     this.patternData.wavePhase +=
       baseSpeed * this.patternSpeed * timeMultiplier * 0.05;
     const targetY =
       this.patternData.waveCenterY +
       Math.sin(this.patternData.wavePhase) * this.patternData.waveAmplitude;
 
-    this.velocity.y = (targetY - this.y) * 0.1;
+    // Velocity scales with speed to maintain consistent movement
+    const velocityScale = 0.1 * this.speed;
+    this.velocity.y = (targetY - this.y) * velocityScale;
 
     this.facingRight = this.direction > 0;
   }
@@ -876,45 +910,43 @@ class MarthaManager {
       // Check if we need to force a different pattern
       const consecutiveCount = this.countConsecutivePatterns();
 
-      if (
-        consecutiveCount >= this.maxConsecutivePatterns &&
-        this.availablePatterns.length > 1
-      ) {
-        // Force a different pattern - filter out the current pattern
+      // After pattern has been used twice, MUST pick a different one
+      if (consecutiveCount >= this.maxConsecutivePatterns && this.availablePatterns.length > 1) {
+        // Force a different pattern - 100% guarantee
         const differentPatterns = this.availablePatterns.filter(
           (p) => p !== this.currentPattern
         );
-
-        if (differentPatterns.length > 0) {
-          newPattern =
-            differentPatterns[
-              Math.floor(Math.random() * differentPatterns.length)
-            ];
-        } else {
-          // Fallback if something goes wrong
-          newPattern =
-            this.availablePatterns[
-              Math.floor(Math.random() * this.availablePatterns.length)
-            ];
-        }
+        newPattern =
+          differentPatterns[
+            Math.floor(Math.random() * differentPatterns.length)
+          ];
       } else {
-        // Normal random selection
+        // Below the limit - random selection (can pick same or different)
         newPattern =
           this.availablePatterns[
             Math.floor(Math.random() * this.availablePatterns.length)
           ];
       }
 
-      // Update pattern history
-      this.patternHistory.push(newPattern);
-
-      // Keep history to a reasonable length (last 10 patterns)
-      if (this.patternHistory.length > 10) {
-        this.patternHistory.shift();
-      }
-
+      // Update current pattern
       this.currentPattern = newPattern;
+
+      // Update pattern history (only if it's different from the last pattern in history)
+      if (this.patternHistory.length === 0 || this.patternHistory[this.patternHistory.length - 1] !== newPattern) {
+        this.patternHistory.push(newPattern);
+
+        // Keep history to a reasonable length (last 10 patterns)
+        if (this.patternHistory.length > 10) {
+          this.patternHistory.shift();
+        }
+      }
+      // Preserve position data (centerX, centerY) but clear pattern-specific state
+      const savedCenterX = this.patternData.centerX;
+      const savedCenterY = this.patternData.centerY;
       this.patternData = {};
+      // Restore center position to ensure smooth transitions
+      if (savedCenterX !== undefined) this.patternData.centerX = savedCenterX;
+      if (savedCenterY !== undefined) this.patternData.centerY = savedCenterY;
       this.patternTimer = 0;
 
       // Reset direction for new pattern

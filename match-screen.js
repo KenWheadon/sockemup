@@ -712,13 +712,13 @@ class MatchScreen extends Screen {
           this.matchStreak++;
           this.lastMatchTime = currentTime;
 
-          // Achievement: STREAK_KING (5x match streak)
-          if (this.matchStreak >= 5) {
+          // Achievement: STREAK_KING (10x match streak)
+          if (this.matchStreak >= 10) {
             this.game.unlockAchievement("streak_king");
           }
 
-          // Achievement: COMBO_MASTER (10x match streak)
-          if (this.matchStreak >= 10) {
+          // Achievement: COMBO_MASTER (20x match streak)
+          if (this.matchStreak >= 20) {
             this.game.unlockAchievement("combo_master");
           }
 
@@ -745,8 +745,8 @@ class MatchScreen extends Screen {
                 this.game.timeBonusEarned = true;
               }
 
-              // Achievement: SPEEDY_MATCHER (complete with 30+ seconds remaining)
-              if (timeRemaining >= 30) {
+              // Achievement: SPEEDY_MATCHER (complete with 20+ seconds remaining)
+              if (timeRemaining >= 20) {
                 this.game.unlockAchievement("speedy_matcher");
               }
 
