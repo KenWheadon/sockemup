@@ -1055,8 +1055,8 @@ class MarthaManager {
       this.game.perfectCatchStats.byLevel[this.game.currentLevel]++;
     }
 
-    // Add points based on catch quality
-    this.game.playerPoints += points;
+    // Points are calculated and awarded at the end of the level in level-end-screen.js
+    // Do not add points here to avoid double-counting
 
     // Play random goblin sound (8 different sounds)
     this.game.audioManager.playRandomSound("goblin-sound", 8, false, 0.5);
