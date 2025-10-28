@@ -60,7 +60,6 @@ class LevelEndScreen extends Screen {
     const marthaImageSize = this.game.getScaledValue(150); // Increased for better visibility
     const marthaToStatsMargin = this.game.getScaledValue(30);
     const scoreLineHeight = this.game.getScaledValue(35);
-    const buttonMarginTop = this.game.getScaledValue(20); // Space between score and button
 
     const scoreStartY =
       canvasHeight / 2 -
@@ -68,19 +67,8 @@ class LevelEndScreen extends Screen {
       marthaImageSize +
       marthaToStatsMargin;
 
-    // Calculate the number of visible score lines based on game state
-    const scoreLines = [
-      { show: this.perfectCatches > 0 },
-      { show: this.goodCatches > 0 },
-      { show: this.regularCatches > 0 },
-      { show: this.game.timeBonusEarned },
-      { show: true }, // Sockballs leftover always shown
-      { show: this.rentPenalty > 0 }, // Rent penalty only if > 0
-      { show: true }, // Total score always shown
-    ];
-    const visibleLineCount = scoreLines.filter((line) => line.show).length;
-    const scoreEndY = scoreStartY + visibleLineCount * scoreLineHeight;
-    const buttonY = scoreEndY + buttonMarginTop;
+    // Note: Button Y position is calculated dynamically in renderScoreLines()
+    // based on actual visible lines, since score data isn't available during layout cache creation
 
     return {
       ...baseLayout,
@@ -97,8 +85,6 @@ class LevelEndScreen extends Screen {
       scoreLineHeight: scoreLineHeight,
       buttonWidth: this.game.getScaledValue(200),
       buttonHeight: this.game.getScaledValue(50),
-      buttonY: buttonY,
-      buttonMarginTop: buttonMarginTop,
     };
   }
 
@@ -419,7 +405,7 @@ class LevelEndScreen extends Screen {
     this.continueButton.width = layout.buttonWidth;
     this.continueButton.height = layout.buttonHeight;
     this.continueButton.x = layout.centerX - layout.buttonWidth / 2;
-    this.continueButton.y = layout.buttonY;
+    // Button Y will be calculated dynamically in render based on actual visible lines
   }
 
   onUpdate(deltaTime) {
@@ -922,6 +908,9 @@ class LevelEndScreen extends Screen {
     ctx.lineTo(layout.centerX + separatorWidth / 2, separatorY);
     ctx.stroke();
     ctx.restore();
+
+    // Calculate button position: 50 pixels below the separator line
+    this.continueButton.y = separatorY + this.game.getScaledValue(50);
 
     // Render only visible lines
     let displayIndex = 0;
