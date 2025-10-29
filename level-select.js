@@ -5088,32 +5088,65 @@ class LevelSelect extends Screen {
     ctx.fillStyle = "rgba(0, 0, 0, 0.85)";
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    // Video container
-    const videoWidth = this.game.getScaledValue(640);
-    const videoHeight = this.game.getScaledValue(360);
-    const videoX = (canvasWidth - videoWidth) / 2;
-    const videoY = (canvasHeight - videoHeight) / 2;
+    // Fixed container dimensions (same height for all videos)
+    const containerHeight = this.game.getScaledValue(360);
+    const containerWidth = this.game.getScaledValue(640);
+    const containerX = (canvasWidth - containerWidth) / 2;
+    const containerY = (canvasHeight - containerHeight) / 2;
 
     // Container background
     ctx.fillStyle = "rgba(20, 20, 20, 0.95)";
-    ctx.fillRect(videoX - 10, videoY - 10, videoWidth + 20, videoHeight + 20);
+    ctx.fillRect(containerX - 10, containerY - 10, containerWidth + 20, containerHeight + 20);
 
     // Border with glow
     ctx.strokeStyle = "#BB8FCE";
     ctx.lineWidth = this.game.getScaledValue(3);
     ctx.shadowColor = "#BB8FCE";
     ctx.shadowBlur = this.game.getScaledValue(15);
-    ctx.strokeRect(videoX - 10, videoY - 10, videoWidth + 20, videoHeight + 20);
+    ctx.strokeRect(containerX - 10, containerY - 10, containerWidth + 20, containerHeight + 20);
 
     // Draw video frame if ready
     if (this.videoElement && this.videoElement.readyState >= 2) {
       try {
+        // Videos are 800x462 with black bars on left/right
+        // The actual content is centered in the video
+        // Crop out the black bars by calculating the content area
+        const videoWidth = this.videoElement.videoWidth;
+        const videoHeight = this.videoElement.videoHeight;
+
+        // Calculate source crop to remove black bars
+        // Assuming the content is 4:3 or similar centered in 800x462
+        // Target aspect ratio is 16:9 (640:360)
+        const targetAspectRatio = 16 / 9;
+        const videoAspectRatio = videoWidth / videoHeight;
+
+        let sourceX, sourceY, sourceWidth, sourceHeight;
+
+        if (videoAspectRatio > targetAspectRatio) {
+          // Video is wider - crop left and right (remove pillarboxing)
+          sourceHeight = videoHeight;
+          sourceWidth = videoHeight * targetAspectRatio;
+          sourceX = (videoWidth - sourceWidth) / 2;
+          sourceY = 0;
+        } else {
+          // Video is taller - crop top and bottom
+          sourceWidth = videoWidth;
+          sourceHeight = videoWidth / targetAspectRatio;
+          sourceX = 0;
+          sourceY = (videoHeight - sourceHeight) / 2;
+        }
+
+        // Draw the cropped portion of the video to fill the container
         ctx.drawImage(
           this.videoElement,
-          videoX,
-          videoY,
-          videoWidth,
-          videoHeight
+          sourceX,
+          sourceY,
+          sourceWidth,
+          sourceHeight,
+          containerX,
+          containerY,
+          containerWidth,
+          containerHeight
         );
       } catch (error) {
         // Show error message
@@ -5143,7 +5176,7 @@ class LevelSelect extends Screen {
     ctx.fillText(
       "Press ESC or click outside to close",
       canvasWidth / 2,
-      videoY + videoHeight + 30
+      containerY + containerHeight + 30
     );
 
     ctx.restore();
