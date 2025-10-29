@@ -5018,8 +5018,8 @@ class LevelSelect extends Screen {
           // Unlock "Secret Video Watcher" achievement (watch any video)
           this.game.unlockAchievement("secret_video_watcher");
 
-          // Check if all 4 videos have been watched
-          if (this.game.watchedVideos.length >= 4) {
+          // Check if all 5 videos have been watched
+          if (this.game.watchedVideos.length >= 5) {
             this.game.unlockAchievement("video_completionist");
           }
 
