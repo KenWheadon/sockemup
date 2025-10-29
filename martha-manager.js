@@ -1059,7 +1059,8 @@ class MarthaManager {
       // Fallback to old calculation method
       catchQuality = this.calculateCatchQuality(sockball);
     }
-    const points = catchQuality.data.points;
+    // Use difficulty-adjusted points for New Game+
+    const points = GameConfig.getCatchQualityPoints(catchQuality.quality, this.game.currentDifficulty);
 
     // Track perfect catches in game stats
     if (catchQuality.quality === "PERFECT") {

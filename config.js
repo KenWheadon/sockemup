@@ -366,7 +366,7 @@ const GameConfig = {
   // Game levels
   LEVELS: [
     {
-      marthaSpeed: 0.5,
+      marthaSpeed: 0.7,
       sockPairs: 3,
       typesAvailable: [1],
       matchingTime: 12,
@@ -374,7 +374,7 @@ const GameConfig = {
       marthaPatterns: ["horizontal", "vertical"],
     },
     {
-      marthaSpeed: 0.65,
+      marthaSpeed: 0.75,
       sockPairs: 4,
       typesAvailable: [1, 2],
       matchingTime: 15,
@@ -382,7 +382,7 @@ const GameConfig = {
       marthaPatterns: ["horizontal", "vertical", "diagonal"],
     },
     {
-      marthaSpeed: 0.8,
+      marthaSpeed: 0.85,
       sockPairs: 6,
       typesAvailable: [1, 2, 3],
       matchingTime: 22,
@@ -390,7 +390,7 @@ const GameConfig = {
       marthaPatterns: ["horizontal", "vertical", "diagonal", "circular"],
     },
     {
-      marthaSpeed: 0.85,
+      marthaSpeed: 0.9,
       sockPairs: 8,
       typesAvailable: [1, 2, 3, 4],
       matchingTime: 30,
@@ -435,7 +435,7 @@ const GameConfig = {
       ],
     },
     {
-      marthaSpeed: 1.1,
+      marthaSpeed: 1,
       sockPairs: 12,
       typesAvailable: [2, 3, 4, 5],
       matchingTime: 40,
@@ -452,7 +452,7 @@ const GameConfig = {
       ],
     },
     {
-      marthaSpeed: 1.2,
+      marthaSpeed: 1,
       sockPairs: 20,
       typesAvailable: [1, 2, 3, 4, 5],
       matchingTime: 60,
@@ -470,7 +470,7 @@ const GameConfig = {
       ],
     },
     {
-      marthaSpeed: 1.3,
+      marthaSpeed: 1,
       sockPairs: 18,
       typesAvailable: [1, 2, 3, 4, 5, 6],
       matchingTime: 60,
@@ -729,30 +729,30 @@ const GameConfig = {
     },
     PLUS_2: {
       name: "NEW GAME+2",
-      speedMultiplier: 1.6,
+      speedMultiplier: 1.5,
       timeMultiplier: 0.85,
       throwCooldownMultiplier: 0.9,
-      throwSpeedMultiplier: 1.25,
+      throwSpeedMultiplier: 1.2,
       catchRadiusMultiplier: 0.8,
       displayName: "★★",
       stars: 2,
     },
     PLUS_3: {
       name: "NEW GAME+3",
-      speedMultiplier: 2,
+      speedMultiplier: 1.8,
       timeMultiplier: 0.8,
       throwCooldownMultiplier: 0.85,
-      throwSpeedMultiplier: 1.5,
+      throwSpeedMultiplier: 1.4,
       catchRadiusMultiplier: 0.65,
       displayName: "★★★",
       stars: 3,
     },
     PLUS_4: {
       name: "NEW GAME+4",
-      speedMultiplier: 2.5,
+      speedMultiplier: 2.2,
       timeMultiplier: 0.75,
       throwCooldownMultiplier: 0.75,
-      throwSpeedMultiplier: 1.75,
+      throwSpeedMultiplier: 1.6,
       catchRadiusMultiplier: 0.4,
       displayName: "★★★★",
       stars: 4,
