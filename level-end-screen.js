@@ -93,6 +93,13 @@ class LevelEndScreen extends Screen {
     this.resetScores();
     this.calculateScoresAndRent();
 
+    // Play appropriate music based on win/lose
+    if (this.rentPenalty === 0) {
+      this.game.audioManager.playMusic("victory-music", false, 0.4);
+    } else {
+      this.game.audioManager.playMusic("defeat-music", false, 0.4);
+    }
+
     if (this.rentPenalty === 0) {
       this.game.completedLevels[this.game.currentLevel] = true;
       this.game.markLevelCompleted(
@@ -138,9 +145,11 @@ class LevelEndScreen extends Screen {
     }
 
     this.showingNewGamePlusUnlock = this.game.showNewGamePlusNotification;
+    this.newGamePlusUnlockedLevel = this.game.newGamePlusUnlockedLevel; // Store which NG+ level was unlocked
     if (this.showingNewGamePlusUnlock) {
       this.game.showNewGamePlusNotification = false;
-      this.game.hasShownNewGamePlusBanner = true;
+      const difficultyIndex = this.game.newGamePlusUnlockedLevel - 1;
+      this.game.hasShownNewGamePlusBanner[difficultyIndex] = true;
       this.game.saveGameData();
     }
 
@@ -176,9 +185,11 @@ class LevelEndScreen extends Screen {
     this.regularCatches = this.game.catchQualityCounts?.REGULAR || 0;
 
     // Catch quality bonuses (these replace the base 5 points per sockball)
-    this.perfectCatchesPoints = this.perfectCatches * 15;
-    this.goodCatchesPoints = this.goodCatches * 10;
-    this.regularCatchesPoints = this.regularCatches * 5;
+    // Points scale with difficulty for NEW GAME+
+    const difficulty = this.game.currentDifficulty || 0;
+    this.perfectCatchesPoints = this.perfectCatches * GameConfig.getCatchQualityPoints('perfect', difficulty);
+    this.goodCatchesPoints = this.goodCatches * GameConfig.getCatchQualityPoints('good', difficulty);
+    this.regularCatchesPoints = this.regularCatches * GameConfig.getCatchQualityPoints('regular', difficulty);
 
     // Calculate base points for sockballs that were caught
     // Total caught sockballs = sum of all catch qualities
@@ -189,12 +200,12 @@ class LevelEndScreen extends Screen {
       this.goodCatchesPoints +
       this.regularCatchesPoints;
 
-    // For sockballs paid but not caught (missed/failed), give base 5 points each
+    // For sockballs paid but not caught (missed/failed), give base points each (scaled by difficulty)
     const uncaughtPaidSockballs = Math.max(
       0,
       this.sockballsPaid - totalCaughtSockballs
     );
-    this.sockballsPaidPoints = uncaughtPaidSockballs * 5;
+    this.sockballsPaidPoints = uncaughtPaidSockballs * GameConfig.getCatchQualityPoints('regular', difficulty);
 
     // Time bonus: double the total rent payment points (catch quality + base) if earned
     this.timeBonusPoints = 0;
@@ -838,28 +849,34 @@ class LevelEndScreen extends Screen {
   }
 
   renderScoreLines(ctx, layout) {
+    // Get difficulty-based point values
+    const difficulty = this.game.currentDifficulty || 0;
+    const perfectPoints = GameConfig.getCatchQualityPoints('perfect', difficulty);
+    const goodPoints = GameConfig.getCatchQualityPoints('good', difficulty);
+    const regularPoints = GameConfig.getCatchQualityPoints('regular', difficulty);
+
     const scoreLines = [
       {
         label: `${this.perfectCatchesDisplay}x PERFECT CATCHES:`,
-        value: this.perfectCatchesDisplay * 15,
+        value: this.perfectCatchesDisplay * perfectPoints,
         color: "#FFD700",
         show: this.perfectCatches > 0,
       },
       {
         label: `${this.goodCatchesDisplay}x GOOD CATCHES:`,
-        value: this.goodCatchesDisplay * 10,
+        value: this.goodCatchesDisplay * goodPoints,
         color: "#00FF00",
         show: this.goodCatches > 0,
       },
       {
         label: `${this.regularCatchesDisplay}x NICE CATCHES:`,
-        value: this.regularCatchesDisplay * 5,
+        value: this.regularCatchesDisplay * regularPoints,
         color: "#FFFFFF",
         show: this.regularCatches > 0,
       },
       {
         label: `TIME BONUS (2x RENT):`,
-        value: this.timeBonusDisplay * 5,
+        value: this.timeBonusDisplay * regularPoints,
         color: "#FFD700",
         show: this.game.timeBonusEarned,
       },
@@ -1143,7 +1160,8 @@ class LevelEndScreen extends Screen {
     ctx.shadowBlur = this.game.getScaledValue(30);
     ctx.strokeRect(0, bannerY, canvasWidth, bannerHeight);
 
-    // Title
+    // Title - show which NG+ level was unlocked
+    const plusLevel = this.newGamePlusUnlockedLevel > 1 ? ` ${this.newGamePlusUnlockedLevel}` : '';
     ctx.shadowBlur = this.game.getScaledValue(10);
     ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
     ctx.fillStyle = "#FFD700";
@@ -1151,7 +1169,7 @@ class LevelEndScreen extends Screen {
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
     ctx.fillText(
-      "NEW GAME+ UNLOCKED!",
+      `NEW GAME+${plusLevel} UNLOCKED!`,
       canvasWidth / 2,
       bannerY + this.game.getScaledValue(20)
     );

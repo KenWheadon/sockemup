@@ -117,31 +117,46 @@ class MarthaManager {
     // Pattern speed is based on Martha's speed
     this.patternSpeed = this.speed;
 
-    // Select spritesheet based on difficulty (New Game+ uses crawling animation)
-    if (this.game.currentDifficulty > 0) {
+    // Select spritesheet based on difficulty (New Game+ uses different animations)
+    if (this.game.currentDifficulty >= 4) {
+      // New Game+ +4: Randomly select from all running spritesheets
+      const spritesheets = [
+        GameConfig.MARTHA_SPRITESHEET,
+        GameConfig.MARTHA_RUMBLERUN_SPRITESHEET,
+        GameConfig.MARTHA_CRAWLING_SPRITESHEET,
+        GameConfig.MARTHA_FATRUN_SPRITESHEET,
+      ];
+      this.spritesheetConfig =
+        spritesheets[Math.floor(Math.random() * spritesheets.length)];
+    } else if (this.game.currentDifficulty === 3) {
+      // New Game+ +3: Use fatrun spritesheet
+      this.spritesheetConfig = GameConfig.MARTHA_FATRUN_SPRITESHEET;
+    } else if (this.game.currentDifficulty === 2) {
+      // New Game+ +2: Use rumblerun spritesheet
+      this.spritesheetConfig = GameConfig.MARTHA_RUMBLERUN_SPRITESHEET;
+    } else if (this.game.currentDifficulty > 0) {
+      // New Game+ +1: Use crawling spritesheet
       this.spritesheetConfig = GameConfig.MARTHA_CRAWLING_SPRITESHEET;
-
-      // Adjust Martha's size to maintain aspect ratio of crawling sprite
-      const frameAspectRatio =
-        this.spritesheetConfig.frameWidth / this.spritesheetConfig.frameHeight;
-      // Keep height the same, adjust width based on aspect ratio
-      this.height = GameConfig.MARTHA_SIZE.height;
-      this.width = this.height * frameAspectRatio;
     } else {
+      // Normal difficulty: Use running spritesheet
       this.spritesheetConfig = GameConfig.MARTHA_SPRITESHEET;
-
-      // Use default Martha size for running animation
-      this.width = GameConfig.MARTHA_SIZE.width;
-      this.height = GameConfig.MARTHA_SIZE.height;
     }
+
+    // Adjust Martha's size to maintain aspect ratio of selected sprite
+    const frameAspectRatio =
+      this.spritesheetConfig.frameWidth / this.spritesheetConfig.frameHeight;
+    // Keep height the same, adjust width based on aspect ratio
+    this.height = GameConfig.MARTHA_SIZE.height;
+    this.width = this.height * frameAspectRatio;
 
     // Setup rent due meter
     this.rentDueMeter.current = 0;
     this.rentDueMeter.max = level.marthaWantsSockballs;
 
-    // Update bounds to match actual canvas size
+    // Update bounds to match actual canvas size with 20px inset on left and bottom
+    this.bounds.left = GameConfig.THROWING_BOUNDS.LEFT + 20;
     this.bounds.right = this.game.getCanvasWidth();
-    this.bounds.bottom = this.game.getCanvasHeight();
+    this.bounds.bottom = this.game.getCanvasHeight() - 20;
 
     // Reset position to center area
     this.x = this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
@@ -266,8 +281,10 @@ class MarthaManager {
   }
 
   updateExitMovement(deltaTime) {
-    // Exit 5 times faster - changed from speed * 3 to speed * 15
-    const exitSpeed = this.speed * 15;
+    // Exit at a fixed speed regardless of difficulty
+    // Use base level speed without difficulty multiplier
+    const baseSpeed = this.speed / GameConfig.getDifficultyMode(this.game.currentDifficulty).speedMultiplier;
+    const exitSpeed = baseSpeed * 15;
     this.velocity.x = this.exitDirection * exitSpeed;
     this.velocity.y = 0;
 
@@ -412,35 +429,25 @@ class MarthaManager {
       !this.patternData.circularAngle &&
       this.patternData.circularAngle !== 0
     ) {
-      // Set center of circular path - use saved center if available (from pattern switch), otherwise use screen center
-      if (!this.patternData.centerX || !this.patternData.centerY) {
-        this.patternData.centerX =
-          this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
-        this.patternData.centerY =
-          this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
-      }
+      // Always calculate center based on screen center for consistency
+      this.patternData.centerX =
+        this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
+      this.patternData.centerY =
+        this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
 
-      // Calculate starting angle AND radius from Martha's current position
-      // This prevents the "jump" - Martha starts from where she is
+      // Calculate starting angle from Martha's current position
       const dx = this.x + this.width / 2 - this.patternData.centerX;
       const dy = this.y + this.height / 2 - this.patternData.centerY;
       this.patternData.circularAngle = Math.atan2(dy, dx);
 
-      // Use Martha's current distance from center as the radius
-      // This ensures she's already ON the circle path at the start
+      // Use Martha's EXACT current distance from center as the radius
+      // NO clamping - this ensures Martha starts the pattern from exactly where she is
+      // without any teleporting or jumping
       const currentDistance = Math.sqrt(dx * dx + dy * dy);
 
-      // Use current distance, but clamp it to reasonable bounds
-      const maxRadius = Math.min(
-        (this.bounds.right - this.bounds.left) / 2.8,
-        (this.bounds.bottom - this.bounds.top) / 2.8
-      );
-      const minRadius = Math.min(maxRadius * 0.5, 150); // At least half max radius or 150px
-
-      this.patternData.radius = Math.max(
-        minRadius,
-        Math.min(maxRadius, currentDistance)
-      );
+      // Ensure we have a minimum radius to prevent division by zero
+      // and to maintain reasonable movement speed
+      this.patternData.radius = Math.max(50, currentDistance);
     }
 
     // Update angle based on speed - adjust multiplier to maintain circular speed consistent with linear patterns
@@ -494,13 +501,11 @@ class MarthaManager {
       this.patternData.figureEightAngle !== 0
     ) {
       this.patternData.figureEightAngle = 0;
-      // Use saved center if available (from pattern switch), otherwise use screen center
-      if (!this.patternData.centerX || !this.patternData.centerY) {
-        this.patternData.centerX =
-          this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
-        this.patternData.centerY =
-          this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
-      }
+      // Always use screen center for consistency
+      this.patternData.centerX =
+        this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
+      this.patternData.centerY =
+        this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
       this.patternData.radiusX = Math.min(
         (this.bounds.right - this.bounds.left) / 4,
         200
@@ -592,13 +597,11 @@ class MarthaManager {
 
     if (!this.patternData.spiralAngle && this.patternData.spiralAngle !== 0) {
       this.patternData.spiralAngle = 0;
-      // Use saved center if available (from pattern switch), otherwise use screen center
-      if (!this.patternData.centerX || !this.patternData.centerY) {
-        this.patternData.centerX =
-          this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
-        this.patternData.centerY =
-          this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
-      }
+      // Always use screen center for consistency
+      this.patternData.centerX =
+        this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
+      this.patternData.centerY =
+        this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
       this.patternData.spiralRadius = 50;
       this.patternData.spiralDirection = this.direction; // 1 for outward, -1 for inward
       this.patternData.maxRadius = Math.min(
@@ -782,35 +785,49 @@ class MarthaManager {
         this.x < launchX + restrictedZoneSize &&
         this.y > launchY - restrictedZoneSize
       ) {
-        // Push Martha away from the lower left corner
-        this.velocity.x = Math.abs(this.velocity.x) + 2; // Force right
-        this.velocity.y = -Math.abs(this.velocity.y) - 2; // Force up
-        this.x = launchX + restrictedZoneSize;
-        this.y = Math.min(this.y, launchY - restrictedZoneSize);
+        // Push Martha away from the lower left corner SMOOTHLY - no teleporting
+        // Only adjust velocity, never directly set position
+        const pushForce = 2;
 
+        // Push right if too far left
+        if (this.x < launchX + restrictedZoneSize) {
+          this.velocity.x = Math.max(this.velocity.x, pushForce);
+        }
+
+        // Push up if too far down
+        if (this.y > launchY - restrictedZoneSize) {
+          this.velocity.y = Math.min(this.velocity.y, -pushForce);
+        }
+
+        // Update pattern directions to encourage moving away from the zone
         if (this.currentPattern === "horizontal") {
           this.direction = 1; // Move right
         } else if (this.patternData.diagonalDirection) {
           this.patternData.diagonalDirection.x = 1;
           this.patternData.diagonalDirection.y = -1;
+        } else if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
+          // Ensure bounce direction pushes away from the corner
+          this.patternData.bounceDirection.x = Math.abs(this.patternData.bounceDirection.x);
+          this.patternData.bounceDirection.y = -Math.abs(this.patternData.bounceDirection.y);
         }
       }
 
-      // Left boundary
+      // Left boundary - trigger recovery animation (except for bounce pattern)
       if (this.x < this.bounds.left) {
         this.x = this.bounds.left;
-        this.velocity.x = Math.abs(this.velocity.x); // Bounce right
-        if (this.currentPattern === "horizontal") {
-          this.direction = 1;
-        } else if (
+        if (
           this.currentPattern === "bounce" &&
           this.patternData.bounceDirection
         ) {
           this.patternData.bounceDirection.x = Math.abs(
             this.patternData.bounceDirection.x
           );
-        } else if (this.patternData.diagonalDirection) {
-          this.patternData.diagonalDirection.x = 1;
+        } else {
+          // Start recovery animation moving right
+          this.isRecovering = true;
+          this.recoveryTimer = 0;
+          this.recoveryDirection = { x: 1, y: 0 };
+          this.facingRight = true;
         }
       }
 
@@ -951,13 +968,11 @@ class MarthaManager {
           this.patternHistory.shift();
         }
       }
-      // Preserve position data (centerX, centerY) but clear pattern-specific state
-      const savedCenterX = this.patternData.centerX;
-      const savedCenterY = this.patternData.centerY;
+
+      // Clear all pattern data to ensure clean pattern transitions
+      // Don't preserve centerX/centerY - let each pattern calculate its own center
+      // based on Martha's current position to prevent teleporting
       this.patternData = {};
-      // Restore center position to ensure smooth transitions
-      if (savedCenterX !== undefined) this.patternData.centerX = savedCenterX;
-      if (savedCenterY !== undefined) this.patternData.centerY = savedCenterY;
       this.patternTimer = 0;
 
       // Reset direction for new pattern

@@ -53,7 +53,8 @@ class SockGame {
       0: [...GameConfig.INITIAL_COMPLETED_LEVELS],
     };
 
-    // Legacy arrays for backwards compatibility (point to base difficulty)
+    // Legacy arrays for backwards compatibility (point to currently selected difficulty)
+    // Will be updated after loadGameState() to reflect selectedDifficulty
     this.unlockedLevels = this.unlockedLevelsByDifficulty[0];
     this.completedLevels = this.completedLevelsByDifficulty[0];
 
@@ -70,7 +71,8 @@ class SockGame {
 
     // NEW GAME+ notification
     this.showNewGamePlusNotification = false;
-    this.hasShownNewGamePlusBanner = false; // Persistent flag to track if banner has been shown
+    this.newGamePlusUnlockedLevel = 0; // Store which NG+ level was just unlocked (1-4)
+    this.hasShownNewGamePlusBanner = [false, false, false, false]; // Track which NG+ levels have shown banner (indices 0-3 for NG+ 1-4)
 
     // Story panel unlocks (one per level completed)
     this.unlockedStoryPanels = Array(9).fill(false);
@@ -645,8 +647,9 @@ class SockGame {
         }
       }
 
-      this.unlockedLevels = this.unlockedLevelsByDifficulty[0];
-      this.completedLevels = this.completedLevelsByDifficulty[0];
+      // Point legacy arrays to the currently selected difficulty
+      this.unlockedLevels = this.unlockedLevelsByDifficulty[this.selectedDifficulty] || this.unlockedLevelsByDifficulty[0];
+      this.completedLevels = this.completedLevelsByDifficulty[this.selectedDifficulty] || this.completedLevelsByDifficulty[0];
 
       this.currentDifficulty = data.currentDifficulty || 0;
       this.tutorialCompleted = data.tutorialCompleted || false;
@@ -728,8 +731,9 @@ class SockGame {
           this.completedLevelsByDifficulty[diff] = [...allLevelsCompleted];
         }
 
-        this.unlockedLevels = this.unlockedLevelsByDifficulty[0];
-        this.completedLevels = this.completedLevelsByDifficulty[0];
+        // Point legacy arrays to the currently selected difficulty
+        this.unlockedLevels = this.unlockedLevelsByDifficulty[this.selectedDifficulty] || this.unlockedLevelsByDifficulty[0];
+        this.completedLevels = this.completedLevelsByDifficulty[this.selectedDifficulty] || this.completedLevelsByDifficulty[0];
       }
 
       const baseLevels = this.completedLevelsByDifficulty[0] || [];
@@ -824,13 +828,16 @@ class SockGame {
         4 // Max difficulty is +4
       );
 
-      // NEW GAME+: Show explanation if just unlocked first difficulty AND haven't shown banner before
+      // NEW GAME+: Show explanation if just unlocked any difficulty AND haven't shown banner for that level before
+      const unlockedDifficultyIndex = this.highestUnlockedDifficulty - 1; // Convert to 0-based index
       if (
-        previousDifficulty === 0 &&
-        this.highestUnlockedDifficulty === 1 &&
-        !this.hasShownNewGamePlusBanner
+        previousDifficulty < this.highestUnlockedDifficulty &&
+        this.highestUnlockedDifficulty >= 1 &&
+        this.highestUnlockedDifficulty <= 4 &&
+        !this.hasShownNewGamePlusBanner[unlockedDifficultyIndex]
       ) {
         this.showNewGamePlusNotification = true;
+        this.newGamePlusUnlockedLevel = this.highestUnlockedDifficulty;
       }
     }
 

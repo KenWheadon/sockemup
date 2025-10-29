@@ -97,6 +97,10 @@ class ThrowingScreen extends Screen {
     this.consecutiveHits = 0;
     this.wallBounceCatchesThisLevel = 0;
 
+    // Reset consecutive perfect throws for new level
+    this.game.consecutivePerfectThrows = 0;
+    this.game.consecutiveMisses = 0;
+
     // Setup Martha for current level - use difficulty-modified level data
     const level =
       this.game.currentLevelData || GameConfig.LEVELS[this.game.currentLevel];
@@ -583,9 +587,11 @@ class ThrowingScreen extends Screen {
               } else if (catchQuality === "GOOD") {
                 this.game.feedbackManager.onGoodCatch();
                 this.game.consecutivePerfectThrows = 0;
+                this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
               } else {
                 this.game.feedbackManager.onRegularCatch();
                 this.game.consecutivePerfectThrows = 0;
+                this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
               }
             } else if (catchQuality === "PERFECT") {
               this.game.feedbackManager.onPerfectCatch();
@@ -605,9 +611,11 @@ class ThrowingScreen extends Screen {
             } else if (catchQuality === "GOOD") {
               this.game.feedbackManager.onGoodCatch();
               this.game.consecutivePerfectThrows = 0; // Reset perfect streak
+              this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
             } else {
               this.game.feedbackManager.onRegularCatch();
               this.game.consecutivePerfectThrows = 0; // Reset perfect streak
+              this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
             }
 
             if (this.consecutiveHits >= GameConfig.ACHIEVEMENTS.DEADEYE.threshold) {
@@ -681,9 +689,11 @@ class ThrowingScreen extends Screen {
               } else if (catchQuality === "GOOD") {
                 this.game.feedbackManager.onGoodCatch();
                 this.game.consecutivePerfectThrows = 0;
+                this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
               } else {
                 this.game.feedbackManager.onRegularCatch();
                 this.game.consecutivePerfectThrows = 0;
+                this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
               }
             } else if (catchQuality === "PERFECT") {
               this.game.feedbackManager.onPerfectCatch();
@@ -703,9 +713,11 @@ class ThrowingScreen extends Screen {
             } else if (catchQuality === "GOOD") {
               this.game.feedbackManager.onGoodCatch();
               this.game.consecutivePerfectThrows = 0; // Reset perfect streak
+              this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
             } else {
               this.game.feedbackManager.onRegularCatch();
               this.game.consecutivePerfectThrows = 0; // Reset perfect streak
+              this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
             }
 
             if (this.consecutiveHits >= GameConfig.ACHIEVEMENTS.DEADEYE.threshold) {

@@ -93,7 +93,6 @@ const GameConfig = {
     filename: "martha-running-spritesheet.png",
     frameWidth: 269,
     frameHeight: 275,
-    animationFrames: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
   },
 
   MARTHA_LAUGHING_SPRITESHEET: {
@@ -131,7 +130,24 @@ const GameConfig = {
     filename: "martha-crawling-spritesheet.png",
     frameWidth: 335,
     frameHeight: 238,
-    fps: 18,
+  },
+
+  MARTHA_RUMBLERUN_SPRITESHEET: {
+    filename: "martha-rumblerun-spritesheet.png",
+    frameWidth: 281,
+    frameHeight: 275,
+  },
+
+  MARTHA_FATRUN_SPRITESHEET: {
+    filename: "martha-fatrun-spritesheet.png",
+    frameWidth: 361,
+    frameHeight: 348,
+    animationFrames: [
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 34, 33, 32,
+      31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14,
+      13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1,
+    ],
   },
 
   MARTHA_STORY1_SPRITESHEET: {
@@ -423,7 +439,7 @@ const GameConfig = {
       sockPairs: 12,
       typesAvailable: [2, 3, 4, 5],
       matchingTime: 40,
-      marthaWantsSockballs: 10,
+      marthaWantsSockballs: 9,
       marthaPatterns: [
         "horizontal",
         "vertical",
@@ -535,6 +551,8 @@ const GameConfig = {
       "martha-rumble-spritesheet.png",
       "martha-fatsop-spritesheet.png",
       "martha-crawling-spritesheet.png",
+      "martha-fatrun-spritesheet.png",
+      "martha-rumblerun-spritesheet.png",
       "martha-story1-spritesheet.png",
       "martha-story2-spritesheet.png",
       "martha-story3-spritesheet.png",
@@ -589,6 +607,12 @@ const GameConfig = {
       "icon-sparkles.png",
       "icon-trophy.png",
       "icon-star.png",
+      "icon-diamondtrophy.png",
+      "icon-goblin.png",
+      "icon-eyeball.png",
+      "icon-poke.png",
+      "icon-diamondsock.png",
+      "icon-fullwizard.png",
 
       "btn-next.png",
       "btn-back.png",
@@ -695,41 +719,41 @@ const GameConfig = {
     },
     PLUS_1: {
       name: "NEW GAME+1",
-      speedMultiplier: 1.25,
+      speedMultiplier: 1.3,
       timeMultiplier: 0.95,
       throwCooldownMultiplier: 1,
-      throwSpeedMultiplier: 1.2,
+      throwSpeedMultiplier: 1.1,
       catchRadiusMultiplier: 0.9,
       displayName: "★",
       stars: 1,
     },
     PLUS_2: {
       name: "NEW GAME+2",
-      speedMultiplier: 1.75,
+      speedMultiplier: 1.6,
       timeMultiplier: 0.85,
-      throwCooldownMultiplier: 1,
-      throwSpeedMultiplier: 1.4,
+      throwCooldownMultiplier: 0.9,
+      throwSpeedMultiplier: 1.25,
       catchRadiusMultiplier: 0.8,
       displayName: "★★",
       stars: 2,
     },
     PLUS_3: {
       name: "NEW GAME+3",
-      speedMultiplier: 2.15,
-      timeMultiplier: 0.78,
-      throwCooldownMultiplier: 1,
-      throwSpeedMultiplier: 1.75,
+      speedMultiplier: 2,
+      timeMultiplier: 0.8,
+      throwCooldownMultiplier: 0.85,
+      throwSpeedMultiplier: 1.5,
       catchRadiusMultiplier: 0.65,
       displayName: "★★★",
       stars: 3,
     },
     PLUS_4: {
       name: "NEW GAME+4",
-      speedMultiplier: 2.75,
-      timeMultiplier: 0.7,
-      throwCooldownMultiplier: 1,
-      throwSpeedMultiplier: 2,
-      catchRadiusMultiplier: 0.5,
+      speedMultiplier: 2.5,
+      timeMultiplier: 0.75,
+      throwCooldownMultiplier: 0.75,
+      throwSpeedMultiplier: 1.75,
+      catchRadiusMultiplier: 0.4,
       displayName: "★★★★",
       stars: 4,
     },
@@ -751,8 +775,31 @@ const GameConfig = {
   // Flat cost increase per difficulty level for better NEW GAME+ scaling
   getLevelCost: function (levelIndex, difficulty = 0) {
     const baseCost = this.LEVEL_COSTS[levelIndex];
-    const flatIncrease = 75; // Add 75 per difficulty level
+    const flatIncrease = 30; // Add 30 per difficulty level
     return baseCost + difficulty * flatIncrease;
+  },
+
+  // Calculate catch quality points adjusted for difficulty
+  // Higher difficulties reward more points for good throws
+  getCatchQualityPoints: function (quality, difficulty = 0) {
+    const pointsByDifficulty = {
+      0: { nice: 5, good: 10, perfect: 15 }, // Normal
+      1: { nice: 6, good: 12, perfect: 18 }, // +1
+      2: { nice: 8, good: 15, perfect: 22 }, // +2
+      3: { nice: 10, good: 20, perfect: 30 }, // +3
+      4: { nice: 15, good: 30, perfect: 45 }, // +4
+    };
+
+    const difficultyPoints =
+      pointsByDifficulty[Math.min(difficulty, 4)] || pointsByDifficulty[0];
+
+    if (quality === "perfect" || quality === "PERFECT")
+      return difficultyPoints.perfect;
+    if (quality === "good" || quality === "GOOD") return difficultyPoints.good;
+    if (quality === "nice" || quality === "regular" || quality === "REGULAR")
+      return difficultyPoints.nice;
+
+    return difficultyPoints.nice; // Default to nice/regular
   },
 
   // Level background mappings
@@ -787,10 +834,10 @@ const GameConfig = {
     SPEEDY_MATCHER: {
       id: "speedy_matcher",
       name: "Speed Demon",
-      description: "20+ seconds remaining",
-      icon: "icon-lightning.png",
+      description: "15+ seconds remaining",
+      icon: "icon-demon.png",
       unlocked: false,
-      threshold: 20,
+      threshold: 15,
     },
     MARTHAS_FAVORITE: {
       id: "marthas_favorite",
@@ -842,7 +889,7 @@ const GameConfig = {
       id: "ultimate_champion",
       name: "Ultimate Champion",
       description: "Complete all levels on +4 difficulty",
-      icon: "icon-trophy.png",
+      icon: "icon-diamondtrophy.png",
       unlocked: false,
     },
     SPEED_DEMON: {
@@ -895,16 +942,16 @@ const GameConfig = {
     BIG_SPENDER: {
       id: "big_spender",
       name: "Big Spender",
-      description: "Spend 1000 money total",
+      description: "Spend 2500 money total",
       icon: "icon-goldbar.png",
       unlocked: false,
-      threshold: 1000,
+      threshold: 2500,
     },
     MARTHAS_MILLIONAIRE: {
       id: "marthas_millionaire",
       name: "Martha's Millionaire",
       description: "Earn 2000 sockballs total (lifetime)",
-      icon: "icon-diamond.png",
+      icon: "icon-diamondsock.png",
       unlocked: false,
       threshold: 2000,
     },
@@ -965,7 +1012,7 @@ const GameConfig = {
       id: "pinball_wizard",
       name: "Pinball Wizard",
       description: "Get 3 wall bounce catches in one level",
-      icon: "icon-demon.png",
+      icon: "icon-fullwizard.png",
       unlocked: false,
       threshold: 3,
     },
@@ -981,14 +1028,14 @@ const GameConfig = {
       id: "bonus_hunter",
       name: "Bonus Hunter",
       description: "Hit Martha with a bonus sockball",
-      icon: "icon-fire1.png",
+      icon: "icon-goblin.png",
       unlocked: false,
     },
     BONUS_MASTER: {
       id: "bonus_master",
       name: "Bonus Master",
       description: "Get 10 bonus hits (lifetime)",
-      icon: "icon-fire3.png",
+      icon: "icon-poke.png",
       unlocked: false,
       threshold: 10,
     },
