@@ -376,6 +376,7 @@ class ThrowingScreen extends Screen {
       rotationSpeed: 0.2,
       gravity: GameConfig.GRAVITY,
       bounced: false,
+      bounceCount: 0,
       active: true,
       previousDistanceToMartha: Infinity,
       enteredCatchZone: false,
@@ -453,12 +454,14 @@ class ThrowingScreen extends Screen {
           Math.min(canvasWidth - sockball.size / 2, sockball.x)
         );
         sockball.bounced = true;
+        sockball.bounceCount++;
       }
 
       if (sockball.y <= sockball.size / 2) {
         sockball.vy *= -GameConfig.BOUNCE_DAMPING;
         sockball.y = sockball.size / 2;
         sockball.bounced = true; // Mark as bounced when hitting top
+        sockball.bounceCount++;
       }
 
       if (sockball.y > canvasHeight + sockball.size) {
@@ -564,6 +567,17 @@ class ThrowingScreen extends Screen {
               if (this.game.totalWallBounceCatches >= GameConfig.ACHIEVEMENTS.PINBALL_KING.threshold) {
                 this.game.unlockAchievement("pinball_king");
               }
+
+              // Track double bounce catches for achievements
+              if (sockball.bounceCount >= 2) {
+                this.game.totalDoubleBounces++;
+
+                this.game.unlockAchievement("how_did_you");
+
+                if (this.game.totalDoubleBounces >= GameConfig.ACHIEVEMENTS.SPACE_SHOOTER.threshold) {
+                  this.game.unlockAchievement("space_shooter");
+                }
+              }
             }
 
             if (isBonusHit) {
@@ -665,6 +679,17 @@ class ThrowingScreen extends Screen {
 
               if (this.game.totalWallBounceCatches >= GameConfig.ACHIEVEMENTS.PINBALL_KING.threshold) {
                 this.game.unlockAchievement("pinball_king");
+              }
+
+              // Track double bounce catches for achievements
+              if (sockball.bounceCount >= 2) {
+                this.game.totalDoubleBounces++;
+
+                this.game.unlockAchievement("how_did_you");
+
+                if (this.game.totalDoubleBounces >= GameConfig.ACHIEVEMENTS.SPACE_SHOOTER.threshold) {
+                  this.game.unlockAchievement("space_shooter");
+                }
               }
             }
 

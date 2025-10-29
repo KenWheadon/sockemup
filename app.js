@@ -28,6 +28,7 @@ class SockGame {
     this.levelsPlayed = 0; // Total levels played including replays (for Veteran Tenant)
     this.totalWallBounceCatches = 0; // Lifetime wall bounce catches (for Pinball King)
     this.totalBonusHits = 0; // Lifetime bonus hits (for Bonus Master)
+    this.totalDoubleBounces = 0; // Lifetime double bounce catches (for Space Shooter)
     this.consecutivePerfectThrows = 0; // Current streak of perfect throws (for Sock Sniper)
     this.consecutiveMisses = 0; // Current streak of misses (for Butterfingers)
     this.easterEggSockballsCreated = 0; // Sockballs created via easter egg this level (for Sockball Wizard)
@@ -78,6 +79,9 @@ class SockGame {
     this.unlockedStoryPanels = Array(9).fill(false);
     this.viewedStoryPanels = Array(9).fill(false); // Track which panels have been viewed
     this.newStoryPanelUnlocked = -1; // Index of newly unlocked panel to animate
+
+    // Secret video tracking (videos 1-4 for NG+ 1-4)
+    this.watchedVideos = []; // Array of watched video numbers (1-4)
 
     // Initialize audio manager
     this.audioManager = new AudioManager();
@@ -531,6 +535,7 @@ class SockGame {
       this.levelsPlayed = data.levelsPlayed || 0;
       this.totalWallBounceCatches = data.totalWallBounceCatches || 0;
       this.totalBonusHits = data.totalBonusHits || 0;
+      this.totalDoubleBounces = data.totalDoubleBounces || 0;
       this.logoClickCount = data.logoClickCount || 0;
       this.easterEggSockballsCreated = data.easterEggSockballsCreated || 0;
 
@@ -665,6 +670,9 @@ class SockGame {
         data.unlockedStoryPanels || Array(9).fill(false);
       this.viewedStoryPanels = data.viewedStoryPanels || Array(9).fill(false);
 
+      // Secret videos
+      this.watchedVideos = data.watchedVideos || [];
+
       this.hasShownNewGamePlusBanner = data.hasShownNewGamePlusBanner || false;
 
       const baseLevels = this.completedLevelsByDifficulty[0] || [];
@@ -756,6 +764,7 @@ class SockGame {
       levelsPlayed: this.levelsPlayed,
       totalWallBounceCatches: this.totalWallBounceCatches,
       totalBonusHits: this.totalBonusHits,
+      totalDoubleBounces: this.totalDoubleBounces,
       logoClickCount: this.logoClickCount,
       easterEggSockballsCreated: this.easterEggSockballsCreated,
       // NEW GAME+: Save per-difficulty progress
@@ -777,6 +786,8 @@ class SockGame {
       // Story panels
       unlockedStoryPanels: this.unlockedStoryPanels,
       viewedStoryPanels: this.viewedStoryPanels,
+      // Secret videos
+      watchedVideos: this.watchedVideos,
     };
     localStorage.setItem("sockGameData", JSON.stringify(data));
   }

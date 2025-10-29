@@ -4989,7 +4989,16 @@ class LevelSelect extends Screen {
     try {
       // Create video element
       this.videoElement = document.createElement("video");
-      this.videoElement.src = "videos/video-end.mp4";
+
+      // Select video based on current difficulty (1-4 for New Game+ 1-4)
+      let videoSrc = "videos/video-end.mp4"; // Default fallback
+      let videoNumber = null;
+      if (this.game.selectedDifficulty >= 1 && this.game.selectedDifficulty <= 4) {
+        videoNumber = this.game.selectedDifficulty;
+        videoSrc = `videos/video-end-${videoNumber}.mp4`;
+      }
+
+      this.videoElement.src = videoSrc;
       this.videoElement.loop = true;
       this.videoElement.autoplay = true;
       this.videoElement.controls = false;
@@ -4999,6 +5008,25 @@ class LevelSelect extends Screen {
       this.videoElement.addEventListener("error", () => {
         this.closeVideoPlayer();
       });
+
+      // Track video watching for achievements (when video actually starts playing)
+      this.videoElement.addEventListener("playing", () => {
+        if (videoNumber !== null && !this.game.watchedVideos.includes(videoNumber)) {
+          // Mark this video as watched
+          this.game.watchedVideos.push(videoNumber);
+
+          // Unlock "Secret Video Watcher" achievement (watch any video)
+          this.game.unlockAchievement("secret_video_watcher");
+
+          // Check if all 4 videos have been watched
+          if (this.game.watchedVideos.length >= 4) {
+            this.game.unlockAchievement("video_completionist");
+          }
+
+          // Save progress
+          this.game.saveGameData();
+        }
+      }, { once: true }); // Only trigger once per video open
 
       document.body.appendChild(this.videoElement);
     } catch (error) {
