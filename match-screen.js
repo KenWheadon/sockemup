@@ -48,6 +48,10 @@ class MatchScreen extends Screen {
 
     // Track active timeouts for cleanup
     this.activeTimeouts = [];
+
+    // Auto-shoot state for holding down on sock pile
+    this.sockPilePressed = false;
+    this.autoShootInterval = null;
   }
 
   createLayoutCache() {
@@ -131,6 +135,10 @@ class MatchScreen extends Screen {
     this.pulseTimer = 0;
     this.dragHistory = [];
 
+    // Reset auto-shoot state
+    this.sockPilePressed = false;
+    this.stopAutoShoot();
+
     // Reset elapsed time counter and time bonus flag
     this.game.timeElapsed = 0;
     this.game.timeBonusEarned = false;
@@ -149,6 +157,9 @@ class MatchScreen extends Screen {
 
     // Clear all active timeouts
     this.clearAllTimeouts();
+
+    // Clear auto-shoot interval
+    this.stopAutoShoot();
 
     // Reset canvas transform in case shake is still active
     if (this.game.canvas) {
@@ -427,7 +438,9 @@ class MatchScreen extends Screen {
     }
 
     if (this.sockManager.checkSockPileClick(x, y)) {
-      this.shootSockFromPile();
+      this.sockPilePressed = true;
+      this.shootSockFromPile(); // Shoot immediately on first click
+      this.startAutoShoot(); // Start auto-shooting after a delay
       return true;
     }
 
@@ -488,6 +501,12 @@ class MatchScreen extends Screen {
       x <= exitButtonLeft + layout.exitButtonWidth &&
       y >= exitButtonTop &&
       y <= exitButtonTop + layout.exitButtonHeight;
+
+    // If sock pile is pressed but mouse moved away from it, stop auto-shooting
+    if (this.sockPilePressed && !this.sockManager.checkSockPileClick(x, y)) {
+      this.sockPilePressed = false;
+      this.stopAutoShoot();
+    }
 
     if (this.draggedSock) {
       this.draggedSock.x = x - this.dragOffset.x;
@@ -603,6 +622,12 @@ class MatchScreen extends Screen {
   }
 
   onMouseUp() {
+    // Stop auto-shooting when mouse is released
+    if (this.sockPilePressed) {
+      this.sockPilePressed = false;
+      this.stopAutoShoot();
+    }
+
     if (!this.draggedSock) return;
 
     const sock = this.draggedSock;
@@ -643,9 +668,32 @@ class MatchScreen extends Screen {
     this.checkForMatches();
   }
 
+  startAutoShoot() {
+    // Clear any existing interval
+    this.stopAutoShoot();
+
+    // Start auto-shooting after a short delay, then every 100ms
+    this.autoShootInterval = setInterval(() => {
+      if (this.sockPilePressed && !this.isPaused) {
+        this.shootSockFromPile();
+      }
+    }, 100); // 0.1 seconds = 100 milliseconds
+  }
+
+  stopAutoShoot() {
+    if (this.autoShootInterval) {
+      clearInterval(this.autoShootInterval);
+      this.autoShootInterval = null;
+    }
+  }
+
   shootSockFromPile() {
     const newSock = this.sockManager.shootSockFromPile();
-    if (!newSock) return;
+    if (!newSock) {
+      // No more socks to shoot, stop auto-shooting
+      this.stopAutoShoot();
+      return;
+    }
 
     // Mark sock pile as clicked
     if (!this.sockPileClicked) {
@@ -1457,6 +1505,89 @@ class MatchScreen extends Screen {
     }
 
     ctx.restore();
+  }
+
+  // Controller reticle support
+  getInteractiveElements() {
+    const layout = this.layoutCache;
+    const elements = [];
+
+    // Add pause button
+    elements.push({
+      x: layout.pauseButtonX - layout.pauseButtonWidth / 2,
+      y: layout.pauseButtonY - layout.pauseButtonHeight / 2,
+      width: layout.pauseButtonWidth,
+      height: layout.pauseButtonHeight
+    });
+
+    // Add exit button
+    elements.push({
+      x: layout.exitButtonX - layout.exitButtonWidth / 2,
+      y: layout.exitButtonY - layout.exitButtonHeight / 2,
+      width: layout.exitButtonWidth,
+      height: layout.exitButtonHeight
+    });
+
+    return elements;
+  }
+
+  handleReticleMove(x, y) {
+    const layout = this.layoutCache;
+
+    // Update pause button hover state
+    this.pauseButton.hovered = this.isPointInRect(x, y, {
+      x: layout.pauseButtonX - layout.pauseButtonWidth / 2,
+      y: layout.pauseButtonY - layout.pauseButtonHeight / 2,
+      width: layout.pauseButtonWidth,
+      height: layout.pauseButtonHeight
+    });
+
+    // Update exit button hover state
+    this.exitButton.hovered = this.isPointInRect(x, y, {
+      x: layout.exitButtonX - layout.exitButtonWidth / 2,
+      y: layout.exitButtonY - layout.exitButtonHeight / 2,
+      width: layout.exitButtonWidth,
+      height: layout.exitButtonHeight
+    });
+
+    // Update reticle hover state
+    const isHovering = this.pauseButton.hovered || this.exitButton.hovered;
+    if (this.game.controllerManager) {
+      this.game.controllerManager.setReticleHoverState(isHovering);
+    }
+  }
+
+  handleReticleAction(x, y) {
+    const layout = this.layoutCache;
+
+    // Check pause button
+    if (this.isPointInRect(x, y, {
+      x: layout.pauseButtonX - layout.pauseButtonWidth / 2,
+      y: layout.pauseButtonY - layout.pauseButtonHeight / 2,
+      width: layout.pauseButtonWidth,
+      height: layout.pauseButtonHeight
+    })) {
+      this.togglePause();
+      return true;
+    }
+
+    // Check exit button
+    if (this.isPointInRect(x, y, {
+      x: layout.exitButtonX - layout.exitButtonWidth / 2,
+      y: layout.exitButtonY - layout.exitButtonHeight / 2,
+      width: layout.exitButtonWidth,
+      height: layout.exitButtonHeight
+    })) {
+      this.exitToLevelSelect();
+      return true;
+    }
+
+    return false;
+  }
+
+  isPointInRect(x, y, rect) {
+    return x >= rect.x && x <= rect.x + rect.width &&
+           y >= rect.y && y <= rect.y + rect.height;
   }
 
   renderPauseOverlay(ctx) {

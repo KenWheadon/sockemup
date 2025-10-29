@@ -547,6 +547,44 @@ class LevelEndScreen extends Screen {
     }
   }
 
+  // Controller reticle support
+  getInteractiveElements() {
+    const elements = [];
+
+    // Add continue button
+    const b = this.continueButton;
+    elements.push({
+      x: b.x,
+      y: b.y,
+      width: b.width,
+      height: b.height
+    });
+
+    return elements;
+  }
+
+  handleReticleMove(x, y) {
+    // Reuse the existing mouse move logic for hover detection
+    const b = this.continueButton;
+    b.hovered =
+      x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height;
+
+    // Update reticle hover state in controller manager
+    if (this.game.controllerManager) {
+      this.game.controllerManager.setReticleHoverState(b.hovered);
+    }
+  }
+
+  handleReticleAction(x, y) {
+    // Reuse the existing click logic
+    const b = this.continueButton;
+    if (x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height) {
+      this.handleContinue();
+      return true;
+    }
+    return false;
+  }
+
   onRender(ctx) {
     ctx.save();
     this.renderMainContainer(ctx);

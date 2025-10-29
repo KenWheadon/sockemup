@@ -1759,6 +1759,113 @@ class LevelSelect extends Screen {
     return false;
   }
 
+  // Controller reticle support
+  getInteractiveElements() {
+    const layout = this.layoutCache;
+    const elements = [];
+
+    // Add story replay button
+    elements.push({
+      x: layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2,
+      y: layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2,
+      width: layout.storyReplayButtonWidth,
+      height: layout.storyReplayButtonHeight
+    });
+
+    // Add achievements button
+    elements.push({
+      x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
+      y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
+      width: layout.achievementsButtonWidth,
+      height: layout.achievementsButtonHeight
+    });
+
+    // Add level tiles
+    const levelTileSize = this.game.getScaledValue(
+      this.LEVEL_TILE_CONFIG.baseTileSize
+    );
+    for (let i = 0; i < GameConfig.LEVELS.length; i++) {
+      const position = this.getLevelTilePosition(i);
+      if (position) {
+        elements.push({
+          x: position.x - levelTileSize / 2,
+          y: position.y - levelTileSize / 2,
+          width: levelTileSize,
+          height: levelTileSize
+        });
+      }
+    }
+
+    return elements;
+  }
+
+  handleReticleMove(x, y) {
+    // Reuse the existing mouse move logic for hover detection
+    const previousHoveredLevel = this.hoveredLevel;
+    this.hoveredLevel = this.getLevelAtPosition(x, y);
+
+    // Play hover sound when hovering over a new level
+    if (
+      this.hoveredLevel !== previousHoveredLevel &&
+      this.hoveredLevel !== -1
+    ) {
+      this.game.audioManager.playSound("button-hover", false, 0.3);
+    }
+
+    // Update button hover states
+    const layout = this.layoutCache;
+
+    this.storyReplayButton.hovered = this.isPointInRect(x, y, {
+      x: layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2,
+      y: layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2,
+      width: layout.storyReplayButtonWidth,
+      height: layout.storyReplayButtonHeight,
+    });
+
+    this.achievementsButton.hovered = this.isPointInRect(x, y, {
+      x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
+      y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
+      width: layout.achievementsButtonWidth,
+      height: layout.achievementsButtonHeight,
+    });
+
+    // Update reticle hover state in controller manager
+    const isHovering =
+      this.hoveredLevel !== -1 ||
+      this.storyReplayButton.hovered ||
+      this.achievementsButton.hovered;
+
+    if (this.game.controllerManager) {
+      this.game.controllerManager.setReticleHoverState(isHovering);
+    }
+  }
+
+  handleReticleAction(x, y) {
+    // Reuse the existing click logic
+    // Check story replay button
+    if (this.storyReplayButton.hovered) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.game.storyManager.showIntroStory();
+      return true;
+    }
+
+    // Check achievements button
+    if (this.achievementsButton.hovered) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.toggleAchievementsDrawer();
+      return true;
+    }
+
+    // Check level selection
+    const levelIndex = this.getLevelAtPosition(x, y);
+    if (levelIndex !== -1) {
+      this.selectLevel(levelIndex);
+      return true;
+    }
+
+    return false;
+  }
+
   isCreditsButtonClicked(x, y) {
     const layout = this.layoutCache;
     return (

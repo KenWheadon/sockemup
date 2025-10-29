@@ -545,23 +545,34 @@ class MarthaManager {
 
     if (!this.patternData.zigzagPhase && this.patternData.zigzagPhase !== 0) {
       this.patternData.zigzagPhase = 0;
+      // Much larger amplitude for clearly visible zigzag
       this.patternData.zigzagAmplitude = Math.min(
-        (this.bounds.bottom - this.bounds.top) / 3,
-        100
+        (this.bounds.bottom - this.bounds.top) / 2.5,
+        140
       );
     }
 
     // Move horizontally with vertical zigzag
-    this.velocity.x =
-      this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
+    const vx = this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
 
+    // Update phase more slowly for longer, more visible zigzags
     this.patternData.zigzagPhase +=
-      baseSpeed * this.patternSpeed * timeMultiplier * 0.1;
-    const zigzagY =
-      Math.sin(this.patternData.zigzagPhase) *
-      this.patternData.zigzagAmplitude *
-      0.05;
-    this.velocity.y = zigzagY;
+      baseSpeed * this.patternSpeed * timeMultiplier * 0.015;
+
+    // Calculate vertical velocity from derivative of sine wave
+    const phaseVelocity = baseSpeed * this.patternSpeed * timeMultiplier * 0.015;
+    const vy = Math.cos(this.patternData.zigzagPhase) * this.patternData.zigzagAmplitude * phaseVelocity;
+
+    // Normalize to maintain consistent overall speed
+    const length = Math.sqrt(vx * vx + vy * vy);
+    if (length > 0) {
+      const targetSpeed = baseSpeed * this.patternSpeed * timeMultiplier;
+      this.velocity.x = (vx / length) * targetSpeed;
+      this.velocity.y = (vy / length) * targetSpeed;
+    } else {
+      this.velocity.x = vx;
+      this.velocity.y = 0;
+    }
 
     this.facingRight = this.direction > 0;
   }
@@ -571,23 +582,34 @@ class MarthaManager {
 
     if (!this.patternData.zigzagPhase && this.patternData.zigzagPhase !== 0) {
       this.patternData.zigzagPhase = 0;
+      // Much larger amplitude for clearly visible zigzag
       this.patternData.zigzagAmplitude = Math.min(
-        (this.bounds.right - this.bounds.left) / 3,
-        100
+        (this.bounds.right - this.bounds.left) / 2.5,
+        140
       );
     }
 
     // Move vertically with horizontal zigzag
-    this.velocity.y =
-      this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
+    const vy = this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
 
+    // Update phase more slowly for longer, more visible zigzags
     this.patternData.zigzagPhase +=
-      baseSpeed * this.patternSpeed * timeMultiplier * 0.1;
-    const zigzagX =
-      Math.sin(this.patternData.zigzagPhase) *
-      this.patternData.zigzagAmplitude *
-      0.05;
-    this.velocity.x = zigzagX;
+      baseSpeed * this.patternSpeed * timeMultiplier * 0.015;
+
+    // Calculate horizontal velocity from derivative of sine wave
+    const phaseVelocity = baseSpeed * this.patternSpeed * timeMultiplier * 0.015;
+    const vx = Math.cos(this.patternData.zigzagPhase) * this.patternData.zigzagAmplitude * phaseVelocity;
+
+    // Normalize to maintain consistent overall speed
+    const length = Math.sqrt(vx * vx + vy * vy);
+    if (length > 0) {
+      const targetSpeed = baseSpeed * this.patternSpeed * timeMultiplier;
+      this.velocity.x = (vx / length) * targetSpeed;
+      this.velocity.y = (vy / length) * targetSpeed;
+    } else {
+      this.velocity.x = 0;
+      this.velocity.y = vy;
+    }
 
     this.facingRight = this.velocity.x > 0;
   }
@@ -681,49 +703,62 @@ class MarthaManager {
       this.patternData.squareSide = 0; // 0=right, 1=down, 2=left, 3=up
       this.patternData.squareProgress = 0;
       this.patternData.squareSize = Math.min(
-        (this.bounds.right - this.bounds.left) / 2,
-        (this.bounds.bottom - this.bounds.top) / 2
+        (this.bounds.right - this.bounds.left) / 2.5,
+        (this.bounds.bottom - this.bounds.top) / 2.5,
+        200 // Max size for reasonable square
       );
+      // Store starting position for each side
+      this.patternData.squareStartX = this.x;
+      this.patternData.squareStartY = this.y;
     }
-
-    this.patternData.squareProgress +=
-      baseSpeed * this.patternSpeed * timeMultiplier * 0.5;
 
     // Calculate speed for square movement - scales with difficulty
     const squareMovementSpeed = baseSpeed * this.patternSpeed * timeMultiplier;
 
-    // Move in square pattern
+    // Move in square pattern with clear state transitions
     switch (this.patternData.squareSide) {
       case 0: // Moving right
         this.velocity.x = squareMovementSpeed;
         this.velocity.y = 0;
-        if (this.patternData.squareProgress > this.patternData.squareSize) {
+        this.patternData.squareProgress += Math.abs(this.velocity.x);
+        if (this.patternData.squareProgress >= this.patternData.squareSize) {
           this.patternData.squareSide = 1;
           this.patternData.squareProgress = 0;
+          this.patternData.squareStartX = this.x;
+          this.patternData.squareStartY = this.y;
         }
         break;
       case 1: // Moving down
         this.velocity.x = 0;
         this.velocity.y = squareMovementSpeed;
-        if (this.patternData.squareProgress > this.patternData.squareSize) {
+        this.patternData.squareProgress += Math.abs(this.velocity.y);
+        if (this.patternData.squareProgress >= this.patternData.squareSize) {
           this.patternData.squareSide = 2;
           this.patternData.squareProgress = 0;
+          this.patternData.squareStartX = this.x;
+          this.patternData.squareStartY = this.y;
         }
         break;
       case 2: // Moving left
         this.velocity.x = -squareMovementSpeed;
         this.velocity.y = 0;
-        if (this.patternData.squareProgress > this.patternData.squareSize) {
+        this.patternData.squareProgress += Math.abs(this.velocity.x);
+        if (this.patternData.squareProgress >= this.patternData.squareSize) {
           this.patternData.squareSide = 3;
           this.patternData.squareProgress = 0;
+          this.patternData.squareStartX = this.x;
+          this.patternData.squareStartY = this.y;
         }
         break;
       case 3: // Moving up
         this.velocity.x = 0;
         this.velocity.y = -squareMovementSpeed;
-        if (this.patternData.squareProgress > this.patternData.squareSize) {
+        this.patternData.squareProgress += Math.abs(this.velocity.y);
+        if (this.patternData.squareProgress >= this.patternData.squareSize) {
           this.patternData.squareSide = 0;
           this.patternData.squareProgress = 0;
+          this.patternData.squareStartX = this.x;
+          this.patternData.squareStartY = this.y;
         }
         break;
     }
@@ -736,31 +771,34 @@ class MarthaManager {
 
     if (!this.patternData.wavePhase && this.patternData.wavePhase !== 0) {
       this.patternData.wavePhase = 0;
+      // Much larger amplitude for clearly visible wave motion
       this.patternData.waveAmplitude = Math.min(
-        (this.bounds.bottom - this.bounds.top) / 4,
-        100
+        (this.bounds.bottom - this.bounds.top) / 2.5,
+        180
       );
       this.patternData.waveCenterY =
         this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
     }
 
-    // Wave pattern: moves horizontally while oscillating vertically
+    // Wave pattern: moves horizontally while oscillating vertically in a smooth sine wave
     // Horizontal velocity component
     const vx = this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
 
-    // Update wave phase
+    // Update wave phase - slower frequency for longer, more visible waves
     this.patternData.wavePhase +=
-      baseSpeed * this.patternSpeed * timeMultiplier * 0.05;
+      baseSpeed * this.patternSpeed * timeMultiplier * 0.008;
 
-    // Vertical velocity component (derivative of sine wave)
-    const waveFrequency = baseSpeed * this.patternSpeed * timeMultiplier * 0.05;
-    const vy = Math.cos(this.patternData.wavePhase) * this.patternData.waveAmplitude * waveFrequency;
+    // Vertical velocity component (derivative of sine wave position)
+    // For position y = A * sin(phase), velocity vy = A * cos(phase) * d(phase)/dt
+    const phaseVelocity = baseSpeed * this.patternSpeed * timeMultiplier * 0.008;
+    const vy = Math.cos(this.patternData.wavePhase) * this.patternData.waveAmplitude * phaseVelocity;
 
-    // Normalize combined velocity to maintain consistent speed
+    // Normalize the combined velocity to maintain consistent overall speed
     const length = Math.sqrt(vx * vx + vy * vy);
     if (length > 0) {
-      this.velocity.x = (vx / length) * baseSpeed * this.patternSpeed * timeMultiplier;
-      this.velocity.y = (vy / length) * baseSpeed * this.patternSpeed * timeMultiplier;
+      const targetSpeed = baseSpeed * this.patternSpeed * timeMultiplier;
+      this.velocity.x = (vx / length) * targetSpeed;
+      this.velocity.y = (vy / length) * targetSpeed;
     } else {
       this.velocity.x = vx;
       this.velocity.y = 0;
@@ -827,10 +865,12 @@ class MarthaManager {
             this.patternData.bounceDirection.x
           );
         } else {
-          // Start recovery animation moving right
+          // Start recovery animation moving right AND slightly up/down to escape corners
           this.isRecovering = true;
           this.recoveryTimer = 0;
-          this.recoveryDirection = { x: 1, y: 0 };
+          // Add vertical component to avoid getting stuck in horizontal loops
+          const verticalEscape = (Math.random() - 0.5) * 0.6;
+          this.recoveryDirection = { x: 1, y: verticalEscape };
           this.facingRight = true;
         }
       }
@@ -846,10 +886,12 @@ class MarthaManager {
             this.patternData.bounceDirection.x
           );
         } else {
-          // Start recovery animation moving left
+          // Start recovery animation moving left AND slightly up/down to escape corners
           this.isRecovering = true;
           this.recoveryTimer = 0;
-          this.recoveryDirection = { x: -1, y: 0 };
+          // Add vertical component to avoid getting stuck in horizontal loops
+          const verticalEscape = (Math.random() - 0.5) * 0.6;
+          this.recoveryDirection = { x: -1, y: verticalEscape };
           this.facingRight = false;
         }
       }
@@ -883,10 +925,12 @@ class MarthaManager {
             this.patternData.bounceDirection.y
           );
         } else {
-          // Start recovery animation moving up
+          // Start recovery animation moving up AND slightly left/right to escape corners
           this.isRecovering = true;
           this.recoveryTimer = 0;
-          this.recoveryDirection = { x: 0, y: -1 };
+          // Add horizontal component to avoid getting stuck in vertical loops
+          const horizontalEscape = (Math.random() - 0.5) * 0.6;
+          this.recoveryDirection = { x: horizontalEscape, y: -1 };
         }
       }
 

@@ -19,6 +19,35 @@ class ControllerManager {
     this.showIndicator = false;
     this.indicatorFadeTimer = 0;
 
+    // Reticle state for controller cursor
+    this.reticle = {
+      x: 0,
+      y: 0,
+      visible: false,
+      hovered: false,
+      pulseTimer: 0,
+      velocityX: 0,
+      velocityY: 0
+    };
+
+    // Reticle configuration
+    this.reticleConfig = {
+      baseSpeed: 8,
+      maxSpeed: 20,
+      acceleration: 1.2,
+      size: 24,
+      glowSize: 8,
+      pulseSpeed: 0.1,
+      magnetismEnabled: true,
+      magnetismRadius: 80,  // Distance at which magnetism starts
+      magnetismStrength: 0.3  // How strong the pull is (0-1)
+    };
+
+    // Track if mouse was used recently (to hide reticle)
+    this.mouseUsedRecently = false;
+    this.mouseInactiveTimer = 0;
+    this.mouseInactiveThreshold = 1000; // ms
+
     // Check if Gamepad API is supported
     this.isSupported = 'getGamepads' in navigator;
 
@@ -55,6 +84,11 @@ class ControllerManager {
     this.connectedControllers.set(e.gamepad.index, e.gamepad);
     this.showControllerIndicator();
 
+    // Initialize reticle position at center of canvas
+    this.reticle.x = this.game.getCanvasWidth() / 2;
+    this.reticle.y = this.game.getCanvasHeight() / 2;
+    this.reticle.visible = true;
+
     // Start polling if not already polling
     if (!this.pollInterval) {
       this.startPolling();
@@ -65,8 +99,9 @@ class ControllerManager {
     console.log(`🎮 Controller disconnected: ${e.gamepad.id}`);
     this.connectedControllers.delete(e.gamepad.index);
 
-    // Stop polling if no controllers connected
+    // Hide reticle when no controllers connected
     if (this.connectedControllers.size === 0) {
+      this.reticle.visible = false;
       this.stopPolling();
     }
   }
@@ -115,6 +150,9 @@ class ControllerManager {
 
     const currentScreen = this.game.getCurrentScreen();
     if (!currentScreen) return;
+
+    // Update reticle position with left stick (for menu/UI navigation)
+    this.updateReticlePosition(gamepad);
 
     // Handle D-pad and analog stick input
     this.handleDirectionalInput(gamepad, currentScreen);
@@ -252,6 +290,14 @@ class ControllerManager {
       }
     }
 
+    // Handle A button for reticle action (in menu/gameOver states)
+    if ((gameState === 'menu' || gameState === 'gameOver') && this.buttonJustPressed(gamepad, 0, aButton)) {
+      const handled = this.handleReticleAction();
+      if (handled) {
+        return; // Don't process other A button actions if reticle handled it
+      }
+    }
+
     // Game state specific button handling
     if (gameState === 'matching') {
       // A button - shoot sock from pile or drop selected sock
@@ -359,6 +405,164 @@ class ControllerManager {
     return sign * ((magnitude - this.axisDeadzone) / (1 - this.axisDeadzone));
   }
 
+  updateReticlePosition(gamepad) {
+    if (!this.reticle.visible) return;
+
+    const gameState = this.game.gameState;
+
+    // Show reticle in menu, gameOver, matching, and throwing states
+    if (gameState !== 'menu' && gameState !== 'gameOver' && gameState !== 'matching' && gameState !== 'throwing') {
+      return;
+    }
+
+    // Get left stick input (with deadzone applied)
+    const stickX = this.applyDeadzone(gamepad.axes[0] || 0);
+    const stickY = this.applyDeadzone(gamepad.axes[1] || 0);
+
+    // Calculate speed based on stick magnitude
+    const magnitude = Math.sqrt(stickX * stickX + stickY * stickY);
+
+    if (magnitude > 0) {
+      // Show reticle when stick is moved
+      this.mouseUsedRecently = false;
+
+      // Calculate speed with acceleration
+      const speed = this.game.getScaledValue(
+        Math.min(
+          this.reticleConfig.baseSpeed + (magnitude * this.reticleConfig.acceleration * 4),
+          this.reticleConfig.maxSpeed
+        )
+      );
+
+      // Calculate target position
+      let targetX = this.reticle.x + stickX * speed;
+      let targetY = this.reticle.y + stickY * speed;
+
+      // Apply button magnetism if enabled
+      if (this.reticleConfig.magnetismEnabled) {
+        const magneticTarget = this.findNearestButton(targetX, targetY);
+        if (magneticTarget) {
+          const dx = magneticTarget.x - targetX;
+          const dy = magneticTarget.y - targetY;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          const magnetRadius = this.game.getScaledValue(this.reticleConfig.magnetismRadius);
+
+          if (distance < magnetRadius) {
+            // Apply magnetic pull (stronger as we get closer)
+            const pullStrength = this.reticleConfig.magnetismStrength * (1 - distance / magnetRadius);
+            targetX += dx * pullStrength;
+            targetY += dy * pullStrength;
+          }
+        }
+      }
+
+      // Update position
+      this.reticle.x = targetX;
+      this.reticle.y = targetY;
+
+      // Clamp to canvas bounds
+      this.reticle.x = Math.max(0, Math.min(this.game.getCanvasWidth(), this.reticle.x));
+      this.reticle.y = Math.max(0, Math.min(this.game.getCanvasHeight(), this.reticle.y));
+
+      // Notify current screen of reticle movement for hover detection
+      const currentScreen = this.game.getCurrentScreen();
+      if (currentScreen && typeof currentScreen.handleReticleMove === 'function') {
+        currentScreen.handleReticleMove(this.reticle.x, this.reticle.y);
+      }
+    }
+  }
+
+  findNearestButton(x, y) {
+    const currentScreen = this.game.getCurrentScreen();
+    if (!currentScreen || typeof currentScreen.getInteractiveElements !== 'function') {
+      return null;
+    }
+
+    const buttons = currentScreen.getInteractiveElements();
+    if (!buttons || buttons.length === 0) {
+      return null;
+    }
+
+    let nearestButton = null;
+    let nearestDistance = Infinity;
+
+    for (const button of buttons) {
+      // Calculate center of button
+      const buttonCenterX = button.x + (button.width || 0) / 2;
+      const buttonCenterY = button.y + (button.height || 0) / 2;
+
+      const dx = buttonCenterX - x;
+      const dy = buttonCenterY - y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestButton = { x: buttonCenterX, y: buttonCenterY };
+      }
+    }
+
+    return nearestButton;
+  }
+
+  handleReticleAction() {
+    if (!this.reticle.visible) return false;
+
+    const gameState = this.game.gameState;
+
+    // Handle reticle actions in menu, gameOver, matching, and throwing states
+    if (gameState !== 'menu' && gameState !== 'gameOver' && gameState !== 'matching' && gameState !== 'throwing') {
+      return false;
+    }
+
+    // Trigger pulse animation
+    this.reticle.pulseTimer = 1.0;
+
+    // Trigger haptic feedback
+    this.triggerHapticFeedback('medium');
+
+    // Notify current screen of reticle action
+    const currentScreen = this.game.getCurrentScreen();
+    if (currentScreen && typeof currentScreen.handleReticleAction === 'function') {
+      return currentScreen.handleReticleAction(this.reticle.x, this.reticle.y);
+    }
+
+    return false;
+  }
+
+  triggerHapticFeedback(intensity = 'medium') {
+    // Get all connected gamepads
+    const gamepads = navigator.getGamepads();
+    if (!gamepads) return;
+
+    // Vibration patterns based on intensity
+    const patterns = {
+      light: { duration: 50, weakMagnitude: 0.3, strongMagnitude: 0.1 },
+      medium: { duration: 100, weakMagnitude: 0.5, strongMagnitude: 0.3 },
+      strong: { duration: 150, weakMagnitude: 0.8, strongMagnitude: 0.6 }
+    };
+
+    const pattern = patterns[intensity] || patterns.medium;
+
+    for (let i = 0; i < gamepads.length; i++) {
+      const gamepad = gamepads[i];
+      if (gamepad && gamepad.vibrationActuator) {
+        // Use the Gamepad Haptics API
+        if (typeof gamepad.vibrationActuator.playEffect === 'function') {
+          gamepad.vibrationActuator.playEffect('dual-rumble', {
+            startDelay: 0,
+            duration: pattern.duration,
+            weakMagnitude: pattern.weakMagnitude,
+            strongMagnitude: pattern.strongMagnitude
+          }).catch(err => {
+            // Silently fail if haptics not supported
+            console.debug('Haptic feedback not supported:', err);
+          });
+        }
+      }
+    }
+  }
+
   update(deltaTime) {
     if (!this.isSupported) return;
 
@@ -369,11 +573,38 @@ class ControllerManager {
         this.showIndicator = false;
       }
     }
+
+    // Update reticle pulse animation
+    if (this.reticle.pulseTimer > 0) {
+      this.reticle.pulseTimer -= deltaTime / 1000;
+      if (this.reticle.pulseTimer < 0) {
+        this.reticle.pulseTimer = 0;
+      }
+    }
+
+    // Track mouse inactivity
+    if (this.mouseUsedRecently) {
+      this.mouseInactiveTimer += deltaTime;
+      if (this.mouseInactiveTimer >= this.mouseInactiveThreshold) {
+        this.mouseUsedRecently = false;
+        this.mouseInactiveTimer = 0;
+      }
+    }
   }
 
   render(ctx) {
-    if (!this.isSupported || !this.showIndicator || this.connectedControllers.size === 0) return;
+    // Draw controller indicator
+    if (this.isSupported && this.showIndicator && this.connectedControllers.size > 0) {
+      this.renderControllerIndicator(ctx);
+    }
 
+    // Draw reticle
+    if (this.isSupported && this.reticle.visible && !this.mouseUsedRecently) {
+      this.renderReticle(ctx);
+    }
+  }
+
+  renderControllerIndicator(ctx) {
     // Draw controller indicator in bottom-right corner
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
@@ -411,12 +642,94 @@ class ControllerManager {
     ctx.fill();
     ctx.stroke();
 
-    // Controller icon (🎮 emoji)
+    // Controller icon
     ctx.font = `${iconSize * 0.8}px Arial`;
     ctx.fillStyle = `rgba(100, 200, 100, ${alpha})`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('🎮', x + iconSize/2 - padding/4, y + height/2);
+
+    ctx.restore();
+  }
+
+  renderReticle(ctx) {
+    const gameState = this.game.gameState;
+
+    // Render reticle in menu, gameOver, matching, and throwing states
+    if (gameState !== 'menu' && gameState !== 'gameOver' && gameState !== 'matching' && gameState !== 'throwing') {
+      return;
+    }
+
+    const x = this.reticle.x;
+    const y = this.reticle.y;
+    const size = this.game.getScaledValue(this.reticleConfig.size);
+    const glowSize = this.game.getScaledValue(this.reticleConfig.glowSize);
+
+    ctx.save();
+
+    // Pulse effect when action is triggered
+    const pulseScale = 1 + (this.reticle.pulseTimer * 0.3);
+
+    // Outer glow (for visibility on any background)
+    if (this.reticle.hovered || this.reticle.pulseTimer > 0) {
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, size * pulseScale + glowSize);
+      gradient.addColorStop(0, 'rgba(0, 255, 255, 0.6)');
+      gradient.addColorStop(0.5, 'rgba(0, 200, 255, 0.3)');
+      gradient.addColorStop(1, 'rgba(0, 150, 255, 0)');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(x, y, size * pulseScale + glowSize, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Outer circle (dark outline for contrast)
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.beginPath();
+    ctx.arc(x, y, size / 2 * pulseScale, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Inner circle (main reticle)
+    ctx.strokeStyle = this.reticle.hovered ? '#00FFFF' : '#FFFFFF';
+    ctx.lineWidth = this.game.getScaledValue(2);
+    ctx.beginPath();
+    ctx.arc(x, y, size / 2 * pulseScale, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Center dot
+    ctx.fillStyle = this.reticle.hovered ? '#00FFFF' : '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(x, y, this.game.getScaledValue(3) * pulseScale, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Crosshair lines
+    const lineLength = size / 2 + this.game.getScaledValue(4);
+    const innerGap = size / 2 + this.game.getScaledValue(2);
+
+    ctx.strokeStyle = this.reticle.hovered ? '#00FFFF' : '#FFFFFF';
+    ctx.lineWidth = this.game.getScaledValue(2);
+
+    // Horizontal line
+    ctx.beginPath();
+    ctx.moveTo(x - lineLength * pulseScale, y);
+    ctx.lineTo(x - innerGap * pulseScale, y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x + innerGap * pulseScale, y);
+    ctx.lineTo(x + lineLength * pulseScale, y);
+    ctx.stroke();
+
+    // Vertical line
+    ctx.beginPath();
+    ctx.moveTo(x, y - lineLength * pulseScale);
+    ctx.lineTo(x, y - innerGap * pulseScale);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x, y + innerGap * pulseScale);
+    ctx.lineTo(x, y + lineLength * pulseScale);
+    ctx.stroke();
 
     ctx.restore();
   }
@@ -431,9 +744,28 @@ class ControllerManager {
     return Array.from(this.connectedControllers.values());
   }
 
+  // Get reticle position
+  getReticlePosition() {
+    return {
+      x: this.reticle.x,
+      y: this.reticle.y
+    };
+  }
+
+  // Check if reticle is visible
+  isReticleVisible() {
+    return this.reticle.visible && !this.mouseUsedRecently;
+  }
+
+  // Set reticle hover state (called by screens)
+  setReticleHoverState(isHovered) {
+    this.reticle.hovered = isHovered;
+  }
+
   cleanup() {
     this.removeEventListeners();
     this.connectedControllers.clear();
     this.buttonStates.clear();
+    this.reticle.visible = false;
   }
 }

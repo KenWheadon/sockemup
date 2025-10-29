@@ -969,6 +969,12 @@ class SockGame {
 
   handleMouseMove(e) {
     try {
+      // Notify controller manager that mouse is being used
+      if (this.controllerManager) {
+        this.controllerManager.mouseUsedRecently = true;
+        this.controllerManager.mouseInactiveTimer = 0;
+      }
+
       const coords = this.screenToCanvas(e.clientX, e.clientY);
       const x = coords.x;
       const y = coords.y;

@@ -1318,4 +1318,59 @@ class ThrowingScreen extends Screen {
       weight: "bold",
     });
   }
+
+  // Controller reticle support
+  getInteractiveElements() {
+    const layout = this.layoutCache;
+    const elements = [];
+
+    // Add exit button
+    elements.push({
+      x: layout.exitButtonX - layout.exitButtonWidth / 2,
+      y: layout.exitButtonY - layout.exitButtonHeight / 2,
+      width: layout.exitButtonWidth,
+      height: layout.exitButtonHeight
+    });
+
+    return elements;
+  }
+
+  handleReticleMove(x, y) {
+    const layout = this.layoutCache;
+
+    // Update exit button hover state
+    this.exitButton.hovered = this.isPointInRect(x, y, {
+      x: layout.exitButtonX - layout.exitButtonWidth / 2,
+      y: layout.exitButtonY - layout.exitButtonHeight / 2,
+      width: layout.exitButtonWidth,
+      height: layout.exitButtonHeight
+    });
+
+    // Update reticle hover state
+    if (this.game.controllerManager) {
+      this.game.controllerManager.setReticleHoverState(this.exitButton.hovered);
+    }
+  }
+
+  handleReticleAction(x, y) {
+    const layout = this.layoutCache;
+
+    // Check exit button
+    if (this.isPointInRect(x, y, {
+      x: layout.exitButtonX - layout.exitButtonWidth / 2,
+      y: layout.exitButtonY - layout.exitButtonHeight / 2,
+      width: layout.exitButtonWidth,
+      height: layout.exitButtonHeight
+    })) {
+      this.exitToLevelSelect();
+      return true;
+    }
+
+    return false;
+  }
+
+  isPointInRect(x, y, rect) {
+    return x >= rect.x && x <= rect.x + rect.width &&
+           y >= rect.y && y <= rect.y + rect.height;
+  }
 }
