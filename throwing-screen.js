@@ -130,7 +130,31 @@ class ThrowingScreen extends Screen {
     this.game.feedbackManager.reset();
     this.game.feedbackManager.onLevelStart();
 
-    this.game.audioManager.playMusic("throwing-music", true, 0.3);
+    // Select throwing music based on new game plus level
+    let throwingMusicName = "throwing-music"; // Default for NG+0
+    const currentDifficulty = this.game.currentDifficulty;
+
+    if (currentDifficulty === 1) {
+      throwingMusicName = "throwing-music-1";
+    } else if (currentDifficulty === 2) {
+      throwingMusicName = "throwing-music-2";
+    } else if (currentDifficulty === 3) {
+      throwingMusicName = "throwing-music-3";
+    } else if (currentDifficulty >= 4) {
+      // For NG+4 and beyond, randomly select from all throwing music
+      const randomChoice = Math.floor(Math.random() * 4);
+      if (randomChoice === 0) {
+        throwingMusicName = "throwing-music";
+      } else if (randomChoice === 1) {
+        throwingMusicName = "throwing-music-1";
+      } else if (randomChoice === 2) {
+        throwingMusicName = "throwing-music-2";
+      } else {
+        throwingMusicName = "throwing-music-3";
+      }
+    }
+
+    this.game.audioManager.playMusic(throwingMusicName, true, 0.3);
 
     this.showMessage("Click to throw sockballs at Martha!", "info", 3000);
   }

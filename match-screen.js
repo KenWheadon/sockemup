@@ -152,7 +152,31 @@ class MatchScreen extends Screen {
     this.matchStartTime = Date.now();
     this.levelCompleted = false; // Track if level is completed to stop timer
 
-    this.game.audioManager.playMusic("match-music", true, 0.3);
+    // Select matching music based on new game plus level
+    let matchMusicName = "match-music"; // Default for NG+0
+    const currentDifficulty = this.game.currentDifficulty;
+
+    if (currentDifficulty === 1) {
+      matchMusicName = "match-music-1";
+    } else if (currentDifficulty === 2) {
+      matchMusicName = "match-music-2";
+    } else if (currentDifficulty === 3) {
+      matchMusicName = "match-music-3";
+    } else if (currentDifficulty >= 4) {
+      // For NG+4 and beyond, randomly select from all matching music
+      const randomChoice = Math.floor(Math.random() * 4);
+      if (randomChoice === 0) {
+        matchMusicName = "match-music";
+      } else if (randomChoice === 1) {
+        matchMusicName = "match-music-1";
+      } else if (randomChoice === 2) {
+        matchMusicName = "match-music-2";
+      } else {
+        matchMusicName = "match-music-3";
+      }
+    }
+
+    this.game.audioManager.playMusic(matchMusicName, true, 0.3);
   }
 
   cleanup() {
