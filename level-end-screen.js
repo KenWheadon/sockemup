@@ -213,8 +213,13 @@ class LevelEndScreen extends Screen {
       this.timeBonusPoints = totalCatchQualityPoints + this.sockballsPaidPoints;
     }
 
-    this.sockballsLeftoverPoints = this.sockballsLeftover * 10;
-    this.rentPenaltyPoints = this.rentPenalty * -10;
+    // Leftover sockballs bonus increases with difficulty (20, 30, 40, 50 for NG+ 1-4)
+    const sockballsLeftoverBonus = difficulty === 0 ? 10 : 10 + (difficulty * 10);
+    this.sockballsLeftoverPoints = this.sockballsLeftover * sockballsLeftoverBonus;
+
+    // Rent penalty increases with difficulty (20, 30, 40, 50 for NG+ 1-4)
+    const rentPenaltyPerSockball = difficulty === 0 ? 10 : 10 + (difficulty * 10);
+    this.rentPenaltyPoints = this.rentPenalty * -rentPenaltyPerSockball;
 
     // Calculate the raw total (can be negative)
     const rawTotal =
@@ -876,18 +881,18 @@ class LevelEndScreen extends Screen {
       },
       {
         label: `TIME BONUS (2x RENT):`,
-        value: this.timeBonusDisplay * regularPoints,
+        value: this.timeBonusDisplay * 5,
         color: "#FFD700",
         show: this.game.timeBonusEarned,
       },
       {
         label: `SOCKBALLS LEFTOVER:`,
-        value: this.sockballsLeftoverDisplay * 10,
+        value: this.sockballsLeftoverDisplay * (difficulty === 0 ? 10 : 10 + (difficulty * 10)),
         color: "#95E1D3",
       },
       {
         label: `RENT PENALTY:`,
-        value: this.rentPenaltyDisplay * -10,
+        value: this.rentPenaltyDisplay * -(difficulty === 0 ? 10 : 10 + (difficulty * 10)),
         color: "#FF6B6B",
         show: this.rentPenalty > 0, // Only show if there's a penalty
       },

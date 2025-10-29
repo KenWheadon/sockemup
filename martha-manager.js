@@ -785,23 +785,27 @@ class MarthaManager {
         this.x < launchX + restrictedZoneSize &&
         this.y > launchY - restrictedZoneSize
       ) {
-        // Push Martha away from the lower left corner SMOOTHLY - no teleporting
-        // Only adjust velocity, never directly set position
-        const pushForce = 2;
+        // Use gentle push forces that ADD to velocity instead of forcing a minimum
+        // This prevents jiggling by working WITH the pattern instead of against it
+        const pushForce = 0.5; // Reduced push force for gentler correction
 
-        // Push right if too far left
-        if (this.x < launchX + restrictedZoneSize) {
-          this.velocity.x = Math.max(this.velocity.x, pushForce);
+        // Only push if moving INTO the restricted zone, not if already moving away
+        if (this.x < launchX + restrictedZoneSize && this.velocity.x < 0) {
+          // Only push right if moving left (into the zone)
+          this.velocity.x += pushForce;
         }
 
-        // Push up if too far down
-        if (this.y > launchY - restrictedZoneSize) {
-          this.velocity.y = Math.min(this.velocity.y, -pushForce);
+        if (this.y > launchY - restrictedZoneSize && this.velocity.y > 0) {
+          // Only push up if moving down (into the zone)
+          this.velocity.y -= pushForce;
         }
 
-        // Update pattern directions to encourage moving away from the zone
+        // Update pattern directions only for specific patterns that can be redirected
+        // Don't interfere with complex patterns like circular, spiral, etc.
         if (this.currentPattern === "horizontal") {
           this.direction = 1; // Move right
+        } else if (this.currentPattern === "vertical") {
+          this.direction = -1; // Move up
         } else if (this.patternData.diagonalDirection) {
           this.patternData.diagonalDirection.x = 1;
           this.patternData.diagonalDirection.y = -1;
@@ -894,33 +898,24 @@ class MarthaManager {
         const minSpeed = 1.0;
         if (currentSpeed < minSpeed) {
           // If moving too slowly, give a small push
-          // Check if stuck at edges and push away from them
-          const edgeThreshold = 5; // Pixels from edge to consider "at edge"
+          // IMPORTANT: Only apply minimum velocity push if NOT at an edge boundary
+          // Recovery animations handle edge cases, so we should not interfere
+          const edgeThreshold = 10; // Increased threshold to avoid jiggling near edges
 
-          if (this.x <= this.bounds.left + edgeThreshold) {
-            // Stuck at left edge - push right
-            this.velocity.x = minSpeed;
-            this.velocity.y = 0;
-          } else if (this.x >= this.bounds.right - this.width - edgeThreshold) {
-            // Stuck at right edge - push left (this should now be handled by recovery)
-            this.velocity.x = -minSpeed;
-            this.velocity.y = 0;
-          } else if (this.y <= this.bounds.top + edgeThreshold) {
-            // Stuck at top edge - push down
-            this.velocity.x = 0;
-            this.velocity.y = minSpeed;
-          } else if (
-            this.y >=
-            this.bounds.bottom - this.height - edgeThreshold
-          ) {
-            // Stuck at bottom edge - push up (this should now be handled by recovery)
-            this.velocity.x = 0;
-            this.velocity.y = -minSpeed;
-          } else {
+          // Check if we're near any edge - if so, let the boundary/recovery system handle it
+          const nearLeftEdge = this.x <= this.bounds.left + edgeThreshold;
+          const nearRightEdge = this.x >= this.bounds.right - this.width - edgeThreshold;
+          const nearTopEdge = this.y <= this.bounds.top + edgeThreshold;
+          const nearBottomEdge = this.y >= this.bounds.bottom - this.height - edgeThreshold;
+
+          // Only apply minimum velocity if NOT near any edge
+          if (!nearLeftEdge && !nearRightEdge && !nearTopEdge && !nearBottomEdge) {
             // Not at edge, use current direction or default right
             const defaultDirection = this.direction || 1;
             this.velocity.x = defaultDirection * minSpeed;
+            this.velocity.y = 0;
           }
+          // If near an edge and moving slowly, the boundary checks above will handle it
         }
       }
 
