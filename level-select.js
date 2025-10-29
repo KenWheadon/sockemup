@@ -51,6 +51,9 @@ class LevelSelect extends Screen {
     this.currentSockType = 1;
     this.dropZoneHover = null;
 
+    // Hover state for menu socks
+    this.hoveredMenuSock = null;
+
     // Logo click effect
     this.logoPressed = false;
     this.logoPressTimer = 0;
@@ -1123,6 +1126,13 @@ class LevelSelect extends Screen {
     ) {
       this.dragSock.x = x - this.dragOffset.x;
       this.dragSock.y = y - this.dragOffset.y;
+    }
+
+    // Update hovered menu sock (only when not dragging)
+    if (!this.isDragging && this.easterEggActive) {
+      this.hoveredMenuSock = this.getSockAtPosition(x, y);
+    } else if (this.isDragging) {
+      this.hoveredMenuSock = null;
     }
 
     this.updateDropZoneHover(x, y);
@@ -4530,6 +4540,10 @@ class LevelSelect extends Screen {
     this.menuSocks.forEach((sock) => {
       ctx.save();
 
+      // Check if this sock is being hovered or dragged
+      const isHovered = sock === this.hoveredMenuSock;
+      const isDragged = sock === this.dragSock;
+
       if (sock.glowEffect > 0) {
         ctx.shadowColor = "#FFD700";
         ctx.shadowBlur = sock.glowEffect;
@@ -4539,8 +4553,25 @@ class LevelSelect extends Screen {
         ctx.shadowBlur = this.game.getScaledValue(5);
       }
 
+      // Add hover effect - blue/cyan glow
+      if (isHovered && !isDragged) {
+        ctx.shadowColor = "rgba(100, 180, 255, 0.9)";
+        ctx.shadowBlur = this.game.getScaledValue(25);
+      }
+
+      // Add dragged effect - stronger yellow glow
+      if (isDragged) {
+        ctx.shadowColor = "rgba(255, 215, 0, 1.0)";
+        ctx.shadowBlur = this.game.getScaledValue(30);
+      }
+
       ctx.translate(sock.x, sock.y);
       ctx.rotate(sock.rotation);
+
+      // Slightly scale up dragged sock
+      if (isDragged) {
+        ctx.scale(1.1, 1.1);
+      }
 
       const sockImageName = `sock${sock.type}.png`;
       if (this.game.images[sockImageName]) {
