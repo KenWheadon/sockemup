@@ -22,6 +22,9 @@ class MatchScreen extends Screen {
     this.selectedSock = null;
     this.sockSelectedByKeyboard = false;
 
+    // Hover state for socks
+    this.hoveredSock = null;
+
     // Pause button
     this.pauseButton = {
       x: 0,
@@ -605,6 +608,13 @@ class MatchScreen extends Screen {
     this.sockPileHover = this.sockManager.checkSockPileClick(x, y);
     this.dropZoneHover = null;
 
+    // Update hovered sock (only when not dragging)
+    if (!this.draggedSock) {
+      this.hoveredSock = this.sockManager.getSockAt(x, y);
+    } else {
+      this.hoveredSock = null;
+    }
+
     if (this.draggedSock) {
       const snapDistance = this.game.getScaledValue(80);
 
@@ -793,6 +803,11 @@ class MatchScreen extends Screen {
                 this.game.timeBonusEarned = true;
               }
 
+              // Achievement: PERFECT_TIMING (finish with exactly 0 seconds left)
+              if (timeRemaining === 0 && timeElapsed === timeLimit) {
+                this.game.unlockAchievement("perfect_timing");
+              }
+
               // Achievement: SPEEDY_MATCHER
               if (timeRemaining >= GameConfig.ACHIEVEMENTS.SPEEDY_MATCHER.threshold) {
                 this.game.unlockAchievement("speedy_matcher");
@@ -966,11 +981,7 @@ class MatchScreen extends Screen {
     this.sockManager.renderSockPile(ctx);
     this.renderDropZonePairBoxes(ctx);
     this.renderDropZones(ctx);
-    this.sockManager.renderSocks(ctx);
-
-    if (this.draggedSock) {
-      this.renderDraggedSock(ctx);
-    }
+    this.sockManager.renderSocks(ctx, this.hoveredSock, this.draggedSock);
 
     this.sockManager.renderParticleEffects(ctx);
     this.renderMatchScreenUI(ctx);
@@ -1105,20 +1116,6 @@ class MatchScreen extends Screen {
 
       ctx.restore();
     });
-  }
-
-  renderDraggedSock(ctx) {
-    if (!this.draggedSock) return;
-
-    const lineWidth = this.game.getScaledValue(3);
-    const shadowBlur = this.game.getScaledValue(15);
-    const borderOffset = this.game.getScaledValue(2);
-
-    ctx.save();
-    ctx.shadowColor = "yellow";
-    ctx.shadowBlur = shadowBlur;
-
-    ctx.restore();
   }
 
   renderMatchScreenUI(ctx) {

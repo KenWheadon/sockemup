@@ -498,12 +498,16 @@ class SockManager {
     ctx.restore();
   }
 
-  renderSocks(ctx) {
+  renderSocks(ctx, hoveredSock = null, draggedSock = null) {
     this.socks.forEach((sock) => {
       ctx.save();
 
       let drawX = sock.x - sock.width / 2;
       let drawY = sock.y - sock.height / 2;
+
+      // Check if this sock is being hovered or dragged
+      const isHovered = sock === hoveredSock;
+      const isDragged = sock === draggedSock;
 
       this.matchAnimations.forEach((animation) => {
         if (animation.socks.includes(sock)) {
@@ -526,6 +530,23 @@ class SockManager {
       if (sock.glowEffect > 0) {
         ctx.shadowColor = "rgba(255, 200, 100, 0.8)";
         ctx.shadowBlur = sock.glowEffect;
+      }
+
+      // Add hover effect - white/blue glow
+      if (isHovered && !isDragged) {
+        ctx.shadowColor = "rgba(100, 180, 255, 0.9)";
+        ctx.shadowBlur = this.game.getScaledValue(25);
+      }
+
+      // Add dragged effect - stronger yellow glow with scale
+      if (isDragged) {
+        ctx.shadowColor = "rgba(255, 215, 0, 1.0)";
+        ctx.shadowBlur = this.game.getScaledValue(30);
+
+        // Slightly scale up dragged sock
+        ctx.translate(sock.x, sock.y);
+        ctx.scale(1.1, 1.1);
+        ctx.translate(-sock.x, -sock.y);
       }
 
       if (sock.rotation) {

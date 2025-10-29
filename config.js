@@ -1086,6 +1086,13 @@ const GameConfig = {
       icon: "icon-diamondtrophy.png",
       unlocked: false,
     },
+    PERFECT_TIMING: {
+      id: "perfect_timing",
+      name: "Perfect Timing",
+      description: "Finish matching with exactly 0 seconds left",
+      icon: "icon-clock.png",
+      unlocked: false,
+    },
   },
 
   STORY_SLIDES: [
