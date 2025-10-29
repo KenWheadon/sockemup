@@ -156,6 +156,11 @@ class ThrowingScreen extends Screen {
 
     this.game.audioManager.playMusic(throwingMusicName, true, 0.3);
 
+    // Unlock the track in audio player
+    if (this.game.levelSelect && this.game.levelSelect.audioPlayer) {
+      this.game.levelSelect.audioPlayer.unlockTrack(throwingMusicName);
+    }
+
     this.showMessage("Click to throw sockballs at Martha!", "info", 3000);
   }
 

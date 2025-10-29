@@ -177,6 +177,11 @@ class MatchScreen extends Screen {
     }
 
     this.game.audioManager.playMusic(matchMusicName, true, 0.3);
+
+    // Unlock the track in audio player
+    if (this.game.levelSelect && this.game.levelSelect.audioPlayer) {
+      this.game.levelSelect.audioPlayer.unlockTrack(matchMusicName);
+    }
   }
 
   cleanup() {

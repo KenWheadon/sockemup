@@ -96,8 +96,16 @@ class LevelEndScreen extends Screen {
     // Play appropriate music based on win/lose
     if (this.rentPenalty === 0) {
       this.game.audioManager.playMusic("victory-music", false, 0.4);
+      // Unlock victory music in audio player
+      if (this.game.levelSelect && this.game.levelSelect.audioPlayer) {
+        this.game.levelSelect.audioPlayer.unlockTrack("victory-music");
+      }
     } else {
       this.game.audioManager.playMusic("defeat-music", false, 0.4);
+      // Unlock defeat music in audio player
+      if (this.game.levelSelect && this.game.levelSelect.audioPlayer) {
+        this.game.levelSelect.audioPlayer.unlockTrack("defeat-music");
+      }
     }
 
     if (this.rentPenalty === 0) {

@@ -83,6 +83,9 @@ class SockGame {
     // Secret video tracking (videos 1-4 for NG+ 1-4)
     this.watchedVideos = []; // Array of watched video numbers (1-4)
 
+    // Audio player unlocked tracks
+    this.unlockedTracks = ['menu-music']; // Start with menu music unlocked
+
     // Initialize audio manager
     this.audioManager = new AudioManager();
 
@@ -673,6 +676,9 @@ class SockGame {
       // Secret videos
       this.watchedVideos = data.watchedVideos || [];
 
+      // Unlocked music tracks for audio player
+      this.unlockedTracks = data.unlockedTracks || ['menu-music'];
+
       this.hasShownNewGamePlusBanner = data.hasShownNewGamePlusBanner || false;
 
       const baseLevels = this.completedLevelsByDifficulty[0] || [];
@@ -788,6 +794,8 @@ class SockGame {
       viewedStoryPanels: this.viewedStoryPanels,
       // Secret videos
       watchedVideos: this.watchedVideos,
+      // Unlocked music tracks
+      unlockedTracks: this.unlockedTracks,
     };
     localStorage.setItem("sockGameData", JSON.stringify(data));
   }
@@ -886,6 +894,12 @@ class SockGame {
   startLevel(levelIndex, difficulty = null) {
     this.currentLevel = levelIndex;
     const baseLevel = GameConfig.LEVELS[levelIndex];
+
+    // Validate level exists
+    if (!baseLevel) {
+      console.error(`Level ${levelIndex} not found in GameConfig.LEVELS`);
+      return;
+    }
 
     // Track levels played for Veteran Tenant achievement
     this.levelsPlayed++;

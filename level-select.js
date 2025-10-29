@@ -195,6 +195,18 @@ class LevelSelect extends Screen {
     this.videoPlayerActive = false;
     this.videoElement = null;
 
+    // Audio player button
+    this.audioPlayerButton = {
+      x: 0,
+      y: 0,
+      width: 120,
+      height: 40,
+      hovered: false,
+    };
+
+    // Initialize audio player
+    this.audioPlayer = new AudioPlayer(this.game);
+
     // Achievements drawer
     this.achievementsDrawer = {
       isOpen: false,
@@ -368,6 +380,15 @@ class LevelSelect extends Screen {
       videoButtonWidth: this.game.getScaledValue(400),
       videoButtonHeight: this.game.getScaledValue(100),
 
+      audioPlayerButtonX:
+        canvasWidth - youWinImageSize.width / 2 - this.game.getScaledValue(50),
+      audioPlayerButtonY:
+        canvasHeight / 2 +
+        youWinImageSize.height / 2 +
+        this.game.getScaledValue(200),
+      audioPlayerButtonWidth: this.game.getScaledValue(400),
+      audioPlayerButtonHeight: this.game.getScaledValue(100),
+
       statsPanelWidth: this.game.getScaledValue(200),
       statsPanelHeight: this.game.getScaledValue(40),
     };
@@ -491,6 +512,11 @@ class LevelSelect extends Screen {
     this.game.audioManager.stopMusic();
 
     this.closeVideoPlayer();
+
+    // Close audio player if open
+    if (this.audioPlayer.isOpen) {
+      this.audioPlayer.close();
+    }
 
     this.removeCreditsEventListeners();
 
@@ -719,6 +745,9 @@ class LevelSelect extends Screen {
       this.game.storyManager.update(deltaTime);
       return;
     }
+
+    // Update audio player animation
+    this.audioPlayer.update(deltaTime);
 
     // Only update difficulty UI if New Game+ is unlocked
     if (this.game.highestUnlockedDifficulty > 0) {
@@ -970,6 +999,9 @@ class LevelSelect extends Screen {
       return;
     }
 
+    // Update audio player hover
+    this.audioPlayer.updateHover(x, y, this.game.canvas);
+
     if (this.storyViewer.isOpen) {
       this.storyViewer.handleMouseMove(x, y);
       return;
@@ -1028,8 +1060,19 @@ class LevelSelect extends Screen {
         width: layout.videoButtonWidth,
         height: layout.videoButtonHeight,
       });
+
+      // Audio player button hover
+      const audioPlayerButtonX = layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2;
+      const audioPlayerButtonY = layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2;
+      this.audioPlayerButton.hovered = this.isPointInRect(x, y, {
+        x: audioPlayerButtonX,
+        y: audioPlayerButtonY,
+        width: layout.audioPlayerButtonWidth,
+        height: layout.audioPlayerButtonHeight,
+      });
     } else {
       this.videoButton.hovered = false;
+      this.audioPlayerButton.hovered = false;
     }
 
     this.storyViewer.updateButtonHover(x, y, layout);
@@ -1165,6 +1208,7 @@ class LevelSelect extends Screen {
       this.storyReplayButton.hovered ||
       this.creditsButton.hovered ||
       this.videoButton.hovered ||
+      this.audioPlayerButton.hovered ||
       this.achievementsDrawer.button.hovered ||
       this.achievementsDrawer.closeButton.hovered ||
       this.storyViewer.button.hovered ||
@@ -1613,6 +1657,12 @@ class LevelSelect extends Screen {
       return;
     }
 
+    // Audio player click handling
+    if (this.audioPlayer.isOpen) {
+      this.audioPlayer.handleClick(x, y, this.game.canvas);
+      return;
+    }
+
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.handleClick(x, y);
       return;
@@ -1745,6 +1795,21 @@ class LevelSelect extends Screen {
     ) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.openVideoPlayer();
+      return true;
+    }
+
+    // Check audio player button (only if all levels completed)
+    if (
+      this.areAllLevelsCompleted() &&
+      this.isPointInRect(x, y, {
+        x: layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2,
+        y: layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2,
+        width: layout.audioPlayerButtonWidth,
+        height: layout.audioPlayerButtonHeight,
+      })
+    ) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.audioPlayer.open();
       return true;
     }
 
@@ -2108,6 +2173,12 @@ class LevelSelect extends Screen {
   }
 
   onMouseWheel(deltaY) {
+    // Check audio player first
+    if (this.audioPlayer.isOpen) {
+      this.audioPlayer.handleScroll(deltaY * 0.5);
+      return true;
+    }
+
     if (
       this.achievementsDrawer.isOpen &&
       this.achievementsDrawer.animationProgress > 0.5
@@ -2333,6 +2404,7 @@ class LevelSelect extends Screen {
     if (this.areAllLevelsCompleted()) {
       this.renderYouWinGraphic(ctx);
       this.renderVideoButton(ctx);
+      this.renderAudioPlayerButton(ctx);
     }
 
     // Render easter egg socks BEFORE the top bar so they appear below it
@@ -2371,6 +2443,9 @@ class LevelSelect extends Screen {
     if (this.videoPlayerActive) {
       this.renderVideoPlayer(ctx);
     }
+
+    // Render audio player if open
+    this.audioPlayer.render(ctx);
 
     if (this.game.storyManager.showingStory) {
       this.game.storyManager.render(ctx);
@@ -5008,6 +5083,101 @@ class LevelSelect extends Screen {
         }
       );
     }
+
+    ctx.restore();
+  }
+
+  renderAudioPlayerButton(ctx) {
+    const layout = this.layoutCache;
+    const button = this.audioPlayerButton;
+
+    ctx.save();
+
+    const x = layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2;
+    const y = layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2;
+
+    // Gradient background
+    const radius = this.game.getScaledValue(8);
+    const gradient = ctx.createLinearGradient(
+      x,
+      y,
+      x,
+      y + layout.audioPlayerButtonHeight
+    );
+
+    let color1, color2;
+    if (button.hovered) {
+      color1 = "#4a9eff";
+      color2 = "#2d7dd2";
+    } else {
+      color1 = "#2d7dd2";
+      color2 = "#1e5a9e";
+    }
+
+    gradient.addColorStop(0, color1);
+    gradient.addColorStop(1, color2);
+    ctx.fillStyle = gradient;
+
+    if (button.hovered) {
+      ctx.shadowColor = "#4a9eff";
+      ctx.shadowBlur = this.game.getScaledValue(12);
+    }
+
+    ctx.strokeStyle = button.hovered ? "#6ab7ff" : "#2d7dd2";
+    ctx.lineWidth = this.game.getScaledValue(3);
+
+    // Draw rounded rectangle
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + layout.audioPlayerButtonWidth - radius, y);
+    ctx.quadraticCurveTo(
+      x + layout.audioPlayerButtonWidth,
+      y,
+      x + layout.audioPlayerButtonWidth,
+      y + radius
+    );
+    ctx.lineTo(
+      x + layout.audioPlayerButtonWidth,
+      y + layout.audioPlayerButtonHeight - radius
+    );
+    ctx.quadraticCurveTo(
+      x + layout.audioPlayerButtonWidth,
+      y + layout.audioPlayerButtonHeight,
+      x + layout.audioPlayerButtonWidth - radius,
+      y + layout.audioPlayerButtonHeight
+    );
+    ctx.lineTo(x + radius, y + layout.audioPlayerButtonHeight);
+    ctx.quadraticCurveTo(
+      x,
+      y + layout.audioPlayerButtonHeight,
+      x,
+      y + layout.audioPlayerButtonHeight - radius
+    );
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+
+    ctx.fill();
+    ctx.stroke();
+
+    if (button.hovered) {
+      ctx.shadowColor = "#4a9eff";
+      ctx.shadowBlur = this.game.getScaledValue(10);
+      ctx.stroke();
+    }
+
+    // Button text
+    this.renderText(
+      ctx,
+      "MUSIC PLAYER",
+      layout.audioPlayerButtonX,
+      layout.audioPlayerButtonY,
+      {
+        fontSize: this.game.getScaledValue(18),
+        color: "white",
+        weight: "bold",
+      }
+    );
 
     ctx.restore();
   }
