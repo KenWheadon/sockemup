@@ -853,6 +853,11 @@ class MatchScreen extends Screen {
           pairZones[0].sock = null;
           pairZones[1].sock = null;
 
+          // Achievement: MOMENTUM_KILLER - Break a 15+ match streak
+          if (this.matchStreak >= GameConfig.ACHIEVEMENTS.MOMENTUM_KILLER.threshold) {
+            this.game.unlockAchievement("momentum_killer");
+          }
+
           this.matchStreak = 0;
           this.lastMatchTime = 0;
         }

@@ -63,6 +63,13 @@ class StoryViewer {
     if (unlockedPanels.length > 0) {
       const panelIndex = unlockedPanels[this.currentPanel];
       this.game.viewedStoryPanels[panelIndex] = true;
+
+      // Check for LORE_MASTER achievement
+      const allPanelsViewed = this.game.viewedStoryPanels.every((viewed) => viewed);
+      if (allPanelsViewed) {
+        this.game.unlockAchievement("lore_master");
+      }
+
       this.game.saveGameData();
     }
 
@@ -89,6 +96,13 @@ class StoryViewer {
       // Mark the new panel as viewed
       const panelIndex = unlockedPanels[this.currentPanel];
       this.game.viewedStoryPanels[panelIndex] = true;
+
+      // Check for LORE_MASTER achievement
+      const allPanelsViewed = this.game.viewedStoryPanels.every((viewed) => viewed);
+      if (allPanelsViewed) {
+        this.game.unlockAchievement("lore_master");
+      }
+
       this.game.saveGameData();
 
       this.resetSpriteAnimation();
@@ -107,6 +121,13 @@ class StoryViewer {
       const unlockedPanels = this.getUnlockedPanels();
       const panelIndex = unlockedPanels[this.currentPanel];
       this.game.viewedStoryPanels[panelIndex] = true;
+
+      // Check for LORE_MASTER achievement
+      const allPanelsViewed = this.game.viewedStoryPanels.every((viewed) => viewed);
+      if (allPanelsViewed) {
+        this.game.unlockAchievement("lore_master");
+      }
+
       this.game.saveGameData();
 
       this.resetSpriteAnimation();

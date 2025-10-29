@@ -115,6 +115,43 @@ class LevelEndScreen extends Screen {
         this.game.currentDifficulty
       );
 
+      // Track consecutive level wins for streak achievements
+      if (!this.game.consecutiveLevelWins) {
+        this.game.consecutiveLevelWins = 0;
+      }
+      this.game.consecutiveLevelWins++;
+
+      // Achievement: BABY_SPEED_RUN - Win 5 levels in a row
+      if (this.game.consecutiveLevelWins >= 5) {
+        this.game.unlockAchievement("baby_speed_run");
+      }
+
+      // Achievement: SPEED_RUN - Win 9 levels in a row
+      if (this.game.consecutiveLevelWins >= 9) {
+        this.game.unlockAchievement("speed_run");
+      }
+
+      // Achievement: SPEED_ROYALTY - Win 20 levels in a row
+      if (this.game.consecutiveLevelWins >= 20) {
+        this.game.unlockAchievement("speed_royalty");
+      }
+
+      // Achievement: TRIAL_BY_FIRE - Complete level 9 on +2 difficulty or higher
+      if (this.game.currentLevel === 8 && this.game.currentDifficulty >= 2) {
+        this.game.unlockAchievement("trial_by_fire");
+      }
+
+      // Track total levels played for GRIND_MASTER
+      if (!this.game.totalLevelsPlayed) {
+        this.game.totalLevelsPlayed = 0;
+      }
+      this.game.totalLevelsPlayed++;
+
+      // Achievement: GRIND_MASTER - Complete 100 total levels
+      if (this.game.totalLevelsPlayed >= 100) {
+        this.game.unlockAchievement("grind_master");
+      }
+
       const allLevelsCompleted =
         this.game.completedLevels &&
         this.game.completedLevels.every((completed) => completed);
@@ -149,6 +186,31 @@ class LevelEndScreen extends Screen {
         if (allLevelsCompletedOnPlus4) {
           this.game.unlockAchievement("ultimate_champion");
         }
+      }
+    } else {
+      // Reset consecutive wins on a loss
+      this.game.consecutiveLevelWins = 0;
+
+      // Track total losses for DISASTER_PRONE
+      if (!this.game.totalLevelLosses) {
+        this.game.totalLevelLosses = 0;
+      }
+      this.game.totalLevelLosses++;
+
+      // Achievement: DISASTER_PRONE - Lose 10 times total
+      if (this.game.totalLevelLosses >= 10) {
+        this.game.unlockAchievement("disaster_prone");
+      }
+
+      // Track total levels played (even losses count)
+      if (!this.game.totalLevelsPlayed) {
+        this.game.totalLevelsPlayed = 0;
+      }
+      this.game.totalLevelsPlayed++;
+
+      // Achievement: GRIND_MASTER - Complete 100 total levels
+      if (this.game.totalLevelsPlayed >= 100) {
+        this.game.unlockAchievement("grind_master");
       }
     }
 

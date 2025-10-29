@@ -33,6 +33,9 @@ class SockGame {
     this.consecutiveMisses = 0; // Current streak of misses (for Butterfingers)
     this.easterEggSockballsCreated = 0; // Sockballs created via easter egg this level (for Sockball Wizard)
     this.logoClickCount = 0; // Times logo has been clicked (for Logo Clicker)
+    this.consecutiveLevelWins = 0; // Current streak of consecutive level wins (for speed run achievements)
+    this.totalLevelsPlayed = 0; // Total levels completed (wins + losses) (for Grind Master)
+    this.totalLevelLosses = 0; // Total level losses (for Disaster Prone)
 
     this.images = {};
     this.loadedImages = 0;
@@ -541,6 +544,9 @@ class SockGame {
       this.totalDoubleBounces = data.totalDoubleBounces || 0;
       this.logoClickCount = data.logoClickCount || 0;
       this.easterEggSockballsCreated = data.easterEggSockballsCreated || 0;
+      this.consecutiveLevelWins = data.consecutiveLevelWins || 0;
+      this.totalLevelsPlayed = data.totalLevelsPlayed || 0;
+      this.totalLevelLosses = data.totalLevelLosses || 0;
 
       this.selectedDifficulty = data.selectedDifficulty || 0;
 
@@ -773,6 +779,9 @@ class SockGame {
       totalDoubleBounces: this.totalDoubleBounces,
       logoClickCount: this.logoClickCount,
       easterEggSockballsCreated: this.easterEggSockballsCreated,
+      consecutiveLevelWins: this.consecutiveLevelWins,
+      totalLevelsPlayed: this.totalLevelsPlayed,
+      totalLevelLosses: this.totalLevelLosses,
       // NEW GAME+: Save per-difficulty progress
       selectedDifficulty: this.selectedDifficulty,
       highestUnlockedDifficulty: this.highestUnlockedDifficulty,
