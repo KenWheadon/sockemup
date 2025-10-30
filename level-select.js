@@ -593,8 +593,8 @@ class LevelSelect extends Screen {
                 <h3>Team</h3>
                 <div class="team-credits">
                   <div class="credit-role">
-                    <span class="role">Founder / Game Lead</span>
-                    <span class="name">Ken Whaeadon</span>
+                    <span class="role">Founder / Game Lead / Jack of all Trades</span>
+                    <span class="name">Ken Wheadon</span>
                   </div>
                   <div class="credit-role">
                     <span class="role">Logo</span>
@@ -602,7 +602,7 @@ class LevelSelect extends Screen {
                   </div>
                   <div class="credit-role">
                     <span class="role">Quality Assurance</span>
-                    <span class="name">ravex & Games for Love volunteers</span>
+                    <span class="name">ravex,  Games for Love volunteers, Ken Wheadon</span>
                   </div>
                   <div class="credit-role">
                     <span class="role">Audio Effects - freesound.org</span>
@@ -611,6 +611,10 @@ class LevelSelect extends Screen {
                   <div class="credit-role">
                     <span class="role">Audio Effects - pixabay.com</span>
                     <span class="name">Karim-Nessim, Universfield, freesound_community</span>
+                  </div>
+                  <div class="credit-role">
+                    <span class="role">Martha Voice Actor</span>
+                    <span class="name">Ken Wheadon</span>
                   </div>
                   <div class="credit-role">
                     <span class="role">Lead Artist</span>
@@ -1452,7 +1456,8 @@ class LevelSelect extends Screen {
 
     // If story is showing, let it handle keyboard
     if (this.game.storyManager.showingStory) {
-      return; // Story manager will handle its own keys
+      this.game.storyManager.handleKeyDown(e);
+      return;
     }
 
     // If credits modal is open, close with Escape
@@ -1916,7 +1921,12 @@ class LevelSelect extends Screen {
 
       // Previous button (if available)
       if (this.storyViewer.currentPanel > 0) {
-        const prevX = modalX + modalWidth - buttonWidth * 2 - buttonSpacing - this.game.getScaledValue(30);
+        const prevX =
+          modalX +
+          modalWidth -
+          buttonWidth * 2 -
+          buttonSpacing -
+          this.game.getScaledValue(30);
         elements.push({
           x: prevX,
           y: buttonY,
@@ -1927,7 +1937,8 @@ class LevelSelect extends Screen {
 
       // Next button (if available)
       if (this.storyViewer.currentPanel < unlockedPanels.length - 1) {
-        const nextX = modalX + modalWidth - buttonWidth - this.game.getScaledValue(30);
+        const nextX =
+          modalX + modalWidth - buttonWidth - this.game.getScaledValue(30);
         elements.push({
           x: nextX,
           y: buttonY,
@@ -1964,7 +1975,11 @@ class LevelSelect extends Screen {
     });
 
     // Add audio player button (if unlocked)
-    if (this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0) {
+    if (
+      this.audioPlayer &&
+      this.audioPlayer.game.unlockedTracks &&
+      this.audioPlayer.game.unlockedTracks.length > 0
+    ) {
       elements.push({
         x: layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2,
         y: layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2,
@@ -1988,7 +2003,8 @@ class LevelSelect extends Screen {
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
       const col = i % this.levelConfig.columns;
       const row = Math.floor(i / this.levelConfig.columns);
-      const levelX = layout.levelGridStartX + col * layout.levelHorizontalSpacing;
+      const levelX =
+        layout.levelGridStartX + col * layout.levelHorizontalSpacing;
       const levelY = layout.levelGridStartY + row * layout.levelVerticalSpacing;
       elements.push({
         x: levelX - levelTileSize / 2,
@@ -2004,7 +2020,7 @@ class LevelSelect extends Screen {
   handleReticleMove(x, y) {
     // If story manager is showing, delegate to it
     if (this.game.storyManager.showingStory) {
-      console.log('Story manager showing - reticle at', x, y);
+      console.log("Story manager showing - reticle at", x, y);
       this.game.storyManager.handleMouseMove(x, y);
       // Story manager has its own hover state handling
       if (this.game.controllerManager) {
@@ -2013,9 +2029,32 @@ class LevelSelect extends Screen {
       return;
     }
 
+    // If credits popup is open, check for close button hover
+    if (this.creditsOpen) {
+      const closeButton = document.getElementById("closeCredits");
+      if (closeButton) {
+        // Convert canvas coordinates to screen coordinates
+        const canvasRect = this.game.canvas.getBoundingClientRect();
+        const screenX = x + canvasRect.left;
+        const screenY = y + canvasRect.top;
+
+        const buttonRect = closeButton.getBoundingClientRect();
+        const isHovering =
+          screenX >= buttonRect.left &&
+          screenX <= buttonRect.right &&
+          screenY >= buttonRect.top &&
+          screenY <= buttonRect.bottom;
+
+        if (this.game.controllerManager) {
+          this.game.controllerManager.setReticleHoverState(isHovering);
+        }
+      }
+      return;
+    }
+
     // If story viewer is open, delegate to it
     if (this.storyViewer.isOpen) {
-      console.log('Story viewer open - reticle at', x, y);
+      console.log("Story viewer open - reticle at", x, y);
       this.storyViewer.handleMouseMove(x, y);
 
       // Update reticle hover state based on story viewer buttons
@@ -2024,7 +2063,7 @@ class LevelSelect extends Screen {
         this.storyViewer.navButtons.previous.hovered ||
         this.storyViewer.navButtons.next.hovered;
 
-      console.log('Story viewer buttons hovered:', this.storyViewer.navButtons);
+      console.log("Story viewer buttons hovered:", this.storyViewer.navButtons);
 
       if (this.game.controllerManager) {
         this.game.controllerManager.setReticleHoverState(isHovering);
@@ -2069,7 +2108,11 @@ class LevelSelect extends Screen {
     });
 
     this.audioPlayerButton.hovered = false;
-    if (this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0) {
+    if (
+      this.audioPlayer &&
+      this.audioPlayer.game.unlockedTracks &&
+      this.audioPlayer.game.unlockedTracks.length > 0
+    ) {
       this.audioPlayerButton.hovered = this.isPointInRect(x, y, {
         x: layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2,
         y: layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2,
@@ -2102,16 +2145,41 @@ class LevelSelect extends Screen {
   handleReticleAction(x, y) {
     // If story manager is showing, delegate to it
     if (this.game.storyManager.showingStory) {
-      console.log('Story manager showing - reticle action at', x, y);
+      console.log("Story manager showing - reticle action at", x, y);
       this.game.storyManager.handleClick(x, y);
       return true;
     }
 
+    // If credits popup is open, check for close button click
+    if (this.creditsOpen) {
+      const closeButton = document.getElementById("closeCredits");
+      if (closeButton) {
+        // Convert canvas coordinates to screen coordinates
+        const canvasRect = this.game.canvas.getBoundingClientRect();
+        const screenX = x + canvasRect.left;
+        const screenY = y + canvasRect.top;
+
+        const buttonRect = closeButton.getBoundingClientRect();
+        const isClickingButton =
+          screenX >= buttonRect.left &&
+          screenX <= buttonRect.right &&
+          screenY >= buttonRect.top &&
+          screenY <= buttonRect.bottom;
+
+        if (isClickingButton) {
+          this.game.audioManager.playSound("button-click", false, 0.5);
+          this.hideCredits();
+          return true;
+        }
+      }
+      return false;
+    }
+
     // If story viewer is open, delegate to it
     if (this.storyViewer.isOpen) {
-      console.log('Story viewer open - reticle action at', x, y);
+      console.log("Story viewer open - reticle action at", x, y);
       const result = this.storyViewer.handleClick(x, y);
-      console.log('Story viewer click result:', result);
+      console.log("Story viewer click result:", result);
       return result;
     }
 
@@ -2137,7 +2205,12 @@ class LevelSelect extends Screen {
     }
 
     // Check audio player button
-    if (this.audioPlayerButton.hovered && this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0) {
+    if (
+      this.audioPlayerButton.hovered &&
+      this.audioPlayer &&
+      this.audioPlayer.game.unlockedTracks &&
+      this.audioPlayer.game.unlockedTracks.length > 0
+    ) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.audioPlayer.open();
       return true;

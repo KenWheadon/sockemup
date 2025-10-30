@@ -19,6 +19,10 @@ class ControllerManager {
     this.showIndicator = false;
     this.indicatorFadeTimer = 0;
 
+    // Initialize reticule canvas overlay
+    this.reticuleCanvas = document.getElementById('reticuleCanvas');
+    this.reticuleCtx = this.reticuleCanvas ? this.reticuleCanvas.getContext('2d') : null;
+
     // Reticle state for controller cursor
     this.reticle = {
       x: 0,
@@ -646,9 +650,27 @@ class ControllerManager {
       this.renderControllerIndicator(ctx);
     }
 
-    // Draw reticle
-    if (this.isSupported && this.reticle.visible && !this.mouseUsedRecently) {
-      this.renderReticle(ctx);
+    // Draw reticle on separate overlay canvas
+    if (this.isSupported && this.reticle.visible && !this.mouseUsedRecently && this.reticuleCtx) {
+      // Sync reticule canvas size with game canvas
+      if (this.reticuleCanvas.width !== this.game.canvas.width ||
+          this.reticuleCanvas.height !== this.game.canvas.height) {
+        this.reticuleCanvas.width = this.game.canvas.width;
+        this.reticuleCanvas.height = this.game.canvas.height;
+        this.reticuleCanvas.style.width = this.game.canvas.style.width;
+        this.reticuleCanvas.style.height = this.game.canvas.style.height;
+        this.reticuleCanvas.style.left = this.game.canvas.style.left || '0px';
+        this.reticuleCanvas.style.top = this.game.canvas.style.top || '0px';
+      }
+
+      // Clear the reticule canvas
+      this.reticuleCtx.clearRect(0, 0, this.reticuleCanvas.width, this.reticuleCanvas.height);
+
+      // Render reticule on its own canvas
+      this.renderReticle(this.reticuleCtx);
+    } else if (this.reticuleCtx) {
+      // Clear reticule canvas when not visible
+      this.reticuleCtx.clearRect(0, 0, this.reticuleCanvas.width, this.reticuleCanvas.height);
     }
   }
 
