@@ -1293,6 +1293,37 @@ const GameConfig = {
       unlocked: false,
       threshold: 100,
     },
+    MISMATCHED: {
+      id: "mismatched",
+      name: "Mismatched",
+      description: "Mismatch a pair of socks",
+      icon: "icon-redx.png",
+      unlocked: false,
+    },
+    MISMATCH_CHAOS: {
+      id: "mismatch_chaos",
+      name: "Mismatch Chaos",
+      description: "Mismatch 5 times in a single level",
+      icon: "icon-upset.png",
+      unlocked: false,
+      threshold: 5,
+    },
+    MISMATCH_QUEEN: {
+      id: "mismatch_queen",
+      name: "Mismatch Queen",
+      description: "Mismatch 25 times lifetime",
+      icon: "icon-crying.png",
+      unlocked: false,
+      threshold: 25,
+    },
+    ONE_AT_A_TIME: {
+      id: "one_at_a_time",
+      name: "One at a Time",
+      description: "Match the same sock type 4 times in a row during a single match screen",
+      icon: "icon-sock.png",
+      unlocked: false,
+      threshold: 4,
+    },
   },
 
   STORY_SLIDES: [

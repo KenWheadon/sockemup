@@ -152,6 +152,10 @@ class MatchScreen extends Screen {
     this.matchStartTime = Date.now();
     this.levelCompleted = false; // Track if level is completed to stop timer
 
+    // Reset per-level achievement tracking
+    this.game.currentLevelMismatches = 0;
+    this.game.currentMatchTypeStreak = [];
+
     // Select matching music based on new game plus level
     let matchMusicName = "match-music"; // Default for NG+0
     const currentDifficulty = this.game.currentDifficulty;
@@ -771,6 +775,18 @@ class MatchScreen extends Screen {
           const matchedSockType = pairZones[0].sock.type;
           this.game.addSockballToQueue(matchedSockType);
 
+          // Track sock type streak for "One at a Time" achievement
+          this.game.currentMatchTypeStreak.push(matchedSockType);
+
+          // Check if the last 4 matches were all the same type
+          if (this.game.currentMatchTypeStreak.length >= GameConfig.ACHIEVEMENTS.ONE_AT_A_TIME.threshold) {
+            const lastFour = this.game.currentMatchTypeStreak.slice(-GameConfig.ACHIEVEMENTS.ONE_AT_A_TIME.threshold);
+            const allSameType = lastFour.every(type => type === lastFour[0]);
+            if (allSameType) {
+              this.game.unlockAchievement("one_at_a_time");
+            }
+          }
+
           this.game.audioManager.playSound("easter-egg-match", false, 0.5);
 
           const timeoutId = setTimeout(() => {
@@ -873,6 +889,23 @@ class MatchScreen extends Screen {
   handleMismatch(sock1, sock2) {
     // Play mismatch sound
     this.game.audioManager.playSound("easter-egg-mismatch", false, 0.6);
+
+    // Track mismatches for achievements
+    this.game.currentLevelMismatches++;
+    this.game.lifetimeMismatches++;
+
+    // Achievement: MISMATCHED - First mismatch ever
+    this.game.unlockAchievement("mismatched");
+
+    // Achievement: MISMATCH_CHAOS - 5 mismatches in a single level
+    if (this.game.currentLevelMismatches >= GameConfig.ACHIEVEMENTS.MISMATCH_CHAOS.threshold) {
+      this.game.unlockAchievement("mismatch_chaos");
+    }
+
+    // Achievement: MISMATCH_QUEEN - 25 lifetime mismatches
+    if (this.game.lifetimeMismatches >= GameConfig.ACHIEVEMENTS.MISMATCH_QUEEN.threshold) {
+      this.game.unlockAchievement("mismatch_queen");
+    }
 
     // Create mismatch particle effects
     this.sockManager.createMismatchEffect(sock1, sock2);

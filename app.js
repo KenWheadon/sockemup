@@ -42,6 +42,9 @@ class SockGame {
     this.totalMisses = 0; // Total misses lifetime (for Miss Miss Miss)
     this.currentGameMisses = 0; // Misses in current level (for No Hope)
     this.lastHitTime = 0; // Timestamp of last Martha hit (for Pincer)
+    this.currentLevelMismatches = 0; // Mismatches in current level (for Mismatch Chaos)
+    this.lifetimeMismatches = 0; // Total mismatches lifetime (for Mismatch Queen)
+    this.currentMatchTypeStreak = []; // Array tracking recent match types for "One at a time"
 
     this.images = {};
     this.loadedImages = 0;
@@ -573,6 +576,7 @@ class SockGame {
       this.totalGoodShots = data.totalGoodShots || 0;
       this.totalFlubs = data.totalFlubs || 0;
       this.totalMisses = data.totalMisses || 0;
+      this.lifetimeMismatches = data.lifetimeMismatches || 0;
 
       this.selectedDifficulty = data.selectedDifficulty || 0;
 
@@ -822,6 +826,7 @@ class SockGame {
       totalGoodShots: this.totalGoodShots,
       totalFlubs: this.totalFlubs,
       totalMisses: this.totalMisses,
+      lifetimeMismatches: this.lifetimeMismatches,
       // NEW GAME+: Save per-difficulty progress
       selectedDifficulty: this.selectedDifficulty,
       highestUnlockedDifficulty: this.highestUnlockedDifficulty,
