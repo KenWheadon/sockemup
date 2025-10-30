@@ -50,6 +50,7 @@ class MarthaManager {
     this.recoveryTimer = 0;
     this.recoveryDuration = 1000; // 1 second in milliseconds
     this.recoveryDirection = { x: 0, y: 0 };
+    this.recoverySpeedMultiplier = 1; // Can be increased for emergency corner escapes
 
     // Sockball collection
     this.collectedSockballs = 0;
@@ -322,10 +323,10 @@ class MarthaManager {
     // Calculate timeMultiplier for consistent frame-independent movement
     const timeMultiplier = deltaTime / 16.67;
 
-    // Use baseSpeed of 1 (same as pattern movements) with patternSpeed multiplier
+    // Use baseSpeed of 1 (same as pattern movements) with patternSpeed multiplier AND recovery speed multiplier
     const baseSpeed = 1;
-    this.velocity.x = this.recoveryDirection.x * baseSpeed * this.patternSpeed * timeMultiplier;
-    this.velocity.y = this.recoveryDirection.y * baseSpeed * this.patternSpeed * timeMultiplier;
+    this.velocity.x = this.recoveryDirection.x * baseSpeed * this.patternSpeed * this.recoverySpeedMultiplier * timeMultiplier;
+    this.velocity.y = this.recoveryDirection.y * baseSpeed * this.patternSpeed * this.recoverySpeedMultiplier * timeMultiplier;
 
     // Update facing direction during recovery
     if (Math.abs(this.velocity.x) > 0.1) {
@@ -336,6 +337,7 @@ class MarthaManager {
     if (this.recoveryTimer >= this.recoveryDuration) {
       this.isRecovering = false;
       this.recoveryTimer = 0;
+      this.recoverySpeedMultiplier = 1; // Reset speed multiplier
       // Switch to a new random pattern after recovery
       this.switchPattern();
     }
@@ -459,7 +461,12 @@ class MarthaManager {
     this.velocity.x = -Math.sin(this.patternData.circularAngle) * baseSpeed * this.patternSpeed * timeMultiplier;
     this.velocity.y = Math.cos(this.patternData.circularAngle) * baseSpeed * this.patternSpeed * timeMultiplier;
 
-    this.facingRight = this.velocity.x > 0;
+    // Only update facing direction if velocity is significant enough to avoid flickering
+    // Use a deadzone threshold to prevent rapid sprite flipping during circular motion
+    const velocityThreshold = 0.5;
+    if (Math.abs(this.velocity.x) > velocityThreshold) {
+      this.facingRight = this.velocity.x > 0;
+    }
   }
 
   updateRandomPattern(timeMultiplier) {
@@ -490,7 +497,11 @@ class MarthaManager {
       this.patternSpeed *
       timeMultiplier;
 
-    this.facingRight = this.velocity.x > 0;
+    // Only update facing direction if velocity is significant enough to avoid flickering
+    const velocityThreshold = 0.5;
+    if (Math.abs(this.velocity.x) > velocityThreshold) {
+      this.facingRight = this.velocity.x > 0;
+    }
   }
 
   updateFigureEightPattern(timeMultiplier) {
@@ -537,7 +548,11 @@ class MarthaManager {
     this.patternData.figureEightAngle +=
       (baseSpeed * this.patternSpeed * timeMultiplier) / Math.max(this.patternData.radiusX, this.patternData.radiusY);
 
-    this.facingRight = this.velocity.x > 0;
+    // Only update facing direction if velocity is significant enough to avoid flickering
+    const velocityThreshold = 0.5;
+    if (Math.abs(this.velocity.x) > velocityThreshold) {
+      this.facingRight = this.velocity.x > 0;
+    }
   }
 
   updateZigzagHorizontalPattern(timeMultiplier) {
@@ -574,7 +589,11 @@ class MarthaManager {
       this.velocity.y = 0;
     }
 
-    this.facingRight = this.direction > 0;
+    // Only update facing direction if velocity is significant enough to avoid flickering
+    const velocityThreshold = 0.5;
+    if (Math.abs(this.velocity.x) > velocityThreshold) {
+      this.facingRight = this.velocity.x > 0;
+    }
   }
 
   updateZigzagVerticalPattern(timeMultiplier) {
@@ -611,7 +630,11 @@ class MarthaManager {
       this.velocity.y = vy;
     }
 
-    this.facingRight = this.velocity.x > 0;
+    // Only update facing direction if velocity is significant enough to avoid flickering
+    const velocityThreshold = 0.5;
+    if (Math.abs(this.velocity.x) > velocityThreshold) {
+      this.facingRight = this.velocity.x > 0;
+    }
   }
 
   updateSpiralPattern(timeMultiplier) {
@@ -666,7 +689,11 @@ class MarthaManager {
     this.velocity.x = vx;
     this.velocity.y = vy;
 
-    this.facingRight = this.velocity.x > 0;
+    // Only update facing direction if velocity is significant enough to avoid flickering
+    const velocityThreshold = 0.5;
+    if (Math.abs(this.velocity.x) > velocityThreshold) {
+      this.facingRight = this.velocity.x > 0;
+    }
   }
 
   updateBouncePattern(timeMultiplier) {
@@ -693,7 +720,11 @@ class MarthaManager {
       timeMultiplier;
 
     // Note: Actual bouncing is handled in applyMovement() boundary checking
-    this.facingRight = this.velocity.x > 0;
+    // Only update facing direction if velocity is significant enough to avoid flickering
+    const velocityThreshold = 0.5;
+    if (Math.abs(this.velocity.x) > velocityThreshold) {
+      this.facingRight = this.velocity.x > 0;
+    }
   }
 
   updateSquarePattern(timeMultiplier) {
@@ -804,7 +835,11 @@ class MarthaManager {
       this.velocity.y = 0;
     }
 
-    this.facingRight = this.direction > 0;
+    // Only update facing direction if velocity is significant enough to avoid flickering
+    const velocityThreshold = 0.5;
+    if (Math.abs(this.velocity.x) > velocityThreshold) {
+      this.facingRight = this.velocity.x > 0;
+    }
   }
 
   applyMovement(deltaTime) {
@@ -854,83 +889,168 @@ class MarthaManager {
         }
       }
 
-      // Left boundary - trigger recovery animation (except for bounce pattern)
-      if (this.x < this.bounds.left) {
-        this.x = this.bounds.left;
-        if (
-          this.currentPattern === "bounce" &&
-          this.patternData.bounceDirection
-        ) {
-          this.patternData.bounceDirection.x = Math.abs(
-            this.patternData.bounceDirection.x
-          );
+      // Corner threshold - detect when Martha is close to a corner
+      const cornerThreshold = this.width;
+
+      // Check for corner positions (prioritize corner recovery over edge recovery)
+      const atLeftEdge = this.x <= this.bounds.left;
+      const atRightEdge = this.x >= this.bounds.right - this.width;
+      const atTopEdge = this.y <= this.bounds.top;
+      const atBottomEdge = this.y >= this.bounds.bottom - this.height;
+
+      // Detect corners and apply strong recovery
+      const inLowerRightCorner = atRightEdge && atBottomEdge;
+      const inLowerLeftCorner = atLeftEdge && atBottomEdge;
+      const inUpperRightCorner = atRightEdge && atTopEdge;
+      const inUpperLeftCorner = atLeftEdge && atTopEdge;
+
+      // CORNER HANDLING - Takes priority over edge handling
+      // Use bounce physics similar to sockballs
+      const bounceDamping = GameConfig.BOUNCE_DAMPING || 0.8; // Same as sockballs
+
+      if (inLowerRightCorner) {
+        // Lower right corner - bounce off both walls
+        this.x = this.bounds.right - this.width;
+        this.y = this.bounds.bottom - this.height;
+
+        if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
+          this.patternData.bounceDirection.x = -Math.abs(this.patternData.bounceDirection.x);
+          this.patternData.bounceDirection.y = -Math.abs(this.patternData.bounceDirection.y);
         } else {
-          // Start recovery animation moving right AND slightly up/down to escape corners
-          this.isRecovering = true;
-          this.recoveryTimer = 0;
-          // Add vertical component to avoid getting stuck in horizontal loops
-          const verticalEscape = (Math.random() - 0.5) * 0.6;
-          this.recoveryDirection = { x: 1, y: verticalEscape };
+          // Bounce both velocity components and dampen
+          this.velocity.x = -Math.abs(this.velocity.x) * bounceDamping * 1.5; // Bounce left
+          this.velocity.y = -Math.abs(this.velocity.y) * bounceDamping * 1.5; // Bounce up
+          this.facingRight = false;
+        }
+      } else if (inLowerLeftCorner) {
+        // Lower left corner - bounce off both walls
+        this.x = this.bounds.left;
+        this.y = this.bounds.bottom - this.height;
+
+        if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
+          this.patternData.bounceDirection.x = Math.abs(this.patternData.bounceDirection.x);
+          this.patternData.bounceDirection.y = -Math.abs(this.patternData.bounceDirection.y);
+        } else {
+          // Bounce both velocity components
+          this.velocity.x = Math.abs(this.velocity.x) * bounceDamping * 1.5; // Bounce right
+          this.velocity.y = -Math.abs(this.velocity.y) * bounceDamping * 1.5; // Bounce up
+          this.facingRight = true;
+        }
+      } else if (inUpperRightCorner) {
+        // Upper right corner - bounce off both walls
+        this.x = this.bounds.right - this.width;
+        this.y = this.bounds.top;
+
+        if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
+          this.patternData.bounceDirection.x = -Math.abs(this.patternData.bounceDirection.x);
+          this.patternData.bounceDirection.y = Math.abs(this.patternData.bounceDirection.y);
+        } else {
+          // Bounce both velocity components
+          this.velocity.x = -Math.abs(this.velocity.x) * bounceDamping * 1.5; // Bounce left
+          this.velocity.y = Math.abs(this.velocity.y) * bounceDamping * 1.5; // Bounce down
+          this.facingRight = false;
+        }
+      } else if (inUpperLeftCorner) {
+        // Upper left corner - bounce off both walls
+        this.x = this.bounds.left;
+        this.y = this.bounds.top;
+
+        if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
+          this.patternData.bounceDirection.x = Math.abs(this.patternData.bounceDirection.x);
+          this.patternData.bounceDirection.y = Math.abs(this.patternData.bounceDirection.y);
+        } else {
+          // Bounce both velocity components
+          this.velocity.x = Math.abs(this.velocity.x) * bounceDamping * 1.5; // Bounce right
+          this.velocity.y = Math.abs(this.velocity.y) * bounceDamping * 1.5; // Bounce down
           this.facingRight = true;
         }
       }
+      // EDGE HANDLING - Only if not in a corner
+      // Use intelligent bounce physics with position-based vertical direction
+      else if (atLeftEdge) {
+        // Left wall - bounce right
+        this.x = this.bounds.left;
 
-      // Right boundary - trigger recovery animation (except for bounce pattern)
-      if (this.x > this.bounds.right - this.width) {
-        this.x = this.bounds.right - this.width;
-        if (
-          this.currentPattern === "bounce" &&
-          this.patternData.bounceDirection
-        ) {
-          this.patternData.bounceDirection.x = -Math.abs(
-            this.patternData.bounceDirection.x
-          );
+        if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
+          this.patternData.bounceDirection.x = Math.abs(this.patternData.bounceDirection.x);
         } else {
-          // Start recovery animation moving left AND slightly up/down to escape corners
-          this.isRecovering = true;
-          this.recoveryTimer = 0;
-          // Add vertical component to avoid getting stuck in horizontal loops
-          const verticalEscape = (Math.random() - 0.5) * 0.6;
-          this.recoveryDirection = { x: -1, y: verticalEscape };
+          // Bounce horizontally like a sockball
+          this.velocity.x = Math.abs(this.velocity.x) * bounceDamping * 1.3;
+
+          // Add intelligent vertical direction based on position
+          const screenMidY = this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
+          const marthaMidY = this.y + this.height / 2;
+
+          if (marthaMidY > screenMidY) {
+            // Below halfway - add upward velocity
+            this.velocity.y = -Math.abs(this.velocity.y || this.speed * 2);
+          } else {
+            // Above halfway - add downward velocity
+            this.velocity.y = Math.abs(this.velocity.y || this.speed * 2);
+          }
+
+          this.facingRight = true;
+        }
+      } else if (atRightEdge) {
+        // Right wall - bounce left
+        this.x = this.bounds.right - this.width;
+
+        if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
+          this.patternData.bounceDirection.x = -Math.abs(this.patternData.bounceDirection.x);
+        } else {
+          // Bounce horizontally like a sockball
+          this.velocity.x = -Math.abs(this.velocity.x) * bounceDamping * 1.3;
+
+          // Add intelligent vertical direction based on position
+          const screenMidY = this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
+          const marthaMidY = this.y + this.height / 2;
+
+          if (marthaMidY > screenMidY) {
+            // Below halfway - add upward velocity
+            this.velocity.y = -Math.abs(this.velocity.y || this.speed * 2);
+          } else {
+            // Above halfway - add downward velocity
+            this.velocity.y = Math.abs(this.velocity.y || this.speed * 2);
+          }
+
           this.facingRight = false;
         }
-      }
-
-      // Top boundary
-      if (this.y < this.bounds.top) {
+      } else if (atTopEdge) {
+        // Top wall - bounce down
         this.y = this.bounds.top;
-        this.velocity.y = Math.abs(this.velocity.y); // Bounce down
+
+        if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
+          this.patternData.bounceDirection.y = Math.abs(this.patternData.bounceDirection.y);
+        } else {
+          // Bounce vertically like a sockball
+          this.velocity.y = Math.abs(this.velocity.y) * bounceDamping * 1.3;
+
+          // Keep horizontal velocity but ensure some movement
+          if (Math.abs(this.velocity.x) < 1) {
+            this.velocity.x = (Math.random() < 0.5 ? -1 : 1) * this.speed;
+          }
+        }
+
+        // Update pattern directions for simple patterns
         if (this.currentPattern === "vertical") {
           this.direction = 1;
-        } else if (
-          this.currentPattern === "bounce" &&
-          this.patternData.bounceDirection
-        ) {
-          this.patternData.bounceDirection.y = Math.abs(
-            this.patternData.bounceDirection.y
-          );
         } else if (this.patternData.diagonalDirection) {
           this.patternData.diagonalDirection.y = 1;
         }
-      }
-
-      // Bottom boundary - trigger recovery animation (except for bounce pattern)
-      if (this.y > this.bounds.bottom - this.height) {
+      } else if (atBottomEdge) {
+        // Bottom wall - bounce up
         this.y = this.bounds.bottom - this.height;
-        if (
-          this.currentPattern === "bounce" &&
-          this.patternData.bounceDirection
-        ) {
-          this.patternData.bounceDirection.y = -Math.abs(
-            this.patternData.bounceDirection.y
-          );
+
+        if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
+          this.patternData.bounceDirection.y = -Math.abs(this.patternData.bounceDirection.y);
         } else {
-          // Start recovery animation moving up AND slightly left/right to escape corners
-          this.isRecovering = true;
-          this.recoveryTimer = 0;
-          // Add horizontal component to avoid getting stuck in vertical loops
-          const horizontalEscape = (Math.random() - 0.5) * 0.6;
-          this.recoveryDirection = { x: horizontalEscape, y: -1 };
+          // Bounce vertically like a sockball
+          this.velocity.y = -Math.abs(this.velocity.y) * bounceDamping * 1.3;
+
+          // Keep horizontal velocity but ensure some movement
+          if (Math.abs(this.velocity.x) < 1) {
+            this.velocity.x = (Math.random() < 0.5 ? -1 : 1) * this.speed;
+          }
         }
       }
 
@@ -1121,12 +1241,45 @@ class MarthaManager {
     this.hitEffect.timer = GameConfig.MARTHA_HIT_EFFECTS.FLASH_DURATION;
     this.hitEffect.flashTimer = 0;
 
-    // Calculate knockback
+    // Calculate knockback with wall/corner amplification
     const knockbackForce = GameConfig.MARTHA_HIT_EFFECTS.KNOCKBACK_DISTANCE;
     const angle = Math.atan2(sockball.y - this.y, sockball.x - this.x);
+
+    // Detect if Martha is near walls/corners
+    const wallThreshold = this.width * 0.5;
+    const atLeftEdge = this.x <= this.bounds.left + wallThreshold;
+    const atRightEdge = this.x >= this.bounds.right - this.width - wallThreshold;
+    const atTopEdge = this.y <= this.bounds.top + wallThreshold;
+    const atBottomEdge = this.y >= this.bounds.bottom - this.height - wallThreshold;
+
+    // Check if in a corner (two edges)
+    const inCorner = (atLeftEdge || atRightEdge) && (atTopEdge || atBottomEdge);
+    const onWall = atLeftEdge || atRightEdge || atTopEdge || atBottomEdge;
+
+    // Calculate base knockback
+    let knockbackX = Math.cos(angle) * knockbackForce;
+    let knockbackY = Math.sin(angle) * knockbackForce;
+
+    // Apply amplification if on wall/corner
+    if (inCorner) {
+      // In corner: 3x knockback to escape quickly
+      knockbackX *= 3;
+      knockbackY *= 3;
+    } else if (onWall) {
+      // On wall: amplify perpendicular direction 2.5x
+      if (atLeftEdge || atRightEdge) {
+        // Amplify vertical movement
+        knockbackY *= 2.5;
+      }
+      if (atTopEdge || atBottomEdge) {
+        // Amplify horizontal movement
+        knockbackX *= 2.5;
+      }
+    }
+
     this.hitEffect.knockbackVelocity = {
-      x: Math.cos(angle) * knockbackForce,
-      y: Math.sin(angle) * knockbackForce,
+      x: knockbackX,
+      y: knockbackY,
     };
 
     // Phase 2.1 - Add point popup with catch quality
