@@ -994,4 +994,24 @@ class AudioPlayer {
     this.scrollOffset += deltaY;
     this.scrollOffset = Math.max(0, Math.min(this.maxScroll, this.scrollOffset));
   }
+
+  handleReticleMove(x, y) {
+    if (!this.isOpen) return;
+
+    // Reuse the existing hover detection logic
+    this.updateHover(x, y, this.game.canvas);
+
+    // Update controller reticle hover state if something is hovered
+    if (this.game.controllerManager) {
+      const isHovering = this.isAnyElementHovered();
+      this.game.controllerManager.setReticleHoverState(isHovering);
+    }
+  }
+
+  handleReticleAction(x, y) {
+    if (!this.isOpen) return false;
+
+    // Reuse the existing click logic
+    return this.handleClick(x, y, this.game.canvas);
+  }
 }

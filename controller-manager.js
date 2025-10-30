@@ -237,6 +237,14 @@ class ControllerManager {
   }
 
   handleScrollableWindowInput(currentScreen, rightStickY) {
+    // Check for audio player (canvas-based scrolling)
+    if (currentScreen && currentScreen.audioPlayer?.isOpen) {
+      const scrollSpeed = 15; // Adjust sensitivity as needed
+      const scrollAmount = rightStickY * scrollSpeed;
+      currentScreen.audioPlayer.handleScroll(scrollAmount);
+      return true; // Handled
+    }
+
     // Check for achievements drawer (canvas-based scrolling)
     if (currentScreen && currentScreen.achievementsDrawer?.isOpen &&
         currentScreen.achievementsDrawer.animationProgress > 0.5) {
@@ -385,6 +393,13 @@ class ControllerManager {
       }
 
     } else if (gameState === 'menu') {
+      // Check if audio player is open and handle B button to close it
+      if (currentScreen.audioPlayer?.isOpen && this.buttonJustPressed(gamepad, 1, bButton)) {
+        currentScreen.audioPlayer.close();
+        this.game.audioManager.playSound("button-click", false, 0.5);
+        return;
+      }
+
       // A button - select level
       if (this.buttonJustPressed(gamepad, 0, aButton)) {
         this.simulateKeyPress(currentScreen, 'Enter');

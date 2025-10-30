@@ -2018,6 +2018,12 @@ class LevelSelect extends Screen {
   }
 
   handleReticleMove(x, y) {
+    // If audio player is open, delegate to it
+    if (this.audioPlayer.isOpen) {
+      this.audioPlayer.handleReticleMove(x, y);
+      return;
+    }
+
     // If story manager is showing, delegate to it
     if (this.game.storyManager.showingStory) {
       console.log("Story manager showing - reticle at", x, y);
@@ -2128,26 +2134,92 @@ class LevelSelect extends Screen {
       height: layout.achievementsButtonHeight,
     });
 
-    // Update reticle hover state in controller manager
-    const isHovering =
-      this.hoveredLevel !== -1 ||
-      this.storyReplayButton.hovered ||
-      this.storyViewer.button.hovered ||
-      this.creditsButton.hovered ||
-      this.audioPlayerButton.hovered ||
-      this.achievementsDrawer.button.hovered;
+    // Handle achievements drawer hover detection
+    if (
+      this.achievementsDrawer.isOpen &&
+      this.achievementsDrawer.animationProgress > 0.5
+    ) {
+      const drawerWidth = layout.achievementsDrawerWidth;
+      const drawerX =
+        -drawerWidth + drawerWidth * this.achievementsDrawer.animationProgress;
+      const closeButtonSize = this.game.getScaledValue(40);
+      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(30);
+      const closeButtonY = this.game.getScaledValue(30);
 
-    if (this.game.controllerManager) {
-      this.game.controllerManager.setReticleHoverState(isHovering);
+      const dx = x - closeButtonX;
+      const dy = y - closeButtonY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      this.achievementsDrawer.closeButton.hovered =
+        distance <= closeButtonSize / 2;
+
+      // Update reticle hover state for close button
+      if (this.game.controllerManager) {
+        this.game.controllerManager.setReticleHoverState(
+          this.achievementsDrawer.closeButton.hovered
+        );
+      }
+    } else {
+      this.achievementsDrawer.closeButton.hovered = false;
+
+      // Update reticle hover state in controller manager
+      const isHovering =
+        this.hoveredLevel !== -1 ||
+        this.storyReplayButton.hovered ||
+        this.storyViewer.button.hovered ||
+        this.creditsButton.hovered ||
+        this.audioPlayerButton.hovered ||
+        this.achievementsDrawer.button.hovered;
+
+      if (this.game.controllerManager) {
+        this.game.controllerManager.setReticleHoverState(isHovering);
+      }
     }
   }
 
   handleReticleAction(x, y) {
+    // If audio player is open, delegate to it
+    if (this.audioPlayer.isOpen) {
+      return this.audioPlayer.handleReticleAction(x, y);
+    }
+
     // If story manager is showing, delegate to it
     if (this.game.storyManager.showingStory) {
       console.log("Story manager showing - reticle action at", x, y);
       this.game.storyManager.handleClick(x, y);
       return true;
+    }
+
+    // If achievements drawer is open, check for close button click
+    if (this.achievementsDrawer.isOpen) {
+      const layout = this.layoutCache;
+      const drawerWidth = layout.achievementsDrawerWidth;
+      const progress = this.achievementsDrawer.animationProgress;
+      const drawerX = -drawerWidth + drawerWidth * progress;
+      const closeButtonSize = this.game.getScaledValue(40);
+      const closeButtonX = drawerX + drawerWidth - this.game.getScaledValue(30);
+      const closeButtonY = this.game.getScaledValue(30);
+
+      const dx = x - closeButtonX;
+      const dy = y - closeButtonY;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance <= closeButtonSize / 2) {
+        this.game.audioManager.playSound("button-click", false, 0.5);
+        this.toggleAchievementsDrawer();
+        return true;
+      }
+
+      // Click is on the drawer - consume the click to prevent click-through
+      const canvasHeight = this.game.getCanvasHeight();
+      if (
+        x >= drawerX &&
+        x <= drawerX + drawerWidth &&
+        y >= 0 &&
+        y <= canvasHeight
+      ) {
+        return true;
+      }
     }
 
     // If credits popup is open, check for close button click
