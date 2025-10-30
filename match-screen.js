@@ -43,6 +43,15 @@ class MatchScreen extends Screen {
       hovered: false,
     };
 
+    // Debug button (only visible in DEV_MODE)
+    this.debugButton = {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+      hovered: false,
+    };
+
     // Velocity tracking for throwing
     this.dragHistory = [];
     this.maxDragHistoryLength = 5;
@@ -55,6 +64,11 @@ class MatchScreen extends Screen {
     // Auto-shoot state for holding down on sock pile
     this.sockPilePressed = false;
     this.autoShootInterval = null;
+
+    // Track click-only placements for Snappy achievement
+    this.initialMousePos = null;
+    this.wasDragged = false;
+    this.pairPlacementMethods = {}; // Track how each sock in a pair was placed
   }
 
   createLayoutCache() {
@@ -112,6 +126,12 @@ class MatchScreen extends Screen {
       exitButtonY: barY + barHeight / 2,
       exitButtonWidth: this.game.getScaledValue(100),
       exitButtonHeight: this.game.getScaledValue(50),
+
+      // Debug button (below exit button when DEV_MODE is true)
+      debugButtonX: canvasWidth - this.game.getScaledValue(120),
+      debugButtonY: canvasHeight - this.game.getScaledValue(60),
+      debugButtonWidth: this.game.getScaledValue(120),
+      debugButtonHeight: this.game.getScaledValue(40),
     };
   }
 
@@ -155,6 +175,8 @@ class MatchScreen extends Screen {
     // Reset per-level achievement tracking
     this.game.currentLevelMismatches = 0;
     this.game.currentMatchTypeStreak = [];
+    this.pairPlacementMethods = {};
+    this.game.currentGameSnapPlacements = 0;
 
     // Select matching music based on new game plus level
     let matchMusicName = "match-music"; // Default for NG+0
@@ -473,6 +495,21 @@ class MatchScreen extends Screen {
       return true;
     }
 
+    // Check debug button click (only when not paused and DEV_MODE is true)
+    if (GameConfig.DEV_MODE) {
+      const debugButtonLeft = layout.debugButtonX - layout.debugButtonWidth / 2;
+      const debugButtonTop = layout.debugButtonY - layout.debugButtonHeight / 2;
+      if (
+        x >= debugButtonLeft &&
+        x <= debugButtonLeft + layout.debugButtonWidth &&
+        y >= debugButtonTop &&
+        y <= debugButtonTop + layout.debugButtonHeight
+      ) {
+        this.matchAllSocks();
+        return true;
+      }
+    }
+
     if (this.sockManager.checkSockPileClick(x, y)) {
       this.sockPilePressed = true;
       this.shootSockFromPile(); // Shoot immediately on first click
@@ -489,6 +526,10 @@ class MatchScreen extends Screen {
       this.draggedSock = sock;
       this.dragOffset = { x: x - sock.x, y: y - sock.y };
       this.isDragging = true;
+
+      // Track initial position for click-only detection
+      this.initialMousePos = { x: x, y: y };
+      this.wasDragged = false;
 
       // Initialize drag history for velocity tracking
       this.dragHistory = [
@@ -538,6 +579,19 @@ class MatchScreen extends Screen {
       y >= exitButtonTop &&
       y <= exitButtonTop + layout.exitButtonHeight;
 
+    // Update debug button hover (only when not paused and DEV_MODE is true)
+    if (GameConfig.DEV_MODE) {
+      const debugButtonLeft = layout.debugButtonX - layout.debugButtonWidth / 2;
+      const debugButtonTop = layout.debugButtonY - layout.debugButtonHeight / 2;
+      this.debugButton.hovered =
+        x >= debugButtonLeft &&
+        x <= debugButtonLeft + layout.debugButtonWidth &&
+        y >= debugButtonTop &&
+        y <= debugButtonTop + layout.debugButtonHeight;
+    } else {
+      this.debugButton.hovered = false;
+    }
+
     // If sock pile is pressed but mouse moved away from it, stop auto-shooting
     if (this.sockPilePressed && !this.sockManager.checkSockPileClick(x, y)) {
       this.sockPilePressed = false;
@@ -549,6 +603,16 @@ class MatchScreen extends Screen {
       this.draggedSock.y = y - this.dragOffset.y;
       this.draggedSock.vx = 0;
       this.draggedSock.vy = 0;
+
+      // Check if mouse moved significantly (more than 5 pixels) - if so, it's a drag
+      if (this.initialMousePos && !this.wasDragged) {
+        const dx = x - this.initialMousePos.x;
+        const dy = y - this.initialMousePos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > 5) {
+          this.wasDragged = true;
+        }
+      }
 
       // Track drag history for velocity calculation
       const currentTime = Date.now();
@@ -577,7 +641,7 @@ class MatchScreen extends Screen {
 
   updateCursor(x, y) {
     // Check if hovering over buttons
-    const isButtonHovered = this.pauseButton.hovered || this.exitButton.hovered;
+    const isButtonHovered = this.pauseButton.hovered || this.exitButton.hovered || this.debugButton.hovered;
 
     // Check if hovering over sock pile (only when not paused)
     const isSockPileHovered = !this.isPaused && this.sockPileHover;
@@ -686,6 +750,13 @@ class MatchScreen extends Screen {
           this.physics.snapToDropZone(sock, zone);
           snapped = true;
           this.createSnapEffect(zone);
+
+          // Track placement method for Snappy achievement
+          const placementMethod = this.wasDragged ? 'drag' : 'click';
+          if (!this.pairPlacementMethods[zone.pairId]) {
+            this.pairPlacementMethods[zone.pairId] = [];
+          }
+          this.pairPlacementMethods[zone.pairId].push(placementMethod);
         } else {
           // Zone occupied, throw the sock with calculated velocity
           const throwVelocity = this.calculateThrowVelocity();
@@ -713,6 +784,8 @@ class MatchScreen extends Screen {
     this.isDragging = false;
     this.dropZoneHover = null;
     this.dragHistory = [];
+    this.initialMousePos = null;
+    this.wasDragged = false;
     this.checkForMatches();
   }
 
@@ -757,6 +830,52 @@ class MatchScreen extends Screen {
     this.game.changeGameState("menu");
   }
 
+  matchAllSocks() {
+    // Debug function to instantly match all socks
+    this.game.audioManager.playSound("click", false, 0.5);
+
+    // Get all remaining socks
+    const level = GameConfig.LEVELS[this.game.currentLevel];
+    if (!level) return;
+
+    // Calculate how many pairs we need to make
+    const pairsNeeded = level.sockPairs - this.game.sockBalls;
+
+    // Match pairs by taking socks from the pile
+    for (let i = 0; i < pairsNeeded; i++) {
+      if (this.sockManager.sockList.length >= 2) {
+        // Get the sock type from the sock list
+        const sockType = this.sockManager.sockList[0];
+
+        // Remove two socks from the pile
+        this.sockManager.sockList.shift();
+        this.sockManager.sockList.shift();
+
+        // Directly increment sockballs count
+        this.game.sockBalls++;
+
+        // Add sockball to the game's sockball queue for throwing
+        this.game.sockballQueue.push(sockType);
+
+        // Play match sound
+        if (i === 0) {
+          this.game.audioManager.playSound("easter-egg-match", false, 0.5);
+        }
+      }
+    }
+
+    // Mark level as completed
+    this.levelCompleted = true;
+
+    // Start throwing phase
+    const timeoutId = setTimeout(() => {
+      if (this.game.gameState === "matching") {
+        this.game.startThrowingPhase();
+      }
+    }, 500);
+    this.activeTimeouts.push(timeoutId);
+  }
+
   createSnapEffect(zone) {
     zone.glowEffect = 20;
 
@@ -786,6 +905,38 @@ class MatchScreen extends Screen {
               this.game.unlockAchievement("one_at_a_time");
             }
           }
+
+          // Achievement: SNAPPY & PURE_SNAP - Check sock placement methods
+          if (this.pairPlacementMethods[pairId] && this.pairPlacementMethods[pairId].length === 2) {
+            const hasClickPlacement = this.pairPlacementMethods[pairId].includes('click');
+            const allClickPlacements = this.pairPlacementMethods[pairId].every(method => method === 'click');
+
+            if (hasClickPlacement) {
+              this.game.unlockAchievement("snappy");
+
+              // Achievement: PURE_SNAP - Both socks placed without dragging
+              if (allClickPlacements) {
+                this.game.unlockAchievement("pure_snap");
+              }
+
+              // Increment snap counters
+              this.game.currentGameSnapPlacements++;
+              this.game.totalSnapPlacements++;
+
+              // Achievement: DOUBLE_SNAP - 2 snaps in one game
+              if (this.game.currentGameSnapPlacements >= GameConfig.ACHIEVEMENTS.DOUBLE_SNAP.threshold) {
+                this.game.unlockAchievement("double_snap");
+              }
+
+              // Achievement: SNAP_MASTER - 10 total snaps
+              if (this.game.totalSnapPlacements >= GameConfig.ACHIEVEMENTS.SNAP_MASTER.threshold) {
+                this.game.unlockAchievement("snap_master");
+              }
+            }
+          }
+
+          // Clear the placement tracking for this pair
+          delete this.pairPlacementMethods[pairId];
 
           this.game.audioManager.playSound("easter-egg-match", false, 0.5);
 
@@ -873,6 +1024,9 @@ class MatchScreen extends Screen {
           this.handleMismatch(pairZones[0].sock, pairZones[1].sock);
           pairZones[0].sock = null;
           pairZones[1].sock = null;
+
+          // Clear placement tracking for this pair on mismatch
+          delete this.pairPlacementMethods[pairId];
 
           // Achievement: MOMENTUM_KILLER - Break a 15+ match streak
           if (this.matchStreak >= GameConfig.ACHIEVEMENTS.MOMENTUM_KILLER.threshold) {
@@ -1470,6 +1624,20 @@ class MatchScreen extends Screen {
       this.exitButton.hovered,
       "rgba(180, 40, 40, 0.8)"
     );
+
+    // Debug button (only visible in DEV_MODE)
+    if (GameConfig.DEV_MODE) {
+      this.renderBottomBarButton(
+        ctx,
+        layout.debugButtonX,
+        layout.debugButtonY,
+        layout.debugButtonWidth,
+        layout.debugButtonHeight,
+        "Match All",
+        this.debugButton.hovered,
+        "rgba(255, 0, 255, 0.8)"
+      );
+    }
   }
 
   renderBottomBarButton(ctx, x, y, width, height, text, isHovered, baseColor) {

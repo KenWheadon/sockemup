@@ -7,7 +7,7 @@ const DEFAULT_SPRITESHEET_FRAMES = [
 const GameConfig = {
   // ========== DEVELOPER MODE ==========
   // Set to true to unlock all levels and difficulties for QA/testing
-  DEV_MODE: false,
+  DEV_MODE: true,
 
   // Target canvas dimensions and aspect ratio
   TARGET_WIDTH: 1200,
@@ -778,7 +778,7 @@ const GameConfig = {
       name: "NEW GAME+1",
       speedMultiplier: 1.3,
       timeMultiplier: 0.9,
-      throwCooldownMultiplier: 1,
+      throwCooldownMultiplier: 0.9,
       throwSpeedMultiplier: 1.1,
       catchRadiusMultiplier: 0.85,
       displayName: "★",
@@ -788,7 +788,7 @@ const GameConfig = {
       name: "NEW GAME+2",
       speedMultiplier: 1.5,
       timeMultiplier: 0.82,
-      throwCooldownMultiplier: 0.9,
+      throwCooldownMultiplier: 0.85,
       throwSpeedMultiplier: 1.2,
       catchRadiusMultiplier: 0.75,
       displayName: "★★",
@@ -798,7 +798,7 @@ const GameConfig = {
       name: "NEW GAME+3",
       speedMultiplier: 1.75,
       timeMultiplier: 0.78,
-      throwCooldownMultiplier: 0.85,
+      throwCooldownMultiplier: 0.75,
       throwSpeedMultiplier: 1.4,
       catchRadiusMultiplier: 0.6,
       displayName: "★★★",
@@ -806,11 +806,11 @@ const GameConfig = {
     },
     PLUS_4: {
       name: "NEW GAME+4",
-      speedMultiplier: 1.95,
+      speedMultiplier: 1.85,
       timeMultiplier: 0.75,
-      throwCooldownMultiplier: 0.75,
-      throwSpeedMultiplier: 1.6,
-      catchRadiusMultiplier: 0.5,
+      throwCooldownMultiplier: 0.5,
+      throwSpeedMultiplier: 1.7,
+      catchRadiusMultiplier: 0.45,
       displayName: "★★★★",
       stars: 4,
     },
@@ -1111,6 +1111,14 @@ const GameConfig = {
       unlocked: false,
       threshold: 10,
     },
+    THATS_NOT_POSSIBLE: {
+      id: "thats_not_possible",
+      name: "That's Not Possible",
+      description: "Hit Martha with a sockball that bounced 3+ times",
+      icon: "icon-shock.png",
+      unlocked: false,
+      bounceThreshold: 3,
+    },
     SECRET_VIDEO_WATCHER: {
       id: "secret_video_watcher",
       name: "Secret Video Watcher",
@@ -1124,6 +1132,7 @@ const GameConfig = {
       description: "Watch all secret bonus videos",
       icon: "icon-tv.png",
       unlocked: false,
+      threshold: 5,
     },
     PERFECT_TIMING: {
       id: "perfect_timing",
@@ -1189,10 +1198,10 @@ const GameConfig = {
     GRIND_MASTER: {
       id: "grind_master",
       name: "Grind Master",
-      description: "Complete (DEBUG 30)100 total levels",
+      description: "Complete 100 total levels",
       icon: "icon-barbell.png",
       unlocked: false,
-      threshold: 30,
+      threshold: 100,
     },
     MY_FAVORITE: {
       id: "my_favorite",
@@ -1275,7 +1284,15 @@ const GameConfig = {
       description: "Hit Martha within 0.5 seconds with 2 sockballs",
       icon: "icon-beetle.png",
       unlocked: false,
-      timeWindow: 0.5, // seconds
+      timeWindow: 0.6, // seconds
+    },
+    PINCER_ADDICT: {
+      id: "pincer_addict",
+      name: "Pincer Addict",
+      description: "Do 5 lifetime pincers",
+      icon: "icon-brain.png",
+      unlocked: false,
+      threshold: 5,
     },
     NO_HOPE: {
       id: "no_hope",
@@ -1319,10 +1336,40 @@ const GameConfig = {
     ONE_AT_A_TIME: {
       id: "one_at_a_time",
       name: "One at a Time",
-      description: "Match the same sock type 4 times in a row during a single match screen",
+      description: "Match the same sock type 4x in a row",
       icon: "icon-sock.png",
       unlocked: false,
       threshold: 4,
+    },
+    SNAPPY: {
+      id: "snappy",
+      name: "Snappy",
+      description: "Finish a pair without dragging - click only",
+      icon: "icon-lightning.png",
+      unlocked: false,
+    },
+    PURE_SNAP: {
+      id: "pure_snap",
+      name: "Pure Snap",
+      description: "Match a pair with both socks placed without dragging",
+      icon: "icon-sparkles.png",
+      unlocked: false,
+    },
+    DOUBLE_SNAP: {
+      id: "double_snap",
+      name: "Double Snap",
+      description: "Get 2 snap placements in 1 game",
+      icon: "icon-hands.png",
+      unlocked: false,
+      threshold: 2,
+    },
+    SNAP_MASTER: {
+      id: "snap_master",
+      name: "Snap Master",
+      description: "Get 10 snap placements total",
+      icon: "icon-diamond.png",
+      unlocked: false,
+      threshold: 10,
     },
   },
 

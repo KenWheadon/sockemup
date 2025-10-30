@@ -41,7 +41,10 @@ class SockGame {
     this.totalFlubs = 0; // Total flubs lifetime (for Flub King)
     this.totalMisses = 0; // Total misses lifetime (for Miss Miss Miss)
     this.currentGameMisses = 0; // Misses in current level (for No Hope)
+    this.totalSnapPlacements = 0; // Total snap placements lifetime (for Snap Master)
+    this.currentGameSnapPlacements = 0; // Snap placements in current level (for Double Snap)
     this.lastHitTime = 0; // Timestamp of last Martha hit (for Pincer)
+    this.totalPincers = 0; // Total lifetime pincers (for Pincer Addict)
     this.currentLevelMismatches = 0; // Mismatches in current level (for Mismatch Chaos)
     this.lifetimeMismatches = 0; // Total mismatches lifetime (for Mismatch Queen)
     this.currentMatchTypeStreak = []; // Array tracking recent match types for "One at a time"
@@ -577,6 +580,8 @@ class SockGame {
       this.totalFlubs = data.totalFlubs || 0;
       this.totalMisses = data.totalMisses || 0;
       this.lifetimeMismatches = data.lifetimeMismatches || 0;
+      this.totalSnapPlacements = data.totalSnapPlacements || 0;
+      this.totalPincers = data.totalPincers || 0;
 
       this.selectedDifficulty = data.selectedDifficulty || 0;
 
@@ -827,6 +832,8 @@ class SockGame {
       totalFlubs: this.totalFlubs,
       totalMisses: this.totalMisses,
       lifetimeMismatches: this.lifetimeMismatches,
+      totalSnapPlacements: this.totalSnapPlacements,
+      totalPincers: this.totalPincers,
       // NEW GAME+: Save per-difficulty progress
       selectedDifficulty: this.selectedDifficulty,
       highestUnlockedDifficulty: this.highestUnlockedDifficulty,

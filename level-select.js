@@ -3543,6 +3543,53 @@ class LevelSelect extends Screen {
         const cardHeight = this.game.getScaledValue(65);
         const cardRadius = this.game.getScaledValue(8);
 
+        // Calculate progress for achievements with thresholds
+        let progressPercent = 0;
+        if (achievement.threshold && !unlocked) {
+          // Map achievement IDs to their progress values
+          const progressMap = {
+            sock_hoarder: this.game.totalSockMatches,
+            deep_pockets: this.game.playerPoints,
+            big_spender: this.game.totalMoneySpent,
+            marthas_millionaire: this.game.totalSockballsEarned,
+            veteran_tenant: this.game.levelsPlayed,
+            sockball_wizard: this.game.easterEggSockballsCreated,
+            logo_clicker: this.game.logoClickCount,
+            butterfingers: this.game.achievements[achievement.id]?.consecutiveMisses || 0,
+            pinball_king: this.game.totalWallBounceCatches,
+            bonus_master: this.game.totalBonusHits,
+            space_shooter: this.game.totalDoubleBounces,
+            disaster_prone: this.game.totalLevelLosses || 0,
+            grind_master: this.game.totalLevelsPlayed || 0,
+            thats_my_song: this.game.audioPlayer?.getMostPlayedCount() || 0,
+            kinda_perfect: this.game.totalPerfectShots || 0,
+            perfection: this.game.totalPerfectShots || 0,
+            good_enough: this.game.totalGoodShots || 0,
+            flub_king: this.game.totalFlubs || 0,
+            pincer_addict: this.game.totalPincers || 0,
+            miss_miss_miss: this.game.totalMisses || 0,
+            mismatch_queen: this.game.lifetimeMismatches || 0,
+            snap_master: this.game.totalSnapPlacements || 0,
+            video_completionist: this.game.watchedVideos?.length || 0,
+            speed_royalty: this.game.consecutiveWins || 0,
+            baby_speed_run: this.game.consecutiveWins || 0,
+            speed_run: this.game.consecutiveWins || 0,
+            deadeye: this.game.consecutiveHits || 0,
+            streak_king: this.game.achievements[achievement.id]?.maxStreak || 0,
+            combo_master: this.game.achievements[achievement.id]?.maxStreak || 0,
+            sock_sniper: this.game.achievements[achievement.id]?.consecutivePerfects || 0,
+            pinball_wizard: this.game.achievements[achievement.id]?.wallBouncesThisLevel || 0,
+            mismatch_chaos: this.game.achievements[achievement.id]?.mismatchesThisLevel || 0,
+            double_snap: this.game.achievements[achievement.id]?.snapsThisGame || 0,
+            one_at_a_time: this.game.achievements[achievement.id]?.sameTypeStreak || 0,
+            momentum_killer: this.game.achievements[achievement.id]?.streakBeforeBreak || 0,
+            no_hope: this.game.achievements[achievement.id]?.missesThisGame || 0,
+          };
+
+          const currentProgress = progressMap[achievement.id] || 0;
+          progressPercent = Math.min(currentProgress / achievement.threshold, 1);
+        }
+
         const cardGradient = ctx.createLinearGradient(
           cardX,
           cardY,
@@ -3595,6 +3642,77 @@ class LevelSelect extends Screen {
         ctx.quadraticCurveTo(cardX, cardY, cardX + cardRadius, cardY);
         ctx.closePath();
         ctx.fill();
+
+        // Draw progress fill for achievements with thresholds (only if not unlocked)
+        if (achievement.threshold && !unlocked && progressPercent >= 0) {
+          const progressWidth = cardWidth * progressPercent;
+
+          ctx.save();
+          // Clip to card shape
+          ctx.beginPath();
+          ctx.moveTo(cardX + cardRadius, cardY);
+          ctx.lineTo(cardX + cardWidth - cardRadius, cardY);
+          ctx.quadraticCurveTo(
+            cardX + cardWidth,
+            cardY,
+            cardX + cardWidth,
+            cardY + cardRadius
+          );
+          ctx.lineTo(cardX + cardWidth, cardY + cardHeight - cardRadius);
+          ctx.quadraticCurveTo(
+            cardX + cardWidth,
+            cardY + cardHeight,
+            cardX + cardWidth - cardRadius,
+            cardY + cardHeight
+          );
+          ctx.lineTo(cardX + cardRadius, cardY + cardHeight);
+          ctx.quadraticCurveTo(
+            cardX,
+            cardY + cardHeight,
+            cardX,
+            cardY + cardHeight - cardRadius
+          );
+          ctx.lineTo(cardX, cardY + cardRadius);
+          ctx.quadraticCurveTo(cardX, cardY, cardX + cardRadius, cardY);
+          ctx.closePath();
+          ctx.clip();
+
+          // Draw progress fill
+          const progressGradient = ctx.createLinearGradient(
+            cardX,
+            cardY,
+            cardX,
+            cardY + cardHeight
+          );
+          progressGradient.addColorStop(0, "rgba(100, 180, 255, 0.2)");
+          progressGradient.addColorStop(1, "rgba(60, 120, 200, 0.15)");
+
+          ctx.fillStyle = progressGradient;
+          ctx.fillRect(cardX, cardY, progressWidth, cardHeight);
+
+          // Add a subtle glow at the edge of progress
+          if (progressPercent < 1) {
+            const edgeGradient = ctx.createLinearGradient(
+              cardX + progressWidth - this.game.getScaledValue(15),
+              cardY,
+              cardX + progressWidth + this.game.getScaledValue(5),
+              cardY
+            );
+            edgeGradient.addColorStop(0, "rgba(100, 180, 255, 0)");
+            edgeGradient.addColorStop(0.5, "rgba(100, 180, 255, 0.4)");
+            edgeGradient.addColorStop(1, "rgba(100, 180, 255, 0)");
+
+            ctx.fillStyle = edgeGradient;
+            ctx.fillRect(
+              cardX + progressWidth - this.game.getScaledValue(15),
+              cardY,
+              this.game.getScaledValue(20),
+              cardHeight
+            );
+          }
+
+          ctx.restore();
+        }
 
         if (unlocked) {
           ctx.strokeStyle = isHovered

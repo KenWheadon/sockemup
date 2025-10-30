@@ -287,8 +287,9 @@ class LevelEndScreen extends Screen {
     this.sockballsPaidPoints = uncaughtPaidSockballs * GameConfig.getCatchQualityPoints('regular', difficulty);
 
     // Time bonus: double the total rent payment points (catch quality + base) if earned
+    // Only award time bonus if the player won (no rent penalty)
     this.timeBonusPoints = 0;
-    if (this.game.timeBonusEarned && this.sockballsPaid > 0) {
+    if (this.game.timeBonusEarned && this.sockballsPaid > 0 && this.rentPenalty === 0) {
       this.timeBonusPoints = totalCatchQualityPoints + this.sockballsPaidPoints;
     }
 

@@ -469,7 +469,18 @@ class ThrowingScreen extends Screen {
     if (this.game.lastHitTime > 0) {
       const timeSinceLastHit = currentTime - this.game.lastHitTime;
       if (timeSinceLastHit <= GameConfig.ACHIEVEMENTS.PINCER.timeWindow) {
+        console.log(`[PINCER] Detected! Time between hits: ${timeSinceLastHit.toFixed(3)}s`);
         this.game.unlockAchievement("pincer");
+
+        // Increment pincer counter
+        this.game.totalPincers++;
+        console.log(`[PINCER] Total pincers: ${this.game.totalPincers}/${GameConfig.ACHIEVEMENTS.PINCER_ADDICT.threshold}`);
+
+        // Achievement: PINCER_ADDICT - 10 lifetime pincers
+        if (this.game.totalPincers >= GameConfig.ACHIEVEMENTS.PINCER_ADDICT.threshold) {
+          this.game.unlockAchievement("pincer_addict");
+          console.log("[PINCER_ADDICT] Achievement unlocked!");
+        }
       }
     }
     this.game.lastHitTime = currentTime;
@@ -520,6 +531,12 @@ class ThrowingScreen extends Screen {
         ) {
           this.game.unlockAchievement("space_shooter");
         }
+      }
+
+      // Achievement: THATS_NOT_POSSIBLE - Hit Martha with a sockball that bounced 3+ times
+      if (sockball.bounceCount >= GameConfig.ACHIEVEMENTS.THATS_NOT_POSSIBLE.bounceThreshold) {
+        console.log(`[THATS_NOT_POSSIBLE] Unlocking achievement - bounceCount: ${sockball.bounceCount}`);
+        this.game.unlockAchievement("thats_not_possible");
       }
     }
 
