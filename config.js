@@ -653,7 +653,6 @@ const GameConfig = {
       "icon-shock.png",
       "icon-beetle.png",
       "icon-crying.png",
-      "icon-diamondsockball.png",
       "icon-goldensocks.png",
       "icon-thumbsdown.png",
       "icon-thumbsup.png",
