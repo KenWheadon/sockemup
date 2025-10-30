@@ -1040,9 +1040,19 @@ class ThrowingScreen extends Screen {
       this.canThrow() &&
       (this.mouseX > 0 || this.mouseY > 0 || this.keyboardAimX !== null)
     ) {
-      // Use keyboard aim if active, otherwise use last mouse position
-      const aimX = this.keyboardAimX !== null ? this.keyboardAimX : this.mouseX;
-      const aimY = this.keyboardAimY !== null ? this.keyboardAimY : this.mouseY;
+      // Use controller reticle if visible, otherwise keyboard aim, otherwise mouse position
+      let aimX, aimY;
+      if (this.game.controllerManager?.isReticleVisible()) {
+        const reticlePos = this.game.controllerManager.getReticlePosition();
+        aimX = reticlePos.x;
+        aimY = reticlePos.y;
+      } else if (this.keyboardAimX !== null) {
+        aimX = this.keyboardAimX;
+        aimY = this.keyboardAimY;
+      } else {
+        aimX = this.mouseX;
+        aimY = this.mouseY;
+      }
       this.updateTrajectoryPreview(aimX, aimY);
       this.showTrajectory = true;
     } else if (!this.canThrow()) {

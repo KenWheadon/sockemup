@@ -7,7 +7,7 @@ const DEFAULT_SPRITESHEET_FRAMES = [
 const GameConfig = {
   // ========== DEVELOPER MODE ==========
   // Set to true to unlock all levels and difficulties for QA/testing
-  DEV_MODE: false,
+  DEV_MODE: true,
 
   // Target canvas dimensions and aspect ratio
   TARGET_WIDTH: 1200,
@@ -1299,7 +1299,7 @@ const GameConfig = {
       description: "Hit Martha within 0.5 seconds with 2 sockballs",
       icon: "icon-beetle.png",
       unlocked: false,
-      timeWindow: 0.75, // seconds
+      timeWindow: 0.65, // seconds
     },
     PINCER_ADDICT: {
       id: "pincer_addict",

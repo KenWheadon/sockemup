@@ -1925,7 +1925,7 @@ class MatchScreen extends Screen {
     if (this.sockManager.checkSockPileClick(x, y)) {
       this.sockPilePressed = true;
       this.shootSockFromPile();
-      // Note: We don't start auto-shoot for controller since it's a single button press
+      this.startAutoShoot(); // Start auto-shooting after initial shot
       return true;
     }
 
@@ -1959,6 +1959,14 @@ class MatchScreen extends Screen {
     }
 
     return false;
+  }
+
+  handleReticleRelease(x, y) {
+    // Stop auto-shooting when button is released
+    if (this.sockPilePressed) {
+      this.sockPilePressed = false;
+      this.stopAutoShoot();
+    }
   }
 
   isPointInRect(x, y, rect) {

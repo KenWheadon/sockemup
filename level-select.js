@@ -1996,6 +1996,39 @@ class LevelSelect extends Screen {
       height: layout.achievementsButtonHeight,
     });
 
+    // Add secret bonus video button (if all levels completed)
+    if (this.areAllLevelsCompleted()) {
+      elements.push({
+        x: layout.videoButtonX - layout.videoButtonWidth / 2,
+        y: layout.videoButtonY - layout.videoButtonHeight / 2,
+        width: layout.videoButtonWidth,
+        height: layout.videoButtonHeight,
+      });
+    }
+
+    // Add difficulty selector button (if New Game+ is unlocked)
+    if (this.game.highestUnlockedDifficulty > 0) {
+      elements.push({
+        x: this.difficultySelector.button.x,
+        y: this.difficultySelector.button.y,
+        width: this.difficultySelector.button.width,
+        height: this.difficultySelector.button.height,
+      });
+
+      // Add dropdown options if open
+      if (this.difficultySelector.isOpen) {
+        for (let i = 0; i < this.difficultySelector.dropdown.options.length; i++) {
+          const optionY = this.difficultySelector.dropdown.y + i * this.difficultySelector.dropdown.optionHeight;
+          elements.push({
+            x: this.difficultySelector.dropdown.x,
+            y: optionY,
+            width: this.difficultySelector.dropdown.width,
+            height: this.difficultySelector.dropdown.optionHeight,
+          });
+        }
+      }
+    }
+
     // Add level tiles
     const levelTileSize = this.game.getScaledValue(
       this.levelConfig.baseButtonSize
@@ -2018,6 +2051,14 @@ class LevelSelect extends Screen {
   }
 
   handleReticleMove(x, y) {
+    // If video player is active, don't update hover states for background elements
+    if (this.videoPlayerActive) {
+      if (this.game.controllerManager) {
+        this.game.controllerManager.setReticleHoverState(false);
+      }
+      return;
+    }
+
     // If audio player is open, delegate to it
     if (this.audioPlayer.isOpen) {
       this.audioPlayer.handleReticleMove(x, y);
@@ -2134,6 +2175,24 @@ class LevelSelect extends Screen {
       height: layout.achievementsButtonHeight,
     });
 
+    // Video button hover (only if all levels completed)
+    if (this.areAllLevelsCompleted()) {
+      this.videoButton.hovered = this.isPointInRect(x, y, {
+        x: layout.videoButtonX - layout.videoButtonWidth / 2,
+        y: layout.videoButtonY - layout.videoButtonHeight / 2,
+        width: layout.videoButtonWidth,
+        height: layout.videoButtonHeight,
+      });
+    } else {
+      this.videoButton.hovered = false;
+    }
+
+    // Difficulty selector hover (only if New Game+ is unlocked)
+    if (this.game.highestUnlockedDifficulty > 0) {
+      this.difficultySelector.updateButtonHover(x, y);
+      this.difficultySelector.updateDropdownHover(x, y);
+    }
+
     // Handle achievements drawer hover detection
     if (
       this.achievementsDrawer.isOpen &&
@@ -2169,7 +2228,9 @@ class LevelSelect extends Screen {
         this.storyViewer.button.hovered ||
         this.creditsButton.hovered ||
         this.audioPlayerButton.hovered ||
-        this.achievementsDrawer.button.hovered;
+        this.achievementsDrawer.button.hovered ||
+        this.videoButton.hovered ||
+        (this.game.highestUnlockedDifficulty > 0 && this.difficultySelector.isButtonHovered());
 
       if (this.game.controllerManager) {
         this.game.controllerManager.setReticleHoverState(isHovering);
@@ -2178,6 +2239,26 @@ class LevelSelect extends Screen {
   }
 
   handleReticleAction(x, y) {
+    // Handle video player modal clicks
+    if (this.videoPlayerActive) {
+      const videoWidth = this.game.getScaledValue(640);
+      const videoHeight = this.game.getScaledValue(360);
+      const videoX = (this.game.getCanvasWidth() - videoWidth) / 2;
+      const videoY = (this.game.getCanvasHeight() - videoHeight) / 2;
+      const clickMargin = this.game.getScaledValue(10);
+
+      const clickedOutside =
+        x < videoX - clickMargin ||
+        x > videoX + videoWidth + clickMargin ||
+        y < videoY - clickMargin ||
+        y > videoY + videoHeight + clickMargin;
+
+      if (clickedOutside) {
+        this.closeVideoPlayer();
+      }
+      return true;
+    }
+
     // If audio player is open, delegate to it
     if (this.audioPlayer.isOpen) {
       return this.audioPlayer.handleReticleAction(x, y);
@@ -2292,6 +2373,21 @@ class LevelSelect extends Screen {
     if (this.achievementsDrawer.button.hovered) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.toggleAchievementsDrawer();
+      return true;
+    }
+
+    // Check video button (if all levels completed)
+    if (this.videoButton.hovered && this.areAllLevelsCompleted()) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.openVideoPlayer();
+      return true;
+    }
+
+    // Check difficulty selector (if New Game+ unlocked)
+    if (this.game.highestUnlockedDifficulty > 0 && this.difficultySelector.handleClick(x, y)) {
+      // Clear cache and recalculate layout after difficulty change to update level display
+      this.clearLayoutCache();
+      this.calculateLayout();
       return true;
     }
 

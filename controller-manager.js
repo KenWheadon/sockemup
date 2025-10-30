@@ -346,12 +346,22 @@ class ControllerManager {
       }
     }
 
-    // Handle A button for reticle action (in menu/gameOver/matching states)
-    if ((gameState === 'menu' || gameState === 'gameOver' || gameState === 'matching') && this.buttonJustPressed(gamepad, 0, aButton)) {
+    // Handle A button release (for stopping auto-shoot on sock pile)
+    if (this.buttonJustReleased(gamepad, 0, aButton)) {
+      if (currentScreen && typeof currentScreen.handleReticleRelease === 'function') {
+        currentScreen.handleReticleRelease(this.reticle.x, this.reticle.y);
+      }
+    }
+
+    // Handle A button for reticle action (in all states)
+    // Check this FIRST to allow clicking buttons before other actions
+    const aButtonPressed = this.buttonJustPressed(gamepad, 0, aButton);
+    if (aButtonPressed) {
       const handled = this.handleReticleAction();
       if (handled) {
-        return; // Don't process other A button actions if reticle handled it
+        return; // Don't process other A button actions if reticle handled it (clicked a button)
       }
+      // If not handled, continue to state-specific handling below
     }
 
     // Game state specific button handling
@@ -373,18 +383,38 @@ class ControllerManager {
       }
 
     } else if (gameState === 'throwing') {
-      // A button or RT - throw sockball
-      if (this.buttonJustPressed(gamepad, 0, aButton) || this.buttonJustPressed(gamepad, 7, rtButton)) {
+      // A button was already checked above
+      // If we got here and aButtonPressed is true, handleReticleAction returned false
+      // (didn't click a button), so throw sockball
+
+      // Check if we should throw (A button that wasn't handled OR RT trigger)
+      const rtPressed = this.buttonJustPressed(gamepad, 7, rtButton);
+      const shouldThrow = aButtonPressed || rtPressed;
+
+      if (shouldThrow) {
         if (typeof currentScreen.canThrow === 'function' && currentScreen.canThrow()) {
-          if (currentScreen.keyboardAimX !== null && currentScreen.keyboardAimY !== null) {
+          // Use reticle position if visible, otherwise keyboard aim
+          let throwX, throwY;
+          if (this.isReticleVisible()) {
+            throwX = this.reticle.x;
+            throwY = this.reticle.y;
+          } else if (currentScreen.keyboardAimX !== null && currentScreen.keyboardAimY !== null) {
+            throwX = currentScreen.keyboardAimX;
+            throwY = currentScreen.keyboardAimY;
+          }
+
+          if (throwX !== undefined && throwY !== undefined) {
             if (typeof currentScreen.throwSockball === 'function') {
-              currentScreen.throwSockball(currentScreen.keyboardAimX, currentScreen.keyboardAimY);
+              currentScreen.throwSockball(throwX, throwY);
             }
           }
         }
       }
 
     } else if (gameState === 'menu') {
+      // A button is already handled by handleReticleAction above
+      // (clicks buttons, selects levels, etc.)
+
       // Check if audio player is open and handle B button to close it
       if (currentScreen.audioPlayer?.isOpen && this.buttonJustPressed(gamepad, 1, bButton)) {
         currentScreen.audioPlayer.close();
@@ -392,9 +422,11 @@ class ControllerManager {
         return;
       }
 
-      // A button - select level
-      if (this.buttonJustPressed(gamepad, 0, aButton)) {
-        this.simulateKeyPress(currentScreen, 'Enter');
+      // Check if achievements drawer is open and handle B button to close it
+      if (currentScreen.achievementsDrawer?.isOpen && this.buttonJustPressed(gamepad, 1, bButton)) {
+        currentScreen.achievementsDrawer.isOpen = false;
+        this.game.audioManager.playSound("button-click", false, 0.5);
+        return;
       }
 
       // B button - back/cancel
@@ -403,8 +435,9 @@ class ControllerManager {
       }
 
     } else if (gameState === 'gameOver') {
-      // A button - continue
-      if (this.buttonJustPressed(gamepad, 0, aButton)) {
+      // A button was already checked above
+      // If aButtonPressed is true and we got here, use it for continue action
+      if (aButtonPressed) {
         this.simulateKeyPress(currentScreen, 'Enter');
       }
     }
@@ -443,6 +476,26 @@ class ControllerManager {
     }
 
     return justPressed;
+  }
+
+  buttonJustReleased(gamepad, buttonIndexOrName, currentState) {
+    const buttonKey = `${gamepad.index}_${buttonIndexOrName}`;
+
+    // Get previous button state
+    const prevState = this.buttonStates.get(buttonKey) || false;
+
+    // Don't update button state here - let buttonJustPressed handle it
+    // This prevents state from being overwritten before buttonJustPressed is called
+
+    // Button was just released if it was pressed before but isn't now
+    const justReleased = !currentState && prevState;
+
+    // Only update state if button was actually released (to prepare for next frame)
+    if (justReleased) {
+      this.buttonStates.set(buttonKey, currentState);
+    }
+
+    return justReleased;
   }
 
   applyDeadzone(value) {
