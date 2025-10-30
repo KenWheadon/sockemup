@@ -268,6 +268,89 @@ class LevelSelect extends Screen {
     return this.game.completedLevels.every((completed) => completed);
   }
 
+  updateMainMenuButtonHoverStates(x, y) {
+    // Update all main menu button hover states based on reticle position
+    // This should be called even when panels are open so hover states are ready when panels close
+    const previousHoveredLevel = this.hoveredLevel;
+    this.hoveredLevel = this.getLevelAtPosition(x, y);
+
+    // Play hover sound when hovering over a new level (but only if no panels are open)
+    if (
+      !this.audioPlayer.isOpen &&
+      !this.storyViewer.isOpen &&
+      !this.game.storyManager.showingStory &&
+      !this.creditsOpen &&
+      !this.videoPlayerActive &&
+      this.hoveredLevel !== previousHoveredLevel &&
+      this.hoveredLevel !== -1
+    ) {
+      this.game.audioManager.playSound("button-hover", false, 0.3);
+    }
+
+    // Update button hover states
+    const layout = this.layoutCache;
+
+    this.storyReplayButton.hovered = this.isPointInRect(x, y, {
+      x: layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2,
+      y: layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2,
+      width: layout.storyReplayButtonWidth,
+      height: layout.storyReplayButtonHeight,
+    });
+
+    this.storyViewer.button.hovered = this.isPointInRect(x, y, {
+      x: layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2,
+      y: layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2,
+      width: layout.storyViewerButtonWidth,
+      height: layout.storyViewerButtonHeight,
+    });
+
+    this.creditsButton.hovered = this.isPointInRect(x, y, {
+      x: layout.creditsButtonX - layout.creditsButtonWidth / 2,
+      y: layout.creditsButtonY - layout.creditsButtonHeight / 2,
+      width: layout.creditsButtonWidth,
+      height: layout.creditsButtonHeight,
+    });
+
+    this.audioPlayerButton.hovered = false;
+    if (
+      this.audioPlayer &&
+      this.audioPlayer.game.unlockedTracks &&
+      this.audioPlayer.game.unlockedTracks.length > 0
+    ) {
+      this.audioPlayerButton.hovered = this.isPointInRect(x, y, {
+        x: layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2,
+        y: layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2,
+        width: layout.audioPlayerButtonWidth,
+        height: layout.audioPlayerButtonHeight,
+      });
+    }
+
+    this.achievementsDrawer.button.hovered = this.isPointInRect(x, y, {
+      x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
+      y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
+      width: layout.achievementsButtonWidth,
+      height: layout.achievementsButtonHeight,
+    });
+
+    // Video button hover (only if all levels completed)
+    if (this.areAllLevelsCompleted()) {
+      this.videoButton.hovered = this.isPointInRect(x, y, {
+        x: layout.videoButtonX - layout.videoButtonWidth / 2,
+        y: layout.videoButtonY - layout.videoButtonHeight / 2,
+        width: layout.videoButtonWidth,
+        height: layout.videoButtonHeight,
+      });
+    } else {
+      this.videoButton.hovered = false;
+    }
+
+    // Difficulty selector hover (only if New Game+ is unlocked)
+    if (this.game.highestUnlockedDifficulty > 0) {
+      this.difficultySelector.updateButtonHover(x, y);
+      this.difficultySelector.updateDropdownHover(x, y);
+    }
+  }
+
   createLayoutCache() {
     const baseLayout = super.createLayoutCache();
     const canvasWidth = this.game.getCanvasWidth();
@@ -2053,21 +2136,27 @@ class LevelSelect extends Screen {
   handleReticleMove(x, y) {
     // If video player is active, don't update hover states for background elements
     if (this.videoPlayerActive) {
+      // Still update main menu hover states so they're ready when video player closes
+      this.updateMainMenuButtonHoverStates(x, y);
       if (this.game.controllerManager) {
         this.game.controllerManager.setReticleHoverState(false);
       }
       return;
     }
 
-    // If audio player is open, delegate to it
+    // If audio player is open, delegate to it AND update main menu hover states
     if (this.audioPlayer.isOpen) {
+      // Update main menu hover states so they're ready when audio player closes
+      this.updateMainMenuButtonHoverStates(x, y);
       this.audioPlayer.handleReticleMove(x, y);
       return;
     }
 
-    // If story manager is showing, delegate to it
+    // If story manager is showing, delegate to it AND update main menu hover states
     if (this.game.storyManager.showingStory) {
       console.log("Story manager showing - reticle at", x, y);
+      // Update main menu hover states so they're ready when story manager closes
+      this.updateMainMenuButtonHoverStates(x, y);
       this.game.storyManager.handleMouseMove(x, y);
       // Story manager has its own hover state handling
       if (this.game.controllerManager) {
@@ -2076,8 +2165,10 @@ class LevelSelect extends Screen {
       return;
     }
 
-    // If credits popup is open, check for close button hover
+    // If credits popup is open, check for close button hover AND update main menu hover states
     if (this.creditsOpen) {
+      // Update main menu hover states so they're ready when credits closes
+      this.updateMainMenuButtonHoverStates(x, y);
       const closeButton = document.getElementById("closeCredits");
       if (closeButton) {
         // Convert canvas coordinates to screen coordinates
@@ -2099,9 +2190,11 @@ class LevelSelect extends Screen {
       return;
     }
 
-    // If story viewer is open, delegate to it
+    // If story viewer is open, delegate to it AND update main menu hover states
     if (this.storyViewer.isOpen) {
       console.log("Story viewer open - reticle at", x, y);
+      // Update main menu hover states so they're ready when story viewer closes
+      this.updateMainMenuButtonHoverStates(x, y);
       this.storyViewer.handleMouseMove(x, y);
 
       // Update reticle hover state based on story viewer buttons
@@ -2118,80 +2211,8 @@ class LevelSelect extends Screen {
       return;
     }
 
-    // Reuse the existing mouse move logic for hover detection
-    const previousHoveredLevel = this.hoveredLevel;
-    this.hoveredLevel = this.getLevelAtPosition(x, y);
-
-    // Play hover sound when hovering over a new level
-    if (
-      this.hoveredLevel !== previousHoveredLevel &&
-      this.hoveredLevel !== -1
-    ) {
-      this.game.audioManager.playSound("button-hover", false, 0.3);
-    }
-
-    // Update button hover states
-    const layout = this.layoutCache;
-
-    this.storyReplayButton.hovered = this.isPointInRect(x, y, {
-      x: layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2,
-      y: layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2,
-      width: layout.storyReplayButtonWidth,
-      height: layout.storyReplayButtonHeight,
-    });
-
-    this.storyViewer.button.hovered = this.isPointInRect(x, y, {
-      x: layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2,
-      y: layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2,
-      width: layout.storyViewerButtonWidth,
-      height: layout.storyViewerButtonHeight,
-    });
-
-    this.creditsButton.hovered = this.isPointInRect(x, y, {
-      x: layout.creditsButtonX - layout.creditsButtonWidth / 2,
-      y: layout.creditsButtonY - layout.creditsButtonHeight / 2,
-      width: layout.creditsButtonWidth,
-      height: layout.creditsButtonHeight,
-    });
-
-    this.audioPlayerButton.hovered = false;
-    if (
-      this.audioPlayer &&
-      this.audioPlayer.game.unlockedTracks &&
-      this.audioPlayer.game.unlockedTracks.length > 0
-    ) {
-      this.audioPlayerButton.hovered = this.isPointInRect(x, y, {
-        x: layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2,
-        y: layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2,
-        width: layout.audioPlayerButtonWidth,
-        height: layout.audioPlayerButtonHeight,
-      });
-    }
-
-    this.achievementsDrawer.button.hovered = this.isPointInRect(x, y, {
-      x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
-      y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
-      width: layout.achievementsButtonWidth,
-      height: layout.achievementsButtonHeight,
-    });
-
-    // Video button hover (only if all levels completed)
-    if (this.areAllLevelsCompleted()) {
-      this.videoButton.hovered = this.isPointInRect(x, y, {
-        x: layout.videoButtonX - layout.videoButtonWidth / 2,
-        y: layout.videoButtonY - layout.videoButtonHeight / 2,
-        width: layout.videoButtonWidth,
-        height: layout.videoButtonHeight,
-      });
-    } else {
-      this.videoButton.hovered = false;
-    }
-
-    // Difficulty selector hover (only if New Game+ is unlocked)
-    if (this.game.highestUnlockedDifficulty > 0) {
-      this.difficultySelector.updateButtonHover(x, y);
-      this.difficultySelector.updateDropdownHover(x, y);
-    }
+    // Update main menu button hover states (no panels open)
+    this.updateMainMenuButtonHoverStates(x, y);
 
     // Handle achievements drawer hover detection
     if (
