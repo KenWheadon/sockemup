@@ -346,8 +346,8 @@ class ControllerManager {
       }
     }
 
-    // Handle A button for reticle action (in menu/gameOver states)
-    if ((gameState === 'menu' || gameState === 'gameOver') && this.buttonJustPressed(gamepad, 0, aButton)) {
+    // Handle A button for reticle action (in menu/gameOver/matching states)
+    if ((gameState === 'menu' || gameState === 'gameOver' || gameState === 'matching') && this.buttonJustPressed(gamepad, 0, aButton)) {
       const handled = this.handleReticleAction();
       if (handled) {
         return; // Don't process other A button actions if reticle handled it
@@ -356,27 +356,19 @@ class ControllerManager {
 
     // Game state specific button handling
     if (gameState === 'matching') {
-      // A button - shoot sock from pile or drop selected sock
-      if (this.buttonJustPressed(gamepad, 0, aButton)) {
-        if (currentScreen.selectedSock) {
-          // Drop selected sock (Enter key equivalent)
-          this.simulateKeyPress(currentScreen, 'Enter');
-        } else {
-          // Shoot sock from pile (Space key equivalent)
-          this.simulateKeyPress(currentScreen, ' ');
-        }
-      }
-
       // X button - cycle through socks (Tab equivalent)
       if (this.buttonJustPressed(gamepad, 2, xButton)) {
         this.simulateKeyPress(currentScreen, 'Tab');
       }
 
-      // B button - deselect sock
+      // B button - deselect sock or release dragged sock
       if (this.buttonJustPressed(gamepad, 1, bButton)) {
         if (currentScreen.selectedSock) {
           currentScreen.selectedSock = null;
           currentScreen.sockSelectedByKeyboard = false;
+        } else if (currentScreen.draggedSock) {
+          // Release the dragged sock (simulate mouse up)
+          currentScreen.onMouseUp();
         }
       }
 
@@ -530,12 +522,8 @@ class ControllerManager {
 
       // Notify current screen of reticle movement for hover detection
       const currentScreen = this.game.getCurrentScreen();
-      console.log('Reticle position:', this.reticle.x, this.reticle.y, 'Screen:', currentScreen?.constructor?.name);
       if (currentScreen && typeof currentScreen.handleReticleMove === 'function') {
-        console.log('Calling handleReticleMove');
         currentScreen.handleReticleMove(this.reticle.x, this.reticle.y);
-      } else {
-        console.log('handleReticleMove not available');
       }
     }
   }

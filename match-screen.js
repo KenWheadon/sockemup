@@ -1749,7 +1749,7 @@ class MatchScreen extends Screen {
     const layout = this.layoutCache;
     const elements = [];
 
-    // Add pause button
+    // Add pause button (always interactable)
     elements.push({
       x: layout.pauseButtonX - layout.pauseButtonWidth / 2,
       y: layout.pauseButtonY - layout.pauseButtonHeight / 2,
@@ -1757,12 +1757,41 @@ class MatchScreen extends Screen {
       height: layout.pauseButtonHeight
     });
 
-    // Add exit button
+    // Don't add other elements when paused
+    if (this.isPaused) {
+      return elements;
+    }
+
+    // Add exit button (only when not paused)
     elements.push({
       x: layout.exitButtonX - layout.exitButtonWidth / 2,
       y: layout.exitButtonY - layout.exitButtonHeight / 2,
       width: layout.exitButtonWidth,
       height: layout.exitButtonHeight
+    });
+
+    // Add sock pile
+    if (this.sockManager.sockPile && this.sockManager.sockList.length > 0) {
+      const sockPile = this.sockManager.sockPile;
+      elements.push({
+        x: sockPile.x - sockPile.width / 2,
+        y: sockPile.y - sockPile.height / 2,
+        width: sockPile.width,
+        height: sockPile.height
+      });
+    }
+
+    // Add all active socks
+    this.sockManager.socks.forEach((sock) => {
+      if (sock.active && !this.sockManager.isSockInAnimation(sock)) {
+        const sockSize = this.game.getScaledValue(40);
+        elements.push({
+          x: sock.x - sockSize / 2,
+          y: sock.y - sockSize / 2,
+          width: sockSize,
+          height: sockSize
+        });
+      }
     });
 
     return elements;
@@ -1771,7 +1800,46 @@ class MatchScreen extends Screen {
   handleReticleMove(x, y) {
     const layout = this.layoutCache;
 
-    // Update pause button hover state
+    // If dragging a sock, move it with the reticle
+    if (this.draggedSock && !this.isPaused) {
+      this.draggedSock.x = x - this.dragOffset.x;
+      this.draggedSock.y = y - this.dragOffset.y;
+      this.draggedSock.vx = 0;
+      this.draggedSock.vy = 0;
+
+      // Check if reticle moved significantly - if so, it's a drag
+      if (this.initialMousePos && !this.wasDragged) {
+        const dx = x - this.initialMousePos.x;
+        const dy = y - this.initialMousePos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance > 5) {
+          this.wasDragged = true;
+        }
+      }
+
+      // Track drag history for velocity calculation
+      const currentTime = Date.now();
+      this.dragHistory.push({
+        x: x,
+        y: y,
+        timestamp: currentTime,
+      });
+
+      // Keep only recent history
+      if (this.dragHistory.length > this.maxDragHistoryLength) {
+        this.dragHistory.shift();
+      }
+
+      // Remove old entries (older than 150ms)
+      this.dragHistory = this.dragHistory.filter(
+        (entry) => currentTime - entry.timestamp < 150
+      );
+
+      // Update hover effects for drop zones
+      this.updateHoverEffects(x, y);
+    }
+
+    // Update pause button hover state (always allow for pause/resume)
     this.pauseButton.hovered = this.isPointInRect(x, y, {
       x: layout.pauseButtonX - layout.pauseButtonWidth / 2,
       y: layout.pauseButtonY - layout.pauseButtonHeight / 2,
@@ -1779,7 +1847,18 @@ class MatchScreen extends Screen {
       height: layout.pauseButtonHeight
     });
 
-    // Update exit button hover state
+    // Don't allow other hovers when paused
+    if (this.isPaused) {
+      this.exitButton.hovered = false;
+      this.sockPileHover = false;
+      this.hoveredSock = null;
+      if (this.game.controllerManager) {
+        this.game.controllerManager.setReticleHoverState(this.pauseButton.hovered);
+      }
+      return;
+    }
+
+    // Update exit button hover state (only when not paused)
     this.exitButton.hovered = this.isPointInRect(x, y, {
       x: layout.exitButtonX - layout.exitButtonWidth / 2,
       y: layout.exitButtonY - layout.exitButtonHeight / 2,
@@ -1787,8 +1866,20 @@ class MatchScreen extends Screen {
       height: layout.exitButtonHeight
     });
 
-    // Update reticle hover state
-    const isHovering = this.pauseButton.hovered || this.exitButton.hovered;
+    // Update sock pile hover state
+    this.sockPileHover = this.sockManager.checkSockPileClick(x, y);
+
+    // Update hovered sock (only when not dragging)
+    if (!this.draggedSock) {
+      this.hoveredSock = this.sockManager.getSockAt(x, y);
+    } else {
+      this.hoveredSock = null;
+    }
+
+    // Update reticle hover state - hovering over any interactive element
+    const isHovering = this.pauseButton.hovered || this.exitButton.hovered ||
+                       this.sockPileHover || this.hoveredSock !== null ||
+                       this.draggedSock !== null;
     if (this.game.controllerManager) {
       this.game.controllerManager.setReticleHoverState(isHovering);
     }
@@ -1808,6 +1899,11 @@ class MatchScreen extends Screen {
       return true;
     }
 
+    // Prevent other interactions when paused
+    if (this.isPaused) {
+      return false;
+    }
+
     // Check exit button
     if (this.isPointInRect(x, y, {
       x: layout.exitButtonX - layout.exitButtonWidth / 2,
@@ -1816,6 +1912,49 @@ class MatchScreen extends Screen {
       height: layout.exitButtonHeight
     })) {
       this.exitToLevelSelect();
+      return true;
+    }
+
+    // If already dragging a sock, release it (place or throw)
+    if (this.draggedSock) {
+      this.onMouseUp();
+      return true;
+    }
+
+    // Check sock pile
+    if (this.sockManager.checkSockPileClick(x, y)) {
+      this.sockPilePressed = true;
+      this.shootSockFromPile();
+      // Note: We don't start auto-shoot for controller since it's a single button press
+      return true;
+    }
+
+    // Check for sock click (to start dragging/selecting)
+    const sock = this.sockManager.getSockAt(x, y);
+    if (sock) {
+      this.draggedSock = sock;
+      this.dragOffset = { x: x - sock.x, y: y - sock.y };
+      this.isDragging = true;
+
+      // Track initial position for click-only detection
+      this.initialMousePos = { x: x, y: y };
+      this.wasDragged = false;
+
+      // Initialize drag history for velocity tracking
+      this.dragHistory = [
+        {
+          x: x,
+          y: y,
+          timestamp: Date.now(),
+        },
+      ];
+
+      this.dropZones.forEach((zone) => {
+        if (zone.sock === sock) {
+          zone.sock = null;
+        }
+      });
+
       return true;
     }
 
