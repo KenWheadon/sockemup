@@ -827,6 +827,9 @@ class ThrowingScreen extends Screen {
         this.levelComplete = true;
         this.gamePhase = "complete";
 
+        // Save the remaining available sockballs at level completion for score calculation
+        this.game.sockballsLeftoverAtEnd = this.availableSockballs;
+
         if (!this.levelCompleteAudioPlayed) {
           this.levelCompleteAudioPlayed = true;
           this.game.audioManager.fadeOutMusic(1000);
@@ -857,6 +860,9 @@ class ThrowingScreen extends Screen {
       if (!this.marthaManager.onScreen) {
         this.levelComplete = true;
         this.gamePhase = "complete";
+
+        // Save the remaining available sockballs at level completion for score calculation
+        this.game.sockballsLeftoverAtEnd = this.availableSockballs;
 
         this.game.unlockAchievement("eviction_notice");
         if (!this.gameOverAudioPlayed) {

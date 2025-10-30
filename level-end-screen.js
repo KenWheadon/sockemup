@@ -253,10 +253,9 @@ class LevelEndScreen extends Screen {
     const sockballsThrown = this.game.throwingScreen.sockballsThrown || 0;
 
     this.sockballsPaid = marthaGot;
-    this.sockballsLeftover = Math.max(
-      0,
-      totalSockballsCreated - sockballsThrown
-    );
+    // Use the sockball queue length saved when the level ended
+    // (this is saved in throwing-screen before the queue gets cleared)
+    this.sockballsLeftover = this.game.sockballsLeftoverAtEnd || 0;
     this.rentPenalty = Math.max(0, marthaWanted - marthaGot);
 
     // Catch quality counts

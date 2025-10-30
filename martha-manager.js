@@ -97,6 +97,10 @@ class MarthaManager {
 
     // Initialization flag to track first-time setup vs animation-only changes
     this.hasBeenInitialized = false;
+
+    // Direction change cooldown to prevent sprite flickering
+    this.lastDirectionChangeTime = 0;
+    this.directionChangeCooldown = 200; // 0.2 seconds in milliseconds
   }
 
   setup(level) {
@@ -189,12 +193,34 @@ class MarthaManager {
     this.switchPattern();
   }
 
+  /**
+   * Helper method to safely update facing direction with cooldown
+   * @param {boolean} newDirection - The new facing direction (true = right, false = left)
+   * @param {number} currentTime - Current timestamp in milliseconds
+   * @returns {boolean} Whether the direction was changed
+   */
+  updateFacingDirection(newDirection, currentTime) {
+    // Only change direction if cooldown has elapsed
+    if (currentTime - this.lastDirectionChangeTime >= this.directionChangeCooldown) {
+      // Only update if the direction is actually changing
+      if (this.facingRight !== newDirection) {
+        this.facingRight = newDirection;
+        this.lastDirectionChangeTime = currentTime;
+        return true;
+      }
+    }
+    return false;
+  }
+
   update(deltaTime) {
     // Update animation
     this.updateAnimation(deltaTime);
 
     this.patternTimer += deltaTime;
     this.patternSwitchTimer += deltaTime;
+
+    // Track current time for direction change cooldown
+    const currentTime = Date.now();
 
     // Update hit effects
     this.updateHitEffects(deltaTime);
@@ -207,17 +233,17 @@ class MarthaManager {
 
     // Update movement based on current state
     if (this.isRecovering) {
-      this.updateRecoveryMovement(deltaTime);
+      this.updateRecoveryMovement(deltaTime, currentTime);
     } else if (this.isExiting) {
-      this.updateExitMovement(deltaTime);
+      this.updateExitMovement(deltaTime, currentTime);
     } else if (this.isEntering) {
-      this.updateEnterMovement(deltaTime);
+      this.updateEnterMovement(deltaTime, currentTime);
     } else if (this.onScreen) {
-      this.updatePatternMovement(deltaTime);
+      this.updatePatternMovement(deltaTime, currentTime);
     }
 
     // Apply movement and bounds checking
-    this.applyMovement(deltaTime);
+    this.applyMovement(deltaTime, currentTime);
 
     // Check for audio triggers
     this.checkAudioTriggers();
@@ -259,13 +285,16 @@ class MarthaManager {
       this.hitEffect.timer -= deltaTime;
       this.hitEffect.flashTimer += deltaTime;
 
-      // Apply knockback
-      this.x += this.hitEffect.knockbackVelocity.x;
-      this.y += this.hitEffect.knockbackVelocity.y;
+      // Apply knockback only if not in recovery mode
+      // Recovery takes priority to ensure Martha escapes corners
+      if (!this.isRecovering) {
+        this.x += this.hitEffect.knockbackVelocity.x;
+        this.y += this.hitEffect.knockbackVelocity.y;
 
-      // Reduce knockback velocity
-      this.hitEffect.knockbackVelocity.x *= 0.9;
-      this.hitEffect.knockbackVelocity.y *= 0.9;
+        // Reduce knockback velocity
+        this.hitEffect.knockbackVelocity.x *= 0.9;
+        this.hitEffect.knockbackVelocity.y *= 0.9;
+      }
 
       if (this.hitEffect.timer <= 0) {
         this.hitEffect.active = false;
@@ -281,7 +310,7 @@ class MarthaManager {
     });
   }
 
-  updateExitMovement(deltaTime) {
+  updateExitMovement(deltaTime, currentTime) {
     // Exit at a fixed speed regardless of difficulty
     // Use base level speed without difficulty multiplier
     const baseSpeed = this.speed / GameConfig.getDifficultyMode(this.game.currentDifficulty).speedMultiplier;
@@ -302,7 +331,7 @@ class MarthaManager {
     }
   }
 
-  updateEnterMovement(deltaTime) {
+  updateEnterMovement(deltaTime, currentTime) {
     const enterSpeed = this.speed * 2; // Enter at moderate speed
     this.velocity.x = this.exitDirection * enterSpeed;
     this.velocity.y = 0;
@@ -316,7 +345,7 @@ class MarthaManager {
     }
   }
 
-  updateRecoveryMovement(deltaTime) {
+  updateRecoveryMovement(deltaTime, currentTime) {
     // Update recovery timer
     this.recoveryTimer += deltaTime;
 
@@ -328,9 +357,9 @@ class MarthaManager {
     this.velocity.x = this.recoveryDirection.x * baseSpeed * this.patternSpeed * this.recoverySpeedMultiplier * timeMultiplier;
     this.velocity.y = this.recoveryDirection.y * baseSpeed * this.patternSpeed * this.recoverySpeedMultiplier * timeMultiplier;
 
-    // Update facing direction during recovery
+    // Update facing direction during recovery with cooldown
     if (Math.abs(this.velocity.x) > 0.1) {
-      this.facingRight = this.velocity.x > 0;
+      this.updateFacingDirection(this.velocity.x > 0, currentTime);
     }
 
     // End recovery after duration
@@ -343,68 +372,68 @@ class MarthaManager {
     }
   }
 
-  updatePatternMovement(deltaTime) {
+  updatePatternMovement(deltaTime, currentTime) {
     const timeMultiplier = deltaTime / 16.67;
 
     // Calculate base movement from pattern
     switch (this.currentPattern) {
       case "horizontal":
-        this.updateHorizontalPattern(timeMultiplier);
+        this.updateHorizontalPattern(timeMultiplier, currentTime);
         break;
       case "vertical":
-        this.updateVerticalPattern(timeMultiplier);
+        this.updateVerticalPattern(timeMultiplier, currentTime);
         break;
       case "diagonal":
-        this.updateDiagonalPattern(timeMultiplier);
+        this.updateDiagonalPattern(timeMultiplier, currentTime);
         break;
       case "circular":
-        this.updateCircularPattern(timeMultiplier);
+        this.updateCircularPattern(timeMultiplier, currentTime);
         break;
       case "random":
-        this.updateRandomPattern(timeMultiplier);
+        this.updateRandomPattern(timeMultiplier, currentTime);
         break;
       case "figure-eight":
-        this.updateFigureEightPattern(timeMultiplier);
+        this.updateFigureEightPattern(timeMultiplier, currentTime);
         break;
       case "zigzag-horizontal":
-        this.updateZigzagHorizontalPattern(timeMultiplier);
+        this.updateZigzagHorizontalPattern(timeMultiplier, currentTime);
         break;
       case "zigzag-vertical":
-        this.updateZigzagVerticalPattern(timeMultiplier);
+        this.updateZigzagVerticalPattern(timeMultiplier, currentTime);
         break;
       case "spiral":
-        this.updateSpiralPattern(timeMultiplier);
+        this.updateSpiralPattern(timeMultiplier, currentTime);
         break;
       case "bounce":
-        this.updateBouncePattern(timeMultiplier);
+        this.updateBouncePattern(timeMultiplier, currentTime);
         break;
       case "square":
-        this.updateSquarePattern(timeMultiplier);
+        this.updateSquarePattern(timeMultiplier, currentTime);
         break;
       case "wave":
-        this.updateWavePattern(timeMultiplier);
+        this.updateWavePattern(timeMultiplier, currentTime);
         break;
     }
   }
 
-  updateHorizontalPattern(timeMultiplier) {
+  updateHorizontalPattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.HORIZONTAL.baseSpeed;
     this.velocity.x =
       this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
     this.velocity.y = 0;
 
-    // Update facing direction
-    this.facingRight = this.direction > 0;
+    // Update facing direction with cooldown
+    this.updateFacingDirection(this.direction > 0, currentTime);
   }
 
-  updateVerticalPattern(timeMultiplier) {
+  updateVerticalPattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.VERTICAL.baseSpeed;
     this.velocity.x = 0;
     this.velocity.y =
       this.direction * baseSpeed * this.patternSpeed * timeMultiplier;
   }
 
-  updateDiagonalPattern(timeMultiplier) {
+  updateDiagonalPattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.DIAGONAL.baseSpeed;
     if (!this.patternData.diagonalDirection) {
       this.patternData.diagonalDirection = { x: 1, y: 1 };
@@ -421,11 +450,11 @@ class MarthaManager {
     this.velocity.x = normalizedX * baseSpeed * this.patternSpeed * timeMultiplier;
     this.velocity.y = normalizedY * baseSpeed * this.patternSpeed * timeMultiplier;
 
-    // Update facing direction
-    this.facingRight = this.patternData.diagonalDirection.x > 0;
+    // Update facing direction with cooldown
+    this.updateFacingDirection(this.patternData.diagonalDirection.x > 0, currentTime);
   }
 
-  updateCircularPattern(timeMultiplier) {
+  updateCircularPattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.CIRCULAR.baseSpeed;
     if (
       !this.patternData.circularAngle &&
@@ -465,11 +494,11 @@ class MarthaManager {
     // Use a deadzone threshold to prevent rapid sprite flipping during circular motion
     const velocityThreshold = 0.5;
     if (Math.abs(this.velocity.x) > velocityThreshold) {
-      this.facingRight = this.velocity.x > 0;
+      this.updateFacingDirection(this.velocity.x > 0, currentTime);
     }
   }
 
-  updateRandomPattern(timeMultiplier) {
+  updateRandomPattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.RANDOM.baseSpeed;
 
     // Change direction less frequently for more predictable movement
@@ -500,11 +529,11 @@ class MarthaManager {
     // Only update facing direction if velocity is significant enough to avoid flickering
     const velocityThreshold = 0.5;
     if (Math.abs(this.velocity.x) > velocityThreshold) {
-      this.facingRight = this.velocity.x > 0;
+      this.updateFacingDirection(this.velocity.x > 0, currentTime);
     }
   }
 
-  updateFigureEightPattern(timeMultiplier) {
+  updateFigureEightPattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.FIGURE_EIGHT.baseSpeed;
 
     if (
@@ -551,11 +580,11 @@ class MarthaManager {
     // Only update facing direction if velocity is significant enough to avoid flickering
     const velocityThreshold = 0.5;
     if (Math.abs(this.velocity.x) > velocityThreshold) {
-      this.facingRight = this.velocity.x > 0;
+      this.updateFacingDirection(this.velocity.x > 0, currentTime);
     }
   }
 
-  updateZigzagHorizontalPattern(timeMultiplier) {
+  updateZigzagHorizontalPattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.ZIGZAG_HORIZONTAL.baseSpeed;
 
     if (!this.patternData.zigzagPhase && this.patternData.zigzagPhase !== 0) {
@@ -592,11 +621,11 @@ class MarthaManager {
     // Only update facing direction if velocity is significant enough to avoid flickering
     const velocityThreshold = 0.5;
     if (Math.abs(this.velocity.x) > velocityThreshold) {
-      this.facingRight = this.velocity.x > 0;
+      this.updateFacingDirection(this.velocity.x > 0, currentTime);
     }
   }
 
-  updateZigzagVerticalPattern(timeMultiplier) {
+  updateZigzagVerticalPattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.ZIGZAG_VERTICAL.baseSpeed;
 
     if (!this.patternData.zigzagPhase && this.patternData.zigzagPhase !== 0) {
@@ -633,11 +662,11 @@ class MarthaManager {
     // Only update facing direction if velocity is significant enough to avoid flickering
     const velocityThreshold = 0.5;
     if (Math.abs(this.velocity.x) > velocityThreshold) {
-      this.facingRight = this.velocity.x > 0;
+      this.updateFacingDirection(this.velocity.x > 0, currentTime);
     }
   }
 
-  updateSpiralPattern(timeMultiplier) {
+  updateSpiralPattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.SPIRAL.baseSpeed;
 
     if (!this.patternData.spiralAngle && this.patternData.spiralAngle !== 0) {
@@ -692,11 +721,11 @@ class MarthaManager {
     // Only update facing direction if velocity is significant enough to avoid flickering
     const velocityThreshold = 0.5;
     if (Math.abs(this.velocity.x) > velocityThreshold) {
-      this.facingRight = this.velocity.x > 0;
+      this.updateFacingDirection(this.velocity.x > 0, currentTime);
     }
   }
 
-  updateBouncePattern(timeMultiplier) {
+  updateBouncePattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.BOUNCE.baseSpeed;
 
     if (!this.patternData.bounceDirection) {
@@ -723,11 +752,11 @@ class MarthaManager {
     // Only update facing direction if velocity is significant enough to avoid flickering
     const velocityThreshold = 0.5;
     if (Math.abs(this.velocity.x) > velocityThreshold) {
-      this.facingRight = this.velocity.x > 0;
+      this.updateFacingDirection(this.velocity.x > 0, currentTime);
     }
   }
 
-  updateSquarePattern(timeMultiplier) {
+  updateSquarePattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.SQUARE.baseSpeed;
 
     if (!this.patternData.squareSide && this.patternData.squareSide !== 0) {
@@ -794,10 +823,10 @@ class MarthaManager {
         break;
     }
 
-    this.facingRight = this.velocity.x > 0;
+    this.updateFacingDirection(this.velocity.x > 0, currentTime);
   }
 
-  updateWavePattern(timeMultiplier) {
+  updateWavePattern(timeMultiplier, currentTime) {
     const baseSpeed = GameConfig.MARTHA_PATTERNS.WAVE.baseSpeed;
 
     if (!this.patternData.wavePhase && this.patternData.wavePhase !== 0) {
@@ -838,11 +867,11 @@ class MarthaManager {
     // Only update facing direction if velocity is significant enough to avoid flickering
     const velocityThreshold = 0.5;
     if (Math.abs(this.velocity.x) > velocityThreshold) {
-      this.facingRight = this.velocity.x > 0;
+      this.updateFacingDirection(this.velocity.x > 0, currentTime);
     }
   }
 
-  applyMovement(deltaTime) {
+  applyMovement(deltaTime, currentTime) {
     // Apply velocity
     this.x += this.velocity.x;
     this.y += this.velocity.y;
@@ -917,10 +946,12 @@ class MarthaManager {
           this.patternData.bounceDirection.x = -Math.abs(this.patternData.bounceDirection.x);
           this.patternData.bounceDirection.y = -Math.abs(this.patternData.bounceDirection.y);
         } else {
-          // Bounce both velocity components and dampen
-          this.velocity.x = -Math.abs(this.velocity.x) * bounceDamping * 1.5; // Bounce left
-          this.velocity.y = -Math.abs(this.velocity.y) * bounceDamping * 1.5; // Bounce up
-          this.facingRight = false;
+          // Start recovery animation to escape corner
+          this.isRecovering = true;
+          this.recoveryTimer = 0;
+          this.recoveryDirection = { x: -1, y: -1 }; // Move up-left
+          this.recoverySpeedMultiplier = 3; // Faster escape from corner
+          this.updateFacingDirection(false, currentTime);
         }
       } else if (inLowerLeftCorner) {
         // Lower left corner - bounce off both walls
@@ -931,10 +962,12 @@ class MarthaManager {
           this.patternData.bounceDirection.x = Math.abs(this.patternData.bounceDirection.x);
           this.patternData.bounceDirection.y = -Math.abs(this.patternData.bounceDirection.y);
         } else {
-          // Bounce both velocity components
-          this.velocity.x = Math.abs(this.velocity.x) * bounceDamping * 1.5; // Bounce right
-          this.velocity.y = -Math.abs(this.velocity.y) * bounceDamping * 1.5; // Bounce up
-          this.facingRight = true;
+          // Start recovery animation to escape corner
+          this.isRecovering = true;
+          this.recoveryTimer = 0;
+          this.recoveryDirection = { x: 1, y: -1 }; // Move up-right
+          this.recoverySpeedMultiplier = 3; // Faster escape from corner
+          this.updateFacingDirection(true, currentTime);
         }
       } else if (inUpperRightCorner) {
         // Upper right corner - bounce off both walls
@@ -945,10 +978,12 @@ class MarthaManager {
           this.patternData.bounceDirection.x = -Math.abs(this.patternData.bounceDirection.x);
           this.patternData.bounceDirection.y = Math.abs(this.patternData.bounceDirection.y);
         } else {
-          // Bounce both velocity components
-          this.velocity.x = -Math.abs(this.velocity.x) * bounceDamping * 1.5; // Bounce left
-          this.velocity.y = Math.abs(this.velocity.y) * bounceDamping * 1.5; // Bounce down
-          this.facingRight = false;
+          // Start recovery animation to escape corner
+          this.isRecovering = true;
+          this.recoveryTimer = 0;
+          this.recoveryDirection = { x: -1, y: 1 }; // Move down-left
+          this.recoverySpeedMultiplier = 3; // Faster escape from corner
+          this.updateFacingDirection(false, currentTime);
         }
       } else if (inUpperLeftCorner) {
         // Upper left corner - bounce off both walls
@@ -959,76 +994,83 @@ class MarthaManager {
           this.patternData.bounceDirection.x = Math.abs(this.patternData.bounceDirection.x);
           this.patternData.bounceDirection.y = Math.abs(this.patternData.bounceDirection.y);
         } else {
-          // Bounce both velocity components
-          this.velocity.x = Math.abs(this.velocity.x) * bounceDamping * 1.5; // Bounce right
-          this.velocity.y = Math.abs(this.velocity.y) * bounceDamping * 1.5; // Bounce down
-          this.facingRight = true;
+          // Start recovery animation to escape corner
+          this.isRecovering = true;
+          this.recoveryTimer = 0;
+          this.recoveryDirection = { x: 1, y: 1 }; // Move down-right
+          this.recoverySpeedMultiplier = 3; // Faster escape from corner
+          this.updateFacingDirection(true, currentTime);
         }
       }
       // EDGE HANDLING - Only if not in a corner
-      // Use intelligent bounce physics with position-based vertical direction
+      // Use recovery animations to smoothly move away from walls
       else if (atLeftEdge) {
-        // Left wall - bounce right
+        // Left wall - start recovery animation moving right
         this.x = this.bounds.left;
 
         if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
           this.patternData.bounceDirection.x = Math.abs(this.patternData.bounceDirection.x);
         } else {
-          // Bounce horizontally like a sockball
-          this.velocity.x = Math.abs(this.velocity.x) * bounceDamping * 1.3;
+          // Start recovery animation to move away from wall
+          this.isRecovering = true;
+          this.recoveryTimer = 0;
+          this.recoverySpeedMultiplier = 2; // Moderate speed for edge escape
 
-          // Add intelligent vertical direction based on position
+          // Determine vertical direction based on position
           const screenMidY = this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
           const marthaMidY = this.y + this.height / 2;
 
           if (marthaMidY > screenMidY) {
-            // Below halfway - add upward velocity
-            this.velocity.y = -Math.abs(this.velocity.y || this.speed * 2);
+            // Below halfway - move right and up
+            this.recoveryDirection = { x: 1, y: -1 };
           } else {
-            // Above halfway - add downward velocity
-            this.velocity.y = Math.abs(this.velocity.y || this.speed * 2);
+            // Above halfway - move right and down
+            this.recoveryDirection = { x: 1, y: 1 };
           }
 
-          this.facingRight = true;
+          this.updateFacingDirection(true, currentTime);
         }
       } else if (atRightEdge) {
-        // Right wall - bounce left
+        // Right wall - start recovery animation moving left
         this.x = this.bounds.right - this.width;
 
         if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
           this.patternData.bounceDirection.x = -Math.abs(this.patternData.bounceDirection.x);
         } else {
-          // Bounce horizontally like a sockball
-          this.velocity.x = -Math.abs(this.velocity.x) * bounceDamping * 1.3;
+          // Start recovery animation to move away from wall
+          this.isRecovering = true;
+          this.recoveryTimer = 0;
+          this.recoverySpeedMultiplier = 2; // Moderate speed for edge escape
 
-          // Add intelligent vertical direction based on position
+          // Determine vertical direction based on position
           const screenMidY = this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
           const marthaMidY = this.y + this.height / 2;
 
           if (marthaMidY > screenMidY) {
-            // Below halfway - add upward velocity
-            this.velocity.y = -Math.abs(this.velocity.y || this.speed * 2);
+            // Below halfway - move left and up
+            this.recoveryDirection = { x: -1, y: -1 };
           } else {
-            // Above halfway - add downward velocity
-            this.velocity.y = Math.abs(this.velocity.y || this.speed * 2);
+            // Above halfway - move left and down
+            this.recoveryDirection = { x: -1, y: 1 };
           }
 
-          this.facingRight = false;
+          this.updateFacingDirection(false, currentTime);
         }
       } else if (atTopEdge) {
-        // Top wall - bounce down
+        // Top wall - start recovery animation moving down
         this.y = this.bounds.top;
 
         if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
           this.patternData.bounceDirection.y = Math.abs(this.patternData.bounceDirection.y);
         } else {
-          // Bounce vertically like a sockball
-          this.velocity.y = Math.abs(this.velocity.y) * bounceDamping * 1.3;
+          // Start recovery animation to move away from wall
+          this.isRecovering = true;
+          this.recoveryTimer = 0;
+          this.recoverySpeedMultiplier = 2; // Moderate speed for edge escape
 
-          // Keep horizontal velocity but ensure some movement
-          if (Math.abs(this.velocity.x) < 1) {
-            this.velocity.x = (Math.random() < 0.5 ? -1 : 1) * this.speed;
-          }
+          // Move down and randomly left or right
+          const horizontalDir = Math.random() < 0.5 ? -1 : 1;
+          this.recoveryDirection = { x: horizontalDir, y: 1 };
         }
 
         // Update pattern directions for simple patterns
@@ -1038,19 +1080,20 @@ class MarthaManager {
           this.patternData.diagonalDirection.y = 1;
         }
       } else if (atBottomEdge) {
-        // Bottom wall - bounce up
+        // Bottom wall - start recovery animation moving up
         this.y = this.bounds.bottom - this.height;
 
         if (this.currentPattern === "bounce" && this.patternData.bounceDirection) {
           this.patternData.bounceDirection.y = -Math.abs(this.patternData.bounceDirection.y);
         } else {
-          // Bounce vertically like a sockball
-          this.velocity.y = -Math.abs(this.velocity.y) * bounceDamping * 1.3;
+          // Start recovery animation to move away from wall
+          this.isRecovering = true;
+          this.recoveryTimer = 0;
+          this.recoverySpeedMultiplier = 2; // Moderate speed for edge escape
 
-          // Keep horizontal velocity but ensure some movement
-          if (Math.abs(this.velocity.x) < 1) {
-            this.velocity.x = (Math.random() < 0.5 ? -1 : 1) * this.speed;
-          }
+          // Move up and randomly left or right
+          const horizontalDir = Math.random() < 0.5 ? -1 : 1;
+          this.recoveryDirection = { x: horizontalDir, y: -1 };
         }
       }
 
@@ -1083,9 +1126,9 @@ class MarthaManager {
         }
       }
 
-      // Update facing direction based on velocity
+      // Update facing direction based on velocity with cooldown
       if (Math.abs(this.velocity.x) > 0.1) {
-        this.facingRight = this.velocity.x > 0;
+        this.updateFacingDirection(this.velocity.x > 0, currentTime);
       }
     }
   }
@@ -1262,7 +1305,23 @@ class MarthaManager {
 
     // Apply amplification if on wall/corner
     if (inCorner) {
-      // In corner: 3x knockback to escape quickly
+      // In corner: trigger immediate recovery animation
+      this.isRecovering = true;
+      this.recoveryTimer = 0;
+      this.recoverySpeedMultiplier = 4; // Very fast escape from corner when hit
+
+      // Determine recovery direction based on which corner
+      if (atLeftEdge && atTopEdge) {
+        this.recoveryDirection = { x: 1, y: 1 }; // Down-right
+      } else if (atLeftEdge && atBottomEdge) {
+        this.recoveryDirection = { x: 1, y: -1 }; // Up-right
+      } else if (atRightEdge && atTopEdge) {
+        this.recoveryDirection = { x: -1, y: 1 }; // Down-left
+      } else if (atRightEdge && atBottomEdge) {
+        this.recoveryDirection = { x: -1, y: -1 }; // Up-left
+      }
+
+      // Still apply knockback for immediate effect
       knockbackX *= 3;
       knockbackY *= 3;
     } else if (onWall) {
