@@ -1003,9 +1003,10 @@ class LevelEndScreen extends Screen {
         show: this.game.timeBonusEarned,
       },
       {
-        label: `SOCKBALLS LEFTOVER:`,
+        label: `${this.sockballsLeftoverDisplay}x SOCKBALLS LEFTOVER:`,
         value: this.sockballsLeftoverDisplay * (difficulty === 0 ? 10 : 10 + (difficulty * 10)),
         color: "#95E1D3",
+        show: this.sockballsLeftover > 0, // Only show if there are leftover sockballs
       },
       {
         label: `RENT PENALTY:`,

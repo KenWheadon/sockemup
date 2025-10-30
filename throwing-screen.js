@@ -101,6 +101,9 @@ class ThrowingScreen extends Screen {
     this.game.consecutivePerfectThrows = 0;
     this.game.consecutiveMisses = 0;
 
+    // Reset current game miss counter for NO_HOPE achievement
+    this.game.currentGameMisses = 0;
+
     // Setup Martha for current level - use difficulty-modified level data
     const level =
       this.game.currentLevelData || GameConfig.LEVELS[this.game.currentLevel];
@@ -499,8 +502,22 @@ class ThrowingScreen extends Screen {
         this.game.consecutiveMisses++;
         this.game.consecutivePerfectThrows = 0;
 
+        // Achievement tracking for misses
+        this.game.currentGameMisses++;
+        this.game.totalMisses++;
+
         if (this.game.consecutiveMisses >= GameConfig.ACHIEVEMENTS.BUTTERFINGERS.threshold) {
           this.game.unlockAchievement("butterfingers");
+        }
+
+        // Achievement: NO_HOPE - Miss 10 sockballs in a single game
+        if (this.game.currentGameMisses >= GameConfig.ACHIEVEMENTS.NO_HOPE.threshold) {
+          this.game.unlockAchievement("no_hope");
+        }
+
+        // Achievement: MISS_MISS_MISS - Miss 100 sockballs lifetime
+        if (this.game.totalMisses >= GameConfig.ACHIEVEMENTS.MISS_MISS_MISS.threshold) {
+          this.game.unlockAchievement("miss_miss_miss");
         }
 
         return false;
@@ -582,12 +599,27 @@ class ThrowingScreen extends Screen {
 
             this.consecutiveHits++;
 
+            // Achievement: PINCER - Hit Martha within 0.5 seconds with 2 sockballs
+            const currentTime = Date.now() / 1000; // Convert to seconds
+            if (this.game.lastHitTime > 0) {
+              const timeSinceLastHit = currentTime - this.game.lastHitTime;
+              if (timeSinceLastHit <= GameConfig.ACHIEVEMENTS.PINCER.timeWindow) {
+                this.game.unlockAchievement("pincer");
+              }
+            }
+            this.game.lastHitTime = currentTime;
+
             // Track wall bounce catches for achievements
             if (sockball.bounced) {
               this.wallBounceCatchesThisLevel++;
               this.game.totalWallBounceCatches++;
 
               this.game.unlockAchievement("bank_shot");
+
+              // Achievement: PERFECT_BOUNCE_SHOT (perfect catch from a bounced shot)
+              if (catchQuality === "PERFECT") {
+                this.game.unlockAchievement("perfect_bounce_shot");
+              }
 
               if (this.wallBounceCatchesThisLevel >= GameConfig.ACHIEVEMENTS.PINBALL_WIZARD.threshold) {
                 this.game.unlockAchievement("pinball_wizard");
@@ -624,6 +656,19 @@ class ThrowingScreen extends Screen {
                 this.game.consecutivePerfectThrows++;
                 this.game.consecutiveMisses = 0;
 
+                // Track lifetime perfect shots
+                this.game.totalPerfectShots++;
+
+                // Achievement: KINDA_PERFECT (25 perfects)
+                if (this.game.totalPerfectShots >= GameConfig.ACHIEVEMENTS.KINDA_PERFECT.threshold) {
+                  this.game.unlockAchievement("kinda_perfect");
+                }
+
+                // Achievement: PERFECTION (100 perfects)
+                if (this.game.totalPerfectShots >= GameConfig.ACHIEVEMENTS.PERFECTION.threshold) {
+                  this.game.unlockAchievement("perfection");
+                }
+
                 if (this.game.consecutivePerfectThrows >= GameConfig.ACHIEVEMENTS.SOCK_SNIPER.threshold) {
                   this.game.unlockAchievement("sock_sniper");
                 }
@@ -631,6 +676,14 @@ class ThrowingScreen extends Screen {
                 this.game.feedbackManager.onGoodCatch();
                 this.game.consecutivePerfectThrows = 0;
                 this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
+
+                // Track lifetime good shots
+                this.game.totalGoodShots++;
+
+                // Achievement: GOOD_ENOUGH (250 good shots)
+                if (this.game.totalGoodShots >= GameConfig.ACHIEVEMENTS.GOOD_ENOUGH.threshold) {
+                  this.game.unlockAchievement("good_enough");
+                }
               } else {
                 this.game.feedbackManager.onRegularCatch();
                 this.game.consecutivePerfectThrows = 0;
@@ -647,6 +700,19 @@ class ThrowingScreen extends Screen {
               this.game.consecutivePerfectThrows++;
               this.game.consecutiveMisses = 0;
 
+              // Track lifetime perfect shots
+              this.game.totalPerfectShots++;
+
+              // Achievement: KINDA_PERFECT (25 perfects)
+              if (this.game.totalPerfectShots >= GameConfig.ACHIEVEMENTS.KINDA_PERFECT.threshold) {
+                this.game.unlockAchievement("kinda_perfect");
+              }
+
+              // Achievement: PERFECTION (100 perfects)
+              if (this.game.totalPerfectShots >= GameConfig.ACHIEVEMENTS.PERFECTION.threshold) {
+                this.game.unlockAchievement("perfection");
+              }
+
               // Achievement: SOCK_SNIPER
               if (this.game.consecutivePerfectThrows >= GameConfig.ACHIEVEMENTS.SOCK_SNIPER.threshold) {
                 this.game.unlockAchievement("sock_sniper");
@@ -655,6 +721,14 @@ class ThrowingScreen extends Screen {
               this.game.feedbackManager.onGoodCatch();
               this.game.consecutivePerfectThrows = 0; // Reset perfect streak
               this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
+
+              // Track lifetime good shots
+              this.game.totalGoodShots++;
+
+              // Achievement: GOOD_ENOUGH (250 good shots)
+              if (this.game.totalGoodShots >= GameConfig.ACHIEVEMENTS.GOOD_ENOUGH.threshold) {
+                this.game.unlockAchievement("good_enough");
+              }
             } else {
               this.game.feedbackManager.onRegularCatch();
               this.game.consecutivePerfectThrows = 0; // Reset perfect streak
@@ -695,12 +769,27 @@ class ThrowingScreen extends Screen {
 
             this.consecutiveHits++;
 
+            // Achievement: PINCER - Hit Martha within 0.5 seconds with 2 sockballs
+            const currentTime = Date.now() / 1000; // Convert to seconds
+            if (this.game.lastHitTime > 0) {
+              const timeSinceLastHit = currentTime - this.game.lastHitTime;
+              if (timeSinceLastHit <= GameConfig.ACHIEVEMENTS.PINCER.timeWindow) {
+                this.game.unlockAchievement("pincer");
+              }
+            }
+            this.game.lastHitTime = currentTime;
+
             // Track wall bounce catches for achievements
             if (sockball.bounced) {
               this.wallBounceCatchesThisLevel++;
               this.game.totalWallBounceCatches++;
 
               this.game.unlockAchievement("bank_shot");
+
+              // Achievement: PERFECT_BOUNCE_SHOT (perfect catch from a bounced shot)
+              if (catchQuality === "PERFECT") {
+                this.game.unlockAchievement("perfect_bounce_shot");
+              }
 
               if (this.wallBounceCatchesThisLevel >= GameConfig.ACHIEVEMENTS.PINBALL_WIZARD.threshold) {
                 this.game.unlockAchievement("pinball_wizard");
@@ -737,6 +826,19 @@ class ThrowingScreen extends Screen {
                 this.game.consecutivePerfectThrows++;
                 this.game.consecutiveMisses = 0;
 
+                // Track lifetime perfect shots
+                this.game.totalPerfectShots++;
+
+                // Achievement: KINDA_PERFECT (25 perfects)
+                if (this.game.totalPerfectShots >= GameConfig.ACHIEVEMENTS.KINDA_PERFECT.threshold) {
+                  this.game.unlockAchievement("kinda_perfect");
+                }
+
+                // Achievement: PERFECTION (100 perfects)
+                if (this.game.totalPerfectShots >= GameConfig.ACHIEVEMENTS.PERFECTION.threshold) {
+                  this.game.unlockAchievement("perfection");
+                }
+
                 if (this.game.consecutivePerfectThrows >= GameConfig.ACHIEVEMENTS.SOCK_SNIPER.threshold) {
                   this.game.unlockAchievement("sock_sniper");
                 }
@@ -744,6 +846,14 @@ class ThrowingScreen extends Screen {
                 this.game.feedbackManager.onGoodCatch();
                 this.game.consecutivePerfectThrows = 0;
                 this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
+
+                // Track lifetime good shots
+                this.game.totalGoodShots++;
+
+                // Achievement: GOOD_ENOUGH (250 good shots)
+                if (this.game.totalGoodShots >= GameConfig.ACHIEVEMENTS.GOOD_ENOUGH.threshold) {
+                  this.game.unlockAchievement("good_enough");
+                }
               } else {
                 this.game.feedbackManager.onRegularCatch();
                 this.game.consecutivePerfectThrows = 0;
@@ -760,6 +870,19 @@ class ThrowingScreen extends Screen {
               this.game.consecutivePerfectThrows++;
               this.game.consecutiveMisses = 0;
 
+              // Track lifetime perfect shots
+              this.game.totalPerfectShots++;
+
+              // Achievement: KINDA_PERFECT (25 perfects)
+              if (this.game.totalPerfectShots >= GameConfig.ACHIEVEMENTS.KINDA_PERFECT.threshold) {
+                this.game.unlockAchievement("kinda_perfect");
+              }
+
+              // Achievement: PERFECTION (100 perfects)
+              if (this.game.totalPerfectShots >= GameConfig.ACHIEVEMENTS.PERFECTION.threshold) {
+                this.game.unlockAchievement("perfection");
+              }
+
               // Achievement: SOCK_SNIPER
               if (this.game.consecutivePerfectThrows >= GameConfig.ACHIEVEMENTS.SOCK_SNIPER.threshold) {
                 this.game.unlockAchievement("sock_sniper");
@@ -768,6 +891,14 @@ class ThrowingScreen extends Screen {
               this.game.feedbackManager.onGoodCatch();
               this.game.consecutivePerfectThrows = 0; // Reset perfect streak
               this.game.consecutiveMisses = 0; // Reset miss streak on successful catch
+
+              // Track lifetime good shots
+              this.game.totalGoodShots++;
+
+              // Achievement: GOOD_ENOUGH (250 good shots)
+              if (this.game.totalGoodShots >= GameConfig.ACHIEVEMENTS.GOOD_ENOUGH.threshold) {
+                this.game.unlockAchievement("good_enough");
+              }
             } else {
               this.game.feedbackManager.onRegularCatch();
               this.game.consecutivePerfectThrows = 0; // Reset perfect streak
@@ -790,8 +921,22 @@ class ThrowingScreen extends Screen {
         this.game.consecutiveMisses++;
         this.game.consecutivePerfectThrows = 0;
 
+        // Achievement tracking for misses
+        this.game.currentGameMisses++;
+        this.game.totalMisses++;
+
         if (this.game.consecutiveMisses >= GameConfig.ACHIEVEMENTS.BUTTERFINGERS.threshold) {
           this.game.unlockAchievement("butterfingers");
+        }
+
+        // Achievement: NO_HOPE - Miss 10 sockballs in a single game
+        if (this.game.currentGameMisses >= GameConfig.ACHIEVEMENTS.NO_HOPE.threshold) {
+          this.game.unlockAchievement("no_hope");
+        }
+
+        // Achievement: MISS_MISS_MISS - Miss 100 sockballs lifetime
+        if (this.game.totalMisses >= GameConfig.ACHIEVEMENTS.MISS_MISS_MISS.threshold) {
+          this.game.unlockAchievement("miss_miss_miss");
         }
 
         return false;
@@ -865,6 +1010,19 @@ class ThrowingScreen extends Screen {
         this.game.sockballsLeftoverAtEnd = this.availableSockballs;
 
         this.game.unlockAchievement("eviction_notice");
+
+        // Achievement: FLUBBED_IT - missed on final sockball when it would have won
+        if (this.marthaManager.collectedSockballs === this.marthaManager.sockballsWanted - 1) {
+          this.game.unlockAchievement("flubbed_it");
+
+          // Track flubs for FLUB_KING achievement
+          this.game.totalFlubs++;
+
+          // Achievement: FLUB_KING - Flub 5 times lifetime
+          if (this.game.totalFlubs >= GameConfig.ACHIEVEMENTS.FLUB_KING.threshold) {
+            this.game.unlockAchievement("flub_king");
+          }
+        }
         if (!this.gameOverAudioPlayed) {
           this.gameOverAudioPlayed = true; // Set flag first
           this.game.audioManager.fadeOutMusic(1000);

@@ -36,6 +36,12 @@ class SockGame {
     this.consecutiveLevelWins = 0; // Current streak of consecutive level wins (for speed run achievements)
     this.totalLevelsPlayed = 0; // Total levels completed (wins + losses) (for Grind Master)
     this.totalLevelLosses = 0; // Total level losses (for Disaster Prone)
+    this.totalPerfectShots = 0; // Lifetime perfect shots (for Kinda Perfect, Perfection)
+    this.totalGoodShots = 0; // Lifetime good shots (for Good Enough)
+    this.totalFlubs = 0; // Total flubs lifetime (for Flub King)
+    this.totalMisses = 0; // Total misses lifetime (for Miss Miss Miss)
+    this.currentGameMisses = 0; // Misses in current level (for No Hope)
+    this.lastHitTime = 0; // Timestamp of last Martha hit (for Pincer)
 
     this.images = {};
     this.loadedImages = 0;
@@ -553,6 +559,10 @@ class SockGame {
       this.consecutiveLevelWins = data.consecutiveLevelWins || 0;
       this.totalLevelsPlayed = data.totalLevelsPlayed || 0;
       this.totalLevelLosses = data.totalLevelLosses || 0;
+      this.totalPerfectShots = data.totalPerfectShots || 0;
+      this.totalGoodShots = data.totalGoodShots || 0;
+      this.totalFlubs = data.totalFlubs || 0;
+      this.totalMisses = data.totalMisses || 0;
 
       this.selectedDifficulty = data.selectedDifficulty || 0;
 
@@ -798,6 +808,10 @@ class SockGame {
       consecutiveLevelWins: this.consecutiveLevelWins,
       totalLevelsPlayed: this.totalLevelsPlayed,
       totalLevelLosses: this.totalLevelLosses,
+      totalPerfectShots: this.totalPerfectShots,
+      totalGoodShots: this.totalGoodShots,
+      totalFlubs: this.totalFlubs,
+      totalMisses: this.totalMisses,
       // NEW GAME+: Save per-difficulty progress
       selectedDifficulty: this.selectedDifficulty,
       highestUnlockedDifficulty: this.highestUnlockedDifficulty,
