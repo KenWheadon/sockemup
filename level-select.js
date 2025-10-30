@@ -2100,8 +2100,14 @@ class LevelSelect extends Screen {
 
       // Add dropdown options if open
       if (this.difficultySelector.isOpen) {
-        for (let i = 0; i < this.difficultySelector.dropdown.options.length; i++) {
-          const optionY = this.difficultySelector.dropdown.y + i * this.difficultySelector.dropdown.optionHeight;
+        for (
+          let i = 0;
+          i < this.difficultySelector.dropdown.options.length;
+          i++
+        ) {
+          const optionY =
+            this.difficultySelector.dropdown.y +
+            i * this.difficultySelector.dropdown.optionHeight;
           elements.push({
             x: this.difficultySelector.dropdown.x,
             y: optionY,
@@ -2215,6 +2221,7 @@ class LevelSelect extends Screen {
     this.updateMainMenuButtonHoverStates(x, y);
 
     // Handle achievements drawer hover detection
+    const layout = this.layoutCache;
     if (
       this.achievementsDrawer.isOpen &&
       this.achievementsDrawer.animationProgress > 0.5
@@ -2251,7 +2258,8 @@ class LevelSelect extends Screen {
         this.audioPlayerButton.hovered ||
         this.achievementsDrawer.button.hovered ||
         this.videoButton.hovered ||
-        (this.game.highestUnlockedDifficulty > 0 && this.difficultySelector.isButtonHovered());
+        (this.game.highestUnlockedDifficulty > 0 &&
+          this.difficultySelector.isButtonHovered());
 
       if (this.game.controllerManager) {
         this.game.controllerManager.setReticleHoverState(isHovering);
@@ -2405,7 +2413,10 @@ class LevelSelect extends Screen {
     }
 
     // Check difficulty selector (if New Game+ unlocked)
-    if (this.game.highestUnlockedDifficulty > 0 && this.difficultySelector.handleClick(x, y)) {
+    if (
+      this.game.highestUnlockedDifficulty > 0 &&
+      this.difficultySelector.handleClick(x, y)
+    ) {
       // Clear cache and recalculate layout after difficulty change to update level display
       this.clearLayoutCache();
       this.calculateLayout();
@@ -2944,9 +2955,9 @@ class LevelSelect extends Screen {
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
 
-    if (this.game.images["level-select-bg.png"]) {
+    if (this.game.images["level-select-bg.jpg"]) {
       ctx.drawImage(
-        this.game.images["level-select-bg.png"],
+        this.game.images["level-select-bg.jpg"],
         0,
         0,
         canvasWidth,

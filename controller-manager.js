@@ -419,12 +419,6 @@ class ControllerManager {
       if (currentScreen.audioPlayer?.isOpen && this.buttonJustPressed(gamepad, 1, bButton)) {
         currentScreen.audioPlayer.close();
         this.game.audioManager.playSound("button-click", false, 0.5);
-        // Recalculate hover states after panel state updates (defer to next frame)
-        if (typeof currentScreen.handleReticleMove === 'function') {
-          setTimeout(() => {
-            currentScreen.handleReticleMove(this.reticle.x, this.reticle.y);
-          }, 0);
-        }
         return;
       }
 
@@ -432,24 +426,12 @@ class ControllerManager {
       if (currentScreen.achievementsDrawer?.isOpen && this.buttonJustPressed(gamepad, 1, bButton)) {
         currentScreen.achievementsDrawer.isOpen = false;
         this.game.audioManager.playSound("button-click", false, 0.5);
-        // Recalculate hover states after panel state updates (defer to next frame)
-        if (typeof currentScreen.handleReticleMove === 'function') {
-          setTimeout(() => {
-            currentScreen.handleReticleMove(this.reticle.x, this.reticle.y);
-          }, 0);
-        }
         return;
       }
 
       // B button - back/cancel (handles story viewer, credits, etc.)
       if (this.buttonJustPressed(gamepad, 1, bButton)) {
         this.simulateKeyPress(currentScreen, 'Escape');
-        // Recalculate hover states after escape closes panels (defer to next frame)
-        if (typeof currentScreen.handleReticleMove === 'function') {
-          setTimeout(() => {
-            currentScreen.handleReticleMove(this.reticle.x, this.reticle.y);
-          }, 0);
-        }
       }
 
     } else if (gameState === 'gameOver') {

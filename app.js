@@ -99,7 +99,7 @@ class SockGame {
     this.watchedVideos = []; // Array of watched video numbers (0-4)
 
     // Audio player unlocked tracks
-    this.unlockedTracks = ['menu-music']; // Start with menu music unlocked
+    this.unlockedTracks = ["menu-music"]; // Start with menu music unlocked
 
     // Audio player favorite tracks
     this.favoriteTracks = []; // Player's favorite music tracks
@@ -697,8 +697,12 @@ class SockGame {
       }
 
       // Point legacy arrays to the currently selected difficulty
-      this.unlockedLevels = this.unlockedLevelsByDifficulty[this.selectedDifficulty] || this.unlockedLevelsByDifficulty[0];
-      this.completedLevels = this.completedLevelsByDifficulty[this.selectedDifficulty] || this.completedLevelsByDifficulty[0];
+      this.unlockedLevels =
+        this.unlockedLevelsByDifficulty[this.selectedDifficulty] ||
+        this.unlockedLevelsByDifficulty[0];
+      this.completedLevels =
+        this.completedLevelsByDifficulty[this.selectedDifficulty] ||
+        this.completedLevelsByDifficulty[0];
 
       this.currentDifficulty = data.currentDifficulty || 0;
       this.tutorialCompleted = data.tutorialCompleted || false;
@@ -718,10 +722,10 @@ class SockGame {
       this.watchedVideos = data.watchedVideos || [];
 
       // Unlocked music tracks for audio player
-      this.unlockedTracks = data.unlockedTracks || ['menu-music'];
+      this.unlockedTracks = data.unlockedTracks || ["menu-music"];
       // Ensure menu-music is always unlocked
-      if (!this.unlockedTracks.includes('menu-music')) {
-        this.unlockedTracks.push('menu-music');
+      if (!this.unlockedTracks.includes("menu-music")) {
+        this.unlockedTracks.push("menu-music");
       }
 
       // Favorite music tracks for audio player
@@ -797,8 +801,12 @@ class SockGame {
         }
 
         // Point legacy arrays to the currently selected difficulty
-        this.unlockedLevels = this.unlockedLevelsByDifficulty[this.selectedDifficulty] || this.unlockedLevelsByDifficulty[0];
-        this.completedLevels = this.completedLevelsByDifficulty[this.selectedDifficulty] || this.completedLevelsByDifficulty[0];
+        this.unlockedLevels =
+          this.unlockedLevelsByDifficulty[this.selectedDifficulty] ||
+          this.unlockedLevelsByDifficulty[0];
+        this.completedLevels =
+          this.completedLevelsByDifficulty[this.selectedDifficulty] ||
+          this.completedLevelsByDifficulty[0];
       }
 
       const baseLevels = this.completedLevelsByDifficulty[0] || [];
@@ -1197,9 +1205,9 @@ class SockGame {
   render() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-    if (this.images["level-select-bg.png"]) {
+    if (this.images["level-select-bg.jpg"]) {
       this.ctx.drawImage(
-        this.images["level-select-bg.png"],
+        this.images["level-select-bg.jpg"],
         0,
         0,
         this.canvas.width,

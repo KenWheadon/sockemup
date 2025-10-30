@@ -7,7 +7,7 @@ const DEFAULT_SPRITESHEET_FRAMES = [
 const GameConfig = {
   // ========== DEVELOPER MODE ==========
   // Set to true to unlock all levels and difficulties for QA/testing
-  DEV_MODE: true,
+  DEV_MODE: false,
 
   // Target canvas dimensions and aspect ratio
   TARGET_WIDTH: 1200,
@@ -589,11 +589,11 @@ const GameConfig = {
     UI: [
       "logo.png",
       "star.png",
-      "throw-bg.png",
-      "throw-bg-2.png",
-      "throw-bg-5.png",
-      "throw-bg-9.png",
-      "level-select-bg.png",
+      "throw-bg.jpg",
+      "throw-bg-2.jpg",
+      "throw-bg-5.jpg",
+      "throw-bg-9.jpg",
+      "level-select-bg.jpg",
       "you-win-spritesheet.png",
 
       "icon-money.png",
@@ -873,15 +873,15 @@ const GameConfig = {
 
   // Level background mappings
   LEVEL_BACKGROUNDS: [
-    "throw-bg.png", // Level 1
-    "throw-bg.png", // Level 2
-    "throw-bg-2.png", // Level 3
-    "throw-bg-2.png", // Level 4
-    "throw-bg-5.png", // Level 5
-    "throw-bg-5.png", // Level 6
-    "throw-bg-9.png", // Level 7
-    "throw-bg-9.png", // Level 8
-    "throw-bg-9.png", // Level 9
+    "throw-bg.jpg", // Level 1
+    "throw-bg.jpg", // Level 2
+    "throw-bg-2.jpg", // Level 3
+    "throw-bg-2.jpg", // Level 4
+    "throw-bg-5.jpg", // Level 5
+    "throw-bg-5.jpg", // Level 6
+    "throw-bg-9.jpg", // Level 7
+    "throw-bg-9.jpg", // Level 8
+    "throw-bg-9.jpg", // Level 9
   ],
 
   // Achievement definitions

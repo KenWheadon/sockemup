@@ -121,12 +121,12 @@ class ThrowingScreen extends Screen {
 
     // Phase 3.2 - Load level-specific background
     const backgroundFilename =
-      GameConfig.LEVEL_BACKGROUNDS[this.game.currentLevel] || "throw-bg.png";
+      GameConfig.LEVEL_BACKGROUNDS[this.game.currentLevel] || "throw-bg.jpg";
     this.backgroundImage = this.game.images[backgroundFilename];
 
     // Fallback to default if level-specific background not found
     if (!this.backgroundImage) {
-      this.backgroundImage = this.game.images["throw-bg.png"];
+      this.backgroundImage = this.game.images["throw-bg.jpg"];
     }
 
     // Set up next sockball type
@@ -469,15 +469,24 @@ class ThrowingScreen extends Screen {
     if (this.game.lastHitTime > 0) {
       const timeSinceLastHit = currentTime - this.game.lastHitTime;
       if (timeSinceLastHit <= GameConfig.ACHIEVEMENTS.PINCER.timeWindow) {
-        console.log(`[PINCER] Detected! Time between hits: ${timeSinceLastHit.toFixed(3)}s`);
+        console.log(
+          `[PINCER] Detected! Time between hits: ${timeSinceLastHit.toFixed(
+            3
+          )}s`
+        );
         this.game.unlockAchievement("pincer");
 
         // Increment pincer counter
         this.game.totalPincers++;
-        console.log(`[PINCER] Total pincers: ${this.game.totalPincers}/${GameConfig.ACHIEVEMENTS.PINCER_ADDICT.threshold}`);
+        console.log(
+          `[PINCER] Total pincers: ${this.game.totalPincers}/${GameConfig.ACHIEVEMENTS.PINCER_ADDICT.threshold}`
+        );
 
         // Achievement: PINCER_ADDICT - 10 lifetime pincers
-        if (this.game.totalPincers >= GameConfig.ACHIEVEMENTS.PINCER_ADDICT.threshold) {
+        if (
+          this.game.totalPincers >=
+          GameConfig.ACHIEVEMENTS.PINCER_ADDICT.threshold
+        ) {
           this.game.unlockAchievement("pincer_addict");
           console.log("[PINCER_ADDICT] Achievement unlocked!");
         }
@@ -534,8 +543,13 @@ class ThrowingScreen extends Screen {
       }
 
       // Achievement: THATS_NOT_POSSIBLE - Hit Martha with a sockball that bounced 3+ times
-      if (sockball.bounceCount >= GameConfig.ACHIEVEMENTS.THATS_NOT_POSSIBLE.bounceThreshold) {
-        console.log(`[THATS_NOT_POSSIBLE] Unlocking achievement - bounceCount: ${sockball.bounceCount}`);
+      if (
+        sockball.bounceCount >=
+        GameConfig.ACHIEVEMENTS.THATS_NOT_POSSIBLE.bounceThreshold
+      ) {
+        console.log(
+          `[THATS_NOT_POSSIBLE] Unlocking achievement - bounceCount: ${sockball.bounceCount}`
+        );
         this.game.unlockAchievement("thats_not_possible");
       }
     }
