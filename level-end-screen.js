@@ -329,8 +329,17 @@ class LevelEndScreen extends Screen {
       // Choose winning Martha spritesheet based on difficulty
       const difficulty = this.game.currentDifficulty || 0;
 
-      if (difficulty >= 3) {
-        // NEW GAME+ 3-4: Use fatsop spritesheet
+      if (difficulty >= 4) {
+        // NEW GAME+ 4: Randomly choose from all winning spritesheets
+        const winningSpritesheets = [
+          "martha-sockballs-spritesheet.png",
+          "martha-rumble-spritesheet.png",
+          "martha-fatsop-spritesheet.png",
+        ];
+        const randomIndex = Math.floor(Math.random() * winningSpritesheets.length);
+        this.marthaImage = this.game.images[winningSpritesheets[randomIndex]];
+      } else if (difficulty >= 3) {
+        // NEW GAME+ 3: Use fatsop spritesheet
         this.marthaImage = this.game.images["martha-fatsop-spritesheet.png"];
       } else if (difficulty >= 1) {
         // NEW GAME+ 1-2: Use rumble spritesheet
@@ -517,11 +526,10 @@ class LevelEndScreen extends Screen {
       if (this.showRentDue) {
         config = GameConfig.MARTHA_LOSING_SPRITESHEET;
       } else {
-        // Choose config based on difficulty
-        const difficulty = this.game.currentDifficulty || 0;
-        if (difficulty >= 3) {
+        // Determine which config to use based on the selected image
+        if (this.marthaImage === this.game.images["martha-fatsop-spritesheet.png"]) {
           config = GameConfig.MARTHA_FATSOP_SPRITESHEET;
-        } else if (difficulty >= 1) {
+        } else if (this.marthaImage === this.game.images["martha-rumble-spritesheet.png"]) {
           config = GameConfig.MARTHA_RUMBLE_SPRITESHEET;
         } else {
           config = GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;
@@ -912,15 +920,15 @@ class LevelEndScreen extends Screen {
     }
 
     if (this.useSpritesheet) {
-      // Render spritesheet frame - choose config based on difficulty
+      // Render spritesheet frame - determine config based on selected image
       let config;
       if (this.showRentDue) {
         config = GameConfig.MARTHA_LOSING_SPRITESHEET;
       } else {
-        const difficulty = this.game.currentDifficulty || 0;
-        if (difficulty >= 3) {
+        // Determine which config to use based on the selected image
+        if (this.marthaImage === this.game.images["martha-fatsop-spritesheet.png"]) {
           config = GameConfig.MARTHA_FATSOP_SPRITESHEET;
-        } else if (difficulty >= 1) {
+        } else if (this.marthaImage === this.game.images["martha-rumble-spritesheet.png"]) {
           config = GameConfig.MARTHA_RUMBLE_SPRITESHEET;
         } else {
           config = GameConfig.MARTHA_SOCKBALLS_SPRITESHEET;

@@ -3584,6 +3584,9 @@ class LevelSelect extends Screen {
             one_at_a_time: this.game.achievements[achievement.id]?.sameTypeStreak || 0,
             momentum_killer: this.game.achievements[achievement.id]?.streakBeforeBreak || 0,
             no_hope: this.game.achievements[achievement.id]?.missesThisGame || 0,
+            sock_master: this.game.completedLevelsByDifficulty[0]?.filter(c => c).length || 0,
+            halfway_there: this.game.completedLevelsByDifficulty[0]?.slice(0, 5).filter(c => c).length || 0,
+            lore_master: this.game.storyPanelsRead?.length || 0,
           };
 
           const currentProgress = progressMap[achievement.id] || 0;

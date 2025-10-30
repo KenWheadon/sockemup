@@ -7,7 +7,7 @@ const DEFAULT_SPRITESHEET_FRAMES = [
 const GameConfig = {
   // ========== DEVELOPER MODE ==========
   // Set to true to unlock all levels and difficulties for QA/testing
-  DEV_MODE: true,
+  DEV_MODE: false,
 
   // Target canvas dimensions and aspect ratio
   TARGET_WIDTH: 1200,
@@ -909,6 +909,7 @@ const GameConfig = {
       description: "Complete all 9 levels",
       icon: "icon-crown.png",
       unlocked: false,
+      threshold: 9,
     },
     DEADEYE: {
       id: "deadeye",
@@ -991,18 +992,18 @@ const GameConfig = {
     DEEP_POCKETS: {
       id: "deep_pockets",
       name: "Deep Pockets",
-      description: "Have 5000+ money at once",
+      description: "Have 9999+ money at once",
       icon: "icon-money.png",
       unlocked: false,
-      threshold: 5000,
+      threshold: 9999,
     },
     BIG_SPENDER: {
       id: "big_spender",
       name: "Big Spender",
-      description: "Spend 9999 money total",
+      description: "Spend 7500 money total",
       icon: "icon-goldbar.png",
       unlocked: false,
-      threshold: 9999,
+      threshold: 7500,
     },
     MARTHAS_MILLIONAIRE: {
       id: "marthas_millionaire",
@@ -1018,6 +1019,7 @@ const GameConfig = {
       description: "Complete levels 1-5",
       icon: "icon-glass.png",
       unlocked: false,
+      threshold: 5,
     },
     VETERAN_TENANT: {
       id: "veteran_tenant",
@@ -1194,6 +1196,7 @@ const GameConfig = {
       description: "Unlock and read all 9 story panels",
       icon: "icon-book.png",
       unlocked: false,
+      threshold: 9,
     },
     GRIND_MASTER: {
       id: "grind_master",
