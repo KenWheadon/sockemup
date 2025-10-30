@@ -182,6 +182,13 @@ class ControllerManager {
     const moveUp = dpadUp || leftStickY < -this.axisThreshold;
     const moveDown = dpadDown || leftStickY > this.axisThreshold;
 
+    // Handle right stick scrolling for scrollable windows
+    if (Math.abs(rightStickY) > 0.1) {
+      if (this.handleScrollableWindowInput(currentScreen, rightStickY)) {
+        return; // Handled by scrollable window, don't process other inputs
+      }
+    }
+
     // Handle directional movement based on game state
     if (gameState === 'matching') {
       // Match screen: use for keyboard-style sock selection and movement
@@ -202,21 +209,58 @@ class ControllerManager {
       }
     } else if (gameState === 'menu') {
       // Level select: handle menu navigation
-      if (this.buttonJustPressed(gamepad, 'dpad_up', moveUp)) {
-        // Navigate up in menu
-        this.simulateKeyPress(currentScreen, 'ArrowUp');
-      }
-      if (this.buttonJustPressed(gamepad, 'dpad_down', moveDown)) {
-        // Navigate down in menu
-        this.simulateKeyPress(currentScreen, 'ArrowDown');
-      }
-      if (this.buttonJustPressed(gamepad, 'dpad_left', moveLeft)) {
-        this.simulateKeyPress(currentScreen, 'ArrowLeft');
-      }
-      if (this.buttonJustPressed(gamepad, 'dpad_right', moveRight)) {
-        this.simulateKeyPress(currentScreen, 'ArrowRight');
+      // Skip directional input if story manager or story viewer is open (use reticle instead)
+      const storyManagerOpen = currentScreen.game?.storyManager?.showingStory;
+      const storyViewerOpen = currentScreen.storyViewer?.isOpen;
+
+      if (!storyManagerOpen && !storyViewerOpen) {
+        if (this.buttonJustPressed(gamepad, 'dpad_up', moveUp)) {
+          // Navigate up in menu
+          this.simulateKeyPress(currentScreen, 'ArrowUp');
+        }
+        if (this.buttonJustPressed(gamepad, 'dpad_down', moveDown)) {
+          // Navigate down in menu
+          this.simulateKeyPress(currentScreen, 'ArrowDown');
+        }
+        if (this.buttonJustPressed(gamepad, 'dpad_left', moveLeft)) {
+          this.simulateKeyPress(currentScreen, 'ArrowLeft');
+        }
+        if (this.buttonJustPressed(gamepad, 'dpad_right', moveRight)) {
+          this.simulateKeyPress(currentScreen, 'ArrowRight');
+        }
       }
     }
+  }
+
+  handleScrollableWindowInput(currentScreen, rightStickY) {
+    // Check for achievements drawer (canvas-based scrolling)
+    if (currentScreen && currentScreen.achievementsDrawer?.isOpen &&
+        currentScreen.achievementsDrawer.animationProgress > 0.5) {
+      const scrollSpeed = 15; // Adjust sensitivity as needed
+      const scrollAmount = rightStickY * scrollSpeed;
+
+      currentScreen.achievementsDrawer.scrollOffset = Math.max(
+        0,
+        Math.min(
+          currentScreen.achievementsDrawer.maxScroll,
+          currentScreen.achievementsDrawer.scrollOffset + scrollAmount
+        )
+      );
+      return true; // Handled
+    }
+
+    // Check for credits modal (HTML/CSS-based scrolling)
+    if (currentScreen && currentScreen.creditsModal?.classList.contains('visible')) {
+      const creditsBody = currentScreen.creditsModal.querySelector('.credits-content');
+      if (creditsBody) {
+        const scrollSpeed = 20; // Adjust sensitivity as needed
+        const scrollAmount = rightStickY * scrollSpeed;
+        creditsBody.scrollTop += scrollAmount;
+        return true; // Handled
+      }
+    }
+
+    return false; // Not handled
   }
 
   handleThrowingAim(currentScreen, aimX, aimY) {
@@ -467,8 +511,12 @@ class ControllerManager {
 
       // Notify current screen of reticle movement for hover detection
       const currentScreen = this.game.getCurrentScreen();
+      console.log('Reticle position:', this.reticle.x, this.reticle.y, 'Screen:', currentScreen?.constructor?.name);
       if (currentScreen && typeof currentScreen.handleReticleMove === 'function') {
+        console.log('Calling handleReticleMove');
         currentScreen.handleReticleMove(this.reticle.x, this.reticle.y);
+      } else {
+        console.log('handleReticleMove not available');
       }
     }
   }

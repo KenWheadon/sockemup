@@ -1892,7 +1892,54 @@ class LevelSelect extends Screen {
     const layout = this.layoutCache;
     const elements = [];
 
-    // Add story replay button
+    // If story viewer is open, return its buttons
+    if (this.storyViewer.isOpen) {
+      const canvasWidth = this.game.getCanvasWidth();
+      const canvasHeight = this.game.getCanvasHeight();
+      const modalWidth = this.game.getScaledValue(900);
+      const modalHeight = this.game.getScaledValue(480);
+      const modalX = (canvasWidth - modalWidth) / 2;
+      const modalY = (canvasHeight - modalHeight) / 2;
+      const buttonY = modalY + modalHeight - this.game.getScaledValue(50);
+      const buttonWidth = this.game.getScaledValue(85);
+      const buttonHeight = this.game.getScaledValue(35);
+      const buttonSpacing = this.game.getScaledValue(15);
+      const unlockedPanels = this.storyViewer.getUnlockedPanels();
+
+      // Close button (far left)
+      elements.push({
+        x: modalX + this.game.getScaledValue(30),
+        y: buttonY,
+        width: buttonWidth,
+        height: buttonHeight,
+      });
+
+      // Previous button (if available)
+      if (this.storyViewer.currentPanel > 0) {
+        const prevX = modalX + modalWidth - buttonWidth * 2 - buttonSpacing - this.game.getScaledValue(30);
+        elements.push({
+          x: prevX,
+          y: buttonY,
+          width: buttonWidth,
+          height: buttonHeight,
+        });
+      }
+
+      // Next button (if available)
+      if (this.storyViewer.currentPanel < unlockedPanels.length - 1) {
+        const nextX = modalX + modalWidth - buttonWidth - this.game.getScaledValue(30);
+        elements.push({
+          x: nextX,
+          y: buttonY,
+          width: buttonWidth,
+          height: buttonHeight,
+        });
+      }
+
+      return elements;
+    }
+
+    // Add story replay button (How to Play)
     elements.push({
       x: layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2,
       y: layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2,
@@ -1900,7 +1947,33 @@ class LevelSelect extends Screen {
       height: layout.storyReplayButtonHeight,
     });
 
-    // Add achievements button
+    // Add story viewer button (Story)
+    elements.push({
+      x: layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2,
+      y: layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2,
+      width: layout.storyViewerButtonWidth,
+      height: layout.storyViewerButtonHeight,
+    });
+
+    // Add credits button
+    elements.push({
+      x: layout.creditsButtonX - layout.creditsButtonWidth / 2,
+      y: layout.creditsButtonY - layout.creditsButtonHeight / 2,
+      width: layout.creditsButtonWidth,
+      height: layout.creditsButtonHeight,
+    });
+
+    // Add audio player button (if unlocked)
+    if (this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0) {
+      elements.push({
+        x: layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2,
+        y: layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2,
+        width: layout.audioPlayerButtonWidth,
+        height: layout.audioPlayerButtonHeight,
+      });
+    }
+
+    // Add achievements button (Trophies)
     elements.push({
       x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
       y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
@@ -1910,24 +1983,55 @@ class LevelSelect extends Screen {
 
     // Add level tiles
     const levelTileSize = this.game.getScaledValue(
-      this.LEVEL_TILE_CONFIG.baseTileSize
+      this.levelConfig.baseButtonSize
     );
     for (let i = 0; i < GameConfig.LEVELS.length; i++) {
-      const position = this.getLevelTilePosition(i);
-      if (position) {
-        elements.push({
-          x: position.x - levelTileSize / 2,
-          y: position.y - levelTileSize / 2,
-          width: levelTileSize,
-          height: levelTileSize,
-        });
-      }
+      const col = i % this.levelConfig.columns;
+      const row = Math.floor(i / this.levelConfig.columns);
+      const levelX = layout.levelGridStartX + col * layout.levelHorizontalSpacing;
+      const levelY = layout.levelGridStartY + row * layout.levelVerticalSpacing;
+      elements.push({
+        x: levelX - levelTileSize / 2,
+        y: levelY - levelTileSize / 2,
+        width: levelTileSize,
+        height: levelTileSize,
+      });
     }
 
     return elements;
   }
 
   handleReticleMove(x, y) {
+    // If story manager is showing, delegate to it
+    if (this.game.storyManager.showingStory) {
+      console.log('Story manager showing - reticle at', x, y);
+      this.game.storyManager.handleMouseMove(x, y);
+      // Story manager has its own hover state handling
+      if (this.game.controllerManager) {
+        this.game.controllerManager.setReticleHoverState(false); // Will be updated by story manager
+      }
+      return;
+    }
+
+    // If story viewer is open, delegate to it
+    if (this.storyViewer.isOpen) {
+      console.log('Story viewer open - reticle at', x, y);
+      this.storyViewer.handleMouseMove(x, y);
+
+      // Update reticle hover state based on story viewer buttons
+      const isHovering =
+        this.storyViewer.navButtons.close.hovered ||
+        this.storyViewer.navButtons.previous.hovered ||
+        this.storyViewer.navButtons.next.hovered;
+
+      console.log('Story viewer buttons hovered:', this.storyViewer.navButtons);
+
+      if (this.game.controllerManager) {
+        this.game.controllerManager.setReticleHoverState(isHovering);
+      }
+      return;
+    }
+
     // Reuse the existing mouse move logic for hover detection
     const previousHoveredLevel = this.hoveredLevel;
     this.hoveredLevel = this.getLevelAtPosition(x, y);
@@ -1950,7 +2054,31 @@ class LevelSelect extends Screen {
       height: layout.storyReplayButtonHeight,
     });
 
-    this.achievementsButton.hovered = this.isPointInRect(x, y, {
+    this.storyViewer.button.hovered = this.isPointInRect(x, y, {
+      x: layout.storyViewerButtonX - layout.storyViewerButtonWidth / 2,
+      y: layout.storyViewerButtonY - layout.storyViewerButtonHeight / 2,
+      width: layout.storyViewerButtonWidth,
+      height: layout.storyViewerButtonHeight,
+    });
+
+    this.creditsButton.hovered = this.isPointInRect(x, y, {
+      x: layout.creditsButtonX - layout.creditsButtonWidth / 2,
+      y: layout.creditsButtonY - layout.creditsButtonHeight / 2,
+      width: layout.creditsButtonWidth,
+      height: layout.creditsButtonHeight,
+    });
+
+    this.audioPlayerButton.hovered = false;
+    if (this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0) {
+      this.audioPlayerButton.hovered = this.isPointInRect(x, y, {
+        x: layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2,
+        y: layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2,
+        width: layout.audioPlayerButtonWidth,
+        height: layout.audioPlayerButtonHeight,
+      });
+    }
+
+    this.achievementsDrawer.button.hovered = this.isPointInRect(x, y, {
       x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
       y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
       width: layout.achievementsButtonWidth,
@@ -1961,7 +2089,10 @@ class LevelSelect extends Screen {
     const isHovering =
       this.hoveredLevel !== -1 ||
       this.storyReplayButton.hovered ||
-      this.achievementsButton.hovered;
+      this.storyViewer.button.hovered ||
+      this.creditsButton.hovered ||
+      this.audioPlayerButton.hovered ||
+      this.achievementsDrawer.button.hovered;
 
     if (this.game.controllerManager) {
       this.game.controllerManager.setReticleHoverState(isHovering);
@@ -1969,16 +2100,51 @@ class LevelSelect extends Screen {
   }
 
   handleReticleAction(x, y) {
-    // Reuse the existing click logic
-    // Check story replay button
-    if (this.storyReplayButton.hovered) {
-      this.game.audioManager.playSound("button-click", false, 0.5);
-      this.game.storyManager.showIntroStory();
+    // If story manager is showing, delegate to it
+    if (this.game.storyManager.showingStory) {
+      console.log('Story manager showing - reticle action at', x, y);
+      this.game.storyManager.handleClick(x, y);
       return true;
     }
 
-    // Check achievements button
-    if (this.achievementsButton.hovered) {
+    // If story viewer is open, delegate to it
+    if (this.storyViewer.isOpen) {
+      console.log('Story viewer open - reticle action at', x, y);
+      const result = this.storyViewer.handleClick(x, y);
+      console.log('Story viewer click result:', result);
+      return result;
+    }
+
+    // Reuse the existing click logic
+    // Check story replay button (How to Play)
+    if (this.storyReplayButton.hovered) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.game.storyManager.show();
+      return true;
+    }
+
+    // Check story viewer button (Story)
+    if (this.storyViewer.button.hovered) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.storyViewer.open();
+      return true;
+    }
+
+    // Check credits button
+    if (this.creditsButton.hovered) {
+      this.showCredits();
+      return true;
+    }
+
+    // Check audio player button
+    if (this.audioPlayerButton.hovered && this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0) {
+      this.game.audioManager.playSound("button-click", false, 0.5);
+      this.audioPlayer.open();
+      return true;
+    }
+
+    // Check achievements button (Trophies)
+    if (this.achievementsDrawer.button.hovered) {
       this.game.audioManager.playSound("button-click", false, 0.5);
       this.toggleAchievementsDrawer();
       return true;
