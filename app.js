@@ -136,6 +136,9 @@ class SockGame {
     // Track game state at mousedown to prevent cross-screen clicks
     this.mouseDownState = null;
 
+    // Track if mouseUp handled event to prevent subsequent click
+    this.preventNextClick = false;
+
     // Initialize screens - now using the base Screen class
     this.levelSelect = new LevelSelect(this);
     this.levelSelect.setup();
@@ -439,7 +442,14 @@ class SockGame {
       const touch = e.changedTouches[0];
 
       this.handleMouseUp({ clientX: touch.clientX, clientY: touch.clientY });
-      this.handleClick({ clientX: touch.clientX, clientY: touch.clientY });
+
+      // Only trigger click if mouseUp didn't handle the event (e.g., wasn't a drag)
+      if (!this.preventNextClick) {
+        this.handleClick({ clientX: touch.clientX, clientY: touch.clientY });
+      } else {
+        // Reset the flag since we skipped the click
+        this.preventNextClick = false;
+      }
     }
   }
 
@@ -1069,15 +1079,19 @@ class SockGame {
       const y = coords.y;
 
       // Use the new Screen base class method
+      let handled = false;
       if (this.gameState === "menu") {
-        this.levelSelect.handleMouseUp(x, y);
+        handled = this.levelSelect.handleMouseUp(x, y);
       } else if (this.gameState === "matching") {
-        this.matchScreen.handleMouseUp();
+        handled = this.matchScreen.handleMouseUp();
       } else if (this.gameState === "throwing") {
-        this.throwingScreen.handleMouseUp(x, y);
+        handled = this.throwingScreen.handleMouseUp(x, y);
       } else if (this.gameState === "gameOver") {
-        this.levelEndScreen.handleMouseUp();
+        handled = this.levelEndScreen.handleMouseUp();
       }
+
+      // If mouseUp was handled (e.g., drag released), prevent click
+      this.preventNextClick = handled;
     } catch (error) {
       console.error("Error handling mouse up:", error);
     }
@@ -1085,6 +1099,13 @@ class SockGame {
 
   handleClick(e) {
     try {
+      // If the previous mouseUp was handled (e.g., drag released), skip click
+      if (this.preventNextClick) {
+        this.preventNextClick = false;
+        this.mouseDownState = null;
+        return;
+      }
+
       if (
         this.mouseDownState !== null &&
         this.mouseDownState !== this.gameState

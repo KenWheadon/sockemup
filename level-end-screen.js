@@ -293,12 +293,12 @@ class LevelEndScreen extends Screen {
     }
 
     // Leftover sockballs bonus increases with difficulty (20, 30, 40, 50 for NG+ 1-4)
-    const sockballsLeftoverBonus = difficulty === 0 ? 10 : 10 + (difficulty * 10);
-    this.sockballsLeftoverPoints = this.sockballsLeftover * sockballsLeftoverBonus;
+    this.sockballsLeftoverBonus = difficulty === 0 ? 10 : 10 + (difficulty * 10);
+    this.sockballsLeftoverPoints = this.sockballsLeftover * this.sockballsLeftoverBonus;
 
     // Rent penalty increases with difficulty (20, 30, 40, 50 for NG+ 1-4)
-    const rentPenaltyPerSockball = difficulty === 0 ? 10 : 10 + (difficulty * 10);
-    this.rentPenaltyPoints = this.rentPenalty * -rentPenaltyPerSockball;
+    this.rentPenaltyPerSockball = difficulty === 0 ? 10 : 10 + (difficulty * 10);
+    this.rentPenaltyPoints = this.rentPenalty * -this.rentPenaltyPerSockball;
 
     // Calculate the raw total (can be negative)
     const rawTotal =
@@ -345,9 +345,9 @@ class LevelEndScreen extends Screen {
     // Calculate animation duration to always take 3 seconds total
     const totalAnimationTime = 3000; // 3 seconds in milliseconds
 
-    // Time bonus display value (in points, not sockballs)
+    // Time bonus display value (use actual points for animation)
     const timeBonusDisplayValue = this.game.timeBonusEarned
-      ? Math.floor(this.timeBonusPoints / 5)
+      ? this.timeBonusPoints
       : 0;
 
     // Calculate total steps needed across all stages
@@ -998,19 +998,19 @@ class LevelEndScreen extends Screen {
       },
       {
         label: `TIME BONUS (2x RENT):`,
-        value: this.timeBonusDisplay * 5,
+        value: this.timeBonusDisplay,
         color: "#FFD700",
         show: this.game.timeBonusEarned,
       },
       {
         label: `${this.sockballsLeftoverDisplay}x SOCKBALLS LEFTOVER:`,
-        value: this.sockballsLeftoverDisplay * (difficulty === 0 ? 10 : 10 + (difficulty * 10)),
+        value: this.sockballsLeftoverDisplay * this.sockballsLeftoverBonus,
         color: "#95E1D3",
         show: this.sockballsLeftover > 0, // Only show if there are leftover sockballs
       },
       {
         label: `RENT PENALTY:`,
-        value: this.rentPenaltyDisplay * -(difficulty === 0 ? 10 : 10 + (difficulty * 10)),
+        value: this.rentPenaltyDisplay * -this.rentPenaltyPerSockball,
         color: "#FF6B6B",
         show: this.rentPenalty > 0, // Only show if there's a penalty
       },

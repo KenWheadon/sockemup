@@ -422,7 +422,7 @@ const GameConfig = {
       marthaSpeed: 0.9,
       sockPairs: 10,
       typesAvailable: [1, 2, 3, 4, 5],
-      matchingTime: 38,
+      matchingTime: 34,
       marthaWantsSockballs: 7,
       marthaPatterns: [
         "horizontal",
@@ -511,7 +511,7 @@ const GameConfig = {
 
   // Level costs and unlock data
   // Smoothed progression: easier early game, better scaling for NEW GAME+ difficulties
-  LEVEL_COSTS: [0, 30, 60, 110, 160, 210, 250, 300, 360],
+  LEVEL_COSTS: [0, 30, 60, 90, 140, 180, 225, 250, 300],
 
   INITIAL_UNLOCKED_LEVELS: [
     true,
@@ -651,6 +651,16 @@ const GameConfig = {
       "icon-barbell.png",
       "icon-heartbreak.png",
 
+      "icon-shock.png",
+      "icon-beetle.png",
+      "icon-crying.png",
+      "icon-diamondsockball.png",
+      "icon-goldensocks.png",
+      "icon-shock.png",
+      "icon-thumbsdown.png",
+      "icon-thumbsup.png",
+      "icon-upset.png",
+
       "btn-next.png",
       "btn-back.png",
       "btn-pause.png",
@@ -722,9 +732,9 @@ const GameConfig = {
 
   // Martha catch mechanics settings
   CATCH_MECHANICS: {
-    CATCH_RADIUS_MULTIPLIER: 2.6,
-    PERFECT_CATCH_THRESHOLD: 0.4,
-    GOOD_CATCH_THRESHOLD: 1,
+    CATCH_RADIUS_MULTIPLIER: 2.5,
+    PERFECT_CATCH_THRESHOLD: 0.45,
+    GOOD_CATCH_THRESHOLD: 1.1,
     PERFECT_CATCH_BONUS: 15,
     GOOD_CATCH_BONUS: 10,
     REGULAR_CATCH_BONUS: 5,
@@ -911,11 +921,11 @@ const GameConfig = {
     QUICK_HANDS: {
       id: "quick_hands",
       name: "Quick Hands",
-      description: "Match 5 pairs in 15 seconds",
+      description: "Match 5 pairs in 14 seconds",
       icon: "icon-hands.png",
       unlocked: false,
       pairs: 5,
-      timeLimit: 15,
+      timeLimit: 14,
     },
     STREAK_KING: {
       id: "streak_king",
@@ -997,7 +1007,7 @@ const GameConfig = {
     MARTHAS_MILLIONAIRE: {
       id: "marthas_millionaire",
       name: "Martha's Millionaire",
-      description: "Earn 1000 sockballs total (lifetime)",
+      description: "Earn 1000 sockballs total",
       icon: "icon-diamondsock.png",
       unlocked: false,
       threshold: 1000,
@@ -1035,10 +1045,10 @@ const GameConfig = {
     LOGO_CLICKER: {
       id: "logo_clicker",
       name: "Logo Clicker",
-      description: "Click the logo 10 times",
+      description: "Click the logo 25 times",
       icon: "icon-mouse.png",
       unlocked: false,
-      threshold: 10,
+      threshold: 25,
     },
     BUTTERFINGERS: {
       id: "butterfingers",
@@ -1066,7 +1076,7 @@ const GameConfig = {
     PINBALL_KING: {
       id: "pinball_king",
       name: "Pinball King",
-      description: "Get 25 total wall bounce catches (lifetime)",
+      description: "Get 25 total wall bounce catches",
       icon: "icon-trophy.png",
       unlocked: false,
       threshold: 25,
@@ -1081,7 +1091,7 @@ const GameConfig = {
     BONUS_MASTER: {
       id: "bonus_master",
       name: "Bonus Master",
-      description: "Get 10 bonus hits (lifetime)",
+      description: "Get 10 bonus hits",
       icon: "icon-poke.png",
       unlocked: false,
       threshold: 10,
@@ -1096,7 +1106,7 @@ const GameConfig = {
     SPACE_SHOOTER: {
       id: "space_shooter",
       name: "Space Shooter",
-      description: "10 double bounces before hitting Martha (lifetime)",
+      description: "Double bounce before hitting Martha 10 times",
       icon: "icon-asteroid.png",
       unlocked: false,
       threshold: 10,
@@ -1133,10 +1143,10 @@ const GameConfig = {
     BABY_SPEED_RUN: {
       id: "baby_speed_run",
       name: "Baby Speed Run",
-      description: "Win 5 levels in a row",
+      description: "Win 3 levels in a row",
       icon: "icon-stroller.png",
       unlocked: false,
-      threshold: 5,
+      threshold: 3,
     },
     SPEED_RUN: {
       id: "speed_run",
@@ -1149,10 +1159,10 @@ const GameConfig = {
     SPEED_ROYALTY: {
       id: "speed_royalty",
       name: "Speed Royalty",
-      description: "Win 20 levels in a row",
+      description: "Win 18 levels in a row",
       icon: "icon-sonic.png",
       unlocked: false,
-      threshold: 20,
+      threshold: 18,
     },
     TRIAL_BY_FIRE: {
       id: "trial_by_fire",
@@ -1223,63 +1233,63 @@ const GameConfig = {
     KINDA_PERFECT: {
       id: "kinda_perfect",
       name: "Kinda Perfect",
-      description: "25 total perfects lifetime",
-      icon: "icon-diamond.png",
+      description: "25 total perfects",
+      icon: "icon-goldensocks.png",
       unlocked: false,
       threshold: 25,
     },
     PERFECTION: {
       id: "perfection",
       name: "Perfection",
-      description: "100 perfect shots lifetime",
-      icon: "icon-sparkles.png",
+      description: "100 perfect shots",
+      icon: "icon-diamondsockball.png",
       unlocked: false,
       threshold: 100,
     },
     GOOD_ENOUGH: {
       id: "good_enough",
       name: "Good Enough",
-      description: "250 good shots lifetime",
-      icon: "icon-eyeball.png",
+      description: "250 good shots",
+      icon: "icon-thumbsup.png",
       unlocked: false,
       threshold: 250,
     },
     FLUBBED_IT: {
       id: "flubbed_it",
       name: "Flubbed It",
-      description: "Miss on the final sockball when it would have made you win the level, but you lose instead",
-      icon: "icon-heartbreak.png",
+      description: "Miss on the final sockball when you would have won",
+      icon: "icon-thumbsdown.png",
       unlocked: false,
+    },
+    FLUB_KING: {
+      id: "flub_king",
+      name: "Flub King",
+      description: "Flub 5 times",
+      icon: "icon-upset.png",
+      unlocked: false,
+      threshold: 5,
     },
     PINCER: {
       id: "pincer",
       name: "Pincer",
       description: "Hit Martha within 0.5 seconds with 2 sockballs",
-      icon: "icon-poke.png",
+      icon: "icon-beetle.png",
       unlocked: false,
       timeWindow: 0.5, // seconds
-    },
-    FLUB_KING: {
-      id: "flub_king",
-      name: "Flub King",
-      description: "Flub 5 times lifetime",
-      icon: "icon-butter.png",
-      unlocked: false,
-      threshold: 5,
     },
     NO_HOPE: {
       id: "no_hope",
       name: "No Hope",
       description: "Miss 10 sockballs in a single game",
-      icon: "icon-redx.png",
+      icon: "icon-shock.png",
       unlocked: false,
       threshold: 10,
     },
     MISS_MISS_MISS: {
       id: "miss_miss_miss",
       name: "Miss Miss Miss",
-      description: "Miss 100 sockballs lifetime",
-      icon: "icon-wall.png",
+      description: "Miss 100 sockballs",
+      icon: "icon-crying.png",
       unlocked: false,
       threshold: 100,
     },
