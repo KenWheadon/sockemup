@@ -89,6 +89,12 @@ class SockGame {
     // Audio player unlocked tracks
     this.unlockedTracks = ['menu-music']; // Start with menu music unlocked
 
+    // Audio player favorite tracks
+    this.favoriteTracks = []; // Player's favorite music tracks
+
+    // Audio player track play counts
+    this.trackPlayCounts = {}; // Track how many times each track has been played
+
     // Initialize audio manager
     this.audioManager = new AudioManager();
 
@@ -685,6 +691,12 @@ class SockGame {
       // Unlocked music tracks for audio player
       this.unlockedTracks = data.unlockedTracks || ['menu-music'];
 
+      // Favorite music tracks for audio player
+      this.favoriteTracks = data.favoriteTracks || [];
+
+      // Track play counts for audio player
+      this.trackPlayCounts = data.trackPlayCounts || {};
+
       this.hasShownNewGamePlusBanner = data.hasShownNewGamePlusBanner || false;
 
       const baseLevels = this.completedLevelsByDifficulty[0] || [];
@@ -805,6 +817,10 @@ class SockGame {
       watchedVideos: this.watchedVideos,
       // Unlocked music tracks
       unlockedTracks: this.unlockedTracks,
+      // Favorite music tracks
+      favoriteTracks: this.favoriteTracks,
+      // Track play counts
+      trackPlayCounts: this.trackPlayCounts,
     };
     localStorage.setItem("sockGameData", JSON.stringify(data));
   }

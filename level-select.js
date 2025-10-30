@@ -380,14 +380,11 @@ class LevelSelect extends Screen {
       videoButtonWidth: this.game.getScaledValue(400),
       videoButtonHeight: this.game.getScaledValue(100),
 
-      audioPlayerButtonX:
-        canvasWidth - youWinImageSize.width / 2 - this.game.getScaledValue(50),
-      audioPlayerButtonY:
-        canvasHeight / 2 +
-        youWinImageSize.height / 2 +
-        this.game.getScaledValue(200),
-      audioPlayerButtonWidth: this.game.getScaledValue(400),
-      audioPlayerButtonHeight: this.game.getScaledValue(100),
+      // Audio player button - in top bar between difficulty and trophies
+      audioPlayerButtonX: canvasWidth - this.game.getScaledValue(535),
+      audioPlayerButtonY: barY + barHeight / 2,
+      audioPlayerButtonWidth: this.game.getScaledValue(100),
+      audioPlayerButtonHeight: this.game.getScaledValue(35),
 
       statsPanelWidth: this.game.getScaledValue(200),
       statsPanelHeight: this.game.getScaledValue(40),
@@ -452,7 +449,37 @@ class LevelSelect extends Screen {
 
   setup() {
     super.setup();
-    this.game.audioManager.playMusic("menu-music", true);
+
+    // Select menu music based on new game plus level (selected difficulty)
+    let menuMusicName = "menu-music"; // Default for NG+0
+    const selectedDifficulty = this.game.selectedDifficulty;
+
+    if (selectedDifficulty === 1) {
+      menuMusicName = "menu-music-1";
+    } else if (selectedDifficulty === 2) {
+      menuMusicName = "menu-music-2";
+    } else if (selectedDifficulty === 3) {
+      menuMusicName = "menu-music-3";
+    } else if (selectedDifficulty >= 4) {
+      // For NG+4 and beyond, randomly select from all menu music
+      const randomChoice = Math.floor(Math.random() * 4);
+      if (randomChoice === 0) {
+        menuMusicName = "menu-music";
+      } else if (randomChoice === 1) {
+        menuMusicName = "menu-music-1";
+      } else if (randomChoice === 2) {
+        menuMusicName = "menu-music-2";
+      } else {
+        menuMusicName = "menu-music-3";
+      }
+    }
+
+    this.game.audioManager.playMusic(menuMusicName, true);
+
+    // Unlock the menu music track in audio player
+    if (this.audioPlayer) {
+      this.audioPlayer.unlockTrack(menuMusicName);
+    }
 
     if (this.game.newStoryPanelUnlocked >= 0) {
       this.game.newStoryPanelUnlocked = -1;
@@ -791,12 +818,14 @@ class LevelSelect extends Screen {
       if (this.logoPressTimer < this.PRESS_DURATION) {
         // Animate to minimum scale
         this.logoPressScale =
-          1.0 - (this.logoPressTimer / this.PRESS_DURATION) * this.PRESS_SCALE_RANGE;
+          1.0 -
+          (this.logoPressTimer / this.PRESS_DURATION) * this.PRESS_SCALE_RANGE;
       } else if (this.logoPressTimer < this.PRESS_DURATION * 2) {
         // Animate back to maximum scale
         const returnProgress =
           (this.logoPressTimer - this.PRESS_DURATION) / this.PRESS_DURATION;
-        this.logoPressScale = this.PRESS_MIN_SCALE + returnProgress * this.PRESS_SCALE_RANGE;
+        this.logoPressScale =
+          this.PRESS_MIN_SCALE + returnProgress * this.PRESS_SCALE_RANGE;
       } else {
         // Animation complete
         this.logoPressed = false;
@@ -911,8 +940,14 @@ class LevelSelect extends Screen {
     this.mismatchParticles.forEach((particle, index) => {
       particle.x += particle.vx * timeMultiplier;
       particle.y += particle.vy * timeMultiplier;
-      particle.vx *= Math.pow(this.menuPhysics.rotationFriction, timeMultiplier);
-      particle.vy *= Math.pow(this.menuPhysics.rotationFriction, timeMultiplier);
+      particle.vx *= Math.pow(
+        this.menuPhysics.rotationFriction,
+        timeMultiplier
+      );
+      particle.vy *= Math.pow(
+        this.menuPhysics.rotationFriction,
+        timeMultiplier
+      );
       particle.life -= timeMultiplier;
 
       if (particle.life <= 0) {
@@ -957,7 +992,10 @@ class LevelSelect extends Screen {
       ) {
         sock.vx = 0;
         sock.vy = 0;
-        if (sock.rotationSpeed && Math.abs(sock.rotationSpeed) < this.ROTATION_VELOCITY_THRESHOLD) {
+        if (
+          sock.rotationSpeed &&
+          Math.abs(sock.rotationSpeed) < this.ROTATION_VELOCITY_THRESHOLD
+        ) {
           sock.rotationSpeed = 0;
         }
       }
@@ -1062,8 +1100,10 @@ class LevelSelect extends Screen {
       });
 
       // Audio player button hover
-      const audioPlayerButtonX = layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2;
-      const audioPlayerButtonY = layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2;
+      const audioPlayerButtonX =
+        layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2;
+      const audioPlayerButtonY =
+        layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2;
       this.audioPlayerButton.hovered = this.isPointInRect(x, y, {
         x: audioPlayerButtonX,
         y: audioPlayerButtonY,
@@ -1543,7 +1583,10 @@ class LevelSelect extends Screen {
 
         // Track money spent for Big Spender achievement
         this.game.totalMoneySpent += levelCost;
-        if (this.game.totalMoneySpent >= GameConfig.ACHIEVEMENTS.BIG_SPENDER.threshold) {
+        if (
+          this.game.totalMoneySpent >=
+          GameConfig.ACHIEVEMENTS.BIG_SPENDER.threshold
+        ) {
           this.game.unlockAchievement("big_spender");
         }
 
@@ -1844,7 +1887,7 @@ class LevelSelect extends Screen {
       x: layout.storyReplayButtonX - layout.storyReplayButtonWidth / 2,
       y: layout.storyReplayButtonY - layout.storyReplayButtonHeight / 2,
       width: layout.storyReplayButtonWidth,
-      height: layout.storyReplayButtonHeight
+      height: layout.storyReplayButtonHeight,
     });
 
     // Add achievements button
@@ -1852,7 +1895,7 @@ class LevelSelect extends Screen {
       x: layout.achievementsButtonX - layout.achievementsButtonWidth / 2,
       y: layout.achievementsButtonY - layout.achievementsButtonHeight / 2,
       width: layout.achievementsButtonWidth,
-      height: layout.achievementsButtonHeight
+      height: layout.achievementsButtonHeight,
     });
 
     // Add level tiles
@@ -1866,7 +1909,7 @@ class LevelSelect extends Screen {
           x: position.x - levelTileSize / 2,
           y: position.y - levelTileSize / 2,
           width: levelTileSize,
-          height: levelTileSize
+          height: levelTileSize,
         });
       }
     }
@@ -2142,7 +2185,10 @@ class LevelSelect extends Screen {
 
     // Track easter egg sockballs for Sockball Wizard achievement
     this.game.easterEggSockballsCreated++;
-    if (this.game.easterEggSockballsCreated >= GameConfig.ACHIEVEMENTS.SOCKBALL_WIZARD.threshold) {
+    if (
+      this.game.easterEggSockballsCreated >=
+      GameConfig.ACHIEVEMENTS.SOCKBALL_WIZARD.threshold
+    ) {
       this.game.unlockAchievement("sockball_wizard");
     }
 
@@ -2236,7 +2282,9 @@ class LevelSelect extends Screen {
     this.game.logoClickCount++; // Track in game for achievement persistence
 
     // Achievement: LOGO_CLICKER
-    if (this.game.logoClickCount >= GameConfig.ACHIEVEMENTS.LOGO_CLICKER.threshold) {
+    if (
+      this.game.logoClickCount >= GameConfig.ACHIEVEMENTS.LOGO_CLICKER.threshold
+    ) {
       this.game.unlockAchievement("logo_clicker");
     }
 
@@ -2404,7 +2452,6 @@ class LevelSelect extends Screen {
     if (this.areAllLevelsCompleted()) {
       this.renderYouWinGraphic(ctx);
       this.renderVideoButton(ctx);
-      this.renderAudioPlayerButton(ctx);
     }
 
     // Render easter egg socks BEFORE the top bar so they appear below it
@@ -2434,7 +2481,7 @@ class LevelSelect extends Screen {
 
     this.renderSockBallAnimations(ctx);
     this.renderPointGainAnimations(ctx);
-    this.renderMismatchParticles(ctx)
+    this.renderMismatchParticles(ctx);
 
     // Render story viewer modal
     this.storyViewer.renderModal(ctx, this.layoutCache);
@@ -2791,6 +2838,23 @@ class LevelSelect extends Screen {
       false,
       "btn-trophies.png"
     );
+
+    // Audio Player button (if all levels completed)
+    if (this.areAllLevelsCompleted()) {
+      this.renderTopBarButton(
+        ctx,
+        layout.audioPlayerButtonX,
+        layout.audioPlayerButtonY,
+        layout.audioPlayerButtonWidth,
+        layout.audioPlayerButtonHeight,
+        "Music",
+        this.audioPlayerButton.hovered,
+        "rgba(138, 43, 226, 0.8)",
+        null,
+        false,
+        "btn-audioplayer.png"
+      );
+    }
 
     this.renderTopBarButton(
       ctx,
@@ -5090,94 +5154,130 @@ class LevelSelect extends Screen {
   renderAudioPlayerButton(ctx) {
     const layout = this.layoutCache;
     const button = this.audioPlayerButton;
+    const buttonImage = this.game.images["btn-audioplayer.png"];
 
     ctx.save();
 
     const x = layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2;
     const y = layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2;
 
-    // Gradient background
-    const radius = this.game.getScaledValue(8);
-    const gradient = ctx.createLinearGradient(
-      x,
-      y,
-      x,
-      y + layout.audioPlayerButtonHeight
-    );
+    if (buttonImage) {
+      // Use button image
+      const aspectRatio = buttonImage.width / buttonImage.height;
+      let imgWidth = layout.audioPlayerButtonWidth;
+      let imgHeight = imgWidth / aspectRatio;
 
-    let color1, color2;
-    if (button.hovered) {
-      color1 = "#4a9eff";
-      color2 = "#2d7dd2";
-    } else {
-      color1 = "#2d7dd2";
-      color2 = "#1e5a9e";
-    }
-
-    gradient.addColorStop(0, color1);
-    gradient.addColorStop(1, color2);
-    ctx.fillStyle = gradient;
-
-    if (button.hovered) {
-      ctx.shadowColor = "#4a9eff";
-      ctx.shadowBlur = this.game.getScaledValue(12);
-    }
-
-    ctx.strokeStyle = button.hovered ? "#6ab7ff" : "#2d7dd2";
-    ctx.lineWidth = this.game.getScaledValue(3);
-
-    // Draw rounded rectangle
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.lineTo(x + layout.audioPlayerButtonWidth - radius, y);
-    ctx.quadraticCurveTo(
-      x + layout.audioPlayerButtonWidth,
-      y,
-      x + layout.audioPlayerButtonWidth,
-      y + radius
-    );
-    ctx.lineTo(
-      x + layout.audioPlayerButtonWidth,
-      y + layout.audioPlayerButtonHeight - radius
-    );
-    ctx.quadraticCurveTo(
-      x + layout.audioPlayerButtonWidth,
-      y + layout.audioPlayerButtonHeight,
-      x + layout.audioPlayerButtonWidth - radius,
-      y + layout.audioPlayerButtonHeight
-    );
-    ctx.lineTo(x + radius, y + layout.audioPlayerButtonHeight);
-    ctx.quadraticCurveTo(
-      x,
-      y + layout.audioPlayerButtonHeight,
-      x,
-      y + layout.audioPlayerButtonHeight - radius
-    );
-    ctx.lineTo(x, y + radius);
-    ctx.quadraticCurveTo(x, y, x + radius, y);
-    ctx.closePath();
-
-    ctx.fill();
-    ctx.stroke();
-
-    if (button.hovered) {
-      ctx.shadowColor = "#4a9eff";
-      ctx.shadowBlur = this.game.getScaledValue(10);
-      ctx.stroke();
-    }
-
-    // Button text
-    this.renderText(
-      ctx,
-      "MUSIC PLAYER",
-      layout.audioPlayerButtonX,
-      layout.audioPlayerButtonY,
-      {
-        fontSize: this.game.getScaledValue(18),
-        color: "white",
-        weight: "bold",
+      // If height is too large, scale by height instead
+      if (imgHeight > layout.audioPlayerButtonHeight) {
+        imgHeight = layout.audioPlayerButtonHeight;
+        imgWidth = imgHeight * aspectRatio;
       }
-    );
+
+      const imgX = x + (layout.audioPlayerButtonWidth - imgWidth) / 2;
+      const imgY = y + (layout.audioPlayerButtonHeight - imgHeight) / 2;
+
+      // Apply hover effect - scale and add glow
+      if (button.hovered) {
+        ctx.shadowColor = "rgba(74, 158, 255, 0.8)"; // Blue glow
+        ctx.shadowBlur = this.game.getScaledValue(20);
+
+        // Scale up slightly on hover
+        const scale = 1.05;
+        const scaledWidth = imgWidth * scale;
+        const scaledHeight = imgHeight * scale;
+        const scaledX = x + (layout.audioPlayerButtonWidth - scaledWidth) / 2;
+        const scaledY = y + (layout.audioPlayerButtonHeight - scaledHeight) / 2;
+
+        ctx.drawImage(buttonImage, scaledX, scaledY, scaledWidth, scaledHeight);
+      } else {
+        ctx.drawImage(buttonImage, imgX, imgY, imgWidth, imgHeight);
+      }
+    } else {
+      // Fallback to gradient style if image not loaded
+      const radius = this.game.getScaledValue(8);
+
+      // Enhanced gradient background
+      const gradient = ctx.createLinearGradient(
+        x,
+        y,
+        x,
+        y + layout.audioPlayerButtonHeight
+      );
+
+      let color1, color2;
+      if (button.hovered) {
+        color1 = "#4a9eff";
+        color2 = "#2d7dd2";
+      } else {
+        color1 = "#2d7dd2";
+        color2 = "#1e5a9e";
+      }
+
+      gradient.addColorStop(0, color1);
+      gradient.addColorStop(1, color2);
+      ctx.fillStyle = gradient;
+
+      if (button.hovered) {
+        ctx.shadowColor = "#4a9eff";
+        ctx.shadowBlur = this.game.getScaledValue(12);
+      }
+
+      ctx.strokeStyle = button.hovered ? "#6ab7ff" : "#2d7dd2";
+      ctx.lineWidth = this.game.getScaledValue(3);
+
+      // Draw rounded rectangle
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + layout.audioPlayerButtonWidth - radius, y);
+      ctx.quadraticCurveTo(
+        x + layout.audioPlayerButtonWidth,
+        y,
+        x + layout.audioPlayerButtonWidth,
+        y + radius
+      );
+      ctx.lineTo(
+        x + layout.audioPlayerButtonWidth,
+        y + layout.audioPlayerButtonHeight - radius
+      );
+      ctx.quadraticCurveTo(
+        x + layout.audioPlayerButtonWidth,
+        y + layout.audioPlayerButtonHeight,
+        x + layout.audioPlayerButtonWidth - radius,
+        y + layout.audioPlayerButtonHeight
+      );
+      ctx.lineTo(x + radius, y + layout.audioPlayerButtonHeight);
+      ctx.quadraticCurveTo(
+        x,
+        y + layout.audioPlayerButtonHeight,
+        x,
+        y + layout.audioPlayerButtonHeight - radius
+      );
+      ctx.lineTo(x, y + radius);
+      ctx.quadraticCurveTo(x, y, x + radius, y);
+      ctx.closePath();
+
+      ctx.fill();
+      ctx.stroke();
+
+      if (button.hovered) {
+        ctx.shadowColor = "#4a9eff";
+        ctx.shadowBlur = this.game.getScaledValue(10);
+        ctx.stroke();
+      }
+
+      // Button text
+      this.renderText(
+        ctx,
+        "MUSIC PLAYER",
+        layout.audioPlayerButtonX,
+        layout.audioPlayerButtonY,
+        {
+          fontSize: this.game.getScaledValue(18),
+          color: "white",
+          weight: "bold",
+        }
+      );
+    }
 
     ctx.restore();
   }
@@ -5194,7 +5294,10 @@ class LevelSelect extends Screen {
       // Select video based on current difficulty (1-4 for New Game+ 1-4)
       let videoSrc = "videos/video-end.mp4"; // Default fallback
       let videoNumber = null;
-      if (this.game.selectedDifficulty >= 1 && this.game.selectedDifficulty <= 4) {
+      if (
+        this.game.selectedDifficulty >= 1 &&
+        this.game.selectedDifficulty <= 4
+      ) {
         videoNumber = this.game.selectedDifficulty;
         videoSrc = `videos/video-end-${videoNumber}.mp4`;
       }
@@ -5211,23 +5314,30 @@ class LevelSelect extends Screen {
       });
 
       // Track video watching for achievements (when video actually starts playing)
-      this.videoElement.addEventListener("playing", () => {
-        if (videoNumber !== null && !this.game.watchedVideos.includes(videoNumber)) {
-          // Mark this video as watched
-          this.game.watchedVideos.push(videoNumber);
+      this.videoElement.addEventListener(
+        "playing",
+        () => {
+          if (
+            videoNumber !== null &&
+            !this.game.watchedVideos.includes(videoNumber)
+          ) {
+            // Mark this video as watched
+            this.game.watchedVideos.push(videoNumber);
 
-          // Unlock "Secret Video Watcher" achievement (watch any video)
-          this.game.unlockAchievement("secret_video_watcher");
+            // Unlock "Secret Video Watcher" achievement (watch any video)
+            this.game.unlockAchievement("secret_video_watcher");
 
-          // Check if all 5 videos have been watched
-          if (this.game.watchedVideos.length >= 5) {
-            this.game.unlockAchievement("video_completionist");
+            // Check if all 5 videos have been watched
+            if (this.game.watchedVideos.length >= 5) {
+              this.game.unlockAchievement("video_completionist");
+            }
+
+            // Save progress
+            this.game.saveGameData();
           }
-
-          // Save progress
-          this.game.saveGameData();
-        }
-      }, { once: true }); // Only trigger once per video open
+        },
+        { once: true }
+      ); // Only trigger once per video open
 
       document.body.appendChild(this.videoElement);
     } catch (error) {
@@ -5266,14 +5376,24 @@ class LevelSelect extends Screen {
 
     // Container background
     ctx.fillStyle = "rgba(20, 20, 20, 0.95)";
-    ctx.fillRect(containerX - 10, containerY - 10, containerWidth + 20, containerHeight + 20);
+    ctx.fillRect(
+      containerX - 10,
+      containerY - 10,
+      containerWidth + 20,
+      containerHeight + 20
+    );
 
     // Border with glow
     ctx.strokeStyle = "#BB8FCE";
     ctx.lineWidth = this.game.getScaledValue(3);
     ctx.shadowColor = "#BB8FCE";
     ctx.shadowBlur = this.game.getScaledValue(15);
-    ctx.strokeRect(containerX - 10, containerY - 10, containerWidth + 20, containerHeight + 20);
+    ctx.strokeRect(
+      containerX - 10,
+      containerY - 10,
+      containerWidth + 20,
+      containerHeight + 20
+    );
 
     // Draw video frame if ready
     if (this.videoElement && this.videoElement.readyState >= 2) {
