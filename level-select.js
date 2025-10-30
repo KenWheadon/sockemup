@@ -3671,7 +3671,7 @@ class LevelSelect extends Screen {
         ctx.fillText(displayDesc, textX, descY);
 
         const statusX = cardX + cardWidth - this.game.getScaledValue(15);
-        const statusY = cardY + cardHeight - this.game.getScaledValue(15);
+        const statusY = cardY + cardHeight - this.game.getScaledValue(22);
 
         if (unlocked) {
           this.renderText(ctx, "✓", statusX, statusY, {

@@ -152,10 +152,11 @@ class LevelEndScreen extends Screen {
         this.game.unlockAchievement("grind_master");
       }
 
-      const allLevelsCompleted =
-        this.game.completedLevels &&
-        this.game.completedLevels.every((completed) => completed);
-      if (allLevelsCompleted) {
+      // Achievement: SOCK_MASTER - Complete all 9 base game levels (difficulty 0)
+      const allBaseLevelsCompleted =
+        this.game.completedLevelsByDifficulty[0] &&
+        this.game.completedLevelsByDifficulty[0].every((completed) => completed);
+      if (allBaseLevelsCompleted) {
         this.game.unlockAchievement("sock_master");
       }
 

@@ -64,9 +64,8 @@ class StoryViewer {
       const panelIndex = unlockedPanels[this.currentPanel];
       this.game.viewedStoryPanels[panelIndex] = true;
 
-      // Check for LORE_MASTER achievement
-      const allPanelsViewed = this.game.viewedStoryPanels.every((viewed) => viewed);
-      if (allPanelsViewed) {
+      // Check for LORE_MASTER achievement - unlock when viewing panel 9 (index 8)
+      if (panelIndex === 8) {
         this.game.unlockAchievement("lore_master");
       }
 
@@ -97,9 +96,8 @@ class StoryViewer {
       const panelIndex = unlockedPanels[this.currentPanel];
       this.game.viewedStoryPanels[panelIndex] = true;
 
-      // Check for LORE_MASTER achievement
-      const allPanelsViewed = this.game.viewedStoryPanels.every((viewed) => viewed);
-      if (allPanelsViewed) {
+      // Check for LORE_MASTER achievement - unlock when viewing panel 9 (index 8)
+      if (panelIndex === 8) {
         this.game.unlockAchievement("lore_master");
       }
 
@@ -122,9 +120,8 @@ class StoryViewer {
       const panelIndex = unlockedPanels[this.currentPanel];
       this.game.viewedStoryPanels[panelIndex] = true;
 
-      // Check for LORE_MASTER achievement
-      const allPanelsViewed = this.game.viewedStoryPanels.every((viewed) => viewed);
-      if (allPanelsViewed) {
+      // Check for LORE_MASTER achievement - unlock when viewing panel 9 (index 8)
+      if (panelIndex === 8) {
         this.game.unlockAchievement("lore_master");
       }
 

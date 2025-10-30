@@ -31,7 +31,7 @@ class SockGame {
     this.totalDoubleBounces = 0; // Lifetime double bounce catches (for Space Shooter)
     this.consecutivePerfectThrows = 0; // Current streak of perfect throws (for Sock Sniper)
     this.consecutiveMisses = 0; // Current streak of misses (for Butterfingers)
-    this.easterEggSockballsCreated = 0; // Sockballs created via easter egg this level (for Sockball Wizard)
+    this.easterEggSockballsCreated = 0; // Sockballs created via easter egg (lifetime) (for Sockball Wizard)
     this.logoClickCount = 0; // Times logo has been clicked (for Logo Clicker)
     this.consecutiveLevelWins = 0; // Current streak of consecutive level wins (for speed run achievements)
     this.totalLevelsPlayed = 0; // Total levels completed (wins + losses) (for Grind Master)

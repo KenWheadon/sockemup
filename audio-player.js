@@ -200,15 +200,15 @@ class AudioPlayer {
     // Unlock CD_PLAYER achievement: open audio player and play a song
     this.game.unlockAchievement("cd_player");
 
-    // Unlock MY_FAVORITE achievement: favorite a song and play it
-    if (this.isFavorite(this.selectedTrack)) {
+    // Unlock MY_FAVORITE achievement: favorite a song and play it from favorites tab
+    if (this.isFavorite(this.selectedTrack) && this.showFavoritesOnly) {
       this.game.unlockAchievement("my_favorite");
     }
 
-    // Check AUDIOPHILE achievement: unlock and listen to all songs
-    const allUnlocked = this.tracks.every(t => this.isTrackUnlocked(t.id));
+    // Check AUDIOPHILE achievement: play all tracks at least once
+    // Since tracks can't be played until unlocked, just check play counts
     const allPlayed = this.tracks.every(t => this.getPlayCount(t.id) > 0);
-    if (allUnlocked && allPlayed) {
+    if (allPlayed) {
       this.game.unlockAchievement("audiophile");
     }
 
