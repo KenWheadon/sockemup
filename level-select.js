@@ -1103,7 +1103,11 @@ class LevelSelect extends Screen {
     }
 
     // Audio player button hover (always check if at least one track is unlocked)
-    if (this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0) {
+    if (
+      this.audioPlayer &&
+      this.audioPlayer.game.unlockedTracks &&
+      this.audioPlayer.game.unlockedTracks.length > 0
+    ) {
       const audioPlayerButtonX =
         layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2;
       const audioPlayerButtonY =
@@ -1847,7 +1851,9 @@ class LevelSelect extends Screen {
 
     // Check audio player button (if at least one track is unlocked)
     if (
-      this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0 &&
+      this.audioPlayer &&
+      this.audioPlayer.game.unlockedTracks &&
+      this.audioPlayer.game.unlockedTracks.length > 0 &&
       this.isPointInRect(x, y, {
         x: layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2,
         y: layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2,
@@ -2844,7 +2850,11 @@ class LevelSelect extends Screen {
     );
 
     // Audio Player button (always visible if at least one track is unlocked)
-    if (this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0) {
+    if (
+      this.audioPlayer &&
+      this.audioPlayer.game.unlockedTracks &&
+      this.audioPlayer.game.unlockedTracks.length > 0
+    ) {
       this.renderTopBarButton(
         ctx,
         layout.audioPlayerButtonX,
@@ -3419,7 +3429,9 @@ class LevelSelect extends Screen {
       // Calculate unlocked/total achievements
       const allAchievements = Object.values(GameConfig.ACHIEVEMENTS);
       const unlockedCount = allAchievements.filter(
-        achievement => this.game.achievements && this.game.achievements[achievement.id]?.unlocked
+        (achievement) =>
+          this.game.achievements &&
+          this.game.achievements[achievement.id]?.unlocked
       ).length;
       const totalCount = allAchievements.length;
 
@@ -3555,7 +3567,8 @@ class LevelSelect extends Screen {
             veteran_tenant: this.game.levelsPlayed,
             sockball_wizard: this.game.easterEggSockballsCreated,
             logo_clicker: this.game.logoClickCount,
-            butterfingers: this.game.achievements[achievement.id]?.consecutiveMisses || 0,
+            butterfingers:
+              this.game.achievements[achievement.id]?.consecutiveMisses || 0,
             pinball_king: this.game.totalWallBounceCatches,
             bonus_master: this.game.totalBonusHits,
             space_shooter: this.game.totalDoubleBounces,
@@ -3576,21 +3589,37 @@ class LevelSelect extends Screen {
             speed_run: this.game.consecutiveWins || 0,
             deadeye: this.game.consecutiveHits || 0,
             streak_king: this.game.achievements[achievement.id]?.maxStreak || 0,
-            combo_master: this.game.achievements[achievement.id]?.maxStreak || 0,
-            sock_sniper: this.game.achievements[achievement.id]?.consecutivePerfects || 0,
-            pinball_wizard: this.game.achievements[achievement.id]?.wallBouncesThisLevel || 0,
-            mismatch_chaos: this.game.achievements[achievement.id]?.mismatchesThisLevel || 0,
-            double_snap: this.game.achievements[achievement.id]?.snapsThisGame || 0,
-            one_at_a_time: this.game.achievements[achievement.id]?.sameTypeStreak || 0,
-            momentum_killer: this.game.achievements[achievement.id]?.streakBeforeBreak || 0,
-            no_hope: this.game.achievements[achievement.id]?.missesThisGame || 0,
-            sock_master: this.game.completedLevelsByDifficulty[0]?.filter(c => c).length || 0,
-            halfway_there: this.game.completedLevelsByDifficulty[0]?.slice(0, 5).filter(c => c).length || 0,
+            combo_master:
+              this.game.achievements[achievement.id]?.maxStreak || 0,
+            sock_sniper:
+              this.game.achievements[achievement.id]?.consecutivePerfects || 0,
+            pinball_wizard:
+              this.game.achievements[achievement.id]?.wallBouncesThisLevel || 0,
+            mismatch_chaos:
+              this.game.achievements[achievement.id]?.mismatchesThisLevel || 0,
+            double_snap:
+              this.game.achievements[achievement.id]?.snapsThisGame || 0,
+            one_at_a_time:
+              this.game.achievements[achievement.id]?.sameTypeStreak || 0,
+            momentum_killer:
+              this.game.achievements[achievement.id]?.streakBeforeBreak || 0,
+            no_hope:
+              this.game.achievements[achievement.id]?.missesThisGame || 0,
+            sock_master:
+              this.game.completedLevelsByDifficulty[0]?.filter((c) => c)
+                .length || 0,
+            halfway_there:
+              this.game.completedLevelsByDifficulty[0]
+                ?.slice(0, 5)
+                .filter((c) => c).length || 0,
             lore_master: this.game.storyPanelsRead?.length || 0,
           };
 
           const currentProgress = progressMap[achievement.id] || 0;
-          progressPercent = Math.min(currentProgress / achievement.threshold, 1);
+          progressPercent = Math.min(
+            currentProgress / achievement.threshold,
+            1
+          );
         }
 
         const cardGradient = ctx.createLinearGradient(
@@ -3687,8 +3716,8 @@ class LevelSelect extends Screen {
             cardX,
             cardY + cardHeight
           );
-          progressGradient.addColorStop(0, "rgba(100, 180, 255, 0.2)");
-          progressGradient.addColorStop(1, "rgba(60, 120, 200, 0.15)");
+          progressGradient.addColorStop(0, "rgba(100, 180, 255, 0.1)");
+          progressGradient.addColorStop(1, "rgba(60, 120, 200, 0.05)");
 
           ctx.fillStyle = progressGradient;
           ctx.fillRect(cardX, cardY, progressWidth, cardHeight);
