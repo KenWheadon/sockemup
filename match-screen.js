@@ -695,6 +695,11 @@ class MatchScreen extends Screen {
       const throwVelocity = this.calculateThrowVelocity();
       this.physics.applySockThrow(sock, throwVelocity);
 
+      // Achievement: MOMENTUM_KILLER - Break a 15+ match streak
+      if (this.matchStreak >= GameConfig.ACHIEVEMENTS.MOMENTUM_KILLER.threshold) {
+        this.game.unlockAchievement("momentum_killer");
+      }
+
       // Break streak when dropping a sock without placing it
       this.matchStreak = 0;
       this.lastMatchTime = 0;

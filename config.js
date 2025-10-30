@@ -981,18 +981,18 @@ const GameConfig = {
     DEEP_POCKETS: {
       id: "deep_pockets",
       name: "Deep Pockets",
-      description: "Have 9999+ money at once",
+      description: "Have (DEBUG 2000)5000+ money at once",
       icon: "icon-money.png",
       unlocked: false,
-      threshold: 9999,
+      threshold: 2000,
     },
     BIG_SPENDER: {
       id: "big_spender",
       name: "Big Spender",
-      description: "Spend 5000 money total",
+      description: "Spend 9999 money total",
       icon: "icon-goldbar.png",
       unlocked: false,
-      threshold: 5000,
+      threshold: 9999,
     },
     MARTHAS_MILLIONAIRE: {
       id: "marthas_millionaire",
@@ -1157,7 +1157,7 @@ const GameConfig = {
     TRIAL_BY_FIRE: {
       id: "trial_by_fire",
       name: "Trial By Fire",
-      description: "Complete level 9 on +2 difficulty or higher",
+      description: "Complete level 9 on +2 difficulty",
       icon: "icon-housefire.png",
       unlocked: false,
     },
@@ -1179,10 +1179,10 @@ const GameConfig = {
     GRIND_MASTER: {
       id: "grind_master",
       name: "Grind Master",
-      description: "Complete 100 total levels",
+      description: "Complete (DEBUG 30)100 total levels",
       icon: "icon-barbell.png",
       unlocked: false,
-      threshold: 100,
+      threshold: 30,
     },
     MY_FAVORITE: {
       id: "my_favorite",

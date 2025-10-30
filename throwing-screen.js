@@ -507,7 +507,7 @@ class ThrowingScreen extends Screen {
       }
 
       const isBonusHit =
-        this.marthaManager.isExiting || this.marthaManager.isEntering;
+        this.marthaManager.isExiting || this.marthaManager.isEntering || !this.marthaManager.onScreen;
 
       const marthaCenterX = this.marthaManager.x + this.marthaManager.width / 2;
       const marthaCenterY =

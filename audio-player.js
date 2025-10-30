@@ -173,20 +173,23 @@ class AudioPlayer {
   selectTrack(trackId) {
     if (!this.isTrackUnlocked(trackId)) return;
 
-    if (this.isPlaying && this.selectedTrack) {
+    // Only stop if selecting a different track
+    if (this.isPlaying && this.selectedTrack && this.selectedTrack !== trackId) {
       this.game.audioManager.stopMusic();
+      this.isPlaying = false;
+      // Turn off repeat when selecting a new track
+      this.repeat = false;
     }
 
     this.selectedTrack = trackId;
-    this.isPlaying = false;
-
-    // Turn off repeat when selecting a new track
-    this.repeat = false;
 
     this.playlistIndex = this.currentPlaylist.findIndex(t => t.id === trackId);
     if (this.playlistIndex === -1) {
       this.rebuildPlaylist();
     }
+
+    // Automatically start playing the selected track
+    this.playCurrentTrack();
   }
 
   playCurrentTrack() {
@@ -301,6 +304,11 @@ class AudioPlayer {
     if (this.openProgress < 1) {
       this.openProgress = Math.min(1, this.openProgress + deltaTime * 0.005);
     }
+  }
+
+  isAnyElementHovered() {
+    if (!this.isOpen) return false;
+    return this.closeButtonHovered || this.hoveredTrack !== null || this.hoveredButton !== null;
   }
 
   updateHover(x, y, canvas) {

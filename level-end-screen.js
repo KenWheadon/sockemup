@@ -122,17 +122,26 @@ class LevelEndScreen extends Screen {
       this.game.consecutiveLevelWins++;
 
       // Achievement: BABY_SPEED_RUN - Win 5 levels in a row
-      if (this.game.consecutiveLevelWins >= 5) {
+      if (
+        this.game.consecutiveLevelWins >=
+        GameConfig.ACHIEVEMENTS.BABY_SPEED_RUN.threshold
+      ) {
         this.game.unlockAchievement("baby_speed_run");
       }
 
       // Achievement: SPEED_RUN - Win 9 levels in a row
-      if (this.game.consecutiveLevelWins >= 9) {
+      if (
+        this.game.consecutiveLevelWins >=
+        GameConfig.ACHIEVEMENTS.SPEED_RUN.threshold
+      ) {
         this.game.unlockAchievement("speed_run");
       }
 
       // Achievement: SPEED_ROYALTY - Win 20 levels in a row
-      if (this.game.consecutiveLevelWins >= 20) {
+      if (
+        this.game.consecutiveLevelWins >=
+        GameConfig.ACHIEVEMENTS.SPEED_ROYALTY.threshold
+      ) {
         this.game.unlockAchievement("speed_royalty");
       }
 

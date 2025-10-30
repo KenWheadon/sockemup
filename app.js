@@ -83,8 +83,8 @@ class SockGame {
     this.viewedStoryPanels = Array(9).fill(false); // Track which panels have been viewed
     this.newStoryPanelUnlocked = -1; // Index of newly unlocked panel to animate
 
-    // Secret video tracking (videos 1-4 for NG+ 1-4)
-    this.watchedVideos = []; // Array of watched video numbers (1-4)
+    // Secret video tracking (videos 0-4: base game + NG+ 1-4)
+    this.watchedVideos = []; // Array of watched video numbers (0-4)
 
     // Audio player unlocked tracks
     this.unlockedTracks = ['menu-music']; // Start with menu music unlocked
@@ -690,6 +690,10 @@ class SockGame {
 
       // Unlocked music tracks for audio player
       this.unlockedTracks = data.unlockedTracks || ['menu-music'];
+      // Ensure menu-music is always unlocked
+      if (!this.unlockedTracks.includes('menu-music')) {
+        this.unlockedTracks.push('menu-music');
+      }
 
       // Favorite music tracks for audio player
       this.favoriteTracks = data.favoriteTracks || [];

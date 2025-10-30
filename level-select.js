@@ -1098,8 +1098,12 @@ class LevelSelect extends Screen {
         width: layout.videoButtonWidth,
         height: layout.videoButtonHeight,
       });
+    } else {
+      this.videoButton.hovered = false;
+    }
 
-      // Audio player button hover
+    // Audio player button hover (always check if at least one track is unlocked)
+    if (this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0) {
       const audioPlayerButtonX =
         layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2;
       const audioPlayerButtonY =
@@ -1111,7 +1115,6 @@ class LevelSelect extends Screen {
         height: layout.audioPlayerButtonHeight,
       });
     } else {
-      this.videoButton.hovered = false;
       this.audioPlayerButton.hovered = false;
     }
 
@@ -1253,7 +1256,8 @@ class LevelSelect extends Screen {
       this.achievementsDrawer.closeButton.hovered ||
       this.storyViewer.button.hovered ||
       (this.game.highestUnlockedDifficulty > 0 &&
-        this.difficultySelector.isButtonHovered());
+        this.difficultySelector.isButtonHovered()) ||
+      this.audioPlayer.isAnyElementHovered();
 
     // Check if hovering over a level button
     const isLevelHovered = this.hoveredLevel !== -1;
@@ -1841,9 +1845,9 @@ class LevelSelect extends Screen {
       return true;
     }
 
-    // Check audio player button (only if all levels completed)
+    // Check audio player button (if at least one track is unlocked)
     if (
-      this.areAllLevelsCompleted() &&
+      this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0 &&
       this.isPointInRect(x, y, {
         x: layout.audioPlayerButtonX - layout.audioPlayerButtonWidth / 2,
         y: layout.audioPlayerButtonY - layout.audioPlayerButtonHeight / 2,
@@ -2839,8 +2843,8 @@ class LevelSelect extends Screen {
       "btn-trophies.png"
     );
 
-    // Audio Player button (if all levels completed)
-    if (this.areAllLevelsCompleted()) {
+    // Audio Player button (always visible if at least one track is unlocked)
+    if (this.audioPlayer && this.audioPlayer.game.unlockedTracks && this.audioPlayer.game.unlockedTracks.length > 0) {
       this.renderTopBarButton(
         ctx,
         layout.audioPlayerButtonX,
@@ -3412,16 +3416,37 @@ class LevelSelect extends Screen {
       );
       ctx.restore();
 
+      // Calculate unlocked/total achievements
+      const allAchievements = Object.values(GameConfig.ACHIEVEMENTS);
+      const unlockedCount = allAchievements.filter(
+        achievement => this.game.achievements && this.game.achievements[achievement.id]?.unlocked
+      ).length;
+      const totalCount = allAchievements.length;
+
+      // Render achievement counter
+      this.renderText(
+        ctx,
+        `${unlockedCount} / ${totalCount}`,
+        drawerX + drawerWidth / 2,
+        this.game.getScaledValue(55),
+        {
+          fontSize: layout.normalFontSize,
+          align: "center",
+          color: unlockedCount === totalCount ? "#FFD700" : "#B0B0B0",
+          weight: "normal",
+        }
+      );
+
       ctx.strokeStyle = "rgba(255, 215, 0, 0.3)";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(
         drawerX + this.game.getScaledValue(20),
-        this.game.getScaledValue(60)
+        this.game.getScaledValue(75)
       );
       ctx.lineTo(
         drawerX + drawerWidth - this.game.getScaledValue(20),
-        this.game.getScaledValue(60)
+        this.game.getScaledValue(75)
       );
       ctx.stroke();
 
@@ -5291,9 +5316,9 @@ class LevelSelect extends Screen {
       // Create video element
       this.videoElement = document.createElement("video");
 
-      // Select video based on current difficulty (1-4 for New Game+ 1-4)
-      let videoSrc = "videos/video-end.mp4"; // Default fallback
-      let videoNumber = null;
+      // Select video based on current difficulty (0 for base game, 1-4 for New Game+ 1-4)
+      let videoNumber = 0; // Default to base game video (video 0)
+      let videoSrc = "videos/video-end.mp4";
       if (
         this.game.selectedDifficulty >= 1 &&
         this.game.selectedDifficulty <= 4
@@ -5317,17 +5342,14 @@ class LevelSelect extends Screen {
       this.videoElement.addEventListener(
         "playing",
         () => {
-          if (
-            videoNumber !== null &&
-            !this.game.watchedVideos.includes(videoNumber)
-          ) {
+          if (!this.game.watchedVideos.includes(videoNumber)) {
             // Mark this video as watched
             this.game.watchedVideos.push(videoNumber);
 
             // Unlock "Secret Video Watcher" achievement (watch any video)
             this.game.unlockAchievement("secret_video_watcher");
 
-            // Check if all 5 videos have been watched
+            // Check if all 5 videos have been watched (0, 1, 2, 3, 4)
             if (this.game.watchedVideos.length >= 5) {
               this.game.unlockAchievement("video_completionist");
             }
