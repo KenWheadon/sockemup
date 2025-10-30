@@ -98,6 +98,11 @@ class AudioPlayer {
     }
     this.game.trackPlayCounts[trackId]++;
     this.game.saveGameData();
+
+    // Unlock THATS_MY_SONG achievement: listen to a single song 10 times
+    if (this.game.trackPlayCounts[trackId] === GameConfig.ACHIEVEMENTS.THATS_MY_SONG.threshold) {
+      this.game.unlockAchievement("thats_my_song");
+    }
   }
 
   toggleShowFavorites() {
@@ -192,6 +197,21 @@ class AudioPlayer {
     this.isPlaying = true;
     this.incrementPlayCount(this.selectedTrack);
 
+    // Unlock CD_PLAYER achievement: open audio player and play a song
+    this.game.unlockAchievement("cd_player");
+
+    // Unlock MY_FAVORITE achievement: favorite a song and play it
+    if (this.isFavorite(this.selectedTrack)) {
+      this.game.unlockAchievement("my_favorite");
+    }
+
+    // Check AUDIOPHILE achievement: unlock and listen to all songs
+    const allUnlocked = this.tracks.every(t => this.isTrackUnlocked(t.id));
+    const allPlayed = this.tracks.every(t => this.getPlayCount(t.id) > 0);
+    if (allUnlocked && allPlayed) {
+      this.game.unlockAchievement("audiophile");
+    }
+
     // Add event listener for when track ends
     if (this.game.audioManager.currentMusic) {
       const music = this.game.audioManager.currentMusic;
@@ -237,9 +257,8 @@ class AudioPlayer {
     // Move to next track
     this.playlistIndex++;
     if (this.playlistIndex >= this.currentPlaylist.length) {
-      // Reached end of playlist, stop playing
-      this.stopCurrentTrack();
-      return;
+      // Reached end of playlist, cycle back to first track
+      this.playlistIndex = 0;
     }
 
     const nextTrack = this.currentPlaylist[this.playlistIndex];
@@ -741,13 +760,13 @@ class AudioPlayer {
 
     switch (type) {
       case 'prev':
-        imageName = 'btn-back.png';
+        imageName = 'btn-audioback.png';
         break;
       case 'play':
-        imageName = this.isPlaying ? 'btn-pause.png' : 'btn-play.png';
+        imageName = this.isPlaying ? 'btn-audiopause.png' : 'btn-audioplay.png';
         break;
       case 'next':
-        imageName = 'btn-next.png';
+        imageName = 'btn-audionext.png';
         break;
       case 'shuffle':
         imageName = 'btn-shuffle.png';
