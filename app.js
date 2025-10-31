@@ -119,6 +119,9 @@ class SockGame {
     // Initialize controller manager
     this.controllerManager = new ControllerManager(this);
 
+    // Initialize keyboard controller for keyboard-to-gamepad emulation
+    this.keyboardController = new KeyboardController(this.controllerManager);
+
     // Initialize sockball queue
     this.sockballQueue = [];
 
@@ -472,6 +475,12 @@ class SockGame {
   }
 
   handleKeyDown(e) {
+    // If keyboard controller is enabled, it handles the event via capture phase
+    // Check if the event was already handled by keyboard controller
+    if (this.keyboardController.isKeyboardEnabled() && e.defaultPrevented) {
+      return;
+    }
+
     const currentScreen = this.getCurrentScreen();
     if (currentScreen && typeof currentScreen.handleKeyDown === "function") {
       currentScreen.handleKeyDown(e);
@@ -1298,6 +1307,7 @@ class SockGame {
     // Cleanup managers
     if (this.audioManager) this.audioManager.cleanup();
     if (this.feedbackManager) this.feedbackManager.reset();
+    if (this.keyboardController) this.keyboardController.cleanup();
     if (this.controllerManager) this.controllerManager.cleanup();
   }
 }

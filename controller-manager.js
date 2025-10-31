@@ -142,6 +142,15 @@ class ControllerManager {
         }
       }
 
+      // Also handle virtual gamepads (like keyboard emulator) from connectedControllers map
+      // Check for virtual gamepad at index 99 (keyboard controller)
+      if (this.connectedControllers.has(99)) {
+        const virtualGamepad = this.connectedControllers.get(99);
+        if (virtualGamepad) {
+          this.handleGamepadInput(virtualGamepad);
+        }
+      }
+
       // Clear button handled tracking for next frame
       this.buttonHandledThisFrame.clear();
     } catch (error) {

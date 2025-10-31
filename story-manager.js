@@ -33,6 +33,7 @@ class StoryManager {
 
     this.buttons = {
       skip: { x: 0, y: 0, width: 100, height: 40, hovered: false },
+      keyboard: { x: 0, y: 0, width: 100, height: 40, hovered: false },
       next: { x: 0, y: 0, width: 100, height: 40, hovered: false },
       previous: { x: 0, y: 0, width: 100, height: 40, hovered: false },
     };
@@ -56,6 +57,7 @@ class StoryManager {
 
     // Reset button hover states to prevent touch event persistence
     this.buttons.skip.hovered = false;
+    this.buttons.keyboard.hovered = false;
     this.buttons.next.hovered = false;
     this.buttons.previous.hovered = false;
 
@@ -121,6 +123,14 @@ class StoryManager {
     this.buttons.skip.y = buttonY;
     this.buttons.skip.width = buttonWidth;
     this.buttons.skip.height = buttonHeight;
+
+    // Keyboard button - centered horizontally, positioned above the counter
+    const keyboardButtonWidth = this.game.getScaledValue(140);
+    this.buttons.keyboard.x =
+      this.slideContainer.x + (this.slideContainer.width - keyboardButtonWidth) / 2;
+    this.buttons.keyboard.y = buttonY - this.game.getScaledValue(45);
+    this.buttons.keyboard.width = keyboardButtonWidth;
+    this.buttons.keyboard.height = buttonHeight;
 
     // Previous button - right side, first button
     this.buttons.previous.x =
@@ -717,6 +727,9 @@ class StoryManager {
   renderButtons(ctx) {
     // Skip button
     this.renderButton(ctx, this.buttons.skip, "Skip", "#888888");
+
+    // Keyboard button - center
+    this.renderButton(ctx, this.buttons.keyboard, "K for Keyboard", "#FFA500");
 
     // Previous button (only if not on first slide)
     if (this.currentSlideIndex > 0) {
