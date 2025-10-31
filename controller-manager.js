@@ -568,8 +568,12 @@ class ControllerManager {
       let targetX = this.reticle.x + stickX * speed;
       let targetY = this.reticle.y + stickY * speed;
 
-      // Apply button magnetism if enabled
-      if (this.reticleConfig.magnetismEnabled) {
+      // Check if currently dragging scrollbar (disable magnetism during drag)
+      const currentScreen = this.game.getCurrentScreen();
+      const isDraggingScrollbar = currentScreen?.achievementsDrawer?.isDraggingScrollbar;
+
+      // Apply button magnetism if enabled and not dragging scrollbar
+      if (this.reticleConfig.magnetismEnabled && !isDraggingScrollbar) {
         const magneticTarget = this.findNearestButton(targetX, targetY);
         if (magneticTarget) {
           const dx = magneticTarget.x - targetX;
@@ -596,9 +600,16 @@ class ControllerManager {
       this.reticle.y = Math.max(0, Math.min(this.game.getCanvasHeight(), this.reticle.y));
 
       // Notify current screen of reticle movement for hover detection
-      const currentScreen = this.game.getCurrentScreen();
       if (currentScreen && typeof currentScreen.handleReticleMove === 'function') {
         currentScreen.handleReticleMove(this.reticle.x, this.reticle.y);
+      }
+    } else {
+      // Even when stick is idle, if we're dragging scrollbar, we need to keep updating
+      const currentScreen = this.game.getCurrentScreen();
+      if (currentScreen?.achievementsDrawer?.isDraggingScrollbar) {
+        if (typeof currentScreen.handleReticleMove === 'function') {
+          currentScreen.handleReticleMove(this.reticle.x, this.reticle.y);
+        }
       }
     }
   }

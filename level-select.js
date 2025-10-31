@@ -2149,6 +2149,34 @@ class LevelSelect extends Screen {
   }
 
   handleReticleMove(x, y) {
+    // Handle scrollbar dragging for achievements drawer with reticle (must be before early returns)
+    if (
+      this.achievementsDrawer.isDraggingScrollbar &&
+      this.achievementsDrawer.isOpen &&
+      this.achievementsDrawer.maxScroll > 0
+    ) {
+      // Calculate scrollbar track dimensions (same as in onMouseMove)
+      const scrollbarY = this.game.getScaledValue(80);
+      const canvasHeight = this.game.getCanvasHeight();
+      const scrollbarTrackHeight = canvasHeight - this.game.getScaledValue(100);
+      const maxScroll = this.achievementsDrawer.maxScroll;
+
+      // Calculate scroll position based on reticle Y position (same as mouse handler)
+      const relativeY = y - scrollbarY;
+      const scrollPercentage = Math.max(
+        0,
+        Math.min(1, relativeY / scrollbarTrackHeight)
+      );
+
+      this.achievementsDrawer.scrollOffset = scrollPercentage * maxScroll;
+
+      // Set hover state when dragging
+      if (this.game.controllerManager) {
+        this.game.controllerManager.setReticleHoverState(true);
+      }
+      return;
+    }
+
     // If video player is active, don't update hover states for background elements
     if (this.videoPlayerActive) {
       // Still update main menu hover states so they're ready when video player closes
@@ -2224,41 +2252,6 @@ class LevelSelect extends Screen {
         this.game.controllerManager.setReticleHoverState(isHovering);
       }
       return;
-    }
-
-    // Handle scrollbar dragging for achievements drawer with reticle
-    if (
-      this.achievementsDrawer.isDraggingScrollbar &&
-      this.achievementsDrawer.isOpen
-    ) {
-      const layout = this.layoutCache;
-      const scrollbarHeight = layout.achievementsScrollbarHeight;
-      const maxScroll = this.achievementsDrawer.maxScroll;
-      const contentHeight = layout.achievementsContentHeight;
-
-      // Calculate new scroll position based on reticle Y position
-      const scrollbarAreaStart = layout.achievementsScrollbarY;
-      const scrollbarAreaEnd = layout.achievementsScrollbarY + scrollbarHeight;
-      const scrollbarTrackHeight = scrollbarAreaEnd - scrollbarAreaStart;
-
-      // Clamp Y position within scrollbar area
-      const clampedY = Math.max(
-        scrollbarAreaStart,
-        Math.min(scrollbarAreaEnd, y)
-      );
-
-      // Calculate scroll percentage
-      const scrollPercentage =
-        (clampedY - scrollbarAreaStart) /
-        (scrollbarTrackHeight -
-          (scrollbarHeight * scrollbarTrackHeight) /
-            (scrollbarTrackHeight + maxScroll));
-
-      // Update scroll offset
-      this.achievementsDrawer.scrollOffset = Math.max(
-        0,
-        Math.min(maxScroll, scrollPercentage * maxScroll)
-      );
     }
 
     // Update main menu button hover states (no panels open)
@@ -2362,6 +2355,25 @@ class LevelSelect extends Screen {
         this.game.audioManager.playSound("button-click", false, 0.5);
         this.toggleAchievementsDrawer();
         return true;
+      }
+
+      // Check for scrollbar click (use wider hitbox for easier grabbing)
+      if (this.achievementsDrawer.animationProgress > 0.5) {
+        const scrollbarX = drawerX + drawerWidth - this.game.getScaledValue(20);
+        const scrollbarY = this.game.getScaledValue(80);
+        const scrollbarHitboxWidth = this.game.getScaledValue(30); // Wider hitbox for easier grabbing (visual is 10px)
+        const canvasHeight = this.game.getCanvasHeight();
+        const scrollbarHeight = canvasHeight - this.game.getScaledValue(100);
+
+        if (
+          x >= scrollbarX - this.game.getScaledValue(10) &&
+          x <= scrollbarX + scrollbarHitboxWidth &&
+          y >= scrollbarY &&
+          y <= scrollbarY + scrollbarHeight
+        ) {
+          this.achievementsDrawer.isDraggingScrollbar = true;
+          return true;
+        }
       }
 
       // Click is on the drawer - consume the click to prevent click-through
@@ -2472,6 +2484,21 @@ class LevelSelect extends Screen {
     if (levelIndex !== -1) {
       this.selectLevel(levelIndex);
       return true;
+    }
+
+    return false;
+  }
+
+  handleReticleRelease(x, y) {
+    // Stop scrollbar dragging when reticle button is released
+    if (this.achievementsDrawer.isDraggingScrollbar) {
+      this.achievementsDrawer.isDraggingScrollbar = false;
+      return true;
+    }
+
+    // If audio player is open, delegate to it
+    if (this.audioPlayer.isOpen) {
+      return this.audioPlayer.handleReticleRelease(x, y);
     }
 
     return false;

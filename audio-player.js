@@ -21,6 +21,7 @@ class AudioPlayer {
     this.openProgress = 0;
     this.scrollOffset = 0;
     this.maxScroll = 0;
+    this.isDraggingScrollbar = false;
 
     // Track end listener
     this.trackEndListener = null;
@@ -911,6 +912,26 @@ class AudioPlayer {
     const trackHeight = 55;
     const listHeight = playerHeight - 280;
 
+    // Check scrollbar click (use wider hitbox for easier grabbing)
+    if (this.maxScroll > 0) {
+      const visibleTracks = this.getVisibleTracks();
+      const totalTracksHeight = visibleTracks.length * trackHeight;
+      const scrollbarHeight = (listHeight / totalTracksHeight) * listHeight;
+      const scrollbarY = listStartY + (this.scrollOffset / this.maxScroll) * (listHeight - scrollbarHeight);
+      const scrollbarX = playerX + playerWidth - 15;
+      const scrollbarWidth = 20; // Wider hitbox for easier grabbing (visual is 5px)
+
+      if (
+        x >= scrollbarX - 7 &&
+        x <= scrollbarX + scrollbarWidth &&
+        y >= scrollbarY &&
+        y <= scrollbarY + scrollbarHeight
+      ) {
+        this.isDraggingScrollbar = true;
+        return true;
+      }
+    }
+
     const visibleTracks = this.getVisibleTracks();
     let currentY = listStartY - this.scrollOffset;
 
@@ -1023,6 +1044,40 @@ class AudioPlayer {
   handleReticleMove(x, y) {
     if (!this.isOpen) return;
 
+    // Handle scrollbar dragging with reticle
+    if (this.isDraggingScrollbar && this.maxScroll > 0) {
+      const canvas = this.game.canvas;
+      const playerWidth = Math.min(700, canvas.width - 100);
+      const playerHeight = Math.min(650, canvas.height - 100);
+      const playerY = (canvas.height - playerHeight) / 2;
+      const listStartY = playerY + 120;
+      const trackHeight = 55;
+      const listHeight = playerHeight - 280;
+
+      const visibleTracks = this.getVisibleTracks();
+      const totalTracksHeight = visibleTracks.length * trackHeight;
+      const scrollbarHeight = (listHeight / totalTracksHeight) * listHeight;
+
+      // Calculate new scroll position based on reticle Y position
+      const scrollbarAreaStart = listStartY;
+      const scrollbarAreaEnd = listStartY + listHeight;
+
+      // Clamp Y position within scrollbar area
+      const clampedY = Math.max(scrollbarAreaStart, Math.min(scrollbarAreaEnd, y));
+
+      // Calculate scroll percentage
+      const scrollPercentage = (clampedY - scrollbarAreaStart) / (listHeight - scrollbarHeight);
+
+      // Update scroll offset
+      this.scrollOffset = Math.max(0, Math.min(this.maxScroll, scrollPercentage * this.maxScroll));
+
+      // Set hover state when dragging
+      if (this.game.controllerManager) {
+        this.game.controllerManager.setReticleHoverState(true);
+      }
+      return;
+    }
+
     // Reuse the existing hover detection logic
     this.updateHover(x, y, this.game.canvas);
 
@@ -1038,5 +1093,13 @@ class AudioPlayer {
 
     // Reuse the existing click logic
     return this.handleClick(x, y, this.game.canvas);
+  }
+
+  handleReticleRelease(x, y) {
+    if (this.isDraggingScrollbar) {
+      this.isDraggingScrollbar = false;
+      return true;
+    }
+    return false;
   }
 }
