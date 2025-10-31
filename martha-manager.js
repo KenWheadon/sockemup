@@ -9,8 +9,8 @@ class MarthaManager {
     // Martha's position and size
     this.x = 600;
     this.y = 300;
-    this.width = GameConfig.MARTHA_SIZE.width;
-    this.height = GameConfig.MARTHA_SIZE.height;
+    this.width = game.getScaledValue(GameConfig.MARTHA_SIZE.width);
+    this.height = game.getScaledValue(GameConfig.MARTHA_SIZE.height);
     this.scale = 1;
 
     // Movement state
@@ -151,7 +151,8 @@ class MarthaManager {
     const frameAspectRatio =
       this.spritesheetConfig.frameWidth / this.spritesheetConfig.frameHeight;
     // Keep height the same, adjust width based on aspect ratio
-    this.height = GameConfig.MARTHA_SIZE.height;
+    // Scale Martha's size based on viewport scale factor for consistent visual size
+    this.height = this.game.getScaledValue(GameConfig.MARTHA_SIZE.height);
     this.width = this.height * frameAspectRatio;
 
     // Setup rent due meter
@@ -288,8 +289,9 @@ class MarthaManager {
       // Apply knockback only if not in recovery mode
       // Recovery takes priority to ensure Martha escapes corners
       if (!this.isRecovering) {
-        this.x += this.hitEffect.knockbackVelocity.x;
-        this.y += this.hitEffect.knockbackVelocity.y;
+        // Scale knockback by viewport scale factor
+        this.x += this.hitEffect.knockbackVelocity.x * this.game.viewport.scaleFactor;
+        this.y += this.hitEffect.knockbackVelocity.y * this.game.viewport.scaleFactor;
 
         // Reduce knockback velocity
         this.hitEffect.knockbackVelocity.x *= 0.9;
@@ -872,16 +874,18 @@ class MarthaManager {
   }
 
   applyMovement(deltaTime, currentTime) {
-    // Apply velocity
-    this.x += this.velocity.x;
-    this.y += this.velocity.y;
+    // Apply velocity scaled by viewport scale factor for consistent movement speed
+    const scaledVelocityX = this.velocity.x * this.game.viewport.scaleFactor;
+    const scaledVelocityY = this.velocity.y * this.game.viewport.scaleFactor;
+    this.x += scaledVelocityX;
+    this.y += scaledVelocityY;
 
     // Simple bounds checking with direction reversal
     if (!this.isExiting && !this.isEntering) {
       // Restricted zone: lower left corner (where sockballs are launched from)
-      const restrictedZoneSize = 200; // Size of restricted area
-      const launchX = GameConfig.SOCKBALL_LAUNCH_POSITION.x;
-      const launchY = GameConfig.SOCKBALL_LAUNCH_POSITION.y;
+      const restrictedZoneSize = this.game.getScaledValue(200); // Size of restricted area
+      const launchX = this.game.getScaledValue(GameConfig.SOCKBALL_LAUNCH_POSITION.x);
+      const launchY = this.game.getScaledValue(GameConfig.SOCKBALL_LAUNCH_POSITION.y);
 
       if (
         this.x < launchX + restrictedZoneSize &&
@@ -1209,8 +1213,8 @@ class MarthaManager {
     const dy = sockball.y - marthaCenterY;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Calculate max distance for catch (using fixed base width for consistency)
-    const maxDistance = GameConfig.MARTHA_SIZE.width / 2;
+    // Calculate max distance for catch (using actual scaled width)
+    const maxDistance = this.width / 2;
 
     // Normalized distance (0 = center, 1 = edge of Martha, >1 = beyond edge)
     const normalizedDistance = distance / maxDistance;
@@ -1358,13 +1362,14 @@ class MarthaManager {
 
   checkCollision(sockball) {
     // Phase 2.1 - Enhanced collision with catch radius multiplier and difficulty scaling
-    // Use fixed base size for consistent catch radius regardless of sprite
-    const sockballRadius = GameConfig.SOCKBALL_SIZE / 2;
+    // Use scaled sockball size for consistent collision detection
+    const sockballRadius = this.game.getScaledValue(GameConfig.SOCKBALL_SIZE) / 2;
     const difficultyMode = GameConfig.getDifficultyMode(
       this.game.currentDifficulty
     );
+    // Use actual scaled Martha width instead of config value
     const baseCatchRadius =
-      (GameConfig.MARTHA_SIZE.width / 2) *
+      (this.width / 2) *
       GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
     const catchRadius = baseCatchRadius * difficultyMode.catchRadiusMultiplier;
 
@@ -1450,8 +1455,8 @@ class MarthaManager {
     // Calculate Martha's center position
     const centerX = this.x + this.width / 2;
     const centerY = this.y + this.height / 2;
-    // Use fixed base size for consistent catch zones regardless of sprite
-    const baseRadius = GameConfig.MARTHA_SIZE.width / 2;
+    // Use actual scaled Martha width for consistent catch zones
+    const baseRadius = this.width / 2;
 
     // Get the catch radius with multiplier and difficulty scaling
     const difficultyMode = GameConfig.getDifficultyMode(
