@@ -9,6 +9,7 @@ class MarthaManager {
     // Martha's position and size
     this.x = 600;
     this.y = 300;
+    // Scale Martha linearly with viewport for consistent visual proportion
     this.width = game.getScaledValue(GameConfig.MARTHA_SIZE.width);
     this.height = game.getScaledValue(GameConfig.MARTHA_SIZE.height);
     this.scale = 1;
@@ -151,7 +152,7 @@ class MarthaManager {
     const frameAspectRatio =
       this.spritesheetConfig.frameWidth / this.spritesheetConfig.frameHeight;
     // Keep height the same, adjust width based on aspect ratio
-    // Scale Martha's size based on viewport scale factor for consistent visual size
+    // Scale Martha linearly with viewport for consistent visual proportion
     this.height = this.game.getScaledValue(GameConfig.MARTHA_SIZE.height);
     this.width = this.height * frameAspectRatio;
 
@@ -1213,8 +1214,8 @@ class MarthaManager {
     const dy = sockball.y - marthaCenterY;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Calculate max distance for catch (using actual scaled width)
-    const maxDistance = this.width / 2;
+    // Calculate max distance for catch using base (unscaled) size, then scale
+    const maxDistance = this.game.getScaledValue(GameConfig.MARTHA_SIZE.width / 2);
 
     // Normalized distance (0 = center, 1 = edge of Martha, >1 = beyond edge)
     const normalizedDistance = distance / maxDistance;
@@ -1367,11 +1368,11 @@ class MarthaManager {
     const difficultyMode = GameConfig.getDifficultyMode(
       this.game.currentDifficulty
     );
-    // Use actual scaled Martha width instead of config value
+    // Use base (unscaled) Martha size, then scale the final radius
+    const baseUnscaledRadius = GameConfig.MARTHA_SIZE.width / 2;
     const baseCatchRadius =
-      (this.width / 2) *
-      GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
-    const catchRadius = baseCatchRadius * difficultyMode.catchRadiusMultiplier;
+      baseUnscaledRadius * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+    const catchRadius = this.game.getScaledValue(baseCatchRadius * difficultyMode.catchRadiusMultiplier);
 
     // Calculate Martha's center
     const marthaCenterX = this.x + this.width / 2;
@@ -1455,22 +1456,22 @@ class MarthaManager {
     // Calculate Martha's center position
     const centerX = this.x + this.width / 2;
     const centerY = this.y + this.height / 2;
-    // Use actual scaled Martha width for consistent catch zones
-    const baseRadius = this.width / 2;
+    // Use base (unscaled) Martha size, then scale the final radius for consistent proportions
+    const baseUnscaledRadius = GameConfig.MARTHA_SIZE.width / 2;
 
     // Get the catch radius with multiplier and difficulty scaling
     const difficultyMode = GameConfig.getDifficultyMode(
       this.game.currentDifficulty
     );
     const baseCatchRadius =
-      baseRadius * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
-    const catchRadius = baseCatchRadius * difficultyMode.catchRadiusMultiplier;
+      baseUnscaledRadius * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+    const catchRadius = this.game.getScaledValue(baseCatchRadius * difficultyMode.catchRadiusMultiplier);
 
-    // Calculate zone radii based on thresholds
+    // Calculate zone radii based on thresholds (scale after applying threshold)
     const perfectRadius =
-      baseRadius * GameConfig.CATCH_MECHANICS.PERFECT_CATCH_THRESHOLD;
+      this.game.getScaledValue(baseUnscaledRadius * GameConfig.CATCH_MECHANICS.PERFECT_CATCH_THRESHOLD);
     const goodRadius =
-      baseRadius * GameConfig.CATCH_MECHANICS.GOOD_CATCH_THRESHOLD;
+      this.game.getScaledValue(baseUnscaledRadius * GameConfig.CATCH_MECHANICS.GOOD_CATCH_THRESHOLD);
     const regularRadius = catchRadius;
 
     ctx.save();
@@ -1479,8 +1480,8 @@ class MarthaManager {
     ctx.beginPath();
     ctx.arc(centerX, centerY, regularRadius, 0, Math.PI * 2);
     ctx.strokeStyle = "rgba(100, 150, 255, 0.4)";
-    ctx.lineWidth = 3;
-    ctx.setLineDash([8, 4]);
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.setLineDash([this.game.getScaledValue(8), this.game.getScaledValue(4)]);
     ctx.stroke();
     ctx.fillStyle = "rgba(100, 150, 255, 0.08)";
     ctx.fill();
@@ -1489,8 +1490,8 @@ class MarthaManager {
     ctx.beginPath();
     ctx.arc(centerX, centerY, goodRadius, 0, Math.PI * 2);
     ctx.strokeStyle = "rgba(144, 238, 144, 0.5)";
-    ctx.lineWidth = 3;
-    ctx.setLineDash([6, 3]);
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.setLineDash([this.game.getScaledValue(6), this.game.getScaledValue(3)]);
     ctx.stroke();
     ctx.fillStyle = "rgba(144, 238, 144, 0.1)";
     ctx.fill();
@@ -1499,8 +1500,8 @@ class MarthaManager {
     ctx.beginPath();
     ctx.arc(centerX, centerY, perfectRadius, 0, Math.PI * 2);
     ctx.strokeStyle = "rgba(255, 215, 0, 0.6)";
-    ctx.lineWidth = 3;
-    ctx.setLineDash([4, 2]);
+    ctx.lineWidth = this.game.getScaledValue(3);
+    ctx.setLineDash([this.game.getScaledValue(4), this.game.getScaledValue(2)]);
     ctx.stroke();
     ctx.fillStyle = "rgba(255, 215, 0, 0.12)";
     ctx.fill();

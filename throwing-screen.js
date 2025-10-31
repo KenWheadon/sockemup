@@ -768,20 +768,20 @@ class ThrowingScreen extends Screen {
       const difficultyMode = GameConfig.getDifficultyMode(
         this.game.currentDifficulty
       );
-      // Use actual scaled Martha width for consistent catch zones
+      // Use base (unscaled) Martha size, then scale the final radius for consistent proportions
+      const baseUnscaledRadius = GameConfig.MARTHA_SIZE.width / 2;
       const baseCatchRadius =
-        (this.marthaManager.width / 2) *
-        GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
+        baseUnscaledRadius * GameConfig.CATCH_MECHANICS.CATCH_RADIUS_MULTIPLIER;
       const catchRadius =
-        baseCatchRadius * difficultyMode.catchRadiusMultiplier;
+        this.game.getScaledValue(baseCatchRadius * difficultyMode.catchRadiusMultiplier);
       const sockballRadius = this.game.getScaledValue(GameConfig.SOCKBALL_SIZE) / 2;
       const inCatchZone = currentDistance <= catchRadius + sockballRadius;
 
       if (inCatchZone) {
         sockball.enteredCatchZone = true;
 
-        // Determine current zone quality
-        const maxDistance = this.marthaManager.width / 2;
+        // Determine current zone quality using base size for consistent normalization
+        const maxDistance = this.game.getScaledValue(GameConfig.MARTHA_SIZE.width / 2);
         const normalizedDistance = currentDistance / maxDistance;
         let currentZone = null;
 
