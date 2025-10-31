@@ -75,16 +75,16 @@ class MarthaManager {
     this.availablePatterns = ["horizontal"];
     this.patternSpeed = 1;
 
-    // Bounds with buffer zones
+    // Bounds with buffer zones (scaled values)
     this.bounds = {
-      left: GameConfig.THROWING_BOUNDS.LEFT,
-      right: GameConfig.THROWING_BOUNDS.RIGHT,
-      top: GameConfig.THROWING_BOUNDS.TOP,
-      bottom: GameConfig.THROWING_BOUNDS.BOTTOM,
+      left: game.getScaledValue(GameConfig.THROWING_BOUNDS.LEFT),
+      right: game.getScaledValue(GameConfig.THROWING_BOUNDS.RIGHT),
+      top: game.getScaledValue(GameConfig.THROWING_BOUNDS.TOP),
+      bottom: game.getScaledValue(GameConfig.THROWING_BOUNDS.BOTTOM),
     };
 
     // Simplified edge handling - smaller buffer for more usable space
-    this.edgeBuffer = 40; // Reduced from 100 for more play area
+    this.edgeBuffer = game.getScaledValue(40); // Reduced from 100 for more play area
 
     // Audio tracking
     this.hasPlayedAngrySound = false;
@@ -159,10 +159,10 @@ class MarthaManager {
     this.rentDueMeter.current = 0;
     this.rentDueMeter.max = level.marthaWantsSockballs;
 
-    // Update bounds to match actual canvas size with 20px inset on left and bottom
-    this.bounds.left = GameConfig.THROWING_BOUNDS.LEFT + 20;
+    // Update bounds to match actual canvas size with scaled inset on left and bottom
+    this.bounds.left = this.game.getScaledValue(GameConfig.THROWING_BOUNDS.LEFT + 20);
     this.bounds.right = this.game.getCanvasWidth();
-    this.bounds.bottom = this.game.getCanvasHeight() - 20;
+    this.bounds.bottom = this.game.getCanvasHeight() - this.game.getScaledValue(20);
 
     // Reset position to center area
     this.x = this.bounds.left + (this.bounds.right - this.bounds.left) / 2;
@@ -479,8 +479,8 @@ class MarthaManager {
       const currentDistance = Math.sqrt(dx * dx + dy * dy);
 
       // Ensure we have a minimum radius to prevent division by zero
-      // and to maintain reasonable movement speed
-      this.patternData.radius = Math.max(50, currentDistance);
+      // and to maintain reasonable movement speed (scaled)
+      this.patternData.radius = Math.max(this.game.getScaledValue(50), currentDistance);
     }
 
     // Update angle based on speed - adjust multiplier to maintain circular speed consistent with linear patterns
@@ -550,11 +550,11 @@ class MarthaManager {
         this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;
       this.patternData.radiusX = Math.min(
         (this.bounds.right - this.bounds.left) / 4,
-        200
+        this.game.getScaledValue(200)
       );
       this.patternData.radiusY = Math.min(
         (this.bounds.bottom - this.bounds.top) / 4,
-        150
+        this.game.getScaledValue(150)
       );
     }
 
@@ -591,10 +591,10 @@ class MarthaManager {
 
     if (!this.patternData.zigzagPhase && this.patternData.zigzagPhase !== 0) {
       this.patternData.zigzagPhase = 0;
-      // Much larger amplitude for clearly visible zigzag
+      // Much larger amplitude for clearly visible zigzag (scaled)
       this.patternData.zigzagAmplitude = Math.min(
         (this.bounds.bottom - this.bounds.top) / 2.5,
-        140
+        this.game.getScaledValue(140)
       );
     }
 
@@ -632,10 +632,10 @@ class MarthaManager {
 
     if (!this.patternData.zigzagPhase && this.patternData.zigzagPhase !== 0) {
       this.patternData.zigzagPhase = 0;
-      // Much larger amplitude for clearly visible zigzag
+      // Much larger amplitude for clearly visible zigzag (scaled)
       this.patternData.zigzagAmplitude = Math.min(
         (this.bounds.right - this.bounds.left) / 2.5,
-        140
+        this.game.getScaledValue(140)
       );
     }
 
@@ -833,10 +833,10 @@ class MarthaManager {
 
     if (!this.patternData.wavePhase && this.patternData.wavePhase !== 0) {
       this.patternData.wavePhase = 0;
-      // Much larger amplitude for clearly visible wave motion
+      // Much larger amplitude for clearly visible wave motion (scaled)
       this.patternData.waveAmplitude = Math.min(
         (this.bounds.bottom - this.bounds.top) / 2.5,
-        180
+        this.game.getScaledValue(180)
       );
       this.patternData.waveCenterY =
         this.bounds.top + (this.bounds.bottom - this.bounds.top) / 2;

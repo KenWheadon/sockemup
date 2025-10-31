@@ -396,7 +396,9 @@ class ThrowingScreen extends Screen {
     );
     const adjustedThrowSpeed =
       GameConfig.SOCKBALL_THROW_SPEED * difficultyMode.throwSpeedMultiplier;
-    const normalizedVelocity = adjustedThrowSpeed / distance;
+    // Scale throw speed by viewport scale factor for consistent speed across screen sizes
+    const scaledThrowSpeed = adjustedThrowSpeed * this.game.viewport.scaleFactor;
+    const normalizedVelocity = scaledThrowSpeed / distance;
 
     // Create sockball projectile with the tracked type
     const sockball = {
@@ -404,11 +406,11 @@ class ThrowingScreen extends Screen {
       y: this.launchPosition.y,
       vx: deltaX * normalizedVelocity,
       vy: deltaY * normalizedVelocity,
-      size: GameConfig.SOCKBALL_SIZE,
+      size: this.game.getScaledValue(GameConfig.SOCKBALL_SIZE),
       type: sockballType,
       rotation: 0,
       rotationSpeed: 0.2,
-      gravity: GameConfig.GRAVITY,
+      gravity: GameConfig.GRAVITY * this.game.viewport.scaleFactor,
       bounced: false,
       bounceCount: 0,
       active: true,
