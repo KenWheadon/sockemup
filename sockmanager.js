@@ -43,7 +43,7 @@ class SockManager {
     this.sockPile.glowEffect = 30;
 
     const angle = Math.PI / 4 + (Math.random() * Math.PI) / 2;
-    const speed = GameConfig.SOCK_SHOOT_SPEED + Math.random() * 4;
+    const speed = (this.game.getScaledValue(GameConfig.SOCK_SHOOT_SPEED) + Math.random() * this.game.getScaledValue(4));
     const sockSize = this.game.getScaledValue(GameConfig.SOCK_SIZE);
 
     const newSock = {
@@ -76,8 +76,8 @@ class SockManager {
       this.particleEffects.push({
         x: sock.x + (Math.random() - 0.5) * this.game.getScaledValue(20),
         y: sock.y + (Math.random() - 0.5) * this.game.getScaledValue(20),
-        vx: (Math.random() - 0.5) * 6,
-        vy: (Math.random() - 0.5) * 6,
+        vx: (Math.random() - 0.5) * this.game.getScaledValue(6),
+        vy: (Math.random() - 0.5) * this.game.getScaledValue(6),
         life: 30,
         maxLife: 30,
         color: "#FFD700",
@@ -106,8 +106,8 @@ class SockManager {
       this.particleEffects.push({
         x: centerX + (Math.random() - 0.5) * this.game.getScaledValue(100),
         y: centerY + (Math.random() - 0.5) * this.game.getScaledValue(100),
-        vx: (Math.random() - 0.5) * 12,
-        vy: (Math.random() - 0.5) * 12,
+        vx: (Math.random() - 0.5) * this.game.getScaledValue(12),
+        vy: (Math.random() - 0.5) * this.game.getScaledValue(12),
         life: 60,
         maxLife: 60,
         color:
@@ -121,8 +121,8 @@ class SockManager {
       this.particleEffects.push({
         x: centerX + (Math.random() - 0.5) * this.game.getScaledValue(60),
         y: centerY + (Math.random() - 0.5) * this.game.getScaledValue(60),
-        vx: (Math.random() - 0.5) * 8,
-        vy: (Math.random() - 0.5) * 8,
+        vx: (Math.random() - 0.5) * this.game.getScaledValue(8),
+        vy: (Math.random() - 0.5) * this.game.getScaledValue(8),
         life: 45,
         maxLife: 45,
         color: "#FF0000",
@@ -209,8 +209,8 @@ class SockManager {
       this.particleEffects.push({
         x: animation.centerX + (Math.random() - 0.5) * particleSpread,
         y: animation.centerY + (Math.random() - 0.5) * particleSpread,
-        vx: (Math.random() - 0.5) * 8,
-        vy: (Math.random() - 0.5) * 8,
+        vx: (Math.random() - 0.5) * this.game.getScaledValue(8),
+        vy: (Math.random() - 0.5) * this.game.getScaledValue(8),
         life: 50,
         maxLife: 50,
         color: colors[Math.floor(Math.random() * colors.length)],
@@ -403,8 +403,8 @@ class SockManager {
       this.particleEffects.push({
         x: x + (Math.random() - 0.5) * particleSpread,
         y: y + (Math.random() - 0.5) * particleSpread,
-        vx: (Math.random() - 0.5) * 12,
-        vy: (Math.random() - 0.5) * 12,
+        vx: (Math.random() - 0.5) * this.game.getScaledValue(12),
+        vy: (Math.random() - 0.5) * this.game.getScaledValue(12),
         life: 40,
         maxLife: 40,
         color: colors[Math.floor(Math.random() * colors.length)],

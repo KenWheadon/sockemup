@@ -78,7 +78,7 @@ class FeedbackManager {
     this.celebrationParticles = this.celebrationParticles.filter((particle) => {
       particle.x += particle.vx * (deltaTime / 16.67);
       particle.y += particle.vy * (deltaTime / 16.67);
-      particle.vy += 0.2; // Gravity
+      particle.vy += 0.2 * this.game.viewport.scaleFactor; // Gravity scaled
       particle.alpha -= 0.01;
       particle.life -= deltaTime;
       return particle.life > 0 && particle.alpha > 0;
@@ -221,11 +221,11 @@ class FeedbackManager {
       x: this.game.getCanvasWidth() / 2,
       y: this.game.getCanvasHeight() / 2,
       alpha: 1,
-      velocity: 2,
+      velocity: this.game.getScaledValue(2),
       timer: 2000,
       duration: 2000,
       color: "#FF5722",
-      fontSize: 48,
+      fontSize: this.game.getScaledValue(48),
     });
   }
 
@@ -319,15 +319,15 @@ class FeedbackManager {
 
     for (let i = 0; i < 30; i++) {
       const angle = (Math.PI * 2 * i) / 30;
-      const speed = 3 + Math.random() * 3;
+      const speed = this.game.getScaledValue(3 + Math.random() * 3);
 
       this.celebrationParticles.push({
         x: centerX,
         y: centerY,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 2,
+        vy: Math.sin(angle) * speed - this.game.getScaledValue(2),
         color: colors[Math.floor(Math.random() * colors.length)],
-        size: 8 + Math.random() * 8,
+        size: this.game.getScaledValue(8 + Math.random() * 8),
         alpha: 1,
         life: 2000 + Math.random() * 1000,
       });

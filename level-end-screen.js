@@ -437,9 +437,9 @@ class LevelEndScreen extends Screen {
         this.particles.push({
           x: Math.random() * canvasWidth,
           y: -Math.random() * canvasHeight,
-          vx: (Math.random() - 0.5) * 2,
-          vy: Math.random() * 3 + 1,
-          size: Math.random() * 6 + 2,
+          vx: (Math.random() - 0.5) * this.game.getScaledValue(2),
+          vy: Math.random() * this.game.getScaledValue(3) + this.game.getScaledValue(1),
+          size: Math.random() * this.game.getScaledValue(6) + this.game.getScaledValue(2),
           color: this.getRandomColor(),
           rotation: Math.random() * Math.PI * 2,
           rotationSpeed: (Math.random() - 0.5) * 0.1,

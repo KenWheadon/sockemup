@@ -55,8 +55,9 @@ class MatchScreen extends Screen {
     // Velocity tracking for throwing
     this.dragHistory = [];
     this.maxDragHistoryLength = 5;
-    this.velocityScale = 12; // Scale factor for throw velocity - increased significantly
-    this.maxThrowVelocity = 45; // Maximum throw velocity - increased for more dramatic throws
+    // These will be set in setup() to scale with viewport
+    this.velocityScale = 12;
+    this.maxThrowVelocity = 45;
 
     // Track active timeouts for cleanup
     this.activeTimeouts = [];
@@ -165,6 +166,10 @@ class MatchScreen extends Screen {
     // Reset elapsed time counter and time bonus flag
     this.game.timeElapsed = 0;
     this.game.timeBonusEarned = false;
+
+    // Scale physics values with viewport
+    this.velocityScale = 12 * this.game.viewport.scaleFactor;
+    this.maxThrowVelocity = 45 * this.game.viewport.scaleFactor;
 
     // Track achievements for this level
     this.firstMatchMade = false;
@@ -604,12 +609,12 @@ class MatchScreen extends Screen {
       this.draggedSock.vx = 0;
       this.draggedSock.vy = 0;
 
-      // Check if mouse moved significantly (more than 5 pixels) - if so, it's a drag
+      // Check if mouse moved significantly (scaled threshold) - if so, it's a drag
       if (this.initialMousePos && !this.wasDragged) {
         const dx = x - this.initialMousePos.x;
         const dy = y - this.initialMousePos.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        if (distance > 5) {
+        if (distance > this.game.getScaledValue(5)) {
           this.wasDragged = true;
         }
       }
@@ -1070,7 +1075,7 @@ class MatchScreen extends Screen {
     // Create mismatch particle effects
     this.sockManager.createMismatchEffect(sock1, sock2);
 
-    const throwForce = 20;
+    const throwForce = 20 * this.game.viewport.scaleFactor;
 
     this.physics.applySockThrow(sock1, {
       x: (Math.random() - 0.5) * throwForce,
@@ -1095,7 +1100,7 @@ class MatchScreen extends Screen {
     const canvas = this.game.canvas;
     const originalTransform = canvas.style.transform;
 
-    let shakeIntensity = 4; // Stronger than match shake
+    let shakeIntensity = this.game.getScaledValue(4); // Stronger than match shake
     let shakeCount = 0;
     const maxShakes = 8; // More shakes
 
@@ -1125,7 +1130,7 @@ class MatchScreen extends Screen {
     const canvas = this.game.canvas;
     const originalTransform = canvas.style.transform;
 
-    let shakeIntensity = 2;
+    let shakeIntensity = this.game.getScaledValue(2);
     let shakeCount = 0;
     const maxShakes = 6;
 

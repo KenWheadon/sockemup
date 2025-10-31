@@ -4,7 +4,7 @@ class MatchPhysics {
     this.updateBounds();
 
     this.friction = 0.992;
-    this.minVelocity = 0.05;
+    this.minVelocity = 0.05 * game.viewport.scaleFactor;
     this.bounceRestitution = 0.4;
     this.rotationFriction = 0.98;
 
@@ -170,14 +170,14 @@ class MatchPhysics {
           sock1.vy * sock1.vy +
           (sock2.vx * sock2.vx + sock2.vy * sock2.vy)
       );
-      const force = Math.max(3, combinedVelocity * 0.5);
+      const force = Math.max(this.game.getScaledValue(3), combinedVelocity * 0.5);
 
       sock1.vx -= cos * force;
       sock1.vy -= sin * force;
       sock2.vx += cos * force;
       sock2.vy += sin * force;
 
-      // Enhanced glow effect based on collision strength
+      // Enhanced glow effect based on collision strength (intensity values are fine as-is)
       const glowIntensity = Math.min(25, Math.max(10, combinedVelocity * 2));
       sock1.glowEffect = glowIntensity;
       sock2.glowEffect = glowIntensity;
@@ -198,7 +198,7 @@ class MatchPhysics {
     sock.vx += impulseX;
     sock.vy += impulseY;
 
-    const maxVelocity = 20;
+    const maxVelocity = this.game.getScaledValue(20);
     sock.vx = Math.max(-maxVelocity, Math.min(maxVelocity, sock.vx));
     sock.vy = Math.max(-maxVelocity, Math.min(maxVelocity, sock.vy));
   }
