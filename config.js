@@ -7,7 +7,7 @@ const DEFAULT_SPRITESHEET_FRAMES = [
 const GameConfig = {
   // ========== DEVELOPER MODE ==========
   // Set to true to unlock all levels and difficulties for QA/testing
-  DEV_MODE: true,
+  DEV_MODE: false,
 
   // Target canvas dimensions and aspect ratio
   TARGET_WIDTH: 1200,
@@ -15,14 +15,10 @@ const GameConfig = {
   TARGET_ASPECT_RATIO: 1200 / 800, // 1.5 (3:2 ratio)
 
   // Canvas sizing constraints
-  MIN_WIDTH: 600,
-  MIN_HEIGHT: 400,
+  MIN_WIDTH: 150,
+  MIN_HEIGHT: 100,
   MAX_WIDTH: 1920,
   MAX_HEIGHT: 1080,
-
-  // Original canvas dimensions for backwards compatibility
-  CANVAS_WIDTH: 1200,
-  CANVAS_HEIGHT: 800,
 
   // Canvas sizing utility functions
   calculateCanvasSize: function (viewportWidth, viewportHeight) {
@@ -39,6 +35,16 @@ const GameConfig = {
       // Viewport is taller than target ratio - fit to width
       canvasWidth = Math.min(viewportWidth, this.MAX_WIDTH);
       canvasHeight = canvasWidth / targetRatio;
+    }
+
+    // Ensure canvas doesn't exceed viewport dimensions
+    if (canvasWidth > viewportWidth) {
+      canvasWidth = viewportWidth;
+      canvasHeight = canvasWidth / targetRatio;
+    }
+    if (canvasHeight > viewportHeight) {
+      canvasHeight = viewportHeight;
+      canvasWidth = canvasHeight * targetRatio;
     }
 
     // Ensure minimum size constraints
