@@ -213,8 +213,12 @@ class StoryManager {
       if (button.hovered) anyButtonHovered = true;
     }
 
-    // Update cursor
-    this.game.canvas.style.cursor = anyButtonHovered ? "pointer" : "default";
+    // Update cursor - hide when reticle is visible
+    if (this.game.controllerManager && this.game.controllerManager.isReticleVisible()) {
+      this.game.canvas.style.cursor = "none";
+    } else {
+      this.game.canvas.style.cursor = anyButtonHovered ? "pointer" : "default";
+    }
 
     return true;
   }

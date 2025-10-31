@@ -52,6 +52,10 @@ class ControllerManager {
     this.mouseInactiveTimer = 0;
     this.mouseInactiveThreshold = 1000; // ms
 
+    // Track last known mouse position
+    this.lastMouseX = null;
+    this.lastMouseY = null;
+
     // Check if Gamepad API is supported
     this.isSupported = 'getGamepads' in navigator;
 
@@ -88,10 +92,19 @@ class ControllerManager {
     this.connectedControllers.set(e.gamepad.index, e.gamepad);
     this.showControllerIndicator();
 
-    // Initialize reticle position at center of canvas
-    this.reticle.x = this.game.getCanvasWidth() / 2;
-    this.reticle.y = this.game.getCanvasHeight() / 2;
+    // Initialize reticle position at last mouse position, or center if no mouse position yet
+    if (this.lastMouseX !== null && this.lastMouseY !== null) {
+      this.reticle.x = this.lastMouseX;
+      this.reticle.y = this.lastMouseY;
+    } else {
+      this.reticle.x = this.game.getCanvasWidth() / 2;
+      this.reticle.y = this.game.getCanvasHeight() / 2;
+    }
     this.reticle.visible = true;
+
+    // Hide the mouse cursor immediately
+    this.mouseUsedRecently = false;
+    this.game.canvas.style.cursor = "none";
 
     // Start polling if not already polling
     if (!this.pollInterval) {

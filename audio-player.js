@@ -25,6 +25,10 @@ class AudioPlayer {
     // Track end listener
     this.trackEndListener = null;
 
+    // Store previous music state to restore after closing
+    this.previousMusicName = null;
+    this.previousMusicTime = 0;
+
     // Initialize unlocked tracks if not exists
     if (!this.game.unlockedTracks) {
       this.game.unlockedTracks = ['menu-music'];
@@ -157,6 +161,16 @@ class AudioPlayer {
     this.isOpen = true;
     this.openProgress = 0;
     this.rebuildPlaylist();
+
+    // Store the current music state so we can restore it later
+    if (this.game.audioManager.currentMusic && this.game.audioManager.currentMusicName) {
+      this.previousMusicName = this.game.audioManager.currentMusicName;
+      this.previousMusicTime = this.game.audioManager.currentMusic.currentTime;
+    } else {
+      this.previousMusicName = null;
+      this.previousMusicTime = 0;
+    }
+
     this.game.audioManager.pauseMusic();
   }
 
@@ -167,7 +181,18 @@ class AudioPlayer {
     this.openProgress = 0;
     this.hoveredTrack = null;
     this.hoveredButton = null;
-    this.game.audioManager.resumeMusic();
+
+    // Restore the previous music if there was any
+    if (this.previousMusicName) {
+      this.game.audioManager.playMusic(this.previousMusicName, true);
+      // Restore the playback position
+      if (this.game.audioManager.currentMusic) {
+        this.game.audioManager.currentMusic.currentTime = this.previousMusicTime;
+      }
+    } else {
+      // If there was no previous music, try to resume any paused music
+      this.game.audioManager.resumeMusic();
+    }
   }
 
   selectTrack(trackId) {

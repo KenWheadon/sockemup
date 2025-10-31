@@ -1337,6 +1337,12 @@ class LevelSelect extends Screen {
   }
 
   updateCursor() {
+    // Hide cursor when reticle is visible
+    if (this.game.controllerManager && this.game.controllerManager.isReticleVisible()) {
+      this.game.canvas.style.cursor = "none";
+      return;
+    }
+
     // Check if any button is hovered
     const isButtonHovered =
       this.storyReplayButton.hovered ||

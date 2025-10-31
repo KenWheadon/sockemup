@@ -114,9 +114,13 @@ class DifficultyModal {
       }
     }
 
-    // Update cursor
-    this.game.canvas.style.cursor =
-      this.hoveredDifficulty !== -1 ? "pointer" : "default";
+    // Update cursor - hide when reticle is visible
+    if (this.game.controllerManager && this.game.controllerManager.isReticleVisible()) {
+      this.game.canvas.style.cursor = "none";
+    } else {
+      this.game.canvas.style.cursor =
+        this.hoveredDifficulty !== -1 ? "pointer" : "default";
+    }
   }
 
   /**

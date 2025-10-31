@@ -640,6 +640,12 @@ class MatchScreen extends Screen {
   }
 
   updateCursor(x, y) {
+    // Hide cursor when reticle is visible
+    if (this.game.controllerManager && this.game.controllerManager.isReticleVisible()) {
+      this.game.canvas.style.cursor = "none";
+      return;
+    }
+
     // Check if hovering over buttons
     const isButtonHovered = this.pauseButton.hovered || this.exitButton.hovered || this.debugButton.hovered;
 

@@ -320,12 +320,16 @@ class StoryViewer {
       this.navButtons.next.hovered = false;
     }
 
-    // Update cursor
-    const anyButtonHovered =
-      this.navButtons.close.hovered ||
-      this.navButtons.previous.hovered ||
-      this.navButtons.next.hovered;
-    this.game.canvas.style.cursor = anyButtonHovered ? "pointer" : "default";
+    // Update cursor - hide when reticle is visible
+    if (this.game.controllerManager && this.game.controllerManager.isReticleVisible()) {
+      this.game.canvas.style.cursor = "none";
+    } else {
+      const anyButtonHovered =
+        this.navButtons.close.hovered ||
+        this.navButtons.previous.hovered ||
+        this.navButtons.next.hovered;
+      this.game.canvas.style.cursor = anyButtonHovered ? "pointer" : "default";
+    }
 
     return true;
   }

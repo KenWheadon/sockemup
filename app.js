@@ -251,9 +251,12 @@ class SockGame {
   // Fixed coordinate conversion
   screenToCanvas(screenX, screenY) {
     const rect = this.canvas.getBoundingClientRect();
+    // Convert from screen pixels to canvas pixels
+    const scaleX = this.canvas.width / rect.width;
+    const scaleY = this.canvas.height / rect.height;
     return {
-      x: screenX - rect.left,
-      y: screenY - rect.top,
+      x: (screenX - rect.left) * scaleX,
+      y: (screenY - rect.top) * scaleY,
     };
   }
 
@@ -1076,15 +1079,17 @@ class SockGame {
 
   handleMouseMove(e) {
     try {
-      // Notify controller manager that mouse is being used
-      if (this.controllerManager) {
-        this.controllerManager.mouseUsedRecently = true;
-        this.controllerManager.mouseInactiveTimer = 0;
-      }
-
       const coords = this.screenToCanvas(e.clientX, e.clientY);
       const x = coords.x;
       const y = coords.y;
+
+      // Notify controller manager that mouse is being used and store position
+      if (this.controllerManager) {
+        this.controllerManager.mouseUsedRecently = true;
+        this.controllerManager.mouseInactiveTimer = 0;
+        this.controllerManager.lastMouseX = x;
+        this.controllerManager.lastMouseY = y;
+      }
 
       // Use the new Screen base class method
       if (this.gameState === "menu") {

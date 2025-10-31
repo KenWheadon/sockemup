@@ -106,31 +106,41 @@ class KeyboardController {
   }
 
   handleKeyDown(e) {
-    // Show reticle when ANY keyboard button is pressed
-    if (!this.controllerManager.reticle.visible) {
+    // Check if this is a control key (movement or action)
+    const isControlKey = this.keyState.hasOwnProperty(e.key) ||
+                        ['w', 'W', 'a', 'A', 's', 'S', 'd', 'D'].includes(e.key);
+
+    // Show reticle on ANY key press (for better UX)
+    // Check if reticle is effectively hidden (either not visible or mouse used recently)
+    if (!this.controllerManager.isReticleVisible()) {
       this.controllerManager.reticle.visible = true;
       this.controllerManager.mouseUsedRecently = false;
       this.controllerManager.mouseInactiveTimer = 0;
 
-      // Initialize reticle position at center
-      const canvasWidth = this.controllerManager.game.getCanvasWidth();
-      const canvasHeight = this.controllerManager.game.getCanvasHeight();
-      this.controllerManager.reticle.x = canvasWidth / 2;
-      this.controllerManager.reticle.y = canvasHeight / 2;
+      // Initialize reticle position at last mouse position, or center if no mouse position yet
+      if (this.controllerManager.lastMouseX !== null && this.controllerManager.lastMouseY !== null) {
+        this.controllerManager.reticle.x = this.controllerManager.lastMouseX;
+        this.controllerManager.reticle.y = this.controllerManager.lastMouseY;
+      } else {
+        const canvasWidth = this.controllerManager.game.getCanvasWidth();
+        const canvasHeight = this.controllerManager.game.getCanvasHeight();
+        this.controllerManager.reticle.x = canvasWidth / 2;
+        this.controllerManager.reticle.y = canvasHeight / 2;
+      }
+
+      // Hide the mouse cursor immediately
+      this.controllerManager.game.canvas.style.cursor = "none";
 
       console.log('🎮 Reticle shown at', this.controllerManager.reticle.x, this.controllerManager.reticle.y);
     }
 
-    // Track key state - include WASD and arrow keys
-    const isTracked = this.keyState.hasOwnProperty(e.key) ||
-                     ['w', 'W', 'a', 'A', 's', 'S', 'd', 'D'].includes(e.key);
-
-    if (!isTracked) return;
+    // Only process control keys for keyboard emulation
+    if (!isControlKey) return;
 
     // Track the key state
     this.keyState[e.key] = true;
 
-    // If keyboard mode is not enabled, enable it on first key press
+    // If keyboard mode is not enabled, enable it on first control key press
     if (!this.isEnabled) {
       this.enable();
       console.log('🎮 Keyboard mode auto-enabled by key press');

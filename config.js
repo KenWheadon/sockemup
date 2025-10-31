@@ -693,6 +693,7 @@ const GameConfig = {
       "btn-audionext.png",
       "btn-audiopause.png",
       "btn-audioplay.png",
+      "btn-keyboard.png",
 
       "secret-video-button.png",
       "arrow-no-pixel.png",

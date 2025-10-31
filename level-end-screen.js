@@ -580,8 +580,12 @@ class LevelEndScreen extends Screen {
     b.hovered =
       x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height;
 
-    // Update cursor
-    this.game.canvas.style.cursor = b.hovered ? "pointer" : "default";
+    // Update cursor - hide when reticle is visible
+    if (this.game.controllerManager && this.game.controllerManager.isReticleVisible()) {
+      this.game.canvas.style.cursor = "none";
+    } else {
+      this.game.canvas.style.cursor = b.hovered ? "pointer" : "default";
+    }
   }
 
   onMouseDown(x, y) {
