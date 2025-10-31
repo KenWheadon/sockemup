@@ -345,10 +345,16 @@ class AudioPlayer {
       return;
     }
 
-    const playerWidth = Math.min(700, canvas.width - 100);
-    const playerHeight = Math.min(650, canvas.height - 100);
+    const padding = Math.min(100, canvas.width * 0.05, canvas.height * 0.05);
+    const playerWidth = Math.min(700, canvas.width - padding);
+    const playerHeight = Math.min(650, canvas.height - padding);
     const playerX = (canvas.width - playerWidth) / 2;
     const playerY = (canvas.height - playerHeight) / 2;
+
+    const scale = Math.min(1, playerWidth / 700, playerHeight / 650);
+    const isMobile = playerWidth < 400;
+    const headerHeight = Math.max(50, 70 * scale);
+    const controlsAreaHeight = Math.max(100, 150 * scale);
 
     // Close button hover
     const closeButtonX = playerX + playerWidth - 50;
@@ -360,10 +366,10 @@ class AudioPlayer {
     const distance = Math.sqrt(dx * dx + dy * dy);
     this.closeButtonHovered = distance <= closeButtonSize / 2;
 
-    // Track list hover
-    const listStartY = playerY + 120;
-    const trackHeight = 55;
-    const listHeight = playerHeight - 280;
+    // Track list hover with responsive positioning
+    const listStartY = playerY + headerHeight + 50;
+    const trackHeight = isMobile ? Math.max(35, 40 * scale) : 40; // Reduced from 45-55 to 35-40
+    const listHeight = playerHeight - headerHeight - controlsAreaHeight - 60;
 
     this.hoveredTrack = null;
     const visibleTracks = this.getVisibleTracks();
@@ -388,12 +394,13 @@ class AudioPlayer {
       currentY += trackHeight;
     }
 
-    // Button hovers
-    const controlsY = playerY + playerHeight - 100;
-    const buttonSize = 50;
-    const buttonSpacing = 15;
+    // Button hovers with responsive positioning
+    const buttonSize = Math.max(35, 50 * scale);
+    const buttonSpacing = Math.max(8, 15 * scale);
     const totalWidth = (buttonSize * 5) + (buttonSpacing * 4);
     let buttonX = (canvas.width - totalWidth) / 2;
+    const controlsAreaY = playerY + playerHeight - controlsAreaHeight;
+    const controlsY = controlsAreaY + (controlsAreaHeight * 0.5) - (buttonSize / 2);
 
     this.hoveredButton = null;
 
@@ -407,8 +414,8 @@ class AudioPlayer {
       buttonX += buttonSize + buttonSpacing;
     }
 
-    // Filter buttons
-    const filterY = playerY + 80;
+    // Filter buttons with responsive positioning
+    const filterY = playerY + headerHeight + 10;
     const filterButtonWidth = 120;
     const filterButtonHeight = 30;
     const allButtonX = playerX + 20;
@@ -433,10 +440,19 @@ class AudioPlayer {
     ctx.fillStyle = `rgba(0, 0, 0, ${0.85 * progress})`;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    const playerWidth = Math.min(700, canvas.width - 100);
-    const playerHeight = Math.min(650, canvas.height - 100);
+    const padding = Math.min(100, canvas.width * 0.05, canvas.height * 0.05);
+    const playerWidth = Math.min(700, canvas.width - padding);
+    const playerHeight = Math.min(650, canvas.height - padding);
     const playerX = (canvas.width - playerWidth) / 2;
     const playerY = (canvas.height - playerHeight) / 2;
+
+    // Responsive scaling factors
+    const scale = Math.min(1, playerWidth / 700, playerHeight / 650);
+    const isMobile = playerWidth < 400;
+
+    // Responsive bar heights
+    const headerHeight = Math.max(50, 70 * scale);
+    const controlsAreaHeight = Math.max(100, 150 * scale);
 
     ctx.save();
 
@@ -463,14 +479,15 @@ class AudioPlayer {
 
     // Title bar
     ctx.fillStyle = 'rgba(74, 158, 255, 0.2)';
-    ctx.fillRect(playerX, playerY, playerWidth, 70);
+    ctx.fillRect(playerX, playerY, playerWidth, headerHeight);
 
     // Title
     ctx.fillStyle = "#ffffff";
-    ctx.font = "bold 28px Arial";
+    const titleSize = Math.max(18, 28 * scale);
+    ctx.font = `bold ${titleSize}px Arial`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("Music Player", canvas.width / 2, playerY + 35);
+    ctx.fillText("Music Player", canvas.width / 2, playerY + headerHeight / 2);
     ctx.textBaseline = "alphabetic";
 
     // Close button
@@ -502,8 +519,8 @@ class AudioPlayer {
       ctx.shadowBlur = 0;
     }
 
-    // Filter buttons
-    const filterY = playerY + 80;
+    // Filter buttons - positioned right after header
+    const filterY = playerY + headerHeight + 10;
     const filterButtonWidth = 120;
     const filterButtonHeight = 30;
     const allButtonX = playerX + 20;
@@ -519,7 +536,8 @@ class AudioPlayer {
     ctx.shadowBlur = 0;
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 13px Arial';
+    const filterFontSize = Math.max(10, 13 * scale);
+    ctx.font = `bold ${filterFontSize}px Arial`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('All Tracks', allButtonX + filterButtonWidth / 2, filterY + filterButtonHeight / 2);
@@ -534,23 +552,25 @@ class AudioPlayer {
     this.renderRoundedRect(ctx, favButtonX, filterY, filterButtonWidth, filterButtonHeight, 5);
     ctx.shadowBlur = 0;
 
-    // Draw heart icon
+    // Draw heart icon (responsive)
     const heartIcon = this.game.images['icon-heart.png'];
     if (heartIcon && heartIcon.complete) {
-      const heartSize = 16;
-      ctx.drawImage(heartIcon, favButtonX + 8, filterY + filterButtonHeight / 2 - heartSize / 2, heartSize, heartSize);
+      const heartIconSize = Math.max(12, 16 * scale);
+      const heartIconPadding = Math.max(6, 8 * scale);
+      ctx.drawImage(heartIcon, favButtonX + heartIconPadding, filterY + filterButtonHeight / 2 - heartIconSize / 2, heartIconSize, heartIconSize);
     }
 
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`Favorites (${favCount})`, favButtonX + filterButtonWidth / 2 + 8, filterY + filterButtonHeight / 2);
+    const favTextOffset = Math.max(6, 8 * scale);
+    ctx.fillText(`Favorites (${favCount})`, favButtonX + filterButtonWidth / 2 + favTextOffset, filterY + filterButtonHeight / 2);
     ctx.textBaseline = 'alphabetic';
 
-    // Track list
-    const listStartY = playerY + 120;
-    const trackHeight = 55;
-    const listHeight = playerHeight - 280;
+    // Track list with responsive sizing - positioned after filter buttons
+    const listStartY = playerY + headerHeight + 50;
+    const trackHeight = isMobile ? Math.max(35, 40 * scale) : 40; // Reduced from 45-55 to 35-40
+    const listHeight = playerHeight - headerHeight - controlsAreaHeight - 60;
 
     const visibleTracks = this.getVisibleTracks();
     const totalTracksHeight = visibleTracks.length * trackHeight;
@@ -602,30 +622,36 @@ class AudioPlayer {
         ctx.strokeRect(trackX, trackY, trackW, trackH);
         ctx.shadowBlur = 0;
 
-        // Track info
-        ctx.font = isSelected ? "bold 16px Arial" : "16px Arial";
+        // Track info with responsive font sizes
+        const trackNameSize = Math.max(12, 16 * scale);
+        const trackInfoSize = Math.max(10, 12 * scale);
+        ctx.font = isSelected ? `bold ${trackNameSize}px Arial` : `${trackNameSize}px Arial`;
         ctx.fillStyle = isUnlocked ? "#ffffff" : "#666666";
         ctx.textAlign = "left";
 
         const displayName = isUnlocked ? track.name : "???";
-        ctx.fillText(displayName, trackX + 15, trackY + 22);
+        const nameY = trackY + (trackH * 0.4);
+        ctx.fillText(displayName, trackX + 15, nameY);
 
         // Duration and play count (only for unlocked)
         if (isUnlocked) {
-          ctx.font = "12px Arial";
+          ctx.font = `${trackInfoSize}px Arial`;
           ctx.fillStyle = "#aaaaaa";
           const playCount = this.getPlayCount(track.id);
-          ctx.fillText(`${track.duration} • Played ${playCount}x`, trackX + 15, trackY + 40);
+          const infoY = trackY + (trackH * 0.75);
+          ctx.fillText(`${track.duration} • Played ${playCount}x`, trackX + 15, infoY);
 
-          // Heart icon using game asset
+          // Heart icon using game asset (responsive)
           const heartImg = this.game.images[isFavorited ? 'icon-heart.png' : 'btn-favorite.png'];
           if (heartImg && heartImg.complete) {
-            const heartSize = 24;
+            const heartSize = Math.max(18, 24 * scale);
+            const heartPadding = Math.max(8, 10 * scale);
+            const heartY = trackY + (trackH * 0.25);
             ctx.save();
             if (!isFavorited) {
               ctx.globalAlpha = 0.4;
             }
-            ctx.drawImage(heartImg, trackX + trackW - heartSize - 10, trackY + 13, heartSize, heartSize);
+            ctx.drawImage(heartImg, trackX + trackW - heartSize - heartPadding, heartY, heartSize, heartSize);
             ctx.restore();
           } else {
             // Fallback to unicode heart
@@ -649,11 +675,11 @@ class AudioPlayer {
                 return `${mins}:${secs.toString().padStart(2, '0')}`;
               };
 
-              // Progress bar on the track
-              const progressBarWidth = (trackW - 30) * 0.5; // 50% of original width
-              const progressBarHeight = 14;
+              // Progress bar on the track (responsive)
+              const progressBarWidth = Math.min((trackW - 30) * 0.6, trackW - 60);
+              const progressBarHeight = Math.max(10, 14 * scale);
               const progressBarX = trackX + (trackW / 2) - (progressBarWidth / 2); // Centered
-              const progressBarY = trackY + 36;
+              const progressBarY = trackY + (trackH * 0.7);
 
               // Background
               ctx.fillStyle = "#1a1a2a";
@@ -671,10 +697,11 @@ class AudioPlayer {
                 ctx.fillRect(progressBarX, progressBarY, fillWidth, progressBarHeight);
               }
 
-              // Time display centered on the bar
+              // Time display centered on the bar (responsive)
               const timeText = `${formatTime(currentTime)}/${formatTime(duration)}`;
               ctx.fillStyle = "#ffffff";
-              ctx.font = "11px Arial";
+              const timeFontSize = Math.max(8, 11 * scale);
+              ctx.font = `${timeFontSize}px Arial`;
               ctx.textAlign = "center";
               ctx.textBaseline = "middle";
               ctx.fillText(timeText, progressBarX + progressBarWidth / 2, progressBarY + progressBarHeight / 2);
@@ -683,10 +710,11 @@ class AudioPlayer {
           }
         } else {
           // Locked status text (no icon)
-          ctx.font = "12px Arial";
+          ctx.font = `${trackInfoSize}px Arial`;
           ctx.fillStyle = "#666666";
           ctx.textAlign = "left";
-          ctx.fillText("Locked", trackX + 15, trackY + 40);
+          const lockedY = trackY + (trackH * 0.75);
+          ctx.fillText("Locked", trackX + 15, lockedY);
         }
       }
 
@@ -704,38 +732,43 @@ class AudioPlayer {
       this.renderRoundedRect(ctx, playerX + playerWidth - 15, scrollbarY, 5, scrollbarHeight, 2);
     }
 
-    // Controls area
-    const controlsAreaY = playerY + playerHeight - 150;
+    // Controls area with responsive height
+    const controlsAreaY = playerY + playerHeight - controlsAreaHeight;
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-    ctx.fillRect(playerX, controlsAreaY, playerWidth, 150);
+    ctx.fillRect(playerX, controlsAreaY, playerWidth, controlsAreaHeight);
 
-    // Now playing text
+    // Now playing text with responsive sizing
+    const nowPlayingSize = Math.max(14, 18 * scale);
+    const selectedSize = Math.max(12, 16 * scale);
+    const selectPromptSize = Math.max(11, 14 * scale);
+    const nowPlayingY = controlsAreaY + (controlsAreaHeight * 0.25);
+
     if (this.selectedTrack) {
       const track = this.tracks.find(t => t.id === this.selectedTrack);
       if (this.isPlaying) {
         ctx.fillStyle = "#4a9eff";
-        ctx.font = "bold 18px Arial";
+        ctx.font = `bold ${nowPlayingSize}px Arial`;
         ctx.textAlign = "center";
-        ctx.fillText(`Now Playing: ${track.name}`, canvas.width / 2, controlsAreaY + 30);
+        ctx.fillText(`Now Playing: ${track.name}`, canvas.width / 2, nowPlayingY);
       } else {
         ctx.fillStyle = "#888888";
-        ctx.font = "16px Arial";
+        ctx.font = `${selectedSize}px Arial`;
         ctx.textAlign = "center";
-        ctx.fillText(`Selected: ${track.name}`, canvas.width / 2, controlsAreaY + 30);
+        ctx.fillText(`Selected: ${track.name}`, canvas.width / 2, nowPlayingY);
       }
     } else {
       ctx.fillStyle = "#666666";
-      ctx.font = "italic 14px Arial";
+      ctx.font = `italic ${selectPromptSize}px Arial`;
       ctx.textAlign = "center";
-      ctx.fillText("Select a track to play", canvas.width / 2, controlsAreaY + 30);
+      ctx.fillText("Select a track to play", canvas.width / 2, nowPlayingY);
     }
 
-    // Control buttons
-    const controlsY = playerY + playerHeight - 100;
-    const buttonSize = 50;
-    const buttonSpacing = 15;
+    // Control buttons with responsive sizing - positioned in middle of controls area
+    const buttonSize = Math.max(35, 50 * scale);
+    const buttonSpacing = Math.max(8, 15 * scale);
     const totalWidth = (buttonSize * 5) + (buttonSpacing * 4);
     let buttonX = (canvas.width - totalWidth) / 2;
+    const controlsY = controlsAreaY + (controlsAreaHeight * 0.5) - (buttonSize / 2);
 
     const canPlay = this.selectedTrack && this.isTrackUnlocked(this.selectedTrack);
 
@@ -753,19 +786,21 @@ class AudioPlayer {
 
     this.renderControlButton(ctx, buttonX, controlsY, buttonSize, 'repeat', true);
 
-    // Status text
+    // Status text with responsive sizing - positioned at bottom of controls area
     const unlockedCount = this.tracks.filter(t => this.isTrackUnlocked(t.id)).length;
     const percentUnlocked = Math.round((unlockedCount / this.tracks.length) * 100);
 
     ctx.fillStyle = "#aaaaaa";
-    ctx.font = "14px Arial";
+    const statusFontSize = Math.max(10, 14 * scale);
+    ctx.font = `${statusFontSize}px Arial`;
     ctx.textAlign = "center";
 
     let statusText = `Collection: ${unlockedCount}/${this.tracks.length} (${percentUnlocked}%)`;
     if (this.shuffle) statusText += ' • Shuffle ON';
     if (this.repeat) statusText += ' • Repeat ON';
 
-    ctx.fillText(statusText, canvas.width / 2, playerY + playerHeight - 20);
+    const statusY = controlsAreaY + (controlsAreaHeight * 0.85);
+    ctx.fillText(statusText, canvas.width / 2, statusY);
 
     ctx.restore();
   }
@@ -864,10 +899,16 @@ class AudioPlayer {
   handleClick(x, y, canvas) {
     if (!this.isOpen) return false;
 
-    const playerWidth = Math.min(700, canvas.width - 100);
-    const playerHeight = Math.min(650, canvas.height - 100);
+    const padding = Math.min(100, canvas.width * 0.05, canvas.height * 0.05);
+    const playerWidth = Math.min(700, canvas.width - padding);
+    const playerHeight = Math.min(650, canvas.height - padding);
     const playerX = (canvas.width - playerWidth) / 2;
     const playerY = (canvas.height - playerHeight) / 2;
+
+    const scale = Math.min(1, playerWidth / 700, playerHeight / 650);
+    const isMobile = playerWidth < 400;
+    const headerHeight = Math.max(50, 70 * scale);
+    const controlsAreaHeight = Math.max(100, 150 * scale);
 
     // Close button
     const closeButtonX = playerX + playerWidth - 50;
@@ -884,8 +925,8 @@ class AudioPlayer {
       return true;
     }
 
-    // Filter buttons
-    const filterY = playerY + 80;
+    // Filter buttons with responsive positioning
+    const filterY = playerY + headerHeight + 10;
     const filterButtonWidth = 120;
     const filterButtonHeight = 30;
     const allButtonX = playerX + 20;
@@ -907,10 +948,10 @@ class AudioPlayer {
       }
     }
 
-    // Track list
-    const listStartY = playerY + 120;
-    const trackHeight = 55;
-    const listHeight = playerHeight - 280;
+    // Track list with responsive sizing and positioning
+    const listStartY = playerY + headerHeight + 50;
+    const trackHeight = isMobile ? Math.max(35, 40 * scale) : 40; // Reduced from 45-55 to 35-40
+    const listHeight = playerHeight - headerHeight - controlsAreaHeight - 60;
 
     // Check scrollbar click (use wider hitbox for easier grabbing)
     if (this.maxScroll > 0) {
@@ -948,11 +989,13 @@ class AudioPlayer {
 
         const isUnlocked = this.isTrackUnlocked(track.id);
 
-        // Check heart click (heart is 24px icon at trackX + trackW - 34)
-        const heartSize = 24;
-        const heartX = trackX + trackW - heartSize - 10;
+        // Check heart click with responsive sizing
+        const heartSize = Math.max(18, 24 * scale);
+        const heartPadding = Math.max(8, 10 * scale);
+        const heartX = trackX + trackW - heartSize - heartPadding;
+        const heartY = trackY + (trackH * 0.25);
         if (isUnlocked && x >= heartX && x <= heartX + heartSize &&
-            y >= trackY + 13 && y <= trackY + 13 + heartSize) {
+            y >= heartY && y <= heartY + heartSize) {
           this.toggleFavorite(track.id);
           this.game.audioManager.playSound("button-click", false, 0.5);
           return true;
@@ -970,12 +1013,13 @@ class AudioPlayer {
       currentY += trackHeight;
     }
 
-    // Control buttons
-    const controlsY = playerY + playerHeight - 100;
-    const buttonSize = 50;
-    const buttonSpacing = 15;
+    // Control buttons with responsive sizing and positioning
+    const buttonSize = Math.max(35, 50 * scale);
+    const buttonSpacing = Math.max(8, 15 * scale);
     const totalWidth = (buttonSize * 5) + (buttonSpacing * 4);
     let buttonX = (canvas.width - totalWidth) / 2;
+    const controlsAreaY = playerY + playerHeight - controlsAreaHeight;
+    const controlsY = controlsAreaY + (controlsAreaHeight * 0.5) - (buttonSize / 2);
 
     // Previous
     if (x >= buttonX && x <= buttonX + buttonSize &&
@@ -1047,12 +1091,17 @@ class AudioPlayer {
     // Handle scrollbar dragging with reticle
     if (this.isDraggingScrollbar && this.maxScroll > 0) {
       const canvas = this.game.canvas;
-      const playerWidth = Math.min(700, canvas.width - 100);
-      const playerHeight = Math.min(650, canvas.height - 100);
+      const padding = Math.min(100, canvas.width * 0.05, canvas.height * 0.05);
+      const playerWidth = Math.min(700, canvas.width - padding);
+      const playerHeight = Math.min(650, canvas.height - padding);
       const playerY = (canvas.height - playerHeight) / 2;
-      const listStartY = playerY + 120;
-      const trackHeight = 55;
-      const listHeight = playerHeight - 280;
+      const scale = Math.min(1, playerWidth / 700, playerHeight / 650);
+      const isMobile = playerWidth < 400;
+      const headerHeight = Math.max(50, 70 * scale);
+      const controlsAreaHeight = Math.max(100, 150 * scale);
+      const listStartY = playerY + headerHeight + 50;
+      const trackHeight = isMobile ? Math.max(35, 40 * scale) : 40; // Reduced from 45-55 to 35-40
+      const listHeight = playerHeight - headerHeight - controlsAreaHeight - 60;
 
       const visibleTracks = this.getVisibleTracks();
       const totalTracksHeight = visibleTracks.length * trackHeight;

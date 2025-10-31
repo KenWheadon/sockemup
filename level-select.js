@@ -2741,7 +2741,7 @@ class LevelSelect extends Screen {
   onMouseWheel(deltaY) {
     // Check audio player first
     if (this.audioPlayer.isOpen) {
-      this.audioPlayer.handleScroll(deltaY * 0.5);
+      this.audioPlayer.handleScroll(deltaY * 0.2); // Reduced from 0.5 to 0.2 for finer control
       return true;
     }
 
