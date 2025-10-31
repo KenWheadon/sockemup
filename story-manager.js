@@ -124,13 +124,14 @@ class StoryManager {
     this.buttons.skip.width = buttonWidth;
     this.buttons.skip.height = buttonHeight;
 
-    // Keyboard button - centered horizontally, positioned above the counter
-    const keyboardButtonWidth = this.game.getScaledValue(140);
+    // Keyboard button - centered horizontally, positioned above the counter, 1.5x size
+    const keyboardButtonWidth = this.game.getScaledValue(140) * 1.5;
+    const keyboardButtonHeight = buttonHeight * 1.5;
     this.buttons.keyboard.x =
       this.slideContainer.x + (this.slideContainer.width - keyboardButtonWidth) / 2;
-    this.buttons.keyboard.y = buttonY - this.game.getScaledValue(45);
+    this.buttons.keyboard.y = buttonY - this.game.getScaledValue(45) - this.game.getScaledValue(20);
     this.buttons.keyboard.width = keyboardButtonWidth;
-    this.buttons.keyboard.height = buttonHeight;
+    this.buttons.keyboard.height = keyboardButtonHeight;
 
     // Previous button - right side, first button
     this.buttons.previous.x =
@@ -209,8 +210,13 @@ class StoryManager {
     for (const key in this.buttons) {
       const button = this.buttons[key];
       const wasHovered = button.hovered;
-      button.hovered = this.isPointInRect(x, y, button);
-      if (button.hovered) anyButtonHovered = true;
+      // Keyboard button should not have hover state since it's not clickable
+      if (key === 'keyboard') {
+        button.hovered = false;
+      } else {
+        button.hovered = this.isPointInRect(x, y, button);
+        if (button.hovered) anyButtonHovered = true;
+      }
     }
 
     // Update cursor - hide when reticle is visible
@@ -713,13 +719,14 @@ class StoryManager {
     ctx.textAlign = "left";
     ctx.textBaseline = "top";
 
-    // Word wrap text with better line height
+    // Word wrap text with better line height and right padding
+    const textRightPadding = this.game.getScaledValue(20);
     this.wrapText(
       ctx,
       slide.text,
       rightPanelX,
       textStartY,
-      rightPanelWidth,
+      rightPanelWidth - textRightPadding,
       this.game.getScaledValue(28)
     );
 
@@ -758,6 +765,7 @@ class StoryManager {
     const isNext = text === "Next" || text === "Start";
     const isPrevious = text === "Previous";
     const isSkip = text === "Skip";
+    const isKeyboard = text === "K for Keyboard";
 
     if (isNext) {
       buttonImage = this.game.images["btn-next.png"];
@@ -765,6 +773,8 @@ class StoryManager {
       buttonImage = this.game.images["btn-back.png"];
     } else if (isSkip) {
       buttonImage = this.game.images["btn-skip.png"];
+    } else if (isKeyboard) {
+      buttonImage = this.game.images["btn-keyboard.png"];
     }
 
     // If we have a button image, use it
@@ -783,8 +793,8 @@ class StoryManager {
       const imgX = button.x + (button.width - imgWidth) / 2;
       const imgY = button.y + (button.height - imgHeight) / 2;
 
-      // Apply hover effect - scale and add glow
-      if (button.hovered) {
+      // Apply hover effect - scale and add glow (but NOT for keyboard button)
+      if (button.hovered && !isKeyboard) {
         ctx.shadowColor = "rgba(255, 215, 0, 0.8)";
         ctx.shadowBlur = this.game.getScaledValue(20);
 

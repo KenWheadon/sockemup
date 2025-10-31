@@ -1338,7 +1338,10 @@ class LevelSelect extends Screen {
 
   updateCursor() {
     // Hide cursor when reticle is visible
-    if (this.game.controllerManager && this.game.controllerManager.isReticleVisible()) {
+    if (
+      this.game.controllerManager &&
+      this.game.controllerManager.isReticleVisible()
+    ) {
       this.game.canvas.style.cursor = "none";
       return;
     }
@@ -2224,7 +2227,10 @@ class LevelSelect extends Screen {
     }
 
     // Handle scrollbar dragging for achievements drawer with reticle
-    if (this.achievementsDrawer.isDraggingScrollbar && this.achievementsDrawer.isOpen) {
+    if (
+      this.achievementsDrawer.isDraggingScrollbar &&
+      this.achievementsDrawer.isOpen
+    ) {
       const layout = this.layoutCache;
       const scrollbarHeight = layout.achievementsScrollbarHeight;
       const maxScroll = this.achievementsDrawer.maxScroll;
@@ -2236,10 +2242,17 @@ class LevelSelect extends Screen {
       const scrollbarTrackHeight = scrollbarAreaEnd - scrollbarAreaStart;
 
       // Clamp Y position within scrollbar area
-      const clampedY = Math.max(scrollbarAreaStart, Math.min(scrollbarAreaEnd, y));
+      const clampedY = Math.max(
+        scrollbarAreaStart,
+        Math.min(scrollbarAreaEnd, y)
+      );
 
       // Calculate scroll percentage
-      const scrollPercentage = (clampedY - scrollbarAreaStart) / (scrollbarTrackHeight - (scrollbarHeight * scrollbarTrackHeight / (scrollbarTrackHeight + maxScroll)));
+      const scrollPercentage =
+        (clampedY - scrollbarAreaStart) /
+        (scrollbarTrackHeight -
+          (scrollbarHeight * scrollbarTrackHeight) /
+            (scrollbarTrackHeight + maxScroll));
 
       // Update scroll offset
       this.achievementsDrawer.scrollOffset = Math.max(
@@ -3120,9 +3133,6 @@ class LevelSelect extends Screen {
     if (this.showingQuote && this.currentQuote) {
       this.renderMarthaQuote(ctx, layout);
     }
-
-    // Render keyboard controls hint below Martha
-    this.renderKeyboardHint(ctx, layout);
   }
 
   renderMarthaQuote(ctx, layout) {
@@ -3230,29 +3240,6 @@ class LevelSelect extends Screen {
     });
 
     ctx.restore();
-  }
-
-  renderKeyboardHint(ctx, layout) {
-    // Render keyboard controls hint below Martha panel
-    const hintY = layout.marthaY + layout.marthaHeight / 2 + this.game.getScaledValue(100);
-
-    const keyboardText = this.game.keyboardController.isKeyboardEnabled()
-      ? "Keyboard mode active"
-      : "Press any key for keyboard controls";
-
-    this.renderText(
-      ctx,
-      keyboardText,
-      layout.marthaX,
-      hintY,
-      {
-        fontSize: layout.smallFontSize * 0.9,
-        color: this.game.keyboardController.isKeyboardEnabled()
-          ? "rgba(0, 255, 0, 0.8)"
-          : "rgba(255, 255, 255, 0.6)",
-        align: "center"
-      }
-    );
   }
 
   renderTopBar(ctx) {
