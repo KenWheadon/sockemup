@@ -679,6 +679,10 @@ const GameConfig = {
       "icon-laundrypile.png",
       "icon-basket.png",
 
+      "icon-alarmclock.png",
+      "icon-sundial.png",
+      "icon-stopwatch.png",
+
       "btn-next.png",
       "btn-back.png",
       "btn-pause.png",
@@ -1391,6 +1395,30 @@ const GameConfig = {
       icon: "icon-gauntlet.png",
       unlocked: false,
       threshold: 10,
+    },
+    SESSION_5MIN: {
+      id: "session_5min",
+      name: "Just Getting Started",
+      description: "Play for 5 minutes in a single session",
+      icon: "icon-stopwatch.png",
+      unlocked: false,
+      threshold: 5,
+    },
+    SESSION_15MIN: {
+      id: "session_15min",
+      name: "Dedicated Player",
+      description: "Play for 15 minutes in a single session",
+      icon: "icon-alarmclock.png",
+      unlocked: false,
+      threshold: 15,
+    },
+    SESSION_1HOUR: {
+      id: "session_1hour",
+      name: "Marathon Runner",
+      description: "Play for 1 hour in a single session",
+      icon: "icon-sundial.png",
+      unlocked: false,
+      threshold: 60,
     },
   },
 

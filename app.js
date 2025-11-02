@@ -49,6 +49,15 @@ class SockGame {
     this.lifetimeMismatches = 0; // Total mismatches lifetime (for Mismatch Queen)
     this.currentMatchTypeStreak = []; // Array tracking recent match types for "One at a time"
 
+    // Session duration tracking (for session time achievements)
+    this.sessionStartTime = Date.now(); // Timestamp when game session started
+    this.sessionDuration = 0; // Total time in current session (milliseconds)
+    this.sessionAchievementsUnlocked = {
+      fiveMinutes: false,
+      fifteenMinutes: false,
+      oneHour: false,
+    }; // Track which session achievements were unlocked this session
+
     this.images = {};
     this.loadedImages = 0;
     this.totalImages = 0;
@@ -1190,6 +1199,42 @@ class SockGame {
   }
 
   update(deltaTime) {
+    // Update session duration tracking
+    this.sessionDuration = Date.now() - this.sessionStartTime;
+
+    // Check for session duration achievements
+    const minutes = this.sessionDuration / 1000 / 60;
+
+    // 5 minute achievement
+    if (
+      minutes >= 5 &&
+      !this.sessionAchievementsUnlocked.fiveMinutes &&
+      this.achievements["session_5min"]
+    ) {
+      this.unlockAchievement("session_5min");
+      this.sessionAchievementsUnlocked.fiveMinutes = true;
+    }
+
+    // 15 minute achievement
+    if (
+      minutes >= 15 &&
+      !this.sessionAchievementsUnlocked.fifteenMinutes &&
+      this.achievements["session_15min"]
+    ) {
+      this.unlockAchievement("session_15min");
+      this.sessionAchievementsUnlocked.fifteenMinutes = true;
+    }
+
+    // 1 hour achievement
+    if (
+      minutes >= 60 &&
+      !this.sessionAchievementsUnlocked.oneHour &&
+      this.achievements["session_1hour"]
+    ) {
+      this.unlockAchievement("session_1hour");
+      this.sessionAchievementsUnlocked.oneHour = true;
+    }
+
     // Use the new Screen base class update method
     if (this.gameState === "menu") {
       this.levelSelect.update(deltaTime);
