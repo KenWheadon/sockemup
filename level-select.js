@@ -10,16 +10,6 @@ class LevelSelect extends Screen {
       bottom: 0,
     };
 
-    this.DROP_ZONE_CONFIG = {
-      snapDistance: 40,
-      size: 60,
-      offsetX: 1200,
-      offsetY1: 200,
-      offsetY2: 300,
-      outerBorderWidth: 10,
-      glowDuration: 20,
-    };
-
     this.MARTHA_CONFIG = {
       offsetX: 150,
       offsetY: 250,
@@ -41,18 +31,6 @@ class LevelSelect extends Screen {
     this.hoveredLevel = -1;
     this.selectedLevel = -1;
 
-    // Easter egg state
-    this.easterEggActive = false;
-    this.menuSocks = [];
-    this.isDragging = false;
-    this.dragSock = null;
-    this.dragOffset = { x: 0, y: 0 };
-    this.logoClickCount = 0;
-    this.currentSockType = 1;
-    this.dropZoneHover = null;
-
-    // Hover state for menu socks
-    this.hoveredMenuSock = null;
 
     // Logo click effect
     this.logoPressed = false;
@@ -104,18 +82,6 @@ class LevelSelect extends Screen {
     this.quoteDisplayTime = 0;
     this.showingQuote = true;
 
-    // Easter egg drop zones
-    this.easterDropZones = [];
-
-    // Sock ball animations
-    this.sockBallAnimations = [];
-
-    // Point gain animations
-    this.pointGainAnimations = [];
-
-    // Mismatch particle effects
-    this.mismatchParticles = [];
-
     // Credits integration
     this.creditsOpen = false;
     this.creditsModal = null;
@@ -133,20 +99,6 @@ class LevelSelect extends Screen {
     this.PRESS_DURATION = 150; // Logo press duration in milliseconds
     this.PRESS_MIN_SCALE = 0.95; // Minimum scale during press
     this.PRESS_SCALE_RANGE = 0.05; // Range of scale change (max - min)
-
-    // Physics for menu socks
-    this.menuPhysics = {
-      friction: 0.992,
-      minVelocity: 0.05,
-      bounceRestitution: 0.4,
-      rotationFriction: 0.98,
-      bounds: {
-        left: -500,
-        right: 2000,
-        top: -500,
-        bottom: 2000,
-      },
-    };
 
     // Level button configuration
     this.levelConfig = {
@@ -237,6 +189,8 @@ class LevelSelect extends Screen {
     this.storyViewer = new StoryViewer(this.game, this.uiHelpers);
     this.difficultyModal = new DifficultyModal(this.game, this.uiHelpers);
     this.difficultySelector = new DifficultySelector(this.game, this.uiHelpers);
+    this.marthaCharacter = new MarthaCharacter(this.game);
+    this.easterEggManager = new EasterEggManager(this.game, this.marthaCharacter);
   }
 
   calculateMarthaImageSize() {
@@ -402,11 +356,11 @@ class LevelSelect extends Screen {
       marthaY: barHeight + this.game.getScaledValue(this.MARTHA_CONFIG.offsetY),
       marthaWidth: this.marthaImageSize.width,
       marthaHeight: this.marthaImageSize.height,
-      dropZoneSize: this.game.getScaledValue(this.DROP_ZONE_CONFIG.size),
-      dropZone1X: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetX),
-      dropZone1Y: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetY1),
-      dropZone2X: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetX),
-      dropZone2Y: this.game.getScaledValue(this.DROP_ZONE_CONFIG.offsetY2),
+      dropZoneSize: this.game.getScaledValue(this.easterEggManager.DROP_ZONE_CONFIG.size),
+      dropZone1X: this.game.getScaledValue(this.easterEggManager.DROP_ZONE_CONFIG.offsetX),
+      dropZone1Y: this.game.getScaledValue(this.easterEggManager.DROP_ZONE_CONFIG.offsetY1),
+      dropZone2X: this.game.getScaledValue(this.easterEggManager.DROP_ZONE_CONFIG.offsetX),
+      dropZone2Y: this.game.getScaledValue(this.easterEggManager.DROP_ZONE_CONFIG.offsetY2),
 
       // Top bar layout
       barY: barY,
@@ -482,7 +436,7 @@ class LevelSelect extends Screen {
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
 
-    this.menuPhysics.bounds = {
+    this.easterEggManager.menuPhysics.bounds = {
       left: -500,
       right: canvasWidth + 500,
       top: -500,
@@ -495,13 +449,13 @@ class LevelSelect extends Screen {
   setupEasterDropZones() {
     // Only initialize drop zones if they don't exist yet
     // This preserves their state and positions when returning to the level select screen
-    if (this.easterDropZones.length === 0) {
+    if (this.easterEggManager.easterDropZones.length === 0) {
       this.clearLayoutCache();
       this.calculateLayout();
 
       const layout = this.layoutCache;
 
-      this.easterDropZones = [
+      this.easterEggManager.easterDropZones = [
         {
           x: layout.dropZone1X,
           y: layout.dropZone1Y,
@@ -571,7 +525,7 @@ class LevelSelect extends Screen {
     const canvasWidth = this.game.getCanvasWidth();
     const canvasHeight = this.game.getCanvasHeight();
 
-    this.menuPhysics.bounds = {
+    this.easterEggManager.menuPhysics.bounds = {
       left: -500,
       right: canvasWidth + 500,
       top: -500,
@@ -641,18 +595,7 @@ class LevelSelect extends Screen {
     this.creditsModal = null;
 
     // Clear bonus/easter egg socks
-    this.menuSocks = [];
-    this.easterEggActive = false;
-    this.isDragging = false;
-    this.dragSock = null;
-
-    // Reset drop zones - clear any socks in the drop zones
-    this.easterDropZones.forEach((zone) => {
-      zone.sock = null;
-      zone.glowEffect = 0;
-      zone.hoverEffect = 0;
-      zone.snapEffect = 0;
-    });
+    this.easterEggManager.cleanup();
   }
 
   setupCreditsModal() {
@@ -940,7 +883,7 @@ class LevelSelect extends Screen {
       deltaTime
     );
 
-    if (this.easterEggActive) {
+    if (this.easterEggManager.easterEggActive) {
       this.updateMenuSocks(deltaTime);
     }
 
@@ -992,22 +935,6 @@ class LevelSelect extends Screen {
       this.cycleToNextQuote();
     }
 
-    this.easterDropZones.forEach((zone) => {
-      if (zone.glowEffect > 0) zone.glowEffect--;
-      if (zone.hoverEffect > 0) zone.hoverEffect--;
-      if (zone.snapEffect > 0) zone.snapEffect--;
-    });
-
-    this.sockBallAnimations = this.sockBallAnimations.filter((animation) => {
-      animation.progress += deltaTime / 1000;
-      return animation.progress < 1;
-    });
-
-    this.pointGainAnimations = this.pointGainAnimations.filter((animation) => {
-      animation.progress += deltaTime / 2000;
-      return animation.progress < 1;
-    });
-
     const drawerTarget = this.achievementsDrawer.isOpen ? 1 : 0;
     this.achievementsDrawer.animationProgress = this.smoothToward(
       this.achievementsDrawer.animationProgress,
@@ -1019,99 +946,6 @@ class LevelSelect extends Screen {
     this.updateMismatchParticles(deltaTime);
   }
 
-  updateMismatchParticles(deltaTime) {
-    if (!this.mismatchParticles) return;
-
-    const timeMultiplier = deltaTime / this.TIME_MULTIPLIER_BASE;
-
-    this.mismatchParticles.forEach((particle, index) => {
-      particle.x += particle.vx * timeMultiplier;
-      particle.y += particle.vy * timeMultiplier;
-      particle.vx *= Math.pow(
-        this.menuPhysics.rotationFriction,
-        timeMultiplier
-      );
-      particle.vy *= Math.pow(
-        this.menuPhysics.rotationFriction,
-        timeMultiplier
-      );
-      particle.life -= timeMultiplier;
-
-      if (particle.life <= 0) {
-        this.mismatchParticles.splice(index, 1);
-      }
-    });
-  }
-
-  updateMenuSocks(deltaTime) {
-    const timeMultiplier = deltaTime / this.TIME_MULTIPLIER_BASE;
-
-    this.menuSocks = this.menuSocks.filter((sock) => {
-      if (sock === this.dragSock || this.isSockInDropZone(sock)) return true;
-
-      sock.vx *= Math.pow(this.menuPhysics.friction, timeMultiplier);
-      sock.vy *= Math.pow(this.menuPhysics.friction, timeMultiplier);
-
-      if (sock.rotationSpeed) {
-        sock.rotationSpeed *= Math.pow(
-          this.menuPhysics.rotationFriction,
-          timeMultiplier
-        );
-      }
-
-      sock.x += sock.vx * timeMultiplier;
-      sock.y += sock.vy * timeMultiplier;
-      sock.rotation += sock.rotationSpeed * timeMultiplier;
-
-      if (this.isSockOutsideBounds(sock)) {
-        this.clearSockFromDropZones(sock);
-
-        if (sock === this.dragSock) {
-          this.isDragging = false;
-          this.dragSock = null;
-        }
-        return false;
-      }
-
-      if (
-        Math.abs(sock.vx) < this.menuPhysics.minVelocity &&
-        Math.abs(sock.vy) < this.menuPhysics.minVelocity
-      ) {
-        sock.vx = 0;
-        sock.vy = 0;
-        if (
-          sock.rotationSpeed &&
-          Math.abs(sock.rotationSpeed) < this.ROTATION_VELOCITY_THRESHOLD
-        ) {
-          sock.rotationSpeed = 0;
-        }
-      }
-
-      return true;
-    });
-  }
-
-  clearSockFromDropZones(sock) {
-    this.easterDropZones.forEach((zone) => {
-      if (zone.sock === sock) {
-        zone.sock = null;
-      }
-    });
-  }
-
-  isSockInDropZone(sock) {
-    return this.easterDropZones.some((zone) => zone.sock === sock);
-  }
-
-  isSockOutsideBounds(sock) {
-    const isOutside =
-      sock.x < this.menuPhysics.bounds.left ||
-      sock.x > this.menuPhysics.bounds.right ||
-      sock.y < this.menuPhysics.bounds.top ||
-      sock.y > this.menuPhysics.bounds.bottom;
-
-    return isOutside;
-  }
 
   onMouseMove(x, y) {
     this.mouseVelocityX = x - this.lastMouseX;
@@ -1294,45 +1128,21 @@ class LevelSelect extends Screen {
       this.achievementsDrawer.closeButton.hovered = false;
     }
 
-    // Don't update drag position if story or menus are open
-    if (
-      this.isDragging &&
-      this.dragSock &&
-      !this.game.storyManager.showingStory &&
-      !this.storyViewer.isOpen
-    ) {
-      this.dragSock.x = x - this.dragOffset.x;
-      this.dragSock.y = y - this.dragOffset.y;
+    // Delegate easter egg dragging to EasterEggManager
+    if (this.easterEggManager && !this.game.storyManager.showingStory && !this.storyViewer.isOpen) {
+      this.easterEggManager.onMouseMove(x, y);
     }
-
-    // Update hovered menu sock (only when not dragging)
-    if (!this.isDragging && this.easterEggActive) {
-      this.hoveredMenuSock = this.getSockAtPosition(x, y);
-    } else if (this.isDragging) {
-      this.hoveredMenuSock = null;
-    }
-
-    this.updateDropZoneHover(x, y);
 
     // Update cursor based on what's being hovered
     this.updateCursor();
   }
 
   updateDropZoneHover(x, y) {
-    this.dropZoneHover = null;
-
-    if (this.isDragging && this.dragSock) {
-      const snapDistance = this.game.getScaledValue(
-        this.DROP_ZONE_CONFIG.snapDistance
-      );
-
-      this.easterDropZones.forEach((zone) => {
-        const distance = this.getDropZoneDistance(this.dragSock, zone);
-        if (distance < snapDistance && zone.sock === null) {
-          this.dropZoneHover = zone.id;
-          zone.hoverEffect = Math.max(zone.hoverEffect, 10);
-        }
-      });
+    // Drop zone hover is now managed by EasterEggManager
+    if (this.easterEggManager) {
+      this.dropZoneHover = this.easterEggManager.dropZoneHover;
+    } else {
+      this.dropZoneHover = null;
     }
   }
 
@@ -1380,13 +1190,18 @@ class LevelSelect extends Screen {
       this.lastMouseY
     );
 
-    // Check if hovering over a sock (when easter egg is active)
-    const isSockHovered =
-      this.easterEggActive &&
-      this.getSockAtPosition(this.lastMouseX, this.lastMouseY) !== null;
+    // Check if hovering over a sock (when easter egg is active) - now delegated to EasterEggManager
+    let isSockHovered = false;
+    let isDraggingEgg = false;
+    if (this.easterEggManager) {
+      isDraggingEgg = this.easterEggManager.isDragging;
+      isSockHovered =
+        this.easterEggManager.easterEggActive &&
+        this.easterEggManager.getSockAtPosition(this.lastMouseX, this.lastMouseY) !== null;
+    }
 
     // Set cursor based on what's being hovered/interacted with
-    if (this.isDragging) {
+    if (isDraggingEgg) {
       this.game.canvas.style.cursor = "grabbing";
     } else if (isSockHovered) {
       this.game.canvas.style.cursor = "grab";
@@ -1403,6 +1218,11 @@ class LevelSelect extends Screen {
   }
 
   onMouseDown(x, y) {
+    // Delegate easter egg sock dragging to EasterEggManager
+    if (this.easterEggManager && this.easterEggManager.onMouseDown(x, y)) {
+      return true;
+    }
+
     if (this.achievementsDrawer.isOpen) {
       const layout = this.layoutCache;
       const drawerWidth = layout.achievementsDrawerWidth;
@@ -1451,89 +1271,21 @@ class LevelSelect extends Screen {
       return false;
     }
 
-    if (this.easterEggActive) {
-      const sock = this.getSockAtPosition(x, y);
-      if (sock) {
-        this.isDragging = true;
-        this.dragSock = sock;
-        this.dragOffset.x = x - sock.x;
-        this.dragOffset.y = y - sock.y;
-        sock.vx = 0;
-        sock.vy = 0;
-
-        this.lastMouseX = x;
-        this.lastMouseY = y;
-        this.mouseVelocityX = 0;
-        this.mouseVelocityY = 0;
-
-        // Remove sock from drop zone if it was in one
-        this.easterDropZones.forEach((zone) => {
-          if (zone.sock === sock) {
-            zone.sock = null;
-          }
-        });
-
-        return true;
-      }
-    }
     return false;
   }
 
   onMouseUp(x, y) {
+    // Delegate easter egg sock drop/snap handling to EasterEggManager
+    if (this.easterEggManager && this.easterEggManager.onMouseUp(x, y)) {
+      return true;
+    }
+
     if (this.achievementsDrawer.isDraggingScrollbar) {
       this.achievementsDrawer.isDraggingScrollbar = false;
       return;
     }
 
-    if (this.isDragging && this.dragSock) {
-      const sock = this.dragSock;
-      let snapped = false;
-
-      this.easterDropZones.forEach((zone) => {
-        const distance = this.getDropZoneDistance(sock, zone);
-        const snapDistance = this.game.getScaledValue(
-          this.DROP_ZONE_CONFIG.snapDistance
-        );
-
-        if (distance < snapDistance && zone.sock === null) {
-          zone.sock = sock;
-          this.snapSockToDropZone(sock, zone);
-          snapped = true;
-          this.createSnapEffect(zone);
-        }
-      });
-
-      if (!snapped) {
-        const momentumMultiplier = 0.8; // Adjust for feel
-
-        const maxVelocity = 20;
-        const clampedVx = Math.max(
-          -maxVelocity,
-          Math.min(maxVelocity, this.mouseVelocityX * momentumMultiplier)
-        );
-        const clampedVy = Math.max(
-          -maxVelocity,
-          Math.min(maxVelocity, this.mouseVelocityY * momentumMultiplier)
-        );
-
-        sock.vx = clampedVx;
-        sock.vy = clampedVy;
-
-        const velocityMagnitude = Math.sqrt(
-          sock.vx * sock.vx + sock.vy * sock.vy
-        );
-        sock.rotationSpeed =
-          (velocityMagnitude / 100) * (Math.random() > 0.5 ? 1 : -1);
-      }
-
-      this.isDragging = false;
-      this.dragSock = null;
-      this.dropZoneHover = null;
-      this.checkForEasterEggMatches();
-
-      // Prevent onClick from triggering after sock drag
-      return true;
-    }
+    return false;
   }
 
   handleKeyDown(e) {
@@ -1968,10 +1720,10 @@ class LevelSelect extends Screen {
       return true;
     }
 
-    if (this.isLogoClicked(x, y)) {
+    if (this.easterEggManager.isLogoClicked(x, y)) {
       this.logoPressed = true;
       this.logoPressTimer = 0;
-      this.activateEasterEgg();
+      this.easterEggManager.activateEasterEgg();
       return true;
     }
 
@@ -2514,221 +2266,6 @@ class LevelSelect extends Screen {
     );
   }
 
-  getDropZoneDistance(sock, dropZone) {
-    return Math.sqrt(
-      Math.pow(sock.x - dropZone.x, 2) + Math.pow(sock.y - dropZone.y, 2)
-    );
-  }
-
-  snapSockToDropZone(sock, dropZone) {
-    sock.x = dropZone.x;
-    sock.y = dropZone.y;
-    sock.vx = 0;
-    sock.vy = 0;
-    sock.rotationSpeed = 0;
-  }
-
-  createSnapEffect(zone) {
-    zone.glowEffect = this.DROP_ZONE_CONFIG.glowDuration;
-    zone.snapEffect = 15;
-  }
-
-  removeMatchedSocks(sock1, sock2) {
-    this.menuSocks = this.menuSocks.filter((s) => s !== sock1 && s !== sock2);
-
-    if (this.dragSock === sock1 || this.dragSock === sock2) {
-      this.isDragging = false;
-      this.dragSock = null;
-    }
-
-    this.clearSockFromDropZones(sock1);
-    this.clearSockFromDropZones(sock2);
-  }
-
-  checkForEasterEggMatches() {
-    if (!this.easterDropZones || this.easterDropZones.length < 2) return;
-
-    if (this.easterDropZones[0].sock && this.easterDropZones[1].sock) {
-      const sock1 = this.easterDropZones[0].sock;
-      const sock2 = this.easterDropZones[1].sock;
-
-      if (
-        !sock1 ||
-        !sock2 ||
-        sock1.type === undefined ||
-        sock2.type === undefined
-      ) {
-        this.easterDropZones[0].sock = null;
-        this.easterDropZones[1].sock = null;
-        return;
-      }
-
-      if (sock1.type === sock2.type) {
-        this.game.audioManager.playSound("easter-egg-match", false, 0.8);
-        this.easterDropZones[0].sock = null;
-        this.easterDropZones[1].sock = null;
-
-        this.createSockBallAnimation(sock1, sock2);
-        this.awardPointsForMatch(sock1, sock2);
-
-        this.removeMatchedSocks(sock1, sock2);
-
-        // Check if we should deactivate easter egg (no socks left)
-        this.checkEasterEggDeactivation();
-      } else {
-        this.game.audioManager.playSound("easter-egg-mismatch", false, 0.6);
-        this.easterDropZones[0].sock = null;
-        this.easterDropZones[1].sock = null;
-        this.handleEasterEggMismatch(sock1, sock2);
-      }
-    }
-  }
-
-  checkEasterEggDeactivation() {
-    // Deactivate easter egg if there are no more socks in the menu
-    if (this.menuSocks.length === 0 && this.easterEggActive) {
-      this.easterEggActive = false;
-    }
-  }
-
-  cancelActiveDrag() {
-    // Cancel any active sock dragging
-    if (this.isDragging && this.dragSock) {
-      this.isDragging = false;
-      this.dragSock = null;
-      this.dropZoneHover = null;
-    }
-  }
-
-  handleEasterEggMismatch(sock1, sock2) {
-    if (
-      !sock1 ||
-      !sock2 ||
-      sock1.type === undefined ||
-      sock2.type === undefined
-    ) {
-      return;
-    }
-
-    this.game.audioManager.playSound("particle-burst", false, 0.4);
-
-    this.createEasterEggMismatchEffect(sock1, sock2);
-
-    const dx = sock2.x - sock1.x;
-    const dy = sock2.y - sock1.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    const normalizedDx = distance > 0 ? dx / distance : 1;
-    const normalizedDy = distance > 0 ? dy / distance : 0;
-
-    const repulsionForce = 20;
-
-    sock1.vx = -normalizedDx * repulsionForce + (Math.random() - 0.5) * 8;
-    sock1.vy = -normalizedDy * repulsionForce + (Math.random() - 0.5) * 8;
-
-    sock2.vx = normalizedDx * repulsionForce + (Math.random() - 0.5) * 8;
-    sock2.vy = normalizedDy * repulsionForce + (Math.random() - 0.5) * 8;
-
-    sock1.rotationSpeed = (Math.random() - 0.5) * 0.3;
-    sock2.rotationSpeed = (Math.random() - 0.5) * 0.3;
-
-    sock1.glowEffect = 30;
-    sock2.glowEffect = 30;
-
-    this.easterDropZones[0].glowEffect = 30;
-    this.easterDropZones[1].glowEffect = 30;
-  }
-
-  createEasterEggMismatchEffect(sock1, sock2) {
-    if (!sock1 || !sock2 || sock1.x === undefined || sock2.x === undefined) {
-      return;
-    }
-
-    const centerX = (sock1.x + sock2.x) / 2;
-    const centerY = (sock1.y + sock2.y) / 2;
-    const mismatchColors = [
-      "#FF4444",
-      "#FF6B6B",
-      "#FF8E53",
-      "#FFB347",
-      "#FF69B4",
-    ];
-
-    for (let i = 0; i < 20; i++) {
-      this.createMismatchParticle(
-        centerX + (Math.random() - 0.5) * this.game.getScaledValue(100),
-        centerY + (Math.random() - 0.5) * this.game.getScaledValue(100),
-        (Math.random() - 0.5) * 12,
-        (Math.random() - 0.5) * 12,
-        mismatchColors[Math.floor(Math.random() * mismatchColors.length)],
-        this.game.getScaledValue(3 + Math.random() * 3),
-        60
-      );
-    }
-
-    for (let i = 0; i < 8; i++) {
-      this.createMismatchParticle(
-        centerX + (Math.random() - 0.5) * this.game.getScaledValue(60),
-        centerY + (Math.random() - 0.5) * this.game.getScaledValue(60),
-        (Math.random() - 0.5) * 8,
-        (Math.random() - 0.5) * 8,
-        "#FF0000",
-        this.game.getScaledValue(4 + Math.random() * 2),
-        45,
-        "cross"
-      );
-    }
-  }
-
-  createMismatchParticle(x, y, vx, vy, color, size, life, shape = "circle") {
-    if (!this.mismatchParticles) {
-      this.mismatchParticles = [];
-    }
-
-    this.mismatchParticles.push({
-      x: x,
-      y: y,
-      vx: vx,
-      vy: vy,
-      life: life,
-      maxLife: life,
-      color: color,
-      size: size,
-      shape: shape,
-    });
-  }
-
-  awardPointsForMatch(sock1, sock2) {
-    this.game.playerPoints += 1;
-    this.game.sockBalls++; // Increment the sockball currency counter
-    this.game.totalSockMatches++; // Track lifetime total matches (displays on top bar)
-
-    // Track easter egg sockballs for Sockball Wizard achievement
-    this.game.easterEggSockballsCreated++;
-    if (
-      this.game.easterEggSockballsCreated >=
-      GameConfig.ACHIEVEMENTS.SOCKBALL_WIZARD.threshold
-    ) {
-      this.game.unlockAchievement("sockball_wizard");
-    }
-
-    // Track total sockballs earned (for Martha's Millionaire achievement)
-    this.game.totalSockballsEarned++;
-
-    this.game.saveGameData();
-
-    this.game.audioManager.playSound("points-gained", false, 0.7);
-
-    const centerX = (sock1.x + sock2.x) / 2;
-    const centerY = (sock1.y + sock2.y) / 2;
-
-    this.pointGainAnimations.push({
-      x: centerX,
-      y: centerY,
-      progress: 0,
-      text: "+1",
-    });
-  }
 
   toggleAchievementsDrawer() {
     this.achievementsDrawer.isOpen = !this.achievementsDrawer.isOpen;
@@ -2764,87 +2301,6 @@ class LevelSelect extends Screen {
     return false;
   }
 
-  createSockBallAnimation(sock1, sock2) {
-    const layout = this.layoutCache;
-    const startX = (sock1.x + sock2.x) / 2;
-    const startY = (sock1.y + sock2.y) / 2;
-
-    const animation = {
-      startX: startX,
-      startY: startY,
-      endX: layout.marthaX,
-      endY: layout.marthaY,
-      progress: 0,
-      type: sock1.type,
-    };
-
-    this.sockBallAnimations.push(animation);
-
-    setTimeout(() => {
-      this.game.audioManager.playSound("rent-collected", false, 0.5);
-      this.marthaWiggling = true;
-      this.marthaWiggleTimer = 0;
-    }, 1000);
-  }
-
-  isLogoClicked(x, y) {
-    const layout = this.layoutCache;
-    return (
-      x >= layout.logoX - layout.logoWidth / 2 &&
-      x <= layout.logoX + layout.logoWidth / 2 &&
-      y >= layout.logoY - layout.logoHeight / 2 &&
-      y <= layout.logoY + layout.logoHeight / 2
-    );
-  }
-
-  activateEasterEgg() {
-    this.logoClickCount++;
-    this.game.logoClickCount++; // Track in game for achievement persistence
-
-    // Achievement: LOGO_CLICKER
-    if (
-      this.game.logoClickCount >= GameConfig.ACHIEVEMENTS.LOGO_CLICKER.threshold
-    ) {
-      this.game.unlockAchievement("logo_clicker");
-    }
-
-    if (!this.easterEggActive) {
-      this.easterEggActive = true;
-
-      // Achievement: EASTER_EGG_HUNTER (unlock the easter egg)
-      this.game.unlockAchievement("easter_egg_hunter");
-    }
-
-    this.spawnSingleSock();
-  }
-
-  spawnSingleSock() {
-    const canvasWidth = this.game.getCanvasWidth();
-    const canvasHeight = this.game.getCanvasHeight();
-
-    const sock = {
-      type: this.currentSockType,
-      x:
-        canvasWidth / 2 + (Math.random() - 0.5) * this.game.getScaledValue(100),
-      y:
-        canvasHeight / 2 +
-        (Math.random() - 0.5) * this.game.getScaledValue(100),
-      size: this.game.getScaledValue((Math.random() + 0.5) * 60),
-      vx: (Math.random() - 0.5) * 15,
-      vy: (Math.random() - 0.5) * 15,
-      rotation: Math.random() * Math.PI * 2,
-      rotationSpeed: (Math.random() - 0.5) * 0.2,
-      glowEffect: 30,
-      spawnTime: Date.now(),
-    };
-
-    this.menuSocks.push(sock);
-
-    this.currentSockType++;
-    if (this.currentSockType > GameConfig.IMAGES.SOCKS.length) {
-      this.currentSockType = 1;
-    }
-  }
 
   getLevelAtPosition(x, y) {
     const layout = this.layoutCache;
@@ -2871,20 +2327,6 @@ class LevelSelect extends Screen {
     return -1;
   }
 
-  getSockAtPosition(x, y) {
-    for (let i = this.menuSocks.length - 1; i >= 0; i--) {
-      const sock = this.menuSocks[i];
-      const distance = Math.sqrt(
-        Math.pow(x - sock.x, 2) + Math.pow(y - sock.y, 2)
-      );
-
-      if (distance < sock.size / 2) {
-        return sock;
-      }
-    }
-
-    return null;
-  }
 
   calculateYouWinImageSize() {
     const spritesheet = GameConfig.YOU_WIN_SPRITESHEET;
@@ -2975,9 +2417,7 @@ class LevelSelect extends Screen {
     }
 
     // Render easter egg socks BEFORE the top bar so they appear below it
-    if (this.easterEggActive) {
-      this.renderMenuSocks(ctx);
-    }
+    this.easterEggManager.renderMenuSocks(ctx);
 
     this.renderTopBar(ctx);
 
@@ -2994,14 +2434,12 @@ class LevelSelect extends Screen {
     // Render achievements drawer after difficulty modal so it appears on top
     this.renderAchievementsDrawer(ctx);
 
-    if (this.easterEggActive) {
-      this.renderEasterDropZonePairBox(ctx);
-      this.renderEasterDropZones(ctx);
-    }
-
-    this.renderSockBallAnimations(ctx);
-    this.renderPointGainAnimations(ctx);
-    this.renderMismatchParticles(ctx);
+    // Render all other easter egg elements (drop zones, animations, particles)
+    this.easterEggManager.renderEasterDropZonePairBox(ctx);
+    this.easterEggManager.renderEasterDropZones(ctx);
+    this.easterEggManager.renderSockBallAnimations(ctx);
+    this.easterEggManager.renderPointGainAnimations(ctx);
+    this.easterEggManager.renderMismatchParticles(ctx);
 
     // Render story viewer modal
     this.storyViewer.renderModal(ctx, this.layoutCache);
@@ -3049,7 +2487,7 @@ class LevelSelect extends Screen {
       ctx.translate(-layout.logoX, -layout.logoY);
     }
 
-    if (this.easterEggActive) {
+    if (this.easterEggManager.easterEggActive) {
       const glowIntensity = this.getGlowIntensity(10, 20);
       ctx.shadowColor = "#FFD700";
       ctx.shadowBlur = glowIntensity;
@@ -3081,7 +2519,7 @@ class LevelSelect extends Screen {
   renderInstructions(ctx) {
     const layout = this.layoutCache;
 
-    if (this.easterEggActive && this.menuSocks.length > 0) {
+    if (this.easterEggManager.easterEggActive && this.easterEggManager.menuSocks.length > 0) {
       this.renderText(
         ctx,
         "Drag socks to the drop zones for bonus points!",
@@ -4775,183 +4213,6 @@ class LevelSelect extends Screen {
     ctx.restore();
   }
 
-  renderEasterDropZonePairBox(ctx) {
-    if (this.easterDropZones.length < 2) return;
-
-    const layout = this.layoutCache;
-    const lineWidth = this.game.getScaledValue(3);
-    const margin = this.game.getScaledValue(30);
-    const cornerRadius = this.game.getScaledValue(10);
-
-    // Calculate bounding box around both drop zones
-    const minX =
-      Math.min(this.easterDropZones[0].x, this.easterDropZones[1].x) - margin;
-    const maxX =
-      Math.max(this.easterDropZones[0].x, this.easterDropZones[1].x) + margin;
-    const minY =
-      Math.min(this.easterDropZones[0].y, this.easterDropZones[1].y) - margin;
-    const maxY =
-      Math.max(this.easterDropZones[0].y, this.easterDropZones[1].y) + margin;
-
-    const width = maxX - minX;
-    const height = maxY - minY;
-    const centerX = (minX + maxX) / 2;
-
-    ctx.save();
-
-    // Draw rounded rectangle background with subtle gradient
-    const gradient = ctx.createLinearGradient(minX, minY, minX, maxY);
-    gradient.addColorStop(0, "rgba(255, 215, 0, 0.1)");
-    gradient.addColorStop(1, "rgba(0, 0, 0, 0.05)");
-
-    ctx.fillStyle = gradient;
-    this.roundRect(ctx, minX, minY, width, height, cornerRadius);
-    ctx.fill();
-
-    // Draw solid border
-    ctx.strokeStyle = "rgba(255, 215, 0, 0.5)";
-    ctx.lineWidth = lineWidth;
-    this.roundRect(ctx, minX, minY, width, height, cornerRadius);
-    ctx.stroke();
-
-    // Draw "Drop Here" text above the box
-    const textY = minY - this.game.getScaledValue(15);
-    this.renderText(ctx, "Drop Here", centerX, textY, {
-      fontSize: layout.bodyFontSize,
-      color: "rgba(255, 215, 0, 0.9)",
-      align: "center",
-      baseline: "bottom",
-      weight: "bold",
-    });
-
-    ctx.restore();
-  }
-
-  renderEasterDropZones(ctx) {
-    const layout = this.layoutCache;
-    const cornerRadius = this.game.getScaledValue(10); // Match match-screen corner radius
-
-    this.easterDropZones.forEach((zone) => {
-      ctx.save();
-
-      let glowIntensity = 0;
-      let isHovered = this.dropZoneHover === zone.id;
-      let isOccupied = zone.sock !== null;
-
-      if (zone.glowEffect > 0) {
-        glowIntensity = zone.glowEffect / this.DROP_ZONE_CONFIG.glowDuration;
-      }
-
-      if (isHovered) {
-        glowIntensity = Math.max(glowIntensity, 0.8);
-      }
-
-      let borderColor = "white";
-      let backgroundColor = "transparent";
-      let shadowColor = "rgba(100, 255, 100, 0.5)";
-      let shadowBlur = this.game.getScaledValue(15);
-
-      if (isOccupied) {
-        borderColor = "rgba(100, 255, 100, 0.8)";
-      } else if (isHovered) {
-        borderColor = "white";
-        backgroundColor = "rgba(255, 255, 255, 0.1)";
-      }
-
-      // Apply glow effect
-      if (glowIntensity > 0) {
-        ctx.shadowColor = shadowColor;
-        ctx.shadowBlur = shadowBlur * glowIntensity;
-      }
-
-      // Draw rounded rectangle for drop zone (matching match screen style)
-      const lineWidth = isHovered
-        ? this.game.getScaledValue(3)
-        : this.game.getScaledValue(2);
-
-      ctx.strokeStyle = borderColor;
-      ctx.lineWidth = lineWidth;
-
-      // Draw rounded rectangle stroke
-      this.roundRect(
-        ctx,
-        zone.x - zone.width / 2,
-        zone.y - zone.height / 2,
-        zone.width,
-        zone.height,
-        cornerRadius
-      );
-      ctx.stroke();
-
-      // Fill if hovered
-      if (isHovered && backgroundColor !== "transparent") {
-        ctx.fillStyle = backgroundColor;
-        this.roundRect(
-          ctx,
-          zone.x - zone.width / 2,
-          zone.y - zone.height / 2,
-          zone.width,
-          zone.height,
-          cornerRadius
-        );
-        ctx.fill();
-      }
-
-      ctx.restore();
-    });
-  }
-
-  renderSockBallAnimations(ctx) {
-    this.sockBallAnimations.forEach((animation) => {
-      const currentX =
-        animation.startX +
-        (animation.endX - animation.startX) * animation.progress;
-      const currentY =
-        animation.startY +
-        (animation.endY - animation.startY) * animation.progress;
-
-      const sockBallImageName = `sockball${animation.type}.png`;
-      if (this.game.images[sockBallImageName]) {
-        const size = this.game.getScaledValue(30);
-        ctx.save();
-        ctx.translate(currentX, currentY);
-        ctx.rotate(animation.progress * Math.PI * 4);
-        ctx.drawImage(
-          this.game.images[sockBallImageName],
-          -size / 2,
-          -size / 2,
-          size,
-          size
-        );
-        ctx.restore();
-      }
-    });
-  }
-
-  renderPointGainAnimations(ctx) {
-    this.pointGainAnimations.forEach((animation) => {
-      const progress = animation.progress;
-      const easeProgress = this.easeOutCubic(progress);
-
-      ctx.save();
-      ctx.globalAlpha = 1 - progress;
-
-      const currentY = animation.y - easeProgress * 60;
-      const scale = 1 + easeProgress * 0.2;
-
-      ctx.translate(animation.x, currentY);
-      ctx.scale(scale, scale);
-
-      this.renderText(ctx, animation.text, 0, 0, {
-        fontSize: this.game.getScaledValue(24),
-        color: "#FFD700",
-        weight: "bold",
-        align: "center",
-      });
-
-      ctx.restore();
-    });
-  }
 
   easeOutCubic(t) {
     return 1 - Math.pow(1 - t, 3);
@@ -5326,91 +4587,6 @@ class LevelSelect extends Screen {
     );
   }
 
-  renderMismatchParticles(ctx) {
-    if (!this.mismatchParticles) return;
-
-    this.mismatchParticles.forEach((particle) => {
-      ctx.save();
-
-      const alpha = particle.life / particle.maxLife;
-      ctx.globalAlpha = alpha;
-      ctx.fillStyle = particle.color;
-
-      if (particle.shape === "cross") {
-        const halfSize = particle.size / 2;
-        ctx.fillRect(
-          particle.x - halfSize,
-          particle.y - halfSize / 3,
-          particle.size,
-          particle.size / 3
-        );
-        ctx.fillRect(
-          particle.x - halfSize / 3,
-          particle.y - halfSize,
-          particle.size / 3,
-          particle.size
-        );
-      } else {
-        ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.restore();
-    });
-  }
-
-  renderMenuSocks(ctx) {
-    this.menuSocks.forEach((sock) => {
-      ctx.save();
-
-      // Check if this sock is being hovered or dragged
-      const isHovered = sock === this.hoveredMenuSock;
-      const isDragged = sock === this.dragSock;
-
-      if (sock.glowEffect > 0) {
-        ctx.shadowColor = "#FFD700";
-        ctx.shadowBlur = sock.glowEffect;
-        sock.glowEffect--;
-      } else {
-        ctx.shadowColor = "rgba(255, 255, 255, 0.3)";
-        ctx.shadowBlur = this.game.getScaledValue(5);
-      }
-
-      // Add hover effect - blue/cyan glow
-      if (isHovered && !isDragged) {
-        ctx.shadowColor = "rgba(100, 180, 255, 0.9)";
-        ctx.shadowBlur = this.game.getScaledValue(25);
-      }
-
-      // Add dragged effect - stronger yellow glow
-      if (isDragged) {
-        ctx.shadowColor = "rgba(255, 215, 0, 1.0)";
-        ctx.shadowBlur = this.game.getScaledValue(30);
-      }
-
-      ctx.translate(sock.x, sock.y);
-      ctx.rotate(sock.rotation);
-
-      // Slightly scale up dragged sock
-      if (isDragged) {
-        ctx.scale(1.1, 1.1);
-      }
-
-      const sockImageName = `sock${sock.type}.png`;
-      if (this.game.images[sockImageName]) {
-        ctx.drawImage(
-          this.game.images[sockImageName],
-          -sock.size / 2,
-          -sock.size / 2,
-          sock.size,
-          sock.size
-        );
-      }
-
-      ctx.restore();
-    });
-  }
 
   destroy() {
     this.cleanup();

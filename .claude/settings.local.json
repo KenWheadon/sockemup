@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(findstr:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(python -m http.server:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
